@@ -1,6 +1,8 @@
-Welcome to Enrico!
+Enrico
+======
 
-A python package and scripts to make Fermi data analysis easy. 
+Enrico helps you with your Fermi data analysis.
+
 http://fermi.gsfc.nasa.gov/ssc/
 
 * Install the package:
