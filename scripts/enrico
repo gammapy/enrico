@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+"""Command line tool for easy Fermi analysis"""
+from os.path import join
+import site
+
+import enrico
+enrico.check_installation()
+
+print("I can find my data:")
+filename = join(site.getuserbase(), 'enrico/default.conf')
+print(open(filename).read())
