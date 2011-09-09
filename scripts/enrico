@@ -7,5 +7,5 @@ import enrico
 enrico.check_installation()
 
 print("I can find my data:")
-filename = join(site.getuserbase(), 'enrico/default.conf')
+filename = join(site.USER_BASE, 'enrico/default.conf')
 print(open(filename).read())
