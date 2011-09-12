@@ -53,6 +53,15 @@ FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
          ('DIFFUSE_ISO_SOURCE', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCE),
          ('DIFFUSE_ISO_CLEAN',  DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEAN)]
 
+# Data selections
+#             (tag,     #weeks)
+SELECTIONS = [('week',       1),
+              ('month',      4),
+              ('11month',   48),
+              ('24month',  105),
+              ('36month',  156),
+              ('all',     1000)]
+
 def check_dirs():
     """Check directory availability"""
     print('*** DIRECTORIES ***')
@@ -166,3 +175,5 @@ def download_data(spacecraft=True, photon=True):
         cmd = ('wget -m -P weekly -nH --cut-dirs=4 -np '
                'ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/photon/')
         os.system(cmd)
+
+def prepare_data():
