@@ -91,7 +91,7 @@ class UnbinnedAnalysisRunner:
         catalog to make an xml model file.
         The same argument names as in make2FGLxml are used."""
         logging.info('make_xml')
-        import make2FGLxml
+        from user_contrib import make2FGLxml
         CATALOG_DIR = '/Users/deil/work/workspace/survey/catalogs/fermi/'
         EXTENDED_DIR = join(CATALOG_DIR, 'Templates')
         DIFFUSE_DIR = '/Users/deil/bin/fermi/ScienceTools-v9r23p1-fssc-20110726/external/diffuseModels/'
@@ -164,7 +164,7 @@ class UnbinnedAnalysisRunner:
         
     def run_likeSED(self):
         logging.info('run_likeSED')
-        from likeSED import likeInput, likeSED
+        from user_contrib.likeSED import likeInput, likeSED
         logging.info('Creating like3 ... this takes about two minutes')
         srcModel = self.options['xmlfit2']
         optimizer = 'NewMinuit'
@@ -199,7 +199,6 @@ def download_data(dir='.'):
     logging.info('Trying to download data files from %s' % url)
     import urllib
     raise NotImplementedError
-
 
 def run_python_tutorial_example():
     # Configuration parameters
