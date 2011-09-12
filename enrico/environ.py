@@ -106,7 +106,7 @@ def check():
        variables (PATH, PYTHONPATH, FERMI_...) as described in the setup tutorial.
     ''')
 
-def download():
+def download_aux():
     """Download missing diffuse model and catalog files"""
     # Catalog and diffuse files
     for _tag, _url, _dir, _file in FILES:
