@@ -8,7 +8,7 @@ http://fermi.gsfc.nasa.gov/ssc/
 * Install the package:
   python setup.py install --user
 
-* Build and look at the documentation:
+* Build (requires Sphinx) and look at the documentation:
   cd doc
   make html
   firefox build/html/index.html

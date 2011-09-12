@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<source_library title="source library">
+<source name="eg_pl" type="DiffuseSource">
+	<spectrum type="PowerLaw">
+		<parameter free="0" max="10" min="0.1" name="Prefactor" scale="2.00285354985e-12" value="1"/>
+		<parameter free="0" max="1" min="1" name="Index" scale="-2.4" value="1"/>
+		<parameter free="0" max="1e10" min="0" name="Scale" scale="1.0" value="10925.4833984"/>
+	</spectrum>
+	<spatialModel type="ConstantValue">
+		<parameter free="0" max="1e1" min="0" name="Value" scale="1" value="1"/>
+	</spatialModel>
+</source>
+</source_library>
