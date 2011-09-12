@@ -29,6 +29,7 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     return config
 
 # @todo: This doesn't work because missing values are invalid!!!
+# Maybe fill those values by hand?
 def get_default_config(configspec=join(CONFIG_DIR, 'default.conf')):
     return ConfigObj(None, configspec=configspec)
 
@@ -40,5 +41,8 @@ def query_config():
     config['target'] = {}
     config['target']['ra'] = raw_input('Right Ascension: ')
     config['target']['dec'] = raw_input('Declination: ')
+    config['space'] = {}
+    config['space']['xref'] = config['target']['ra'] 
+    config['space']['yref'] = config['target']['dec'] 
     return get_config(config)
     

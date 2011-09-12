@@ -1,9 +1,9 @@
 """Central place for analysis environment setup."""
 import os
 from os.path import join
-#import logging
-#logging.basicConfig(level=logging.INFO)
-#log = logging.getLogger(__name__)
+import logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 import subprocess
 import urllib
 
@@ -13,10 +13,6 @@ import urllib
 FERMI_DIR = os.environ.get('FERMI_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
-# @note: At the moment the Fermi tools don't include all diffuse models,
-# but if a future version does we could simply use those:
-#DIFFUSE_DIR_FERMI = join(FERMI_DIR, 'refdata/fermi/diffuseModels') if FERMI_DIR else ''
-#DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', DIFFUSE_DIR_FERMI)
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
 DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
@@ -32,15 +28,10 @@ DIRS = [('FERMI_DIR',   FERMI_DIR),
         ('XML_DIR',     XML_DIR)]
 
 # File names
-#CATALOG = join(CATALOG_DIR, 'gll_psc_v05.fit')
-#DIFFUSE_GAL = join(DIFFUSE_DIR, 'gal_2yearp7v6_v0.fits')
-#DIFFUSE_ISO_SOURCE = join(DIFFUSE_DIR, 'iso_p7v6source.txt')
-#DIFFUSE_ISO_CLEAN = join(DIFFUSE_DIR, 'iso_p7v6clean.txt')
 CATALOG = 'gll_psc_v05.fit'
 DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
 DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
 DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
-SPACECRAFT = 'lat_spacecraft_merged.fits'
 
 # Download URLs
 CATALOG_URL = 'http://fermi.gsfc.nasa.gov/ssc/data/access/lat/2yr_catalog'
@@ -176,4 +167,64 @@ def download_data(spacecraft=True, photon=True):
                'ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/photon/')
         os.system(cmd)
 
-def prepare_data():
+class PrepareData:
+    """Prepare data by running gtselect, gtmktime and gtltcube"""
+    
+    def __init__(self, selections):
+        self.WEEKLY_DIR = join(DOWNLOAD_DIR, 'weekly/photon')
+        self.SCFILE = join(DOWNLOAD_DIR, 'lat_spacecraft_merged.fits')
+        for self.tag in selections.split(','):
+            try:
+                self.weeks = dict(SELECTIONS)[self.tag]
+            except KeyError:
+                print("Selection %s doesn't exist. Skipping.")
+                continue
+            WORKDIR = join(DATA_DIR, self.tag)
+            print('WORKDIR: %s' % WORKDIR)
+            os.chdir(WORKDIR)
+            self.select()
+            self.mktime()
+            self.ltcube()
+    
+    def select(self):
+        """Produce lists of weekly event list files.
+        These lists are used as input for gtselect"""
+        files = os.listdir(self.WEEKLY_DIR)
+    
+        # Select only fits files
+        files = [join(self.WEEKLY_DIR, _) + '\n'
+                 for _ in files if _.endswith('.fits')]
+        # Sort chronologically
+        files.sort()
+        # Select only a subset of weeks
+        files = files[:self.weeks]
+        log.debug('Writing weeks.lis with %04d lines.' % len(files))
+        open('weeks.lis', 'w').writelines(files)
+    
+    def mktime(self):
+        """Make event lists combining all weekly data
+        This runs gtselect and gtmktime"""
+        import fermi
+        # Make a softlink to the spacecraft file
+        try:
+            os.symlink(self.SCFILE, 'spacecraft.fits')
+        except Exception as e:
+            print e
+            print 'Could not create spacecraft.fits symlink.'
+        
+        for emin, tag in [(1e2, ''), (1e3, '_1000')]:
+            fermi.run_select(infile='@weeks.lis',
+                             outfile='photon%s.fits' % tag,
+                             emin=emin, evclsmin=3)
+            fermi.run_mktime(scfile=self.SCFILE,
+                             evfile='photon%s.fits' % tag,
+                             outfile='photon%s_gti.fits' % tag)
+    
+    def ltcube(self):
+        """Make a livetime cube for each event list
+        (runs gtltcube, takes hours to process)"""
+        import fermi
+        fermi.run_ltcube(evfile='photon_gti.fits',
+                         scfile=self.SCFILE,
+                         outfile='ltcube.fits')
+                

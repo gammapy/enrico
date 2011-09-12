@@ -15,9 +15,15 @@ parser.add_option("--download_data",
                   action="store_true", default=False,
                   help="Download missing spacecraft and photon "
                   "files (default=%default)")
+available = [sel[0] for sel in enrico.environ.SELECTIONS]
+parser.add_option("--prepare_data", default=None,
+                  help="Comma-separated list of selections to " 
+                  "preprocess (default=%default), one of "
+                  + ','.join(available))
 (options, args) = parser.parse_args()
 
-if not (options.check or options.download_aux or options.download_data):
+if not (options.check or options.download_aux or 
+        options.download_data or options.prepare_data):
     parser.print_help()
 if options.check:
     enrico.environ.check()
@@ -25,3 +31,5 @@ if options.download_aux:
     enrico.environ.download_aux()
 if options.download_data:
     enrico.environ.download_data()
+if options.prepare_data:
+    enrico.environ.PrepareData(options.prepare_data)

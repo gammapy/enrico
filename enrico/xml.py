@@ -11,11 +11,11 @@ class SourceList:
     def __init__(self, config):
         """Set all options"""
         self.out = join(config['out'], config['file']['xml'])
-        self.clobber = config['clobber']
+        self.clobber = config['tool']['clobber']
         self.ra = config['target']['ra']
         self.dec = config['target']['dec']
-        self.rad = config['analysis']['space']['rad']
-        self.srcrad = config['analysis']['space']['srcrad']
+        self.rad = config['space']['rad']
+        self.srcrad = config['space']['srcrad']
         self.psF = config['model']['point_only']
         self.radLim = config['model']['max_radius']
         self.roi = (self.ra, self.dec, self.rad)
