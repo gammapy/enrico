@@ -1,0 +1,87 @@
+<source_library title="Example_Sources">
+    
+    <source name="GalacticDiffuse_v02">
+        <spectrum escale="MeV">
+            <SpectrumClass name="MapCube" 
+			params="8.296,$(FERMI_DIR)/refdata/fermi/galdiffuse/gll_iem_v02.fit"/>
+            <use_spectrum frame="galaxy"/>
+        </spectrum>
+    </source>
+    
+	<!--
+    <source name="IsotropicDiffuse_v02_DIFFUSE">
+        <spectrum escale="MeV">
+            <SpectrumClass name="FileSpectrumMap"
+             params="flux=5.01,
+			 fitsFile=$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_allsky.fits,
+             specFile=$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_iem_v02.txt,
+			 emin=39.3884,emax=403761"/>
+            <use_spectrum frame="galaxy"/>
+        </spectrum>
+    </source>
+	-->
+
+    <source name="IsotropicDiffuse_v02_DIFFUSE">
+        <spectrum escale="MeV">
+            <SpectrumClass name="FileSpectrumMap"
+             params="flux=5.01,
+			 fitsFile=$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_allsky.fits,
+             specFile=$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_iem_v02.txt,
+			 emin=39.3884,emax=403761"/>
+            <use_spectrum frame="galaxy"/>
+        </spectrum>
+    </source>
+
+    
+    <source name="IsotropicDiffuse_v02_DATACLEAN">
+        <spectrum escale="MeV">
+            <SpectrumClass name="FileSpectrumMap"
+             params="flux=3.3,
+			 fitsFile=$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_allsky.fits,
+             specFile=$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_iem_p6v3dataclean_v02.txt,
+			 emin=60.3553390503,emax=123607.734375"/>
+            <use_spectrum frame="galaxy"/>
+        </spectrum>
+    </source>
+    
+	<source name="iso_pl">
+   		<spectrum escale="MeV">
+      		<SpectrumClass name="Isotropic" params="1e1, 2, 1e4, 1e5"/>
+      		<use_spectrum frame="galaxy"/>
+   		</spectrum>
+	</source>
+	
+    <source name="Standard_diffuse_components">
+        <nestedSource sourceRef="GalacticDiffuse_v02"/>
+        <nestedSource sourceRef="IsotropicDiffuse_v02_DIFFUSE"/>
+    </source>
+
+    <source name="center" flux="1e-2">
+        <spectrum escale="MeV">
+            <particle name="gamma">
+                <power_law emin="1e4" emax="1e5" gamma="2"/>
+            </particle>
+            <celestial_dir ra="0" dec="0"/>
+        </spectrum>
+    </source>
+	
+    <source name="offset" flux="1e-2">
+        <spectrum escale="MeV">
+            <particle name="gamma">
+                <power_law emin="1e4" emax="1e5" gamma="2"/>
+            </particle>
+            <celestial_dir ra="2" dec="0"/>
+        </spectrum>
+    </source>
+
+   <source name="Crab_Pulsar" flux="0.154e2">
+        <spectrum escale="MeV">
+            <particle name="gamma">
+                <power_law emin="20." emax="1000000." gamma="2.19" ebreak="1500."
+                 gamma2="4.89"/>
+            </particle>
+            <celestial_dir ra="83.57" dec="22.01"/>
+        </spectrum>
+    </source>
+
+</source_library>

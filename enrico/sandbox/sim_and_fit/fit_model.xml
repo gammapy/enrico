@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<source_library title="source library">
+    <source name="center" type="PointSource">
+        <spectrum type="PowerLaw2">
+            <parameter free="1" max="1e4" min="0" name="Integral" scale="1e-10" value="1"/>
+            <parameter free="1" max="5" min="1" name="Index" scale="-1.0" value="2"/>
+            <parameter free="0" max="1e10" min="1" name="LowerLimit" scale="1" value="1e4"/>
+            <parameter free="0" max="1e10" min="1" name="UpperLimit" scale="1" value="1e6"/>
+        </spectrum>
+        <spatialModel type="SkyDirFunction">
+            <parameter free="0" max="360.0" min="-360.0" name="RA" scale="1.0" value="0"/>
+            <parameter free="0" max="90" min="-90" name="DEC" scale="1.0" value="0"/>
+        </spatialModel>
+    </source>
+    <!--
+    <source name="iso" type="DiffuseSource">
+        <spectrum file="$(FERMI_DIR)/refdata/fermi/galdiffuse/isotropic_iem_p6v3dataclean_v02.txt" type="FileFunction">
+            <parameter free="0" max="1e3" min="0" name="Normalization" scale="1" value="1"/>
+        </spectrum>
+        <spatialModel type="ConstantValue">
+            <parameter free="0" max="1e3" min="0" name="Value" scale="1" value="1"/>
+        </spatialModel>
+    </source>
+	-->
+</source_library>

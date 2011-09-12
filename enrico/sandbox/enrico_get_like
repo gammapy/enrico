@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""Quick access to the like object for interactive testing:
+$ python -i get_like.py
+>>> <do with obs and like what you want>"""
+from enrico.environ import SCFILE, IRFS, OPTIMIZER
+from UnbinnedAnalysis import UnbinnedObs, UnbinnedAnalysis
+
+print 'Creating UnbinnedObs'
+obs = UnbinnedObs(eventFile='events.fits',
+                  scFile=SCFILE,
+                  expMap='expmap.fits',
+                  expCube='ltcube.fits',
+                  irfs=IRFS)
+
+print 'Creating UnbinnedAnalysis'
+like = UnbinnedAnalysis(obs,
+                        srcModel='model.xml',
+                        optimizer=OPTIMIZER)
+
+print '-'*60
+print obs
+print '-'*60
+print like
+print '-'*60
