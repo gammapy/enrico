@@ -7,19 +7,21 @@ parser = OptionParser(description=__doc__)
 parser.add_option("-c", "--check", 
                   action="store_true", default=False,
                   help="Check setup (default=%default)")
-parser.add_option("-d", "--download", 
+parser.add_option("--download_aux", 
                   action="store_true", default=False,
-                  help="Download missing files (default=%default)")
-parser.add_option("-d", "--download_data", 
+                  help="Download missing catalog and diffuse model "
+                  "files (default=%default)")
+parser.add_option("--download_data", 
                   action="store_true", default=False,
-                  help="Download missing data files (default=%default)")
+                  help="Download missing spacecraft and photon "
+                  "files (default=%default)")
 (options, args) = parser.parse_args()
 
-if not (options.check or options.download):
+if not (options.check or options.download_aux or options.download_data):
     parser.print_help()
 if options.check:
     enrico.environ.check()
-if options.download:
-    enrico.environ.download()
+if options.download_aux:
+    enrico.environ.download_aux()
 if options.download_data:
     enrico.environ.download_data()
