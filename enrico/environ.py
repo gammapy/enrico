@@ -143,7 +143,26 @@ def download():
         print('Set CATALOG_DIR before downloading the files.')
             
 
-def download_data():
-    """Download spacecraft file and weekly photon files"""
-    raise NotImplementedError 
+def download_data(spacecraft=True, photon=True):
+    """Download spacecraft file and weekly photon files.
 
+    Uses wget to download new data incrementally from 
+    the Fermi LAT data server.
+    For info on wget options see
+    http://www.gnu.org/software/wget/manual/wget.html"""
+    os.chdir(DOWNLOAD_DIR)
+    if spacecraft:
+        # -m --mirror
+        cmd = ('wget -N ftp://legacy.gsfc.nasa.gov/FTP/fermi/data/'
+               'lat/mission/spacecraft/lat_spacecraft_merged.fits')
+        print(cmd)
+        os.system(cmd)
+    if photon:
+        # -m --mirror
+        # -P --directory-prefix, in this case put in sub-directory weekly
+        # -nH --no-host-directories
+        # -np --no-parent
+        print(cmd)
+        cmd = ('wget -m -P weekly -nH --cut-dirs=4 -np '
+               'ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/photon/')
+        os.system(cmd)
