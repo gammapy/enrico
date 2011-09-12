@@ -74,7 +74,7 @@ def check_catalog_templates():
 def check_tools():
     """Check command line tool availability"""
     print('*** COMMAND LINE TOOLS ***')
-    for tool in ['python', 'ipython', 'gtlike', 'enrico_check']:
+    for tool in ['python', 'ipython', 'gtlike', 'enrico_setup']:
         location = subprocess.Popen(['which', tool], stdout=subprocess.PIPE).communicate()[0]
         print('{0:.<20} {1}'.format(tool, location.strip() or 'MISSING'))
 
