@@ -7,7 +7,7 @@ export FERMI_DIFFUSE_DIR=$FERMI/diffuse
 export FERMI_DOWNLOAD_DIR=$FERMI/download
 export FERMI_DATA_DIR=$FERMI/data
 
-source $FERMI_DIR/init_fermi.sh
+source $FERMI_DIR/fermi-init.sh
 
 export PATH=$PATH:/home/hfm/deil/code/enrico/scripts
 export PYTHONPATH=$PYTHONPATH:/home/hfm/deil/code/enrico
