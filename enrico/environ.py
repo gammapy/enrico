@@ -18,6 +18,7 @@ CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
 #DIFFUSE_DIR_FERMI = join(FERMI_DIR, 'refdata/fermi/diffuseModels') if FERMI_DIR else ''
 #DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', DIFFUSE_DIR_FERMI)
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
+DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
 DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'data', 'config')
 XML_DIR = join(os.path.dirname(__file__), 'data', 'xml')
@@ -26,6 +27,7 @@ DIRS = [('FERMI_DIR',   FERMI_DIR),
         ('CATALOG_DIR', CATALOG_DIR),
         ('DIFFUSE_DIR', DIFFUSE_DIR),
         ('DATA_DIR',    DATA_DIR),
+        ('DOWNLOAD_DIR',DOWNLOAD_DIR),
         ('CONFIG_DIR',  CONFIG_DIR),
         ('XML_DIR',     XML_DIR)]
 
@@ -38,6 +40,7 @@ CATALOG = 'gll_psc_v05.fit'
 DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
 DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
 DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
+SPACECRAFT = 'lat_spacecraft_merged.fits'
 
 # Download URLs
 CATALOG_URL = 'http://fermi.gsfc.nasa.gov/ssc/data/access/lat/2yr_catalog'
