@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+"""Check setup and / or download missing files."""
+from optparse import OptionParser
+import enrico.environ
+
+parser = OptionParser(description=__doc__)
+parser.add_option("-c", "--check", 
+                  action="store_true", default=False,
+                  help="Check setup (default=%default)")
+parser.add_option("-d", "--download", 
+                  action="store_true", default=False,
+                  help="Download missing files (default=%default)")
+(options, args) = parser.parse_args()
+
+if not (options.check or options.download):
+    parser.print_help()
+if options.check:
+    enrico.environ.check()
+if options.download:
+    enrico.environ.download()

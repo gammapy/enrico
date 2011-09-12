@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+
+import atpy
+from pylab import *
+
+# Load the table
+t = atpy.Table('gll_psc_v02.fit', hdu=1)
+
+# See what columsn are there
+t.describe()
+
+# Find the row index of Vela.
+# This is quite complicated since you have to strip whitespace,
+# but you could use such a code e.g. to write a general function
+# that takes a source name and plots the lightcurve of that source
+# by looking up the row index in the Source_Name column
+assoc2 = map(str.strip, t.ASSOC2)
+row_number = assoc2.index('Vela')
+
+# Get the numbers I need to make the plot
+name = t.Source_Name[row_number]
+y = t.Flux_History[row_number]
+y_err = t.Unc_Flux_History[row_number]
+v = t.Variability_Index[row_number]
+
+# To get real times for the x-axis you could read
+# the values in hdu 2, but I'll just use month number
+x = linspace(1, 11, 11)
+x_err = 0.5 * ones(11)
+
+# Make the plot
+errorbar(x, 1e6 * y, 1e6 * y_err, x_err, fmt='o')
+title('Lightcurve of %s' % name)
+xlabel('Month')
+xticks(x)
+ylabel(r'Flux in 100 MeV to 100 GeV band [10$^{-6}$ cm$^{-2}$ s$^{-1}$]')
+
+# For interactive viewing
+show()
+
+# Or save to file
+#savefig('vela_lightcurve.pdf')
