@@ -173,7 +173,7 @@ class MakeFit:
 	self.OperationNum+=1
 	import pyPlot as P
 #	try :
-	Par=P.Params(self.Observation.srcname,Emin=self.Observation.Emin,Emax=1e7,extend=True,PlotName='SED_extended_'+self.Observation.srcname)
+	Par=P.Params(self.Observation.srcname,Emin=self.Observation.Emin,Emax=1e7,extend=True,PlotName=self.Configuration['out']+'/SED_'+self.Observation.srcname)
 	P.Tgraph(Fit,Par)
 #		print "... Done"
 #	except :
