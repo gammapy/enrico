@@ -9,5 +9,5 @@ export FERMI_DATA_DIR=$FERMI/data
 
 source $FERMI_DIR/fermi-init.sh
 
-export PATH=$PATH:/home/hfm/deil/code/enrico/scripts
-export PYTHONPATH=$PYTHONPATH:/home/hfm/deil/code/enrico
+export PATH=$PATH:/nfs/d22/hfm/sanchez/enrico/scripts
+export PYTHONPATH=$PYTHONPATH:/nfs/d22/hfm/sanchez/enrico
