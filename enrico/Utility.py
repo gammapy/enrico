@@ -135,56 +135,73 @@ def getParamIndx(fit,name,NAME):
 	return ID
 
 
-#def ReadParam(filename) :
-#	FileAna = open(filename,"r")
-#	lines =  FileAna.readlines()
-#	FileAna.close()
-#	dictionary = {}
-#	i=0
-#	for line in lines:
-#		dictionary.update({string.split(lines[i])[0]:string.split(lines[i])[1]})		
-#		i+=1
-#	return dictionary
+def ChangeModel(inFit,Em0,Em1,TSlimit=50) :
+	E0 = int(pow(10,(log10(Em1)+log10(Em0))/2))
 
-#def SaveParam(filename,dictionary) :
-#	FileAna = open(filename,"w")
-
-#	for key in dictionary.iterkeys():
-#    		FileAna.write(key+' '+str(dictionary[key])+'\n')
-#	FileAna.close()
-
-def ChangeModel(inFit,E0,TSlimit=50) :
 	Fit = inFit
 	for name in Fit.model.srcNames :
+
+
 	   if Fit.model.srcs[name].spectrum().genericName() == 'PowerLaw' :
 		IdPref = getParamIndx(Fit,name,'Prefactor')
-		IdGamma  = getParamIndx(Fit,name,'Index')
-		IdScale  = getParamIndx(Fit,name,'Scale')
-
+		IdEScale  = getParamIndx(Fit,name,'Scale')
 		Flux    = Fit[IdPref].value()
-		ErrFlux = Fit[IdPref].error()
 		Scale = Fit[IdPref].getScale()
-		Escale  = Fit[IdScale].value()
+		Escale  = Fit[IdEScale].value()
+
+		IdGamma  = getParamIndx(Fit,name,'Index')
 		Gamma = Fit[IdGamma].value()
 
 		NewFlux  = Flux*pow(E0/Escale,-Gamma)*Scale
 		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))
 		NewScale =  pow(10,int(log10(NewFlux)))
 
-		Fit[IdScale].setBounds(0.0,4e5)
+		Fit[IdEScale].setBounds(0.0,4e5)
 		Fit[IdPref].setBounds(0,Flux*1000)	
 
 		Fit[IdPref].setScale(NewScale)
 		Fit[IdPref] = NormFlux
 		Fit[IdPref].setBounds(NormFlux*0.05,NormFlux*50)
-		Fit[IdScale] = E0
-		Fit[IdScale].setBounds(E0*0.05,E0*50)
+		Fit[IdEScale] = E0
+		Fit[IdEScale].setBounds(E0*0.05,E0*50)
+
+	   if Fit.model.srcs[name].spectrum().genericName() == 'PowerLaw2' :
+		IdInt = getParamIndx(Fit,name,'Integral')
+		IdEmin = getParamIndx(Fit,name,'LowerLimit')
+		IdEmax = getParamIndx(Fit,name,'UpperLimit')
+
+		IdGamma  = getParamIndx(Fit,name,'Index')
+		Gamma = Fit[IdGamma].value()
+
+
+		Flux    = Fit[IdInt].value()
+		Scale = Fit[IdInt].getScale()
+
+		Emin    = Fit[IdEmin].value()
+		Emax    = Fit[IdEmax].value()
+
+		D = pow(Em1,Gamma+1)-pow(Em0,Gamma+1)
+		N = pow(Emax,Gamma+1)-pow(Emin,Gamma+1)
+		print D," ",N
+
+
+		NewFlux = Flux*D/N*Scale
+		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))
+		NewScale =  pow(10,int(log10(NewFlux)))
+
+		Fit[IdInt].setBounds(0,Flux*1000)	
+
+		Fit[IdInt].setScale(NewScale)
+		Fit[IdInt] = NormFlux
+		Fit[IdInt].setBounds(NormFlux*0.05,NormFlux*50)
+		Fit[IdEmin] = Em0
+		Fit[IdEmax] = Em1
+
 	return Fit
 
 
 def Analysis(folder,Configuration,tag="",convtyp='-1'):
 	Obs = gtfunction.Observation(folder,Configuration,convtyp,tag=tag)
-#	Option.update(DicParams)
 
 	print
 	print '# *********************************************************************'
@@ -199,33 +216,37 @@ def Analysis(folder,Configuration,tag="",convtyp='-1'):
 	return runfit, Obs
 
 def PrepareEbin(Fit,runfit):
-	NEbin = int(runfit.Configuration['enricobehavior']['TSlimit'])
-	NewConfig = Config
+	NEbin = int(runfit.Configuration['enricobehavior']['NumEnergyBins'])
+	NewConfig = runfit.Configuration
 	NewConfig['enricobehavior']['NumEnergyBins'] = '0'
+	NewConfig['out'] = runfit.Configuration['out']+'/Ebin'
+	NewConfig['enricobehavior']['ResultPlots'] = 'no'
+	NewConfig['enricobehavior']['FitsGeneration'] = 'yes'
+	NewConfig['enricobehavior']['TSlimit'] = NewConfig['enricobehavior']['TSEnergyBins']
+
+	tag = runfit.Configuration['file']['tag']
 
 	lEmax = log10(float(runfit.Configuration['energy']['emax']))
 	lEmin = log10(float(runfit.Configuration['energy']['emin']))
-
+	print "Preparing submission of fit into energy bins"
+	print "Emin = ",float(runfit.Configuration['energy']['emin'])," Emax = ",float(runfit.Configuration['energy']['emax'])," Nbins = ",NEbin
 	ener = numpy.logspace(lEmin,lEmax,NEbin+1)
 	os.system("mkdir -p "+runfit.Configuration['out']+'/Ebin')
 	paramsfile = []
 
 	for ibin in xrange(NEbin):
 		E = int(pow(10,(log10(ener[ibin+1])+log10(ener[ibin]))/2))
-		ChangeModel(Fit,E)
-		NewModel = runfit.Configuration['out']+"/Ebin/"+runfit.Configuration['target']['name']+"_"+str(E)+".xml"
+		print "Submition # ",ibin," at energy ",E
+		ChangeModel(Fit,ener[ibin],ener[ibin+1])
+
+		NewModel = NewConfig['out']+"/"+runfit.Configuration['target']['name']+"_"+str(E)+".xml"
 		Fit.writeXml(NewModel)
 		NewConfig['energy']['emin'] = str(ener[ibin])
 		NewConfig['energy']['emax'] = str(ener[ibin+1])
-		NewConfig['file']['tag'] = runfit.Option['tag']+'_Ebin'+str(ibin) 
-		NewConfig['out'] = runfit.Configuration['out']+'/Ebin'
-		NewConfig['enricobehavior']['ResultPlots'] = 'no'
-		NewConfig['enricobehavior']['FitsGeneration'] = 'yes'
-		NewConfig['enricobehavior']['TSlimit'] = NewConfig['enricobehavior']['TSEnergyBins']
+		NewConfig['file']['tag'] = tag+'_Ebin_'+str(ibin) 
 
+		paramsfile.append(runfit.Configuration['out']+'/'+runfit.Configuration['target']['name']+"_"+str(E)+".conf")
+		NewConfig.write(open(paramsfile[ibin], 'w'))
 
-	NewConfig.write(open(paramsfile[ibin], 'w'))
-#		paramsfile.append(runfit.Option.get('folder')+"/Ebin/"+runfit.Option.get('srcname')+"_"+str(E)+".conf")
-#		SaveParam(paramsfile[ibin],NewConfig)
 	return paramsfile
 
