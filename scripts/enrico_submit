@@ -17,6 +17,7 @@ Configuration = get_config(infile)
 prefix =Configuration['out']+"/"+Configuration['target']['name']+"_"+Configuration['analysis']['likelihood']+"_"+Configuration['file']['tag']
 
 os.system("mkdir -p "+Configuration['out']+"\n")
+os.system("cp "+infile+" "+Configuration['out']+"\n")
 
 scriptname=prefix+".sh"
 
@@ -29,9 +30,12 @@ FILE.write("source $ENRICO_DIR/init.sh\n")
 
 #### RUN GTLIKE
 FILE.write("echo ~~~~~~~~ GO FOR GTLIKE ANALYSIS ~~~~~~~~ \n")
-FILE.write("cp "+infile+" .\n")
+
+FILE.write("cd "+Configuration['out']+"\n")
+FILE.write("ls\n")
+FILE.write('pwd\n')
 FILE.write("enrico_fit "+infile+"\n")
 FILE.close()
 
 os.system("chmod +x "+scriptname + "\n")
-os.system("qsub "+scriptname)
+os.system("qsub  "+scriptname)

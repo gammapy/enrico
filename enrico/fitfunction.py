@@ -4,10 +4,12 @@
 from UnbinnedAnalysis import *
 from BinnedAnalysis import *
 import UpperLimits
+import IntegralUpperLimit
 from math import *
 import string
 import Utility
 import gtfunction
+import numpy
 
 class MakeFit:
     def __init__(self,Observ,Configuration):
@@ -131,8 +133,11 @@ class MakeFit:
 		pass
 	Utility.PrintResult(Fit,self.Observation)
 	Utility.GetFlux(Fit)
-	if float(self.Configuration['enricobehavior']['TSlimit'])>Fit.Ts(self.Observation.srcname) :
-		self.ComputeUL(Fit)
+	if float(self.Configuration['UpperLimit']['TSlimit'])>Fit.Ts(self.Observation.srcname) :
+		if self.Configuration['UpperLimit']['envelope'] =='yes' :
+			self.EnvelopeUL(Fit)
+		else :
+			self.ComputeUL(Fit)
 
 
     def ComputeUL(self,Fit) :
@@ -143,27 +148,65 @@ class MakeFit:
 	self.OperationNum+=1
 
 
-	print "Assumed index is 1.5"
+	print "Assumed index is ",self.Configuration['UpperLimit']['SpectralIndex']
 	PhIndex = Fit.par_index(self.Observation.srcname, 'Index')
-	Fit[PhIndex] = -1.5
+	Fit[PhIndex] = -self.Configuration['UpperLimit']['SpectralIndex']
 	Fit.freeze(PhIndex)
 
-	ul = UpperLimits.UpperLimits(Fit)
-	ul_prof, par_prof = ul[self.Observation.srcname].compute(emin=self.Observation.Emin, emax=self.Observation.Emax, delta=2.71/2)
+	if self.Configuration['UpperLimit']['Method'] == "Profile" :
+		ul = UpperLimits.UpperLimits(Fit)
+		ul_prof, par_prof = ul[self.Observation.srcname].compute(emin=self.Observation.Emin, emax=self.Observation.Emax, delta=2.71/2)
 
-	print "Upper limit using profile method: ", ul_prof
+		print "Upper limit using Profile method: ", ul_prof
 
-	print "Assumed index is 2"
+	if self.Configuration['UpperLimit']['Method'] == "Integral" :
+		ul, results = IntegralUpperLimit.calc_int(Fit, self.Observation.srcname, verbosity=0)
+
+		print "Upper limit using Integral method: ", ul
+
+    def EnvelopeUL(self,Fit) :
+	print
+	print '# *********************************************************************'
+	print '# * '+str(self.OperationNum)+' - Make Upper Limit Envelope'
+	print '# *********************************************************************'
+	self.OperationNum+=1
+
 	PhIndex = Fit.par_index(self.Observation.srcname, 'Index')
-	Fit[PhIndex] = -2.
-	Fit.freeze(PhIndex)
+	Nbp = 20
+	Npgraph = 100
+	ener = numpy.logspace(log10(self.Observation.Emin),log10(self.Observation.Emax),Npgraph)
+	Ulenv = numpy.array(Npgraph*[0.]) 
 
-	ul = UpperLimits.UpperLimits(Fit)
-	ul_prof, par_prof = ul[self.Observation.srcname].compute(emin=self.Observation.Emin, emax=self.Observation.Emax, delta=2.71/2)
+	for i in xrange(Nbp):
+		indx = -1.5-i/(Nbp-1.)
+		Fit[PhIndex] = indx
+		Fit.freeze(PhIndex)
+		if self.Configuration['UpperLimit']['Method'] == "Profile" :
+			ul = UpperLimits.UpperLimits(Fit)
+			ul_val, par_prof = ul[self.Observation.srcname].compute(emin=self.Observation.Emin, emax=self.Observation.Emax, delta=2.71/2)
 
-	print "Upper limit using profile method: ", ul_prof
+		if self.Configuration['UpperLimit']['Method'] == "Integral" :
+			ul_val, results = IntegralUpperLimit.calc_int(Fit, self.Observation.srcname, verbosity=0)
 
+		print "Index = ",indx," UL = ",ul_val
 
+		for j in xrange(Npgraph):
+			if Fit.model.srcs[self.Observation.srcname].spectrum().genericName() == 'PowerLaw2':
+				newUl = ul_val*(indx+1)*pow(ener[j],indx+2)/(pow(self.Observation.Emax,indx+1)-pow(self.Observation.Emin,indx+1))
+
+			if Fit.model.srcs[self.Observation.srcname].spectrum().genericName() == 'PowerLaw':
+				IdEScale  = getParamIndx(Fit,self.Observation.srcname,'Scale')
+				Escale  = Fit[IdEScale].value()
+				newUl = ul_val*pow(ener[j]/Escale,indx+2)
+
+			Ulenv[j] = max(Ulenv[j],newUl)
+
+	print 
+	print "Resultat of the UL envelope"
+	for j in xrange(Npgraph):
+		print ener[j]," ",Ulenv[j]
+
+	
 
     def PlotSED(self,Fit) :
 	print

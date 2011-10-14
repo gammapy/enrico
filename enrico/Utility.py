@@ -135,10 +135,11 @@ def getParamIndx(fit,name,NAME):
 	return ID
 
 
-def ChangeModel(inFit,Em0,Em1,TSlimit=50) :
+def ChangeModel(inFit,Em0,Em1) :
 	E0 = int(pow(10,(log10(Em1)+log10(Em0))/2))
 
 	Fit = inFit
+
 	for name in Fit.model.srcNames :
 
 
@@ -155,6 +156,7 @@ def ChangeModel(inFit,Em0,Em1,TSlimit=50) :
 		NewFlux  = Flux*pow(E0/Escale,-Gamma)*Scale
 		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))
 		NewScale =  pow(10,int(log10(NewFlux)))
+		print NormFlux," ",Flux," ",Scale," ",Gamma
 
 		Fit[IdEScale].setBounds(0.0,4e5)
 		Fit[IdPref].setBounds(0,Flux*1000)	
@@ -222,7 +224,7 @@ def PrepareEbin(Fit,runfit):
 	NewConfig['out'] = runfit.Configuration['out']+'/Ebin'
 	NewConfig['enricobehavior']['ResultPlots'] = 'no'
 	NewConfig['enricobehavior']['FitsGeneration'] = 'yes'
-	NewConfig['enricobehavior']['TSlimit'] = NewConfig['enricobehavior']['TSEnergyBins']
+	NewConfig['UpperLimit']['TSlimit'] = NewConfig['enricobehavior']['TSEnergyBins']
 
 	tag = runfit.Configuration['file']['tag']
 
@@ -234,9 +236,14 @@ def PrepareEbin(Fit,runfit):
 	os.system("mkdir -p "+runfit.Configuration['out']+'/Ebin')
 	paramsfile = []
 
+
+	RemoveWeakSources(Fit)
+
 	for ibin in xrange(NEbin):
 		E = int(pow(10,(log10(ener[ibin+1])+log10(ener[ibin]))/2))
 		print "Submition # ",ibin," at energy ",E
+
+
 		ChangeModel(Fit,ener[ibin],ener[ibin+1])
 
 		NewModel = NewConfig['out']+"/"+runfit.Configuration['target']['name']+"_"+str(E)+".xml"

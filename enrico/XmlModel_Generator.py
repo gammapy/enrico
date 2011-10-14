@@ -7,6 +7,7 @@ from xml.sax import ContentHandler, make_parser
 from math import *
 import pyfits,xml.dom.minidom,numpy
 
+import enrico.environ as env
 from enrico.config import get_config
 
 
@@ -341,12 +342,32 @@ def WriteXml(lib,doc,srclist,Configuration):
 	emax = Configuration['energy']['emax']
 	model = Configuration['target']['spectrum']
 
-	Gal = Configuration['model']['diffuse_gal']
-	EG = Configuration['model']['diffuse_iso']
+	#test if the user profide diffuse files
+	if Configuration['model']['diffuse_gal_dir'] =="" :
+		Gal_dir = env.DIFFUSE_DIR
+	else :
+		Gal_dir = Configuration['model']['diffuse_gal_dir']
+
+	if Configuration['model']['diffuse_iso_dir'] =="" :
+		Iso_dir = env.DIFFUSE_DIR
+	else :
+		Iso_dir = Configuration['model']['diffuse_iso_dir']
+
+
+	if Configuration['model']['diffuse_gal'] =="" :
+		Gal = Gal_dir+"/"+env.DIFFUSE_GAL
+	else :
+		Gal = Gal_dir+"/"+Configuration['model']['diffuse_gal']
+
+	if Configuration['model']['diffuse_gal_dir'] =="" :
+		Iso = Iso_dir+"/"+env.DIFFUSE_ISO_SOURCE
+	else :
+		Iso =  Iso_dir+"/"+Configuration['model']['diffuse_iso']
+
 
 	i=0
 
-	addDiffusePL(lib, EG, free=1, value=1.0, scale=1.0, max=10.0, min=1.0, name = 'EG_v02')
+	addDiffusePL(lib, Iso, free=1, value=1.0, scale=1.0, max=10.0, min=1.0, name = 'EG_v02')
 
 	addGalprop(lib, Gal, free=1, value=1.0, scale=1.0, max=10.0, min=.010, name = 'GAL_v02')
 
@@ -367,7 +388,11 @@ def WriteXml(lib,doc,srclist,Configuration):
 		free = srclist[i].get('IsFree')
 		addPSPowerLaw1(lib, name, ra, dec, emin=100, emax=3e5,eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
 
-	output=Configuration['file']['xml']+'.xml'
+	folder = Configuration['out']
+	os.system('mkdir -p '+folder)
+
+	output=Configuration['file']['xml']
+	print "write the Xml file in ",output
 	open(output,'w').write(doc.toprettyxml('  '))
 
 def CreateLib():

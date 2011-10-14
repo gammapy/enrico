@@ -13,7 +13,7 @@ def run(infile) :
 	os.system('mkdir -p '+folder)
 
 
-	TSlimit = float(Configuration['enricobehavior']['TSlimit'])
+	TSlimit = float(Configuration['UpperLimit']['TSlimit'])
 	SPindex = float(Configuration['enricobehavior']['FreeSpectralIndex'])
 	SummedLike = Configuration['enricobehavior']['SummedLike']
 

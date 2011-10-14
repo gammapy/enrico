@@ -21,14 +21,13 @@ class Observation:
 #	folder = dictionnary.get('folder')+'/'
 	self.Configuration = Configuration
 	inttag = Configuration['file']['tag']
+	if not(tag==""):
+		inttag+="_"+tag
 
 	self.srcname   = Configuration['target']['name']
 	self.ft1       = Configuration['file']['event']
 	self.ft2       = Configuration['file']['spacecraft']
-	if tag == "" :
-		self.xmlfile   = Configuration['file']['xml']+'.xml'
-	else :
-		self.xmlfile   = Configuration['file']['xml']+'_'+tag+'.xml'
+	self.xmlfile   = Configuration['file']['xml']
 
 	self.eventfile = folder+'/'+self.srcname+inttag+"_Evt.fits"
 	self.Cubename  = folder+'/'+self.srcname+inttag+"_ltCube.fits"
