@@ -127,11 +127,12 @@ class MakeFit:
 	print '# * '+str(self.OperationNum)+' - Result of the fit'
 	print '# *********************************************************************'
 	self.OperationNum+=1
+	Utility.PrintResult(Fit,self.Observation)
 	try :
 		Utility.GetCovar(self.Observation.srcname,Fit)
 	except :
 		pass
-	Utility.PrintResult(Fit,self.Observation)
+
 	Utility.GetFlux(Fit)
 	if float(self.Configuration['UpperLimit']['TSlimit'])>Fit.Ts(self.Observation.srcname) :
 		if self.Configuration['UpperLimit']['envelope'] =='yes' :

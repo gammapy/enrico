@@ -5,6 +5,7 @@ import string
 import numpy
 import os
 from math import log10
+import pyLikelihood as pyLike
 
 def SubstracFits(Map1,Map2):
 	print "Substracting : ",Map1," to ",Map2
@@ -27,6 +28,7 @@ def PrintResult(Fit,Current_Obs):
 	print 	
 	print "Source Name\tNpred\tTS"
 	for src in Fit.model.srcNames :
+	    if Fit.Ts(src) > 5 :
 		print src,"\t%2.3f\t%2.3f"%(Fit.NpredValue(src),Fit.Ts(src))
 	print 
 	print '# *********************************************************************'
@@ -35,37 +37,46 @@ def PrintResult(Fit,Current_Obs):
 	print "Values and Errors [Minos errors] for "+Current_Obs.srcname
 	print "TS : ",Fit.Ts(Current_Obs.srcname)
 	stype = Fit.model.srcs[Current_Obs.srcname].spectrum().genericName()
+
 	if stype == 'PowerLaw2' :
-	
 		Flux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').value()
 		ErrFlux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').error()
 		Scale = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').getScale()
-
-		try :
+		if Fit.Ts(Current_Obs.srcname)>5:
+		   try :
 			Interror = Fit.minosError(Current_Obs.srcname, 'Integral')
 			print " Integral:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e"%(Flux,ErrFlux,Interror[0],Interror[1],Scale)
-		except :
+		   except :
 			print " Integral:  %2.2f +/-  %2.2f  %2.0e"%(Flux,ErrFlux,Scale)
+
+		else :
+		   print " Integral:  %2.2f +/-  %2.2f  %2.0e"%(Flux,ErrFlux,Scale)
 
 	if stype == 'PowerLaw' :
 		Flux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Prefactor').value()
 		ErrFlux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Prefactor').error()
 		Scale = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Prefactor').getScale()
-		try :
+		if Fit.Ts(Current_Obs.srcname)>5:
+		   try :
 			Interror = Fit.minosError(Current_Obs.srcname, 'Prefactor')
 			print " Prefactor:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e"%(Flux,ErrFlux,Interror[0],Interror[1],Scale)
-		except :
+		   except :
 			print " Prefactor:  %2.2f +/-  %2.2f %2.0e"%(Flux,ErrFlux,Scale)
+		else :
+		   print " Prefactor:  %2.2f +/-  %2.2f %2.0e"%(Flux,ErrFlux,Scale)
 
 	if stype == 'PowerLaw2' or stype == 'PowerLaw' :
 		Gamma = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Index').value()
 		ErrGamma = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Index').error()
-		try :
+		if Fit.Ts(Current_Obs.srcname)>5:
+		   try :
 			Gamerror = Fit.minosError(Current_Obs.srcname, 'Index')
 			print " Index:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ]"%(Gamma,ErrGamma,Gamerror[0],Gamerror[1])
-		except :
+		   except :
 			print " Index:  %2.2f +/-  %2.2f"%(Gamma,ErrGamma)
-
+		else :
+		   print " Index:  %2.2f +/-  %2.2f"%(Gamma,ErrGamma)
+	
 
 def RemoveWeakSources(Fit,SourceName = None):
     print '# *********************************************************************'
@@ -108,7 +119,7 @@ def GetCovar(srcname,Fit):
         	#
         if Fit.covariance is None:
           		raise RuntimeError("Covariance matrix has not been computed.")
-        covar = num.array(Fit.covariance)
+        covar = numpy.array(Fit.covariance)
         if len(covar) != len(par_index_map):
          		raise RuntimeError("Covariance matrix size does not match the " +
                                "number of free parameters.")
@@ -121,7 +132,6 @@ def GetCovar(srcname,Fit):
            	my_covar.append([covar[ix][par_index_map[ypar]] for ypar in pars])
         print "The covariance matrix is :\n",numpy.array(my_covar)
 	print 
-
 
 #function gets index for a specific parameter for a specific source from model in UnbinnedAnalysis object fit
 def getParamIndx(fit,name,NAME):
@@ -220,6 +230,7 @@ def Analysis(folder,Configuration,tag="",convtyp='-1'):
 def PrepareEbin(Fit,runfit):
 	NEbin = int(runfit.Configuration['enricobehavior']['NumEnergyBins'])
 	NewConfig = runfit.Configuration
+	NewConfig['UpperLimit']['envelope'] = 'no'
 	NewConfig['enricobehavior']['NumEnergyBins'] = '0'
 	NewConfig['out'] = runfit.Configuration['out']+'/Ebin'
 	NewConfig['enricobehavior']['ResultPlots'] = 'no'

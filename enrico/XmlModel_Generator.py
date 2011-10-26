@@ -106,23 +106,27 @@ def addDiffusePL2(lib, file, name ,emin=200, emax=3e5,
     src.appendChild(spatial)
     lib.appendChild(src)
 
-
-def addPSPowerLaw1(lib, name, ra, dec, emin=200, emax=100000, eflux=0,
+#def addPSPowerLaw1(lib, name, ra, dec, emin=200, emax=100000, eflux=0,
+#                   flux_free=1, flux_value=1e-9, flux_scale=0,
+#                   flux_max=1000.0, flux_min=1e-5,
+#                   index_free=1, index_value=-2.0,
+#                   index_min=-5.0, index_max=-0.5):
+def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
                    index_min=-5.0, index_max=-0.5):
     elim_min = 30;
     elim_max = 300000;
-    if emin<elim_min:
-        elim_min = emin
-    if emax>elim_max:
-        elim_max = emax 
-    if eflux==0:
-        eflux =2e5# meanEnergy(emin,emax,index_value)
-        flux_value *= (eflux/100.0)**index_value
-    else :
-	flux_value *= 0.1*(eflux/100.0)**index_value
+#    if emin<elim_min:
+#        elim_min = emin
+#    if emax>elim_max:
+#        elim_max = emax 
+#    if eflux==0:
+#        eflux =2e5# meanEnergy(emin,emax,index_value)
+#        flux_value *= (eflux/100.0)**index_value
+#    else :
+#	flux_value *= 0.1*(eflux/100.0)**index_value
     if flux_scale == 0:
         flux_scale=fluxScale(flux_value)
     flux_value /= flux_scale        
@@ -376,7 +380,7 @@ def WriteXml(lib,doc,srclist,Configuration):
 	dec = srclist[i].get('dec')
 	free = srclist[i].get('IsFree')
 	if model == "PL" :
-		addPSPowerLaw1(lib, name, ra, dec, emin=emin, emax=emax,eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
+		addPSPowerLaw1(lib, name, ra, dec,eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
 	if model == "PL2" :
 		addPSPowerLaw2(lib, name, ra, dec, emin=emin, emax=emax,flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
 
@@ -386,7 +390,7 @@ def WriteXml(lib,doc,srclist,Configuration):
 		ra = srclist[i].get('ra')
 		dec = srclist[i].get('dec')
 		free = srclist[i].get('IsFree')
-		addPSPowerLaw1(lib, name, ra, dec, emin=100, emax=3e5,eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
+		addPSPowerLaw1(lib, name, ra, dec, eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
 
 	folder = Configuration['out']
 	os.system('mkdir -p '+folder)

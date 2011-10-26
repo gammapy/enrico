@@ -20,7 +20,7 @@ class Observation:
 	
 #	folder = dictionnary.get('folder')+'/'
 	self.Configuration = Configuration
-	inttag = Configuration['file']['tag']
+	inttag = "_"+Configuration['file']['tag']
 	if not(tag==""):
 		inttag+="_"+tag
 
@@ -45,6 +45,11 @@ class Observation:
 	self.dec       = float(Configuration['target']['dec'])
 	self.roi       = float(Configuration['space']['rad'])
 	self.irfs      = Configuration['analysis']['irfs']
+	if convtyp==0 :
+			self.irfs += "::FRONT"
+	if convtyp==1 :
+			self.irfs += "::BACK"
+
 	self.binsz     = self.Configuration['space']['binsz']
 	self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
 	self.convtyp   = convtyp

@@ -19,10 +19,10 @@ def run(infile) :
 
 	if SummedLike == 'yes' :
 		### create an instance of Observation for the FRONT events
-		runfitfront, Obs_FRONT = Utility.Analysis(folder,Configuration,tag="FRONT",convtyp='Front')
+		runfitfront, Obs_FRONT = Utility.Analysis(folder,Configuration,tag="FRONT",convtyp=0)
 	
 		### create an instance of Observation for the BACK events
-		runfitback, Obs_BACK = Utility.Analysis(folder,Configuration,tag="BACK",convtyp='Back')
+		runfitback, Obs_BACK = Utility.Analysis(folder,Configuration,tag="BACK",convtyp=1)
 
 		FitB = runfitback.CreateFit()
 		FitF = runfitfront.CreateFit()
@@ -35,7 +35,7 @@ def run(infile) :
 	else :
 	
 		### create an instance of Observation 
-		runfit,Obs = Utility.Analysis(folder,Configuration,tag="",convtyp="All")
+		runfit,Obs = Utility.Analysis(folder,Configuration,tag="",convtyp=Configuration['analysis']['convtype'])
 		Fit = runfit.CreateFit()
 
 	runfit.PerformFit(Fit)
