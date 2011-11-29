@@ -2,40 +2,35 @@
 """A simple script to run a fit and energy bin fit on the cluster"""
 
 import sys,os
-from enrico.RunGTlike import run
 from enrico.config import get_config
-
+import enrico.environ as environ
+from enrico.submit import call
 try :
-	infile = sys.argv[1]
+	infile = os.path.abspath(sys.argv[1])
 except :
 	print('FATAL: Config file not found.')
 	sys.exit(1)
 
+enricodir = environ.DIRS[7][1]
 
 Configuration = get_config(infile)
 
-prefix =Configuration['out']+"/"+Configuration['target']['name']+"_"+Configuration['analysis']['likelihood']+"_"+Configuration['file']['tag']
+if Configuration['Spectrum']['SummedLike'] =='yes' :
+	GenericName = Configuration['target']['name']+"_"+Configuration['analysis']['likelihood']+"_Summed_"+Configuration['file']['tag']
+else :
+	GenericName = Configuration['target']['name']+"_"+Configuration['analysis']['likelihood']+"_Normal_"+Configuration['file']['tag']
+
+prefix =Configuration['out']+"/"+GenericName
 
 os.system("mkdir -p "+Configuration['out']+"\n")
-os.system("cp "+infile+" "+Configuration['out']+"\n")
+#os.system("cp "+infile+" "+Configuration['out']+"\n")
 
-scriptname=prefix+".sh"
 
-FILE=open(scriptname,"w")
-FILE.write("#!/bin/sh\n")
+cmd = "enrico_fit "+infile
 
-FILE.write("echo ~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ \n")
-FILE.write("export ENRICO_DIR=/home/hfm/sanchez/disk/enrico/\n")
-FILE.write("source $ENRICO_DIR/init.sh\n")
+scriptname=prefix+"_Script.sh"
+JobLog = prefix+"_Job.log"
+JobName = GenericName
 
-#### RUN GTLIKE
-FILE.write("echo ~~~~~~~~ GO FOR GTLIKE ANALYSIS ~~~~~~~~ \n")
+call(cmd,enricodir,scriptname,JobLog,JobName)
 
-FILE.write("cd "+Configuration['out']+"\n")
-FILE.write("ls\n")
-FILE.write('pwd\n')
-FILE.write("enrico_fit "+infile+"\n")
-FILE.close()
-
-os.system("chmod +x "+scriptname + "\n")
-os.system("qsub  "+scriptname)
