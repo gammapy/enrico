@@ -34,12 +34,19 @@ def PrepareLC(infile) :
 		Configuration['file']['tag'] = Tag+'_LC_'+str(i)
 		filename = Configuration['out']+"/Config_"+str(Configuration['time']['tmin'])+"_"+str(Configuration['time']['tmax'])
 
-		if Configuration['LightCurve']['Prepare'] :
-			print "writting the config file ",filename
+		if Configuration['LightCurve']['Prepare'] == 'yes':
 			Configuration.write(open(filename, 'w'))
 
 		AllConfigFile.append(filename)
 	return AllConfigFile
+
+
+def WriteToAscii(Time,TimeErr,Flux,FluxErr,TS,Npred,filename):
+	flc = open(filename,'w')
+	flc.write("Time (MET) Delta_Time Flux(ph cm-2 s-1) Delta_Flux TS Npred\n")
+	for i in xrange(len(Time)):
+		flc.write(str(Time[i])+"\t"+str(TimeErr[i])+"\t"+str(Flux[i])+"\t"+str(FluxErr[i])+"\t"+str(TS[i])+"\t"+str(Npred[i])+"\n")
+	flc.close()
 
 
 def MakeLC(infile) :
@@ -59,13 +66,14 @@ def MakeLC(infile) :
 
 	Nbin = Configuration['LightCurve']['NLCbin']
 
-	Time = numpy.array(Nbin*[0.])
-	TimeErr = numpy.array(Nbin*[0.])
-	Flux = numpy.array(Nbin*[0.])
-	FluxErr = numpy.array(Nbin*[0.])
+	Time = []# numpy.array(Nbin*[0.])
+	TimeErr = []#numpy.array(Nbin*[0.])
+	Flux = []#numpy.array(Nbin*[0.])
+	FluxErr = []#numpy.array(Nbin*[0.])
 
-	Npred = numpy.array(Nbin*[0.])
-	TS = numpy.array(Nbin*[0.])
+	Npred = []#numpy.array(Nbin*[0.])
+	TS = []#numpy.array(Nbin*[0.])
+
 	Configuration['Spectrum']['FitsGeneration'] == Configuration['LightCurve']['FitsGeneration'] 
 
 	if Configuration['LightCurve']['FitsGeneration'] == 'yes' or Configuration['LightCurve']['Re-Fit'] == 'yes':
@@ -86,22 +94,35 @@ def MakeLC(infile) :
 #				os.system("(source "+enricodir+"/init.sh );(sleep 1);(enrico_fit "+AllConfigFile[i]+")")
 
 	if Configuration['LightCurve']['Plot'] == 'yes' and Doplot:
+		print "Reading output files"
 		for i in xrange(Nbin):
-			print "Reading "+AllConfigFile[i]
 			CurConfig = get_config(AllConfigFile[i])
-			ResultDic = Utility.ReadResult(CurConfig)
+			try :
+				ResultDic = Utility.ReadResult(CurConfig)
+			except :
+				print "WARNING : fail reading the configuration file : ",AllConfigFile[i]
+				print "Job Number : ",i
+				print "Please have a look at this job log file"
+				continue
 			
-			Time[i] = (ResultDic.get("tmax")+ResultDic.get("tmin"))/2.
-			TimeErr[i] =(ResultDic.get("tmax")-ResultDic.get("tmin"))/2.
+			Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
+			TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
 			if ResultDic.has_key('Ulvalue') :
-				Flux[i] = ResultDic.get("Ulvalue")
-				FluxErr[i] = 0
+				Flux.append(ResultDic.get("Ulvalue"))
+				FluxErr.append(0)
 			else :
-				Flux[i] = ResultDic.get("Flux")
-				FluxErr[i] = ResultDic.get("dFlux")
+				Flux.append(ResultDic.get("Flux"))
+				FluxErr.append(ResultDic.get("dFlux"))
 
-			Npred[i] = ResultDic.get("Npred")
-			TS[i] = ResultDic.get("TS")
+			Npred.append(ResultDic.get("Npred"))
+			TS.append(ResultDic.get("TS"))
+
+		TS = numpy.array(TS)
+		Npred = numpy.array(Npred)
+		Time = numpy.array(Time)
+		TimeErr = numpy.array(TimeErr)
+		Flux = numpy.array(Flux)
+		FluxErr = numpy.array(FluxErr)
 
 		if Configuration['LightCurve']['DiagnosticPlots'] == 'yes':
 			gTHNpred,TgrNpred = pyPlot.PlotNpred(Npred,Flux,FluxErr)
@@ -131,3 +152,6 @@ def MakeLC(infile) :
 		CanvLC.Print(folder+'/LightCurve/'+ Configuration['target']['name']+'_LC.eps')
 		CanvLC.Print(folder+'/LightCurve/'+ Configuration['target']['name']+'_LC.C')
 
+		lcfilename = folder+'/LightCurve/'+ Configuration['target']['name']+"_results.dat"
+		print "Write to Ascii file : ",lcfilename
+		WriteToAscii(Time,TimeErr,Flux,FluxErr,TS,Npred,lcfilename)

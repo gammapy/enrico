@@ -275,14 +275,16 @@ def PlotTS(Time,TimeErr,TS) :
 
 def PlotNpred(Npred,Flux,FluxErr) :
 
+
+	FdF = Flux/(FluxErr+0.0001)
 	NpredErr = numpy.sqrt(Npred)
 
-	gh = ROOT.TH2F("ghnpred","",80,min(Npred/NpredErr)*0.8,max(Npred/NpredErr)*1.2,100,min(Flux/FluxErr)*0.8,max(Flux/FluxErr)*1.2);
+	gh = ROOT.TH2F("ghnpred","",80,min(Npred/NpredErr)*0.8,max(Npred/NpredErr)*1.2,100,min(FdF)*0.8,max(FdF)*1.2);
 	gh.SetStats(000)
 	gh.SetXTitle("Npred/sqrt(Npred) ")
 	gh.SetYTitle("Flux/#Delta Flux ")
 
-	tgraph = ROOT.TGraph(len(Npred),array.array('f',Npred/NpredErr),array.array('f',Flux/FluxErr))
+	tgraph = ROOT.TGraph(len(Npred),array.array('f',Npred/NpredErr),array.array('f',FdF))
 	tgraph.SetMarkerColor(1)
 	tgraph.SetMarkerStyle(5)
 
@@ -290,12 +292,13 @@ def PlotNpred(Npred,Flux,FluxErr) :
 
 def PlotLC(Time,TimeErr,Flux,FluxErr) :
 
+	ArrowSize = (max(Flux)+max(FluxErr)*1.3-(min(Flux)-max(FluxErr)*1.3))*0.1
 	Arrow = []
 	for i in xrange(len(Time)):
 		if FluxErr[i] == 0 :
-			Arrow.append(ROOT.TArrow(Time[i],Flux[i],Time[i],Flux[i]*0.7,0.02,"|>"))
+			Arrow.append(ROOT.TArrow(Time[i],Flux[i],Time[i],Flux[i]-ArrowSize,0.015,"|>"))
 
-	gh = ROOT.TH2F("ghflux","",80,min(Time)-max(TimeErr)*3,max(Time)+max(TimeErr)*3,100,min(Flux)-max(FluxErr)*3,max(Flux)+max(FluxErr)*3);
+	gh = ROOT.TH2F("ghflux","",80,min(Time)-max(TimeErr)*10,max(Time)+max(TimeErr)*10,100,min(Flux)-max(FluxErr)*1.3,max(Flux)+max(FluxErr)*1.3);
 	gh.SetStats(000)
 	gh.SetXTitle("Time ")
 	gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
