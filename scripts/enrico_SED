@@ -10,4 +10,4 @@ except :
 	print('FATAL: Config file not found.')
 	sys.exit(1)
 
-plotSED(infile)
+PlotSED(infile)

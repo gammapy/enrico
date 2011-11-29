@@ -239,9 +239,6 @@ def CountsPlot(Result,Parameter):
 	image.close()
 
 def Tgraph(like,Parameter):
-	ROOT.gROOT.SetBatch(ROOT.kTRUE) 
-	Style.RootStyle()
-#	
 	Res = Result(like,Parameter)
 
 	E,SED = MakeSED(Res,Parameter)
@@ -347,22 +344,27 @@ def PlotDataPoints(Configuration):
 		EpointErrm[i] = E-ResultDic.get("Emin")
 		EpointErrp[i] = ResultDic.get("Emax")-E
 
-		Fluxpoint[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
-		try :
-			FluxpointErrp[i] = ResultDic.get("Prefactor+")*Epoint[i]**2*1.6022e-6
-			FluxpointErrm[i] = ResultDic.get("Prefactor-")*Epoint[i]**2*1.6022e-6
+		try : 
+		  Fluxpoint[i] = ResultDic.get("Ulvalue")*Epoint[i]**2*1.6022e-6
+		  Arrow.append(ROOT.TArrow(Epoint[i],Fluxpoint[i],Epoint[i],Fluxpoint[i]*0.7,0.02,"|>"))
 		except :
+		  Fluxpoint[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
+		  try :
+			FluxpointErrp[i] = ResultDic.get("dPrefactor+")*Epoint[i]**2*1.6022e-6
+			FluxpointErrm[i] = abs(ResultDic.get("dPrefactor-"))*Epoint[i]**2*1.6022e-6
+		  except :
 			try :
-				FluxpointErrp[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
-				FluxpointErrm[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
+				FluxpointErrp[i] = ResultDic.get("dPrefactor")*Epoint[i]**2*1.6022e-6
+				FluxpointErrm[i] = ResultDic.get("dPrefactor")*Epoint[i]**2*1.6022e-6
 			except :
-				FluxpointErrp[i] = 0.
-				FluxpointErrm[i] = 0.
-				Arrow.append(ROOT.TArrow(Epoint[i],Fluxpoint[i],Epoint[i],Fluxpoint[i]*0.7,0.02,"|>"))
+				pass
+
 				
 
 		print Epoint[i]
 		print Fluxpoint[i]
+		print FluxpointErrp[i]
+		print FluxpointErrm[i]
 
 	tgpoint = ROOT.TGraphAsymmErrors(NEbin,Epoint,Fluxpoint,EpointErrm,EpointErrp,FluxpointErrm,FluxpointErrp)
 	tgpoint.SetMarkerStyle(20)
@@ -370,6 +372,8 @@ def PlotDataPoints(Configuration):
 	return tgpoint,Arrow
 
 def PlotSED(infile):
+	ROOT.gROOT.SetBatch(ROOT.kTRUE) 
+	Style.RootStyle()
 
 	Configuration = get_config(infile)
 	FilesName = Configuration['out']+'/SED_'+Configuration['target']['name']
