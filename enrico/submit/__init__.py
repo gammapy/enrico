@@ -53,17 +53,18 @@ def wait_for_slot(max_jobs):
         njobs = jobs_in_queue()
 
 def call(cmd,
+         enricoDir, 
          scriptfile=None,
-         logfile=None,
+         qsub_log=None,
+         jobname=None,
+	 submit=True,
+	 max_jobs=50,
+         #logfile=None,
          check_present=None,
          clobber=False,
          exec_dir=None,
          dry=False,
-         options=None,
-         submit=False,
-         jobname=None,
-         max_jobs=100,
-         qsub_log=None):
+         options=None):
     """Run a command line tool either directly
     or submit to the queue"""
     if check_present and not clobber:
@@ -72,8 +73,8 @@ def call(cmd,
                          ''.format(check_present))
             return
 
-    if logfile:
-        cmd += ['>', logfile, '2>&1']
+ #   if logfile:
+  #      cmd += '>'+ logfile+ '2>&1'
 
     if not isinstance(cmd, str):
         cmd = _cmd_to_str(cmd)
@@ -88,7 +89,7 @@ def call(cmd,
         # Note that qsub needs a shell script which sets
         # up the environment and then executes cmd.
         template = join(dirname(__file__), 
-                        'qsub_template.sh')
+                        'qsub.sh')
         fh = file(template)
         text = fh.read()
         fh.close()
@@ -97,7 +98,9 @@ def call(cmd,
         # anyway in a new shell.
         if exec_dir:
             text += '\ncd {0}\n\n'.format(exec_dir)
-
+	    
+	text = text.format(enricodir=enricoDir)
+	
         text += cmd
 
         # Now reset cmd to be the qsub command
@@ -144,22 +147,3 @@ def call(cmd,
 
     if not dry:
         os.system(cmd)
-
-def ask_permission_to_proceed(steps, available_steps):
-    """ For windows users ... :-) """
-    print
-    print '---> Available steps:', available_steps
-    print '---> Selected  steps:', steps
-
-    for step in steps:
-        if not step in available_steps:
-            print('---> USAGE ERROR: "{0}" is not an available step.'
-                  ' Exiting.'.format(step))
-            sys.exit(-1)
-
-    print '---> Hit Enter to proceed or Ctrl+C to exit.'
-    raw_input()
-
-def root(options):
-    cmd = ['root -l -q']
-    return call(cmd, options=options)
