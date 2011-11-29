@@ -1,8 +1,5 @@
-# Author: David Sanchez dsanchez@llr.in2p3.fr
-# Begun: 2008-09-15
-#developed for FGST
 
-#defintion of CLASS Run
+#defintion of CLASS Params
 class Params :
 	"define some usefull parametere for the plot"
 	def __init__(self,srcname,Emin=100,Emax=3e5,extend=False,PlotName="LAT_SED",LineColor=1,AreaColor=2,plotRes=False):
@@ -67,18 +64,17 @@ import pyLikelihood as pyLike
 #Others import
 import string
 from math import *
-from array import array
+import array 
 import ROOT
 import numpy
 import pyfits
 import os,sys
 import copy
 import bisect
-
-#defintion of Usefull functions
-
-
-
+import Style
+from enrico.config import get_config
+import enrico.Utility as Utility
+from math import log10
 
 ########################################################################################################
 ########################################################################################################
@@ -155,39 +151,44 @@ def CountsPlot(Result,Parameter):
 		j+=1
 	emax = image[3].data.field(0)
 	emin = image[3].data.field(1)
-	E = array('f',((emax+emin)/2.))
-	err_E = array('f',((-emax+emin)/2.))
-	src = array('f',(image[1].data.field(indice)))
+
+	E = array.array('f',((emax+emin)/2.))
+	err_E = array.array('f',((-emax+emin)/2.))
+
+	src = array.array('f',(image[1].data.field(indice)))
 	Nbin = len(src)
 
-	obs = array('f',(image[1].data.field(0)))
-	obs_err = array('f',numpy.sqrt(image[1].data.field(0)))
+	obs = array.array('f',(image[1].data.field(0)))
+	obs_err = array.array('f',numpy.sqrt(image[1].data.field(0)))
 	summ = 0
 	for i in xrange(len(image[1].data.names)-1):
-		summ = summ +image[1].data.field(i+1)
-	other = other = array('f',summ - image[1].data.field(indice))
-	summ = array('f', summ)
+		summ = summ +image[1].data.field(i+1)#create an array
 
-	residual = array('f', Nbin*[0.])
-	Dres = array('f', Nbin*[0.])
-	zero =  array('f', Nbin*[0.])
+	other = array.array('f',summ - image[1].data.field(indice))
+	summ = array.array('f', summ)
+
+	residual = array.array('f', Nbin*[0.])
+	Dres = array.array('f', Nbin*[0.])
+
 	for i in xrange(Nbin):
 	   try :
 		residual[i] = (obs[i]-summ[i])/summ[i]
 	   except :
 		residual[i] = 0.
 	   try :
-		Dres[i] = abs(residual[i]*obs_err[i]/obs[i])
+		Dres[i] = (obs_err[i]/summ[i])
 	   except :
 		Dres[i] = 0.
+
+
 	cmap = ROOT.TCanvas("cmap")
 	cmap.SetLogy()
 	cmap.SetLogx()
-	ghh = ROOT.TH2F("ghh","",80,E[0]-err_E[0],E[-1]-err_E[-1],100,min(obs),max(obs)*2);
-	ghh.SetStats(000)
-	ghh.SetXTitle("E (MeV) ")
-	ghh.SetYTitle("Counts")
-	ghh.Draw()	
+	ghcount = ROOT.TH2F("ghcount","",80,91,499e3,100,0.1,max(obs)*2);
+	ghcount.SetStats(000)
+	ghcount.SetXTitle("E (MeV) ")
+	ghcount.SetYTitle("Counts / bin")
+	ghcount.Draw()	
 	tgrobs = ROOT.TGraphErrors(Nbin,E,obs,err_E,obs_err)
 	tgrobs.SetLineColor(1)
 	tgrobs.SetMarkerColor(1)
@@ -212,14 +213,18 @@ def CountsPlot(Result,Parameter):
 
 	cres = ROOT.TCanvas("cres")
 	cres.SetLogx()
-	gh = ROOT.TH2F("gh","",80,E[0]-err_E[0],E[-1]-err_E[-1],100,-1,1);
-	gh.SetStats(000)
-	gh.SetXTitle("E (MeV) ")
-	gh.SetYTitle("Residauls")
-	gh.Draw()
+	ghres = ROOT.TH2F("ghres","",80,91,499e3,100,min(residual)-max(Dres),max(residual)+max(Dres));
+	ghres.SetStats(000)
+	ghres.SetXTitle("E (MeV) ")
+	ghres.SetYTitle("(counts -model)/model")
+	ghres.Draw()
 	tgres = ROOT.TGraphErrors(Nbin,E,residual,err_E,Dres)
 	tgres.Draw("P")
-	tg0 = ROOT.TGraph(Nbin,E,zero)
+
+	zero =  array.array('f', 2*[0.])
+	Ezero =  array.array('f', 2*[0.])
+	Ezero[1] = 1e10
+	tg0 = ROOT.TGraph(2,Ezero,zero)
 	tg0.SetLineStyle(2)
 	tg0.Draw("L")
 
@@ -233,69 +238,9 @@ def CountsPlot(Result,Parameter):
 	os.system("rm "+imName)
 	image.close()
 
-def RootStyle():
-	ROOT.gROOT.SetStyle("Plain");
-	ROOT.gStyle.SetPalette(1);
-
-
-# Canvas
-	ROOT.gStyle.SetCanvasColor(10);
-
-# Frame
-	ROOT.gStyle.SetFrameBorderMode(0);
-	ROOT.gStyle.SetFrameFillColor(0);
-
-# Pad
-	ROOT.gStyle.SetPadBorderMode(0);
-	ROOT.gStyle.SetPadColor(0);
-	ROOT.gStyle.SetPadTopMargin(0.07);
-	ROOT.gStyle.SetPadLeftMargin(0.13);
-	ROOT.gStyle.SetPadRightMargin(0.11);
-	ROOT.gStyle.SetPadBottomMargin(0.1);
-	ROOT.gStyle.SetPadTickX(1);#make ticks be on all 4 sides.
-	ROOT.gStyle.SetPadTickY(1);
-
-# histogram
-	ROOT.gStyle.SetHistFillStyle(0);
-	ROOT.gStyle.SetOptTitle(0);
-
-# histogram title
-	ROOT.gStyle.SetTitleSize(0.22);
-	ROOT.gStyle.SetTitleFontSize(2);
-	ROOT.gStyle.SetTitleFont(42);
-	ROOT.gStyle.SetTitleFont(62,"xyz");
-	ROOT.gStyle.SetTitleYOffset(1.0);
-	ROOT.gStyle.SetTitleXOffset(1.0);
-	ROOT.gStyle.SetTitleXSize(0.04);
-	ROOT.gStyle.SetTitleYSize(0.04);
-	ROOT.gStyle.SetTitleX(.15);
-	ROOT.gStyle.SetTitleY(.98);
-	ROOT.gStyle.SetTitleW(.70);
-	ROOT.gStyle.SetTitleH(.05);
-
-# statistics box
-	ROOT.gStyle.SetStatFont(42);
-	ROOT.gStyle.SetStatX(.91);
-	ROOT.gStyle.SetStatY(.90);
-	ROOT.gStyle.SetStatW(.15);
-	ROOT.gStyle.SetStatH(.15);
-
-# axis labels
-	ROOT.gStyle.SetLabelFont(42,"xyz");
-	ROOT.gStyle.SetLabelSize(0.035,"xyz");
-	ROOT.gStyle.SetGridColor(16);
-
-	ROOT.gStyle.SetLegendBorderSize(0);
-
-
-########################################################################################################
-########################################################################################################
-########################################################################################################
-
-
 def Tgraph(like,Parameter):
 	ROOT.gROOT.SetBatch(ROOT.kTRUE) 
-	RootStyle()
+	Style.RootStyle()
 #	
 	Res = Result(like,Parameter)
 
@@ -314,48 +259,179 @@ def Tgraph(like,Parameter):
 	for i in xrange(Parameter.N):
 		save_file.write("%12.4e  %12.4e  %12.4e \n" % (E[i], SED[i], Err[i]))
 
+
+def PlotTS(Time,TimeErr,TS) :
+
+	Zero = numpy.array(len(TS)*[0.])
+
+	gh = ROOT.TH2F("ghts","",80,min(Time)-max(TimeErr)*3,max(Time)+max(TimeErr)*3,100,0,max(TS)*1.2);
+	gh.SetStats(000)
+	gh.SetXTitle("Time ")
+	gh.SetYTitle("Test Statistic ")
+
+	tgraph = ROOT.TGraphErrors(len(TS),array.array('f',Time),array.array('f',TS),array.array('f',TimeErr),array.array('f',Zero))
+	tgraph.SetMarkerColor(1)
+	tgraph.SetMarkerStyle(5)
+
+	return gh,tgraph
+
+
+def PlotNpred(Npred,Flux,FluxErr) :
+
+	NpredErr = numpy.sqrt(Npred)
+
+	gh = ROOT.TH2F("ghnpred","",80,min(Npred/NpredErr)*0.8,max(Npred/NpredErr)*1.2,100,min(Flux/FluxErr)*0.8,max(Flux/FluxErr)*1.2);
+	gh.SetStats(000)
+	gh.SetXTitle("Npred/sqrt(Npred) ")
+	gh.SetYTitle("Flux/#Delta Flux ")
+
+	tgraph = ROOT.TGraph(len(Npred),array.array('f',Npred/NpredErr),array.array('f',Flux/FluxErr))
+	tgraph.SetMarkerColor(1)
+	tgraph.SetMarkerStyle(5)
+
+	return gh,tgraph
+
+def PlotLC(Time,TimeErr,Flux,FluxErr) :
+
+	Arrow = []
+	for i in xrange(len(Time)):
+		if FluxErr[i] == 0 :
+			Arrow.append(ROOT.TArrow(Time[i],Flux[i],Time[i],Flux[i]*0.7,0.02,"|>"))
+
+	gh = ROOT.TH2F("ghflux","",80,min(Time)-max(TimeErr)*3,max(Time)+max(TimeErr)*3,100,min(Flux)-max(FluxErr)*3,max(Flux)+max(FluxErr)*3);
+	gh.SetStats(000)
+	gh.SetXTitle("Time ")
+	gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
+
+	tgraph = ROOT.TGraphErrors(len(Time),array.array('f',Time),array.array('f',Flux),array.array('f',TimeErr),array.array('f',FluxErr))
+	tgraph.SetMarkerColor(1)
+	tgraph.SetMarkerStyle(20)
+
+	return gh,tgraph,Arrow
+
+
+def PlotDataPoints(Configuration):
+#Plot points
+	Arrow = []
+	NEbin = int(Configuration['Ebin']['NumEnergyBins'])
+
+	lEmax = log10(float(Configuration['energy']['emax']))
+	lEmin = log10(float(Configuration['energy']['emin']))
+
+
+	Epoint = array.array('f',NEbin*[0])
+	EpointErrp = array.array('f',NEbin*[0])
+	EpointErrm = array.array('f',NEbin*[0])
+	Fluxpoint = array.array('f',NEbin*[0])
+	FluxpointErrp = array.array('f',NEbin*[0])
+	FluxpointErrm = array.array('f',NEbin*[0])
+	
+	tmin = int(Configuration['time']['tmin'])
+	tmax = int(Configuration['time']['tmax'])
+	
+	ener = numpy.logspace(lEmin,lEmax,NEbin+1)
+	for i in xrange(NEbin):
+
+		E = int(pow(10,(log10(ener[i+1])+log10(ener[i]))/2))	
+#			emin = int(ener[i])
+#			emax = int(ener[i+1])
+		CurConf = get_config(Configuration['out']+'/Ebin/'+Configuration['target']['name']+"_"+str(E)+".conf")
+
+		try :
+			ResultDic = Utility.ReadResult(CurConf)#TODO
+		except :
+			print "cannot read the Results of energy ",E
+			continue
+
+		Epoint[i] = E
+		EpointErrm[i] = E-ResultDic.get("Emin")
+		EpointErrp[i] = ResultDic.get("Emax")-E
+
+		Fluxpoint[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
+		try :
+			FluxpointErrp[i] = ResultDic.get("Prefactor+")*Epoint[i]**2*1.6022e-6
+			FluxpointErrm[i] = ResultDic.get("Prefactor-")*Epoint[i]**2*1.6022e-6
+		except :
+			try :
+				FluxpointErrp[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
+				FluxpointErrm[i] = ResultDic.get("Prefactor")*Epoint[i]**2*1.6022e-6
+			except :
+				FluxpointErrp[i] = 0.
+				FluxpointErrm[i] = 0.
+				Arrow.append(ROOT.TArrow(Epoint[i],Fluxpoint[i],Epoint[i],Fluxpoint[i]*0.7,0.02,"|>"))
+				
+
+		print Epoint[i]
+		print Fluxpoint[i]
+
+	tgpoint = ROOT.TGraphAsymmErrors(NEbin,Epoint,Fluxpoint,EpointErrm,EpointErrp,FluxpointErrm,FluxpointErrp)
+	tgpoint.SetMarkerStyle(20)
+
+	return tgpoint,Arrow
+
+def PlotSED(infile):
+
+	Configuration = get_config(infile)
+	FilesName = Configuration['out']+'/SED_'+Configuration['target']['name']
+	AsciiFile = FilesName+'.dat'
+
+	fascii = open(AsciiFile,'r')
+	lines = fascii.readlines()
+	ilen = len(lines)-1
+	fascii.close()
+
+	SED = numpy.array(ilen*[0.])
+	E = numpy.array(ilen*[0.])
+	Err = numpy.array(ilen*[0.])
+
+	for i in xrange(ilen):
+		words = string.split(lines[i+1])
+		E[i]=float(words[0])
+		SED[i]=float(words[1])
+		Err[i]=float(words[2])
+
 	Fluxp = SED+Err
 	Fluxm = SED-Err
-	ErrorFlux = array('f',(2*Parameter.N+1)*[0])
-	ErrorE = array('f',(2*Parameter.N+1)*[0])
+	ErrorFlux = array.array('f',(2*ilen+1)*[0])
+	ErrorE = array.array('f',(2*ilen+1)*[0])
 
-	for i in xrange(Parameter.N):
+	for i in xrange(ilen):
 		ErrorFlux[i] = Fluxp[i]
 		ErrorE[i] = E[i]
-	for i in xrange(Parameter.N):
-		ErrorFlux[Parameter.N+i] = Fluxm[Parameter.N-i-1]
-		ErrorE[Parameter.N+i] = E[Parameter.N-i-1]
+	for i in xrange(ilen):
+		ErrorFlux[ilen+i] = Fluxm[ilen-i-1]
+		ErrorE[ilen+i] = E[ilen-i-1]
 	ErrorFlux[-1] = Fluxp[0]
 	ErrorE[-1] = E[0]
-
 
 	c_plot = ROOT.TCanvas("c_plot")
 	c_plot.SetLogx()
 	c_plot.SetLogy()
 
-	gh = ROOT.TH2F("gh","",10000,E[0]*0.8,E[-1]*1.5,100,min(SED[0]-Err[0],SED[-1]-Err[-1])*0.2,max(SED[0]+Err[0],SED[-1]+Err[-1])*3)
-	gh.SetStats(000)
-	gh.SetTitle("Fermi SED")
-	gh.SetXTitle("E [MeV]")
-	gh.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
-	gh.Draw()
+	ghSED = ROOT.TH2F("ghSED","",10000,E[0]*0.8,E[-1]*1.5,100,min(SED[0]-Err[0],SED[-1]-Err[-1])*0.2,max(SED[0]+Err[0],SED[-1]+Err[-1])*3)
+	ghSED.SetStats(000)
+	ghSED.SetTitle("Fermi SED")
+	ghSED.SetXTitle("E [MeV]")
+	ghSED.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
+	ghSED.Draw()
 
-	tgr = ROOT.TGraph(Parameter.N,E,SED)
+	tgr = ROOT.TGraph(ilen,array.array('f',E),array.array('f',SED))
 	tgr.SetLineWidth(2)
-	tgr.SetLineColor(Parameter.LineColor)
+	tgr.Draw("L")
 
-	tgerr = ROOT.TGraph(2*Parameter.N+1,ErrorE,ErrorFlux)
-	tgerr.SetLineStyle(1)
-	tgerr.SetLineWidth(1)
-	if (Parameter.AreaColor==0):
-		tgerr.SetLineColor(2)
-		tgerr.Draw("L")
-	else :
-		tgerr.SetFillColor(Parameter.AreaColor)
-		tgerr.Draw("FL")
-		tgr.Draw('L')
+	tgerr = ROOT.TGraph(2*ilen+1,ErrorE,ErrorFlux)
+	tgerr.SetLineColor(2)
+	tgerr.Draw("L")
 
-	c_plot.Print(Parameter.PlotName+'.C')
-	c_plot.Print(Parameter.PlotName+'.eps')
-	c_plot.Print(Parameter.PlotName+'.png')
+	#Plot points
+	NEbin = int(Configuration['Ebin']['NumEnergyBins'])
+	if NEbin >0 :
+		tgpoint,Arrow =PlotDataPoints(Configuration)
+		tgpoint.Draw("pz")
 
+		for i in xrange(len(Arrow)):
+			Arrow[i].Draw()
+
+	c_plot.Print(FilesName+'.C')
+	c_plot.Print(FilesName+'.eps')
+	c_plot.Print(FilesName+'.png')
