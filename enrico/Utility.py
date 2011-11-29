@@ -7,20 +7,29 @@ import os
 from math import log10
 import pyLikelihood as pyLike
 
-def SubstracFits(Map1,Map2):
+
+def SubstracFits(Map1,Map2,Configuration):
 	print "Substracting : ",Map1," to ",Map2
 
 	arr1 = pyfits.getdata(Map1)
 	arr2 = pyfits.getdata(Map2)
 
-	outfile = "Substract_Model_cmap.fits"
-	pyfits.writeto(outfile,arr1-arr2)
+	head = pyfits.getheader(Map2)
 
-	outfile2 = "Residual_Model_cmap.fits"
+	SubstracMap = Configuration['out']+"/"+Configuration['target']['name']+"_Substract_Model_cmap.fits"
+	ResidualMap = Configuration['out']+"/"+Configuration['target']['name']+"_Residual_Model_cmap.fits"
 
-	pyfits.writeto(outfile2,(arr1-arr2)/arr2)
+	os.system("rm "+SubstracMap)
+	os.system("rm "+ResidualMap)
+
+	pyfits.writeto(SubstracMap,arr1-arr2,head)
+
+	pyfits.writeto(ResidualMap,(arr1-arr2)/arr2,head)
 
 def PrintResult(Fit,Current_Obs):
+	Result  = {}
+#		dictionary.update({string.split(lines[i])[0]:string.split(lines[i])[1]})
+
 	print '# *********************************************************************'
 	print "# *** Model Result ***\n"
 	
@@ -33,8 +42,11 @@ def PrintResult(Fit,Current_Obs):
 	print 
 	print '# *********************************************************************'
 	print 
+	Result.update({'Npred':Fit.NpredValue(Current_Obs.srcname)})
+	Result.update({'TS':Fit.Ts(Current_Obs.srcname)})
 
 	print "Values and Errors [Minos errors] for "+Current_Obs.srcname
+
 	print "TS : ",Fit.Ts(Current_Obs.srcname)
 	stype = Fit.model.srcs[Current_Obs.srcname].spectrum().genericName()
 
@@ -42,10 +54,14 @@ def PrintResult(Fit,Current_Obs):
 		Flux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').value()
 		ErrFlux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').error()
 		Scale = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').getScale()
+		Result.update({'Flux':Flux*Scale})
+		Result.update({'dFlux':ErrFlux*Scale})
 		if Fit.Ts(Current_Obs.srcname)>5:
 		   try :
 			Interror = Fit.minosError(Current_Obs.srcname, 'Integral')
 			print " Integral:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e"%(Flux,ErrFlux,Interror[0],Interror[1],Scale)
+			Result.update({'dFlux-':Interror[0]*Scale})
+			Result.update({'dFlux+':Interror[1]*Scale})
 		   except :
 			print " Integral:  %2.2f +/-  %2.2f  %2.0e"%(Flux,ErrFlux,Scale)
 
@@ -56,10 +72,18 @@ def PrintResult(Fit,Current_Obs):
 		Flux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Prefactor').value()
 		ErrFlux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Prefactor').error()
 		Scale = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Prefactor').getScale()
+		Escale = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Scale').value()
+		Result.update({'Prefactor':Flux*Scale})
+		Result.update({'dPrefactor':ErrFlux*Scale})
+		Result.update({'Escale':Escale})
+
 		if Fit.Ts(Current_Obs.srcname)>5:
 		   try :
 			Interror = Fit.minosError(Current_Obs.srcname, 'Prefactor')
 			print " Prefactor:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e"%(Flux,ErrFlux,Interror[0],Interror[1],Scale)
+			Result.update({'dPrefactor-':Interror[0]*Scale})
+			Result.update({'dPrefactor+':Interror[1]*Scale})
+
 		   except :
 			print " Prefactor:  %2.2f +/-  %2.2f %2.0e"%(Flux,ErrFlux,Scale)
 		else :
@@ -68,15 +92,20 @@ def PrintResult(Fit,Current_Obs):
 	if stype == 'PowerLaw2' or stype == 'PowerLaw' :
 		Gamma = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Index').value()
 		ErrGamma = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Index').error()
+		Result.update({'Index':Gamma})
+		Result.update({'dIndex':ErrGamma})
+
 		if Fit.Ts(Current_Obs.srcname)>5:
 		   try :
 			Gamerror = Fit.minosError(Current_Obs.srcname, 'Index')
 			print " Index:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ]"%(Gamma,ErrGamma,Gamerror[0],Gamerror[1])
+			Result.update({'dIndex-':Gamerror[0]*Scale})
+			Result.update({'dIndex+':Gamerror[1]*Scale})
 		   except :
 			print " Index:  %2.2f +/-  %2.2f"%(Gamma,ErrGamma)
 		else :
 		   print " Index:  %2.2f +/-  %2.2f"%(Gamma,ErrGamma)
-	
+	return Result
 
 def RemoveWeakSources(Fit,SourceName = None):
     print '# *********************************************************************'
@@ -103,6 +132,7 @@ def GetFlux(Fit):
 	except :
 		pass
     print
+    return Fit.flux(src)
 
 def GetCovar(srcname,Fit):
 	ptsrc = pyLike.PointSource_cast(Fit[srcname].src)
@@ -162,11 +192,13 @@ def ChangeModel(inFit,Em0,Em1) :
 
 		IdGamma  = getParamIndx(Fit,name,'Index')
 		Gamma = Fit[IdGamma].value()
+		Fit[IdGamma].setFree(0)
 
-		NewFlux  = Flux*pow(E0/Escale,-Gamma)*Scale
-		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))
-		NewScale =  pow(10,int(log10(NewFlux)))
-		print NormFlux," ",Flux," ",Scale," ",Gamma
+		NewFlux  = Flux*pow(E0/Escale,Gamma)*Scale
+		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))*10
+		NewScale =  pow(10,int(log10(NewFlux))-1)
+		print "NormFlux, ,Scale, ,Gamma"
+		print NormFlux," ",Scale," ",Gamma
 
 		Fit[IdEScale].setBounds(0.0,4e5)
 		Fit[IdPref].setBounds(0,Flux*1000)	
@@ -184,7 +216,7 @@ def ChangeModel(inFit,Em0,Em1) :
 
 		IdGamma  = getParamIndx(Fit,name,'Index')
 		Gamma = Fit[IdGamma].value()
-
+		Fit[IdGamma].setFree(0)
 
 		Flux    = Fit[IdInt].value()
 		Scale = Fit[IdInt].getScale()
@@ -194,12 +226,10 @@ def ChangeModel(inFit,Em0,Em1) :
 
 		D = pow(Em1,Gamma+1)-pow(Em0,Gamma+1)
 		N = pow(Emax,Gamma+1)-pow(Emin,Gamma+1)
-		print D," ",N
-
 
 		NewFlux = Flux*D/N*Scale
-		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))
-		NewScale =  pow(10,int(log10(NewFlux)))
+		NormFlux = pow(10,log10(NewFlux)-int(log10(NewFlux)))*10
+		NewScale =  pow(10,int(log10(NewFlux))-1)
 
 		Fit[IdInt].setBounds(0,Flux*1000)	
 
@@ -208,6 +238,9 @@ def ChangeModel(inFit,Em0,Em1) :
 		Fit[IdInt].setBounds(NormFlux*0.05,NormFlux*50)
 		Fit[IdEmin] = Em0
 		Fit[IdEmax] = Em1
+
+		print "NormFlux, ,NewScale, ,Gamma"
+		print NormFlux," ",NewScale," ",Gamma
 
 	return Fit
 
@@ -223,30 +256,31 @@ def Analysis(folder,Configuration,tag="",convtyp='-1'):
 
 	runfit  = fitfunction.MakeFit(Obs,Configuration)
 
-	if Configuration['enricobehavior']['FitsGeneration'] == 'yes' :
+	if Configuration['Spectrum']['FitsGeneration'] == 'yes' :
 		runfit.PreparFit()
 	return runfit, Obs
 
-def PrepareEbin(Fit,runfit):
-	NEbin = int(runfit.Configuration['enricobehavior']['NumEnergyBins'])
+def PrepareEbin(Fit,runfit,OnlyName = False):
+	NEbin = int(runfit.Configuration['Ebin']['NumEnergyBins'])
 	NewConfig = runfit.Configuration
 	NewConfig['UpperLimit']['envelope'] = 'no'
-	NewConfig['enricobehavior']['NumEnergyBins'] = '0'
+	NewConfig['Ebin']['NumEnergyBins'] = '0'
 	NewConfig['out'] = runfit.Configuration['out']+'/Ebin'
-	NewConfig['enricobehavior']['ResultPlots'] = 'no'
-	NewConfig['enricobehavior']['FitsGeneration'] = 'yes'
-	NewConfig['UpperLimit']['TSlimit'] = NewConfig['enricobehavior']['TSEnergyBins']
+	NewConfig['Spectrum']['ResultPlots'] = 'no'
+	NewConfig['Spectrum']['FitsGeneration'] = 'yes'
+	NewConfig['UpperLimit']['TSlimit'] = NewConfig['Ebin']['TSEnergyBins']
 
 	tag = runfit.Configuration['file']['tag']
 
 	lEmax = log10(float(runfit.Configuration['energy']['emax']))
 	lEmin = log10(float(runfit.Configuration['energy']['emin']))
+
 	print "Preparing submission of fit into energy bins"
 	print "Emin = ",float(runfit.Configuration['energy']['emin'])," Emax = ",float(runfit.Configuration['energy']['emax'])," Nbins = ",NEbin
+
 	ener = numpy.logspace(lEmin,lEmax,NEbin+1)
 	os.system("mkdir -p "+runfit.Configuration['out']+'/Ebin')
 	paramsfile = []
-
 
 	RemoveWeakSources(Fit)
 
@@ -259,6 +293,8 @@ def PrepareEbin(Fit,runfit):
 
 		NewModel = NewConfig['out']+"/"+runfit.Configuration['target']['name']+"_"+str(E)+".xml"
 		Fit.writeXml(NewModel)
+		NewConfig['file']['xml'] = NewModel
+		NewConfig['Spectrum']['FitsGeneration'] = NewConfig['Ebin']['FitsGeneration'] 
 		NewConfig['energy']['emin'] = str(ener[ibin])
 		NewConfig['energy']['emax'] = str(ener[ibin+1])
 		NewConfig['file']['tag'] = tag+'_Ebin_'+str(ibin) 
@@ -267,4 +303,26 @@ def PrepareEbin(Fit,runfit):
 		NewConfig.write(open(paramsfile[ibin], 'w'))
 
 	return paramsfile
+
+
+
+def DumpResult(Result,Configuration):
+	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax'])),"w")
+
+	for key in Result.iterkeys():
+		Dumpfile.write(key+'\t'+str(Result[key])+'\n')
+	Dumpfile.close()
+
+
+def ReadResult(Configuration):
+	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax'])),"r")
+
+	lines =  Dumpfile.readlines()
+	Dumpfile.close()
+	dictionary = {}
+	i=0
+	for line in lines:
+		dictionary.update({string.split(lines[i])[0]:float(string.split(lines[i])[1])})		
+		i+=1
+	return dictionary
 

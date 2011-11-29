@@ -14,8 +14,8 @@ def run(infile) :
 
 
 	TSlimit = float(Configuration['UpperLimit']['TSlimit'])
-	SPindex = float(Configuration['enricobehavior']['FreeSpectralIndex'])
-	SummedLike = Configuration['enricobehavior']['SummedLike']
+	SPindex = float(Configuration['Spectrum']['FreeSpectralIndex'])
+	SummedLike = Configuration['Spectrum']['SummedLike']
 
 	if SummedLike == 'yes' :
 		### create an instance of Observation for the FRONT events
@@ -38,18 +38,19 @@ def run(infile) :
 		runfit,Obs = Utility.Analysis(folder,Configuration,tag="",convtyp=Configuration['analysis']['convtype'])
 		Fit = runfit.CreateFit()
 
-	runfit.PerformFit(Fit)
+	Result = runfit.PerformFit(Fit)
+	Utility.DumpResult(Result,Configuration)
 
-
-	if Configuration['enricobehavior']['ResultPlots'] == 'yes' :
+	if Configuration['Spectrum']['ResultPlots'] == 'yes' :
 		runfit.PlotSED(Fit)
+		outXml = folder+"/"+runfit.Observation.srcname+"_"+Configuration['file']['tag']+"_out.xml"
 		if SummedLike == 'yes' :
-			runfitback.ModelMap(folder+"/"+runfit.Observation.srcname+"_out.xml")
-			runfitfront.ModelMap(folder+"/"+runfit.Observation.srcname+"_out.xml")
+			runfitback.ModelMap(outXml)
+			runfitfront.ModelMap(outXml)
 		else :
-			runfit.ModelMap(folder+"/"+runfit.Observation.srcname+"_out.xml")
+			runfit.ModelMap(outXml)
 
-	if int(Configuration['enricobehavior']['NumEnergyBins']) > 0 :
+	if int(Configuration['Ebin']['NumEnergyBins']) > 0 :
 		configfiles = Utility.PrepareEbin(Fit,runfit)
 	
 		for conf in configfiles:

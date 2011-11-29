@@ -1,16 +1,13 @@
 # gtfunction.py written by David Sanchez : dsanchez@poly.in2p3.fr
 #October 2010
 
-try :
-	from gt_apps import *
-	from UnbinnedAnalysis import *
-	from BinnedAnalysis import *
-	from GtApp import GtApp
-	import ROOT
-except :
-	pass
-
+from gt_apps import *
+from UnbinnedAnalysis import *
+from BinnedAnalysis import *
+from GtApp import GtApp
+import ROOT
 import numpy
+import Utility
 
 import os,string
 from math import *
@@ -202,6 +199,7 @@ class Observation:
 	model_map["irfs"]=self.irfs
 	model_map['outfile'] = self.ModelMap
 	model_map.run()
+	Utility.SubstracFits(self.cmapfile,self.ModelMap,self.Configuration)
 
 
     def GetCovar(self,Fit):

@@ -99,9 +99,9 @@ class MakeFit:
 
 		Fit = UnbinnedAnalysis(Obs,self.Observation.xmlfile,optimizer='DRMNGB')
 
-	if float(self.Configuration['enricobehavior']['FreeSpectralIndex']) >0 :
+	if float(self.Configuration['Spectrum']['FreeSpectralIndex']) >0 :
 		PhIndex = Fit.par_index(self.Observation.srcname, 'Index')
-		Fit[PhIndex] = -float(self.Configuration['enricobehavior']['FreeSpectralIndex'])
+		Fit[PhIndex] = -float(self.Configuration['Spectrum']['FreeSpectralIndex'])
 		Fit.freeze(PhIndex)
 
 	return Fit
@@ -119,7 +119,7 @@ class MakeFit:
 		pass
 	Fit.ftol=float(self.Configuration['fitting']['ftol'])
 	Fit.fit(covar=True,optimizer=self.Configuration['fitting']['optimizer'])
-	Fit.writeXml(self.Configuration['out']+"/"+self.Observation.srcname+"_out.xml")
+	Fit.writeXml(self.Configuration['out']+"/"+self.Observation.srcname+"_"+self.Configuration['file']['tag']+"_out.xml")
 
 
 	print
@@ -127,19 +127,25 @@ class MakeFit:
 	print '# * '+str(self.OperationNum)+' - Result of the fit'
 	print '# *********************************************************************'
 	self.OperationNum+=1
-	Utility.PrintResult(Fit,self.Observation)
+	Result = Utility.PrintResult(Fit,self.Observation)
+	Result.update({'Emin':self.Observation.Emin})
+	Result.update({'Emax':self.Observation.Emax})
 	try :
 		Utility.GetCovar(self.Observation.srcname,Fit)
 	except :
 		pass
 
 	Utility.GetFlux(Fit)
+
 	if float(self.Configuration['UpperLimit']['TSlimit'])>Fit.Ts(self.Observation.srcname) :
 		if self.Configuration['UpperLimit']['envelope'] =='yes' :
 			self.EnvelopeUL(Fit)
 		else :
-			self.ComputeUL(Fit)
-
+			Ulval = self.ComputeUL(Fit)
+			Result.update({'Ulvalue':Ulval})
+	Result.update({'tmin':self.Configuration['time']['tmin']})
+	Result.update({'tmax':self.Configuration['time']['tmax']})
+	return Result
 
     def ComputeUL(self,Fit) :
 	print
@@ -156,14 +162,16 @@ class MakeFit:
 
 	if self.Configuration['UpperLimit']['Method'] == "Profile" :
 		ul = UpperLimits.UpperLimits(Fit)
-		ul_prof, par_prof = ul[self.Observation.srcname].compute(emin=self.Observation.Emin, emax=self.Observation.Emax, delta=2.71/2)
+		ul, par_prof = ul[self.Observation.srcname].compute(emin=self.Observation.Emin, emax=self.Observation.Emax, delta=2.71/2)
 
-		print "Upper limit using Profile method: ", ul_prof
+		print "Upper limit using Profile method: ", ul
 
 	if self.Configuration['UpperLimit']['Method'] == "Integral" :
 		ul, results = IntegralUpperLimit.calc_int(Fit, self.Observation.srcname, verbosity=0)
 
 		print "Upper limit using Integral method: ", ul
+
+	return ul
 
     def EnvelopeUL(self,Fit) :
 	print
@@ -217,7 +225,7 @@ class MakeFit:
 	self.OperationNum+=1
 	import pyPlot as P
 #	try :
-	Par=P.Params(self.Observation.srcname,Emin=self.Observation.Emin,Emax=1e7,extend=True,PlotName=self.Configuration['out']+'/SED_'+self.Observation.srcname)
+	Par=P.Params(self.Observation.srcname,Emin=self.Observation.Emin,Emax=3e5,extend=False,PlotName=self.Configuration['out']+'/SED_'+self.Observation.srcname)
 	P.Tgraph(Fit,Par)
 #		print "... Done"
 #	except :

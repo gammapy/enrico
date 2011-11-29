@@ -10,6 +10,7 @@ import urllib
 # @todo: Optionally use config file for directories!
 
 # Directory names
+ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
 FERMI_DIR = os.environ.get('FERMI_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
@@ -25,10 +26,11 @@ DIRS = [('FERMI_DIR',   FERMI_DIR),
         ('DATA_DIR',    DATA_DIR),
         ('DOWNLOAD_DIR',DOWNLOAD_DIR),
         ('CONFIG_DIR',  CONFIG_DIR),
-        ('XML_DIR',     XML_DIR)]
+        ('XML_DIR',     XML_DIR),
+        ('ENRICO_DIR',   ENRICO_DIR),]
 
 # File names
-CATALOG = 'gll_psc_v05.fit'
+CATALOG = 'gll_psc_v06.fit'
 DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
 DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
 DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
