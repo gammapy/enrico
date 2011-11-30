@@ -5,6 +5,7 @@ from optparse import OptionParser
 from enrico.config import get_config
 import enrico.XmlModel_Generator 
 import enrico.environ as env
+import os,sys
 
 # Parse command line options
 parser = OptionParser(usage="""usage: %prog configfile catalog""",
@@ -17,6 +18,8 @@ if len(args) < 1:
 
 config = get_config(args[0])
 
+folder = config['out']
+os.system('mkdir -p '+folder)
 
 # test if the user provide a catalog or not.
 #if not use the default one
@@ -37,3 +40,4 @@ print "Use the catalog : ",catalog
 lib,doc = enrico.XmlModel_Generator.CreateLib()
 srclist =enrico.XmlModel_Generator.GetlistFromFits(config,catalog)
 enrico.XmlModel_Generator.WriteXml(lib,doc,srclist,config)
+enrico.XmlModel_Generator.Xml_to_Reg(folder+"/Roi_model",srclist,Prog = sys.argv[0])
