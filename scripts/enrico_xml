@@ -32,6 +32,7 @@ if config['environ']['FERMI_CATALOG']=='':
 else :
 	catalog = catalogDir+"/"+config['environ']['FERMI_CATALOG']
 
+print "Use the catalog : ",catalog
 
 lib,doc = enrico.XmlModel_Generator.CreateLib()
 srclist =enrico.XmlModel_Generator.GetlistFromFits(config,catalog)

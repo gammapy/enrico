@@ -195,8 +195,6 @@ def addPSLogparabola(lib, name, ra, dec,  enorm=300,
     if enorm==0:
         enorm =2e5# meanEnergy(emin,emax,index_value)
         norm_value *= (enorm/100.0)**alpha_value
-    else :
-	norm_value *= 0.1*(enorm/100.0)**alpha_value
     if norm_scale == 0:
         norm_scale=fluxScale(norm_value)
     norm_value /= norm_scale        
@@ -266,19 +264,62 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
     lib.appendChild(src)
 
 
+def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
+                   flux_free=1, flux_value=1e-9, flux_scale=0,
+                   flux_max=1000.0, flux_min=1e-5,
+                   index1_free=1, index1_value=-2.0,
+                   index1_min=-5.0, index1_max=-0.5,
+                   cutoff_free=1, cutoff_value=1e4,
+                   cutoff_min=200, cutoff_max=3e5,
+                   index2_free=0, index2_value=-1.0,
+                   index2_min=-5.0, index2_max=-0.5):
+    elim_min = 30;
+    elim_max = 300000;
+#    if emin<elim_min:
+#        elim_min = emin
+#    if emax>elim_max:
+#        elim_max = emax 
+#    if eflux==0:
+#        eflux =2e5# meanEnergy(emin,emax,index_value)
+#        flux_value *= (eflux/100.0)**index_value
+#    else :
+#	flux_value *= 0.1*(eflux/100.0)**index_value
+    if flux_scale == 0:
+        flux_scale=fluxScale(flux_value)
+    flux_value /= flux_scale        
+    doc = lib.ownerDocument
+    src = doc.createElement('source')
+    src.setAttribute('name',name)
+    src.setAttribute('type','PointSource')
+    spec = doc.createElement('spectrum')
+    spec.setAttribute('type','PLSuperExpCutoff')
+    addParameter(spec,'Prefactor',
+                 flux_free,flux_value,flux_scale,flux_min,flux_max)
+    addParameter(spec,'Index1',index1_free,index1_value,1.0,index1_min,index1_max)
+    addParameter(spec,'Scale',0,eflux,1.0,elim_min,elim_max)
+    addParameter(spec,'Cutoff',cutoff_free,cutoff_value,1.0,cutoff_min,cutoff_max)
+    addParameter(spec,'Index2',index2_free,index2_value,1.0,index2_min,index2_max)
+
+    src.appendChild(spec)
+    spatial = doc.createElement('spatialModel')
+    spatial.setAttribute('type','SkyDirFunction')
+    addParameter(spatial,'RA',0,ra,1.0,-360.0,360.0)
+    addParameter(spatial,'DEC',0,dec,1.0,-90.0,90.0)
+    src.appendChild(spatial)
+    lib.appendChild(src)
+ 
+
 def GetlistFromFits(Configuration,catalog,verbosity=1):
 
 	srcname=Configuration['target']['name']
 	ra_src=Configuration['target']['ra']
 	dec_src=Configuration['target']['dec']
 	emin = Configuration['energy']['emin']
-#	emax = Configuration['energy']['emax']
-#	model = Configuration['target']['spectrum']
 
 	roi  = Configuration['space']['rad']
 	max_radius  = Configuration['model']['max_radius']
 	min_significance = Configuration['model']['min_significance']
-
+	model = Configuration['target']['spectrum']
 
 	cfile = pyfits.open(catalog)
 	data=cfile[1].data
@@ -295,7 +336,7 @@ def GetlistFromFits(Configuration,catalog,verbosity=1):
 	beta  = data.field('beta')
 	sigma = data.field('Signif_Avg')
 
-	listSource = [{'name' :srcname, 'ra' : ra_src, 'dec' : dec_src, 'flux' : 1e-9, 'index' : -2, 'scale' : emin, 'IsFree' : 1 }]
+	listSource = [{'name' :srcname, 'ra' : ra_src, 'dec' : dec_src, 'flux' : 1e-9, 'index' : -2, 'scale' : emin, 'cutoff' : 1e4, 'beta' : 0.1, 'IsFree' : 1 , 'SpectrumType' : model}]
 
 	Nfree = 1
 	for i in xrange(len(names)):
@@ -303,10 +344,10 @@ def GetlistFromFits(Configuration,catalog,verbosity=1):
 		r = calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
 		if  r<max_radius and r>.1 and  sigma[i]>min_significance :
 			Nfree += 1 
-			listSource.append({'name' :names[i], 'ra' : ra[i], 'dec' : dec[i], 'flux' : flux[i], 'index' : -index[i], 'scale' : pivot[i], 'IsFree' : 1 })
+			listSource.append({'name' :names[i], 'ra' : ra[i], 'dec' : dec[i], 'flux' : flux[i], 'index' : -index[i], 'scale' : pivot[i], 'cutoff' : cutoff[i], 'beta' : beta[i], 'IsFree' : 1 , 'SpectrumType' : spectype[i]})
 		else :
 			if  r<roi and r>.1  and  sigma[i]>min_significance :
-				listSource.append({'name' :names[i], 'ra' : ra[i], 'dec' : dec[i], 'flux' : flux[i], 'index' : -index[i], 'scale' : pivot[i], 'IsFree' : 0 })
+				listSource.append({'name' :names[i], 'ra' : ra[i], 'dec' : dec[i], 'flux' : flux[i], 'index' : -index[i], 'scale' : pivot[i], 'cutoff' : cutoff[i], 'beta' : beta[i], 'IsFree' : 0 , 'SpectrumType' : spectype[i]})
 
 
 	print "Add ",len(listSource)," sources in the ROI of ",roi," degrees"
@@ -344,7 +385,7 @@ def WriteXml(lib,doc,srclist,Configuration):
 
 	emin = Configuration['energy']['emin']
 	emax = Configuration['energy']['emax']
-	model = Configuration['target']['spectrum']
+	
 
 	#test if the user profide diffuse files
 	if Configuration['model']['diffuse_gal_dir'] =="" :
@@ -375,22 +416,36 @@ def WriteXml(lib,doc,srclist,Configuration):
 
 	addGalprop(lib, Gal, free=1, value=1.0, scale=1.0, max=10.0, min=.010, name = 'GAL_v02')
 
-	name = srclist[i].get('name')
-	ra = srclist[i].get('ra')
-	dec = srclist[i].get('dec')
-	free = srclist[i].get('IsFree')
-	if model == "PL" :
-		addPSPowerLaw1(lib, name, ra, dec,eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
-	if model == "PL2" :
-		addPSPowerLaw2(lib, name, ra, dec, emin=emin, emax=emax,flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
+#	listSource = [{'name' :srcname, 'ra' : ra_src, 'dec' : dec_src, 'flux' : 1e-9, 'index' : -2, 'scale' : emin, 'cutoff' : 1e4, 'beta' : 0.1, 'IsFree' : 1 , 'SpectrumType' : model}]
 
-	for j in xrange(len(srclist)-1):
-		i=i+1
+	for i in xrange(len(srclist)):
 		name = srclist[i].get('name')
 		ra = srclist[i].get('ra')
 		dec = srclist[i].get('dec')
 		free = srclist[i].get('IsFree')
-		addPSPowerLaw1(lib, name, ra, dec, eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
+		spectype = srclist[i].get('SpectrumType')
+		if spectype == "PowerLaw" :
+			addPSPowerLaw1(lib, name, ra, dec,
+                                          eflux=srclist[i].get('scale'),
+                                          flux_free=free,flux_value= srclist[i].get('flux'),
+                                          index_free=free,index_value=srclist[i].get('index'))
+		if spectype == "PowerLaw2" :
+			addPSPowerLaw2(lib, name, ra, dec, 
+                                        emin=emin, emax=emax,
+                                        flux_free=free,flux_value= srclist[i].get('flux'),
+                                        index_free=free,index_value=srclist[i].get('index'))
+		if spectype == "LogParabola" :
+			addPSLogparabola(lib, name, ra, dec, enorm=srclist[i].get('scale'),
+                                          norm_free=free, norm_value=srclist[i].get('flux'),
+                                          alpha_free=free, alpha_value=srclist[i].get('index'), 
+                                          beta_free=free, beta_value=srclist[i].get('beta'))
+		if spectype == "PLExpCutoff" :
+			addPSPLSuperExpCutoff(lib, name, ra, dec,
+                                          eflux=srclist[i].get('scale'),
+                                          flux_free=free,flux_value= srclist[i].get('flux'),
+                                          index1_free=free,index1_value=srclist[i].get('index'),
+                                          cutoff_free=free, cutoff_value=srclist[i].get('cutoff'))
+#		addPSPowerLaw1(lib, name, ra, dec, eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
 
 	folder = Configuration['out']
 	os.system('mkdir -p '+folder)
@@ -431,7 +486,7 @@ if __name__=='__main__':
 	lib = CreateLib()
 
 	srclist =GetlistFromFits(Configuration,Catalog)
-
+#LogParabola
 	#Write donw the XML file
 	WriteXml(lib,doc,srclist,Configuration)
 
