@@ -50,6 +50,8 @@ def PrintResult(Fit,Current_Obs):
 	print "TS : ",Fit.Ts(Current_Obs.srcname)
 	stype = Fit.model.srcs[Current_Obs.srcname].spectrum().genericName()
 
+	Result.update({'ModelType':stype})
+
 	if stype == 'PowerLaw2' :
 		Flux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').value()
 		ErrFlux = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Integral').error()
@@ -322,7 +324,10 @@ def ReadResult(Configuration):
 	dictionary = {}
 	i=0
 	for line in lines:
-		dictionary.update({string.split(lines[i])[0]:float(string.split(lines[i])[1])})		
+		try :
+			dictionary.update({string.split(lines[i])[0]:float(string.split(lines[i])[1])})		
+		except :
+			dictionary.update({string.split(lines[i])[0]:string.split(lines[i])[1]})
 		i+=1
 	return dictionary
 

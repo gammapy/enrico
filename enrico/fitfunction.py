@@ -16,7 +16,7 @@ class MakeFit:
 	self.Observation = Observ
 	self.Configuration = Configuration
 	self.OperationNum = 1
-
+	self.logLike = 0
     def PreparFit(self):
 	print
 	print '# *********************************************************************'
@@ -118,7 +118,7 @@ class MakeFit:
 	except:
 		pass
 	Fit.ftol=float(self.Configuration['fitting']['ftol'])
-	Fit.fit(covar=True,optimizer=self.Configuration['fitting']['optimizer'])
+	self.logLike = Fit.fit(covar=True,optimizer=self.Configuration['fitting']['optimizer'])
 	Fit.writeXml(self.Configuration['out']+"/"+self.Observation.srcname+"_"+self.Configuration['file']['tag']+"_out.xml")
 
 
@@ -128,6 +128,7 @@ class MakeFit:
 	print '# *********************************************************************'
 	self.OperationNum+=1
 	Result = Utility.PrintResult(Fit,self.Observation)
+	Result.update({'logLike':self.logLike})
 	Result.update({'Emin':self.Observation.Emin})
 	Result.update({'Emax':self.Observation.Emax})
 	try :
