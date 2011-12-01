@@ -11,7 +11,7 @@ except :
 	print('FATAL: Config file not found.')
 	sys.exit(1)
 
-enricodir = environ.DIRS[7][1]
+enricodir = environ.DIRS.get('ENRICO_DIR')
 
 Configuration = get_config(infile)
 

@@ -20,14 +20,14 @@ DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'data', 'config')
 XML_DIR = join(os.path.dirname(__file__), 'data', 'xml')
 #       (_tag,          _dir)
-DIRS = [('FERMI_DIR',   FERMI_DIR),
-        ('CATALOG_DIR', CATALOG_DIR),
-        ('DIFFUSE_DIR', DIFFUSE_DIR),
-        ('DATA_DIR',    DATA_DIR),
-        ('DOWNLOAD_DIR',DOWNLOAD_DIR),
-        ('CONFIG_DIR',  CONFIG_DIR),
-        ('XML_DIR',     XML_DIR),
-        ('ENRICO_DIR',   ENRICO_DIR),]
+DIRS = {'FERMI_DIR':   FERMI_DIR,
+        'CATALOG_DIR': CATALOG_DIR,
+        'DIFFUSE_DIR': DIFFUSE_DIR,
+        'DATA_DIR':    DATA_DIR,
+        'DOWNLOAD_DIR':DOWNLOAD_DIR,
+        'CONFIG_DIR':  CONFIG_DIR,
+        'XML_DIR':     XML_DIR,
+        'ENRICO_DIR':   ENRICO_DIR}
 
 # File names
 CATALOG = 'gll_psc_v06.fit'
