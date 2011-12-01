@@ -4,6 +4,7 @@ from os.path import join
 from configobj import ConfigObj, flatten_errors
 from validate import Validator
 from environ import CONFIG_DIR
+import enrico.environ as environ
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     """Parse config file, and in addition:
@@ -39,10 +40,13 @@ def query_config():
     print('Please provide the following required options:')
     config['out'] = raw_input('Output directory: ')
     config['target'] = {}
+    config['target']['name'] = raw_input('Target Name : ')
     config['target']['ra'] = raw_input('Right Ascension: ')
     config['target']['dec'] = raw_input('Declination: ')
+    config['target']['spectrum'] = raw_input('"Options are : PowerLaw, PowerLaw2, LogParabola, PLExpCutoff\nSpectral Model : ')
     config['space'] = {}
     config['space']['xref'] = config['target']['ra'] 
     config['space']['yref'] = config['target']['dec'] 
+    config['space']['rad'] = raw_input('ROI Size: ')
     return get_config(config)
     

@@ -3,8 +3,13 @@
 import sys
 from enrico.config import query_config
 
-if len(sys.argv) < 2:
-    print('Usage: enrico_config <output config file name>')
+try :
+	infile = sys.argv[1]
+except :
+	print('Usage: enrico_config <output config file name>')
+	sys.exit(1)
+
+
 
 config = query_config()
 config.write(open(sys.argv[1], 'w'))
