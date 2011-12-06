@@ -3,15 +3,6 @@ Enrico
 
 Enrico helps you with your Fermi data analysis.
 
-http://fermi.gsfc.nasa.gov/ssc/
-
-* Install the package:
-  python setup.py install --user
-
-* Build (requires Sphinx) and look at the documentation:
-  cd doc
-  make html
-  firefox build/html/index.html
-
-* Feel free to use this code as you like
-  and to contribute back bug fixes and new features!
+Documentation: http://enrico.readthedocs.org/
+Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/
+License: BSD-3-Clause, see LICENSE.txt
