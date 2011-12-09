@@ -11,23 +11,24 @@ import urllib
 
 # Directory names
 ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
-FERMI_DIR = os.environ.get('FERMI_DIR', '')
+FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
-DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
+PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'data', 'config')
 XML_DIR = join(os.path.dirname(__file__), 'data', 'xml')
-#       (_tag,          _dir)
-DIRS = {'FERMI_DIR':   FERMI_DIR,
-        'CATALOG_DIR': CATALOG_DIR,
-        'DIFFUSE_DIR': DIFFUSE_DIR,
-        'DATA_DIR':    DATA_DIR,
-        'DOWNLOAD_DIR':DOWNLOAD_DIR,
-        'CONFIG_DIR':  CONFIG_DIR,
-        'XML_DIR':     XML_DIR,
-        'ENRICO_DIR':   ENRICO_DIR}
+
+#       (_tag,              _dir)
+DIRS = {'FERMI_DATA_DIR':   FERMI_DATA_DIR,
+        'CATALOG_DIR':      CATALOG_DIR,
+        'DIFFUSE_DIR':      DIFFUSE_DIR,
+        'PREPROCESSED_DIR': PREPROCESSED_DIR,
+        'DOWNLOAD_DIR':     DOWNLOAD_DIR,
+        'CONFIG_DIR':       CONFIG_DIR,
+        'XML_DIR':          XML_DIR,
+        'ENRICO_DIR':       ENRICO_DIR}
 
 # File names
 CATALOG = 'gll_psc_v06.fit'
@@ -36,8 +37,9 @@ DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
 DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
 
 # Download URLs
-CATALOG_URL = 'http://fermi.gsfc.nasa.gov/ssc/data/access/lat/2yr_catalog'
-DIFFUSE_URL = 'http://fermi.gsfc.nasa.gov/ssc/data/analysis/software/aux'
+FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
+CATALOG_URL = join(FSSC_URL, 'data/access/lat/2yr_catalog')
+DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
 DATA_URL = 'TODO'
 
 #        (_tag,                 _url,        _dir,        _file)
@@ -77,7 +79,8 @@ def check_tools():
     """Check command line tool availability"""
     print('*** COMMAND LINE TOOLS ***')
     for tool in ['python', 'ipython', 'gtlike', 'enrico_setup']:
-        location = subprocess.Popen(['which', tool], stdout=subprocess.PIPE).communicate()[0]
+        location = subprocess.Popen(['which', tool], 
+                                    stdout=subprocess.PIPE).communicate()[0]
         print('{0:.<20} {1}'.format(tool, location.strip() or 'MISSING'))
 
 def check_python():
@@ -181,18 +184,18 @@ class PrepareData:
             except KeyError:
                 print("Selection %s doesn't exist. Skipping.")
                 continue
-            WORKDIR = join(DATA_DIR, self.tag)
+            WORKDIR = join(PREPROCESSED_DIR, self.tag)
             print('WORKDIR: %s' % WORKDIR)
             os.chdir(WORKDIR)
             self.select()
             self.mktime()
             self.ltcube()
-    
+            
     def select(self):
         """Produce lists of weekly event list files.
         These lists are used as input for gtselect"""
         files = os.listdir(self.WEEKLY_DIR)
-    
+        
         # Select only fits files
         files = [join(self.WEEKLY_DIR, _) + '\n'
                  for _ in files if _.endswith('.fits')]
@@ -202,7 +205,7 @@ class PrepareData:
         files = files[:self.weeks]
         log.debug('Writing weeks.lis with %04d lines.' % len(files))
         open('weeks.lis', 'w').writelines(files)
-    
+        
     def mktime(self):
         """Make event lists combining all weekly data
         This runs gtselect and gtmktime"""
@@ -221,7 +224,7 @@ class PrepareData:
             fermi.run_mktime(scfile=self.SCFILE,
                              evfile='photon%s.fits' % tag,
                              outfile='photon%s_gti.fits' % tag)
-    
+            
     def ltcube(self):
         """Make a livetime cube for each event list
         (runs gtltcube, takes hours to process)"""
@@ -229,4 +232,3 @@ class PrepareData:
         fermi.run_ltcube(evfile='photon_gti.fits',
                          scfile=self.SCFILE,
                          outfile='ltcube.fits')
-                
