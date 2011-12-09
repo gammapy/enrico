@@ -4,7 +4,6 @@ from os.path import join
 from configobj import ConfigObj, flatten_errors
 from validate import Validator
 from environ import CONFIG_DIR
-import enrico.environ as environ
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     """Parse config file, and in addition:
