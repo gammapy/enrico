@@ -413,9 +413,9 @@ def WriteXml(lib,doc,srclist,Configuration):
 
 	i=0
 
-	addDiffusePL(lib, Iso, free=1, value=1.0, scale=1.0, max=10.0, min=1.0, name = 'EG_v02')
+	addDiffusePL(lib, Iso, free=1, value=1.0, scale=1.0, max=10.0, min=1.0, name = 'iso_p7v6source.txt')
 
-	addGalprop(lib, Gal, free=1, value=1.0, scale=1.0, max=10.0, min=.010, name = 'GAL_v02')
+	addGalprop(lib, Gal, free=1, value=1.0, scale=1.0, max=10.0, min=.010, name = 'gal_2yearp7v6_v0')
 
 #	listSource = [{'name' :srcname, 'ra' : ra_src, 'dec' : dec_src, 'flux' : 1e-9, 'index' : -2, 'scale' : emin, 'cutoff' : 1e4, 'beta' : 0.1, 'IsFree' : 1 , 'SpectrumType' : model}]
 
@@ -438,7 +438,7 @@ def WriteXml(lib,doc,srclist,Configuration):
 		if spectype == "LogParabola" :
 			addPSLogparabola(lib, name, ra, dec, enorm=srclist[i].get('scale'),
                                           norm_free=free, norm_value=srclist[i].get('flux'),
-                                          alpha_free=free, alpha_value=srclist[i].get('index'), 
+                                          alpha_free=free, alpha_value=abs(srclist[i].get('index')), 
                                           beta_free=free, beta_value=srclist[i].get('beta'))
 		if spectype == "PLExpCutoff" :
 			addPSPLSuperExpCutoff(lib, name, ra, dec,
