@@ -189,7 +189,7 @@ def addPSLogparabola(lib, name, ra, dec,  enorm=300,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0.5, beta_max=5.0):
+                   beta_min=0.05, beta_max=5.0):
     elim_min = 30;
     elim_max = 300000;
 
