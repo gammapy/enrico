@@ -55,7 +55,7 @@ def MakeLC(infile) :
 
 	Doplot = True;
 
-	enricodir = environ.DIRS[7][1]
+	enricodir = environ.DIRS.get('ENRICO_DIR')
 
 	Configuration = get_config(infile)
 
