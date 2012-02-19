@@ -14,23 +14,13 @@ Here is a list of things that need to be done.
 
 * Access 2FGL and plot lightcurve / spectra with 
   flux points / upper limits / butterflies
-* Binned spectrum
-* Binned flux points
-* Binned light curve
-* Binned TS map
-* Unbinned spectrum
-* Unbinned flux points
-* Unbinned light curve
-* Unbinned TS map
-* Commmand line tools to make xml files
+* TS map
 * Nice analysis result summary web page
-* MPIK job submission
 * MPIK find data & diffuse emission & catalog files automatically
 * Simultaneous Fermi - HESS spectral fit
 * Write documentation -> tutorial
-* Move repo to github and put sphinx docu there
 * Model the 12 ExtendedSources (extension 4 in the catalog) correctly.
-* Include methods to fit Gaussian sources (i.e. make and use FITS template)
+* Include methods to fit Gaussian and disk sources (i.e. make and use FITS template)
 
 Open Issues
 -----------
@@ -43,6 +33,11 @@ Open Issues
 
 How to contribute?
 ------------------
-  
-TODO: give reference to work with git and github flow
-  
+
+Please file bug reports and feature requests on github.
+
+Or even better (for us :-), fork us on github, make the improvement yourself and
+make a pull request for your change to be included in the main repo.
+
+If you don't know how to use git and github, check out
+http://astropy.readthedocs.org/en/latest/development/

@@ -2,8 +2,10 @@
 @todo: Old stuff, can be removed?"""
 import os.path
 import logging
-from config import get_default_config
-config = get_default_config()
+from config import get_config
+config = get_config()
+import environ
+environ.FILES
 SCFILE = config['file']['spacecraft']
 LTCUBE = config['file']['ltcube']
 
@@ -65,7 +67,7 @@ def execute_command(cmd, logfile=None, add_common_commands=True):
         cmd += ' gui=%s' % config['tool']['gui']
         cmd += ' mode=%s' % config['tool']['mode']
     if logfile:
-        cmd += ' 2>&1 > ' + logfile    
+        cmd += ' 2>&1 > ' + logfile
     print cmd
     from os import system
     system(cmd)
@@ -94,10 +96,10 @@ def run_select(infile, outfile,
     cmd += ' evclass=INDEF'
     cmd += ' convtype=%s' % convtype
     cmd += ' phasemin=%s' % phasemin
-    cmd += ' phasemax=%s' % phasemax    
+    cmd += ' phasemax=%s' % phasemax
     execute_command(cmd, logfile)
 
-def run_mktime(scfile, evfile, outfile, 
+def run_mktime(scfile, evfile, outfile,
                filter=FILTER, roicut='no', header_obstimes='yes',
                logfile=None):
     """Run gtmktime"""
@@ -109,8 +111,8 @@ def run_mktime(scfile, evfile, outfile,
     cmd += ' evfile=%s' % evfile
     cmd += ' outfile=%s' % outfile
     execute_command(cmd, logfile)
-    
-def run_ltcube(evfile, scfile, outfile, 
+
+def run_ltcube(evfile, scfile, outfile,
                dcostheta=0.025, binsz=1, zmax=ZMAX,
                tmin=0, tmax=0,
                logfile=None):
@@ -150,7 +152,7 @@ def run_bin(evfile, outfile, scfile=SCFILE,
     cmd += ' emax=%g' % emax
     cmd += ' enumbins=%d' % enumbins
     execute_command(cmd, logfile)
-    
+
 def run_expcube(infile, evfile, cmfile, outfile, irfs=IRFS,
                 nxpix=NXPIX, nypix=NYPIX, pixscale=BINSZ, 
                 coordsys=COORDSYS, xref=XREF, yref=YREF, proj=PROJ,

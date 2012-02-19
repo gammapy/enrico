@@ -4,32 +4,62 @@ from optparse import OptionParser
 import enrico.environ
 
 parser = OptionParser(description=__doc__)
-parser.add_option("-c", "--check", 
+parser.add_option("-c", "--check",
                   action="store_true", default=False,
                   help="Check setup (default=%default)")
-parser.add_option("--download_aux", 
+parser.add_option("--download_aux",
                   action="store_true", default=False,
                   help="Download missing catalog and diffuse model "
                   "files (default=%default)")
-parser.add_option("--download_data", 
+parser.add_option("--download_data",
                   action="store_true", default=False,
                   help="Download missing spacecraft and photon "
                   "files (default=%default)")
-available = [sel[0] for sel in enrico.environ.SELECTIONS]
-parser.add_option("--prepare_data", default=None,
-                  help="Comma-separated list of selections to " 
-                  "preprocess (default=%default), one of "
-                  + ','.join(available))
+parser.add_option("--preprocess_data",
+                  action="store_true", default=False,
+                  help="Preprocess weekly photon "
+                  "files (default=%default)")
+steps = enrico.environ.Data.STEPS
+steps_str = ','.join(steps)
+parser.add_option("--steps", default=steps_str,
+                  help="Comma-separated list of preprocessing steps "
+                  "to execute (default=%default). Available: "
+                  + steps_str)
+event_classes = enrico.environ.Data.EVENT_CLASSES
+event_classes_str = ','.join(event_classes)
+parser.add_option("--event_classes", default=event_classes_str,
+                  help="Comma-separated list of event classes to "
+                  "preprocess (default=%default). Available: "
+                  + event_classes_str)
+selections = enrico.environ.Data.SELECTIONS.keys()
+selections_str = ','.join(selections)
+parser.add_option("--selections", default=selections_str,
+                  help="Comma-separated list of selections to "
+                  "preprocess (default=%default). Available: "
+                  + selections_str)
+emins = enrico.environ.Data.EMINS
+emins_str = ','.join(map(str, emins))
+parser.add_option("--emins", default=emins_str,
+                  help="Comma-separated list of emins to "
+                  "preprocess (default=%default). Available: "
+                  + emins_str)
 (options, args) = parser.parse_args()
 
-if not (options.check or options.download_aux or 
-        options.download_data or options.prepare_data):
+if not (options.check or options.download_aux or
+        options.download_data or options.preprocess_data):
     parser.print_help()
 if options.check:
     enrico.environ.check()
 if options.download_aux:
     enrico.environ.download_aux()
+
+data = enrico.environ.Data()
 if options.download_data:
-    enrico.environ.download_data()
-if options.prepare_data:
-    enrico.environ.PrepareData(options.prepare_data)
+    data.download()
+if options.preprocess_data:
+    steps = options.steps.split(',')
+    event_classes = options.event_classes.split(',')
+    selections = options.selections.split(',')
+    emins = map(int, options.emins.split(','))
+    data.preprocess(steps=steps, event_classes=event_classes,
+                    selections=selections, emins=emins)

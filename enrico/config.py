@@ -2,7 +2,7 @@
 import sys
 from os.path import join
 from configobj import ConfigObj, flatten_errors
-from validate import Validator
+from extern.configobj.validate import Validator
 from environ import CONFIG_DIR
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
@@ -17,13 +17,13 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     if results != True:
         for (section_list, key, _) in flatten_errors(config, results):
             if key is not None:
-                #label = 
-                print('The "%s" key in the section "%s" failed validation' % 
+                print('The "%s" key in the section "%s" failed validation' %
                       (key, ', '.join(section_list)))
             else:
-                print('The following section was missing:%s ' % 
+                print('The following section was missing:%s ' %
                       ', '.join(section_list))
-        print('   Please check your config file for missing and wrong options!')
+        print('   Please check your config file for missing '
+              'and wrong options!')
         print('FATAL: Config file is not valid.')
         sys.exit(1)
     return config
@@ -42,10 +42,11 @@ def query_config():
     config['target']['name'] = raw_input('Target Name : ')
     config['target']['ra'] = raw_input('Right Ascension: ')
     config['target']['dec'] = raw_input('Declination: ')
-    config['target']['spectrum'] = raw_input('"Options are : PowerLaw, PowerLaw2, LogParabola, PLExpCutoff\nSpectral Model : ')
+    message = ('Options are : PowerLaw, PowerLaw2, LogParabola, '
+               'PLExpCutoff\nSpectral Model : ')
+    config['target']['spectrum'] = raw_input(message)
     config['space'] = {}
-    config['space']['xref'] = config['target']['ra'] 
-    config['space']['yref'] = config['target']['dec'] 
+    config['space']['xref'] = config['target']['ra']
+    config['space']['yref'] = config['target']['dec']
     config['space']['rad'] = raw_input('ROI Size: ')
     return get_config(config)
-    
