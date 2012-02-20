@@ -168,7 +168,7 @@ the catalog and diffuse model files
    FERMI_CATALOG_DIR
    FERMI_DIFFUSE_DIR
    FERMI_DOWNLOAD_DIR
-   FERMI_DATA_DIR
+   FERMI_PREPROCESSED_DIR
 
 After setting these you can run this command to download any missing files from the 
 You can use the `enrico_check` tool to check that you have all

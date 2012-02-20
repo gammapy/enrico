@@ -1,5 +1,0 @@
-#!/usr/bin/env python
-"""Run the example analysis for the tutorial"""
-
-print('Running example analysis')
-raise NotImplementedError
