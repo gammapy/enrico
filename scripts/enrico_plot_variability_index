@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-
+"""Plot variability index from the 2FGL"""
+import numpy as np
+import matplotlib.pyplot as plt
 import atpy
-from pylab import *
 
 # Load the table
 t = atpy.Table('gll_psc_v02.fit', hdu=1)
@@ -25,18 +26,18 @@ v = t.Variability_Index[row_number]
 
 # To get real times for the x-axis you could read
 # the values in hdu 2, but I'll just use month number
-x = linspace(1, 11, 11)
-x_err = 0.5 * ones(11)
+x = np.linspace(1, 11, 11)
+x_err = 0.5 * np.ones(11)
 
 # Make the plot
-errorbar(x, 1e6 * y, 1e6 * y_err, x_err, fmt='o')
-title('Lightcurve of %s' % name)
-xlabel('Month')
-xticks(x)
-ylabel(r'Flux in 100 MeV to 100 GeV band [10$^{-6}$ cm$^{-2}$ s$^{-1}$]')
+plt.errorbar(x, 1e6 * y, 1e6 * y_err, x_err, fmt='o')
+plt.title('Lightcurve of %s' % name)
+plt.xlabel('Month')
+plt.xticks(x)
+plt.ylabel(r'Flux in 100 MeV to 100 GeV band [10$^{-6}$ cm$^{-2}$ s$^{-1}$]')
 
-# For interactive viewing
-show()
-
-# Or save to file
-#savefig('vela_lightcurve.pdf')
+interactive = True
+if interactive:
+    plt.show()
+else:
+    plt.savefig('vela_lightcurve.pdf')

@@ -6,8 +6,9 @@ energy = data.field('Center Energy')
 flux = data.field('dN/dE')
 flux_err = data.field('dN/dE_Error')
 
-# Define the model
+
 def pl(energy, norm, gamma):
+    """Power law model definition"""
     return norm * energy ** gamma
 
 # Perform the fit
