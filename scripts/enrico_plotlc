@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+"""A simple script to plot a LC previsously computed"""
+
+import sys
+from enrico.LightCurve import MakeLC
+
+try :
+	infile = sys.argv[1]
+except :
+	print('FATAL: Config file not found.')
+	sys.exit(1)
+
+PlotLC(infile)
