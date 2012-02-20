@@ -134,7 +134,7 @@ class UnbinnedAnalysisRunner:
         logging.info('Fitting ... this takes a few minutes')
         like.fit(verbosity=verbosity)
         print like.model['_2FGLJ1555.7+1111'] 
-        like.logLike.writeXml(self.options['xmlfit1'])
+        like.log_like.writeXml(self.options['xmlfit1'])
         #like.plot()
         
     def run_fit2(self, verbosity=10):
@@ -145,14 +145,14 @@ class UnbinnedAnalysisRunner:
         self.like2 = UnbinnedAnalysis(self.obs, srcModel, optimizer)
         like = self.like2
         like.tol = 1e-2
-        self.like2obj = pyLikelihood.Minuit(like.logLike)
+        self.like2obj = pyLikelihood.Minuit(like.log_like)
         logging.info('Fitting ... this takes a few minutes')
         like.fit(verbosity=verbosity,covar=True,optObject=self.like2obj)
         print 'fit 2 return code:', self.like2obj.getRetCode()
         like.tolType = 0
         like.fit(verbosity=verbosity,covar=True,optObject=self.like2obj)
         print 'fit 2 return code second try:', self.like2obj.getRetCode()
-        like.logLike.writeXml(self.options['xmlfit2'])
+        like.log_like.writeXml(self.options['xmlfit2'])
         print like.model['_2FGLJ1555.7+1111']
         emin, emax = self.options['emin'], self.options['emax']
         print('Integral flux: %s +- %s', 

@@ -8,7 +8,7 @@ from math import log10
 import pyLikelihood as pyLike
 
 
-def SubstracFits(Map1,Map2,Configuration):
+def SubstracFits(Map1,Map2,config):
 	print "Substracting : ",Map1," to ",Map2
 
 	arr1 = pyfits.getdata(Map1)
@@ -16,8 +16,8 @@ def SubstracFits(Map1,Map2,Configuration):
 
 	head = pyfits.getheader(Map2)
 
-	SubstracMap = Configuration['out']+"/"+Configuration['target']['name']+"_Substract_Model_cmap.fits"
-	ResidualMap = Configuration['out']+"/"+Configuration['target']['name']+"_Residual_Model_cmap.fits"
+	SubstracMap = config['out']+"/"+config['target']['name']+"_Substract_Model_cmap.fits"
+	ResidualMap = config['out']+"/"+config['target']['name']+"_Residual_Model_cmap.fits"
 
 	os.system("rm "+SubstracMap)
 	os.system("rm "+ResidualMap)
@@ -165,8 +165,9 @@ def GetCovar(srcname,Fit):
         print "The covariance matrix is :\n",numpy.array(my_covar)
 	print 
 
-#function gets index for a specific parameter for a specific source from model in UnbinnedAnalysis object fit
 def getParamIndx(fit,name,NAME):
+    """Get index for a specific parameter for a specific source 
+    from model in UnbinnedAnalysis object fit"""
 	ID=-1
 	spec=fit[name].funcs['Spectrum']
 	for indx, parName in zip(spec._parIds, spec.paramNames):
@@ -247,8 +248,8 @@ def ChangeModel(inFit,Em0,Em1) :
 	return Fit
 
 
-def Analysis(folder,Configuration,tag="",convtyp='-1'):
-	Obs = gtfunction.Observation(folder,Configuration,convtyp,tag=tag)
+def Analysis(folder,config,tag="",convtyp='-1'):
+	Obs = gtfunction.obs(folder,config,convtyp,tag=tag)
 
 	print
 	print '# *********************************************************************'
@@ -256,32 +257,32 @@ def Analysis(folder,Configuration,tag="",convtyp='-1'):
 	print '# *********************************************************************'
 	Obs.printSum()
 
-	runfit  = fitfunction.MakeFit(Obs,Configuration)
+	runfit  = fitfunction.MakeFit(Obs,config)
 
-	if Configuration['Spectrum']['FitsGeneration'] == 'yes' :
+	if config['Spectrum']['FitsGeneration'] == 'yes' :
 		runfit.PreparFit()
 	return runfit, Obs
 
 def PrepareEbin(Fit,runfit,OnlyName = False):
-	NEbin = int(runfit.Configuration['Ebin']['NumEnergyBins'])
-	NewConfig = runfit.Configuration
+	NEbin = int(runfit.config['Ebin']['NumEnergyBins'])
+	NewConfig = runfit.config
 	NewConfig['UpperLimit']['envelope'] = 'no'
 	NewConfig['Ebin']['NumEnergyBins'] = '0'
-	NewConfig['out'] = runfit.Configuration['out']+'/Ebin'
+	NewConfig['out'] = runfit.config['out']+'/Ebin'
 	NewConfig['Spectrum']['ResultPlots'] = 'no'
 	NewConfig['Spectrum']['FitsGeneration'] = 'yes'
 	NewConfig['UpperLimit']['TSlimit'] = NewConfig['Ebin']['TSEnergyBins']
 
-	tag = runfit.Configuration['file']['tag']
+	tag = runfit.config['file']['tag']
 
-	lEmax = log10(float(runfit.Configuration['energy']['emax']))
-	lEmin = log10(float(runfit.Configuration['energy']['emin']))
+	lEmax = log10(float(runfit.config['energy']['emax']))
+	lEmin = log10(float(runfit.config['energy']['emin']))
 
 	print "Preparing submission of fit into energy bins"
-	print "Emin = ",float(runfit.Configuration['energy']['emin'])," Emax = ",float(runfit.Configuration['energy']['emax'])," Nbins = ",NEbin
+	print "Emin = ",float(runfit.config['energy']['emin'])," Emax = ",float(runfit.config['energy']['emax'])," Nbins = ",NEbin
 
 	ener = numpy.logspace(lEmin,lEmax,NEbin+1)
-	os.system("mkdir -p "+runfit.Configuration['out']+'/Ebin')
+	os.system("mkdir -p "+runfit.config['out']+'/Ebin')
 	paramsfile = []
 
 	RemoveWeakSources(Fit)
@@ -293,7 +294,7 @@ def PrepareEbin(Fit,runfit,OnlyName = False):
 
 		ChangeModel(Fit,ener[ibin],ener[ibin+1])
 
-		NewModel = NewConfig['out']+"/"+runfit.Configuration['target']['name']+"_"+str(E)+".xml"
+		NewModel = NewConfig['out']+"/"+runfit.config['target']['name']+"_"+str(E)+".xml"
 		Fit.writeXml(NewModel)
 		NewConfig['file']['xml'] = NewModel
 		NewConfig['Spectrum']['FitsGeneration'] = NewConfig['Ebin']['FitsGeneration'] 
@@ -301,23 +302,23 @@ def PrepareEbin(Fit,runfit,OnlyName = False):
 		NewConfig['energy']['emax'] = str(ener[ibin+1])
 		NewConfig['file']['tag'] = tag+'_Ebin_'+str(ibin) 
 
-		paramsfile.append(runfit.Configuration['out']+'/'+runfit.Configuration['target']['name']+"_"+str(E)+".conf")
+		paramsfile.append(runfit.config['out']+'/'+runfit.config['target']['name']+"_"+str(E)+".conf")
 		NewConfig.write(open(paramsfile[ibin], 'w'))
 
 	return paramsfile
 
 
 
-def DumpResult(Result,Configuration):
-	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax']))+".results","w")
+def DumpResult(Result,config):
+	Dumpfile = open(config['out']+'/'+config['target']['name']+'_'+str(int(config['time']['tmin']))+'_'+str(int(config['time']['tmax']))+'_'+str(int(config['energy']['emin']))+'_'+str(int(config['energy']['emax']))+".results","w")
 
 	for key in Result.iterkeys():
 		Dumpfile.write(key+'\t'+str(Result[key])+'\n')
 	Dumpfile.close()
 
 
-def ReadResult(Configuration):
-	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax']))+".results","r")
+def ReadResult(config):
+	Dumpfile = open(config['out']+'/'+config['target']['name']+'_'+str(int(config['time']['tmin']))+'_'+str(int(config['time']['tmax']))+'_'+str(int(config['energy']['emin']))+'_'+str(int(config['energy']['emax']))+".results","r")
 
 	lines =  Dumpfile.readlines()
 	Dumpfile.close()

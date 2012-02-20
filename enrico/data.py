@@ -50,7 +50,7 @@ def check_catalog_templates():
     return False
 
 
-class Data:
+class Data(object):
     """Standard data directories and files"""
     # Event classes pass 7 are still hierarchichal
     # Transient = 1, Source = 2, Clean = 3, UltraClean = 4

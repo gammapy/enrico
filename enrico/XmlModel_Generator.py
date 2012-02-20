@@ -1,7 +1,3 @@
-# Author David Sanchez dsanchez@llr.in2p3.fr
-# script to look for near source of given RA and DEC in a catalog
-# begun Oct 2009
-
 import sys, getopt, subprocess, xml.dom.minidom, os, time, math
 from xml.sax import ContentHandler, make_parser
 from math import *
@@ -310,17 +306,17 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
     lib.appendChild(src)
  
 
-def GetlistFromFits(Configuration,catalog,verbosity=1):
+def GetlistFromFits(config,catalog,verbosity=1):
 
-	srcname=Configuration['target']['name']
-	ra_src=Configuration['target']['ra']
-	dec_src=Configuration['target']['dec']
-	emin = Configuration['energy']['emin']
+	srcname=config['target']['name']
+	ra_src=config['target']['ra']
+	dec_src=config['target']['dec']
+	emin = config['energy']['emin']
 
-	roi  = Configuration['space']['rad']
-	max_radius  = Configuration['model']['max_radius']
-	min_significance = Configuration['model']['min_significance']
-	model = Configuration['target']['spectrum']
+	roi  = config['space']['rad']
+	max_radius  = config['model']['max_radius']
+	min_significance = config['model']['min_significance']
+	model = config['target']['spectrum']
 
 	cfile = pyfits.open(catalog)
 	data=cfile[1].data
@@ -382,33 +378,33 @@ def IsIn( Name,ListOfSource):
 
 
 
-def WriteXml(lib,doc,srclist,Configuration):
+def WriteXml(lib,doc,srclist,config):
 
-	emin = Configuration['energy']['emin']
-	emax = Configuration['energy']['emax']
+	emin = config['energy']['emin']
+	emax = config['energy']['emax']
 	
 
 	#test if the user profide diffuse files
-	if Configuration['model']['diffuse_gal_dir'] =="" :
+	if config['model']['diffuse_gal_dir'] =="" :
 		Gal_dir = env.DIFFUSE_DIR
 	else :
-		Gal_dir = Configuration['model']['diffuse_gal_dir']
+		Gal_dir = config['model']['diffuse_gal_dir']
 
-	if Configuration['model']['diffuse_iso_dir'] =="" :
+	if config['model']['diffuse_iso_dir'] =="" :
 		Iso_dir = env.DIFFUSE_DIR
 	else :
-		Iso_dir = Configuration['model']['diffuse_iso_dir']
+		Iso_dir = config['model']['diffuse_iso_dir']
 
 
-	if Configuration['model']['diffuse_gal'] =="" :
+	if config['model']['diffuse_gal'] =="" :
 		Gal = Gal_dir+"/"+env.DIFFUSE_GAL
 	else :
-		Gal = Gal_dir+"/"+Configuration['model']['diffuse_gal']
+		Gal = Gal_dir+"/"+config['model']['diffuse_gal']
 
-	if Configuration['model']['diffuse_gal_dir'] =="" :
+	if config['model']['diffuse_gal_dir'] =="" :
 		Iso = Iso_dir+"/"+env.DIFFUSE_ISO_SOURCE
 	else :
-		Iso =  Iso_dir+"/"+Configuration['model']['diffuse_iso']
+		Iso =  Iso_dir+"/"+config['model']['diffuse_iso']
 
 
 	i=0
@@ -448,10 +444,10 @@ def WriteXml(lib,doc,srclist,Configuration):
                                           cutoff_free=free, cutoff_value=srclist[i].get('cutoff'))
 #		addPSPowerLaw1(lib, name, ra, dec, eflux=srclist[i].get('scale'),flux_free=free,flux_value= srclist[i].get('flux'),index_free=free,index_value=srclist[i].get('index'))
 
-	folder = Configuration['out']
+	folder = config['out']
 	os.system('mkdir -p '+folder)
 
-	output=Configuration['file']['xml']
+	output=config['file']['xml']
 	print "write the Xml file in ",output
 	open(output,'w').write(doc.toprettyxml('  '))
 
@@ -499,15 +495,15 @@ if __name__=='__main__':
 		print('FATAL: Catalog file not found.')
 		sys.exit(1)
 
-	Configuration = get_config(infile)
+	config = get_config(infile)
 
-	folder = Configuration['out']
+	folder = config['out']
 	os.system('mkdir -p '+folder)
 
 	lib = CreateLib()
 
-	srclist =GetlistFromFits(Configuration,Catalog)
+	srclist =GetlistFromFits(config,Catalog)
 #LogParabola
 	#Write donw the XML file
-	WriteXml(lib,doc,srclist,Configuration)
+	WriteXml(lib,doc,srclist,config)
 	Xml_to_Reg(folder+"/Roi_model",srclist,Prog = sys.argv[0])
