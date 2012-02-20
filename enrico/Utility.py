@@ -309,7 +309,7 @@ def PrepareEbin(Fit,runfit,OnlyName = False):
 
 
 def DumpResult(Result,Configuration):
-	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax'])),"w")
+	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax']))+".results","w")
 
 	for key in Result.iterkeys():
 		Dumpfile.write(key+'\t'+str(Result[key])+'\n')
@@ -317,7 +317,7 @@ def DumpResult(Result,Configuration):
 
 
 def ReadResult(Configuration):
-	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax'])),"r")
+	Dumpfile = open(Configuration['out']+'/'+Configuration['target']['name']+'_'+str(int(Configuration['time']['tmin']))+'_'+str(int(Configuration['time']['tmax']))+'_'+str(int(Configuration['energy']['emin']))+'_'+str(int(Configuration['energy']['emax']))+".results","r")
 
 	lines =  Dumpfile.readlines()
 	Dumpfile.close()
