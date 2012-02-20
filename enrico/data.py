@@ -1,17 +1,31 @@
 """Utilities to download / preprocess data"""
+import os
+from os.path import join
+import logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
-# TODO: No import *, if possible use config files here!
+# @todo: use config file for this?
 from environ import *
 
 #TODO: Read from default config
-default_filter='DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
+default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
+
+# Download URLs
+FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
+FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
+CATALOG_URL = join(FSSC_URL, 'data/access/lat/2yr_catalog')
+DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
+WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
+SPACECRAFT_URL = join(FSSC_FTP_URL, 'mission/spacecraft',
+                      SPACECRAFT)
 
 #        (_tag,                 _url,        _dir,        _file)
 FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
          ('DIFFUSE_GAL',        DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_GAL),
          ('DIFFUSE_ISO_SOURCE', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCE),
          ('DIFFUSE_ISO_CLEAN',  DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEAN)]
-         #('SPACECRAFT',         SPACECRAFT_URL, DOWNLOAD_DIR, SPACECRAFT)]
+
 
 def check_dirs():
     """Check directory availability"""
@@ -21,6 +35,7 @@ def check_dirs():
         status = 'YES' if os.path.isdir(dir) else 'NO'
         print('{tag:.<20} {status:.<10} {dir}'.format(**locals()))
 
+
 def check_files():
     """Check file availability"""
     print('*** FILES ***')
@@ -28,6 +43,7 @@ def check_files():
         path = join(_dir, _file)
         status = path if os.path.isfile(path) else 'MISSING'
         print('{0:.<20} {1}'.format(_tag, status))
+
 
 def check_catalog_templates():
     """Check catalog template availability"""
@@ -115,7 +131,8 @@ class Data:
                 print('Unpacking')
                 call(['tar', 'zxvf', path, '-C', CATALOG_DIR])
             else:
-                print('Diffuse emission templates exist already. Not downloading.')
+                print('Diffuse emission templates exist already. '
+                      'Not downloading.')
         else:
             print('Set CATALOG_DIR before downloading the files.')
 
@@ -174,8 +191,7 @@ class Data:
         # Select only a subset of weeks
         weeks = self.SELECTIONS[selection]
         files = files[:weeks]
-        log.debug('Writing weeks.lis with %04d lines.'%
-                  len(files))
+        log.debug('Writing weeks.lis with %04d lines.' % len(files))
         open('weeks.lis', 'w').writelines(files)
 
     def _preprocess_gtselect(self, evclass, emin):

@@ -26,7 +26,7 @@ DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
             PREPROCESSED_DIR=PREPROCESSED_DIR,
             DOWNLOAD_DIR=DOWNLOAD_DIR,
             WEEKLY_DIR=WEEKLY_DIR,
-            CONFIG_DIR= CONFIG_DIR,
+            CONFIG_DIR=CONFIG_DIR,
             XML_DIR=XML_DIR,
             ENRICO_DIR=ENRICO_DIR)
 
@@ -38,14 +38,6 @@ DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
 DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
 
-# Download URLs
-FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
-FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
-CATALOG_URL = join(FSSC_URL, 'data/access/lat/2yr_catalog')
-DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
-WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
-SPACECRAFT_URL = join(FSSC_FTP_URL, 'mission/spacecraft',
-                      SPACECRAFT)
 
 def check_command_line_tools():
     """Check command line tool availability"""
@@ -56,12 +48,14 @@ def check_command_line_tools():
                          stdout=PIPE).communicate()[0]
         print('{0:.<20} {1}'.format(tool, location.strip() or 'MISSING'))
 
+
 def check_python_modules():
     """Check python package availability"""
     # @todo: Use this fast method to check for python module availability:
-    # http://stackoverflow.com/questions/2617704/checking-for-module-availability-programmatically-in-python
+    # http://stackoverflow.com/questions/2617704/
+    # checking-for-module-availability-programmatically-in-python
     ASTRO_PACKAGES = ['pyfits', 'kapteyn']
-    # @todo: Here it's enough to try one of the Fermi python modules 
+    # @todo: Here it's enough to try one of the Fermi python modules
     # and to show where they are located.
     FERMI_PACKAGES = ['gt_apps', 'UnbinnedAnalysis']
     PACKAGES = ['enrico', 'IPython'] + ASTRO_PACKAGES + FERMI_PACKAGES

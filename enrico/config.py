@@ -5,6 +5,7 @@ from configobj import ConfigObj, flatten_errors
 from extern.configobj.validate import Validator
 from environ import CONFIG_DIR
 
+
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     """Parse config file, and in addition:
     - include default options
@@ -28,10 +29,12 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
         sys.exit(1)
     return config
 
+
 # @todo: This doesn't work because missing values are invalid!!!
 # Maybe fill those values by hand?
 def get_default_config(configspec=join(CONFIG_DIR, 'default.conf')):
     return ConfigObj(None, configspec=configspec)
+
 
 def query_config():
     """Make a new config object, asking the user for required options"""
