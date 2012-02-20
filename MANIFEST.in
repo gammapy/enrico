@@ -1,2 +1,0 @@
-include doc/Makefile
-recursive-include doc/source *
