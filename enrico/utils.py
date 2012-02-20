@@ -1,5 +1,8 @@
 """Random collection of utility functions"""
 
+def etag(emin, emax, fmt='%07d'):
+    return ('emin_%s_emax_%s' % (fmt, fmt)) % (emin, emax)
+
 def cube_to_image(cube, slicepos=None, mean=False):
     """ Make an image out of a cube.
     Both in- and output shoud by pyfits.HDUs"""
