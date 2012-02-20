@@ -16,7 +16,7 @@
 # $ init_enrico
 
 echo "Adding Enrico to PATH and PYTHONPATH"
-export PATH=$PATH:$ENRICO_DIR/scripts
+export PATH=$PATH:$ENRICO_DIR/bin
 export PYTHONPATH=$ENRICO_DIR:$PYTHONPATH
 
 echo "Setting environment variables for data file locations"

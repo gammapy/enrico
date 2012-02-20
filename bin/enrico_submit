@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+"""Run a fit for the full energy band and in energy bins on the cluster"""
+import sys
+import os
+from enrico.config import get_config
+import enrico.environ as environ
+from enrico.submit import call
+try:
+    infile = os.path.abspath(sys.argv[1])
+except:
+    print('FATAL: Config file not found.')
+    sys.exit(1)
+
+enricodir = environ.DIRS.get('ENRICO_DIR')
+
+config = get_config(infile)
+
+if config['Spectrum']['SummedLike'] == 'yes':
+    GenericName = (config['target']['name'] + "_" +
+                   config['analysis']['likelihood'] +
+                   "_Summed_" + config['file']['tag'])
+else:
+    GenericName = (config['target']['name'] + "_" +
+                   config['analysis']['likelihood'] +
+                   "_Normal_" + config['file']['tag'])
+
+prefix = config['out'] + "/" + GenericName
+
+os.system("mkdir -p " + config['out'] + "\n")
+
+
+cmd = "enrico_fit " + infile
+
+scriptname = prefix + "_Script.sh"
+JobLog = prefix + "_Job.log"
+JobName = GenericName
+
+call(cmd, enricodir, scriptname, JobLog, JobName)
