@@ -1,8 +1,0 @@
-#!/usr/bin/env python
-"""This script is for developers to try out stuff quickly"""
-
-#package = 'pyfits'
-#__import__(package)
-import pyfits
-#print pyfits.__file__
-print globals()
