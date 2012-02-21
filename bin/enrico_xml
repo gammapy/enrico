@@ -5,7 +5,7 @@ import os
 import sys
 from optparse import OptionParser
 from enrico.config import get_config
-import enrico.XmlModel_Generator
+import enrico.xml_model
 import enrico.environ
 
 # Parse command line options
@@ -38,8 +38,8 @@ else:
 
 print "Use the catalog : ", catalog
 
-lib, doc = enrico.XmlModel_Generator.CreateLib()
-srclist = enrico.XmlModel_Generator.GetlistFromFits(config, catalog)
-enrico.XmlModel_Generator.WriteXml(lib, doc, srclist, config)
-enrico.XmlModel_Generator.Xml_to_Reg(folder + "/Roi_model",
-                                     srclist, Prog=sys.argv[0])
+lib, doc = enrico.xml_model.CreateLib()
+srclist = enrico.xml_model.GetlistFromFits(config, catalog)
+enrico.xml_model.WriteXml(lib, doc, srclist, config)
+enrico.xml_model.Xml_to_Reg(folder + "/Roi_model",
+                            srclist, Prog=sys.argv[0])
