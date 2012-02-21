@@ -378,11 +378,10 @@ def DumpResult(Result, config):
 
 def ReadResult(config):
     """@todo: Use configobj, not this hand-written utility function!"""
-    import string
     lines = open(_dump_filename(config)).readlines()
     results = dict()
     for line in lines:
-        key, value = string.split(line)[0:2]
+        key, value = line.split()[0:2]
         try:
             value = float(value)
         except:
