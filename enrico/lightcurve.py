@@ -1,14 +1,14 @@
-import Utility
 import os
 from os.path import join
 import numpy as np
 import ROOT
-import Style
-from enrico.RunGTlike import run
-import enrico.pyPlot as pyPlot
-import enrico.environ as environ
-from enrico.config import get_config
-from enrico.submit import call
+import utils
+import root_style
+import plotting
+import RunGTlike
+import environ
+from config import get_config
+from submit import call
 
 
 def PrepareLC(infile):
@@ -59,7 +59,7 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
 def MakeLC(infile):
     """@todo: document me"""
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
-    Style.RootStyle()
+    root_style.RootStyle()
 
     Doplot = True
 
@@ -96,14 +96,14 @@ def MakeLC(infile):
 
                 call(cmd, enricodir, scriptname, JobLog, JobName)
             else:
-                run(AllConfigFile[i])
+                RunGTlike.run(AllConfigFile[i])
 
     if config['LightCurve']['Plot'] == 'yes' and Doplot:
         print "Reading output files"
         for i in xrange(Nbin):
             CurConfig = get_config(AllConfigFile[i])
             try:
-                result = Utility.ReadResult(CurConfig)
+                result = utils.ReadResult(CurConfig)
             except:
                 print('WARNING : fail reading the configuration file : ',
                       AllConfigFile[i])
@@ -133,21 +133,21 @@ def MakeLC(infile):
         filebase = join(folder, 'LightCurve', config['target']['name'])
 
         if config['LightCurve']['DiagnosticPlots'] == 'yes':
-            gTHNpred, TgrNpred = pyPlot.PlotNpred(Npred, Flux, FluxErr)
+            gTHNpred, TgrNpred = plotting.PlotNpred(Npred, Flux, FluxErr)
             CanvNpred = ROOT.TCanvas()
             gTHNpred.Draw()
             TgrNpred.Draw('zP')
             CanvNpred.Print(filebase + '_Npred.eps')
             CanvNpred.Print(filebase + '_Npred.C')
 
-            gTHTS, TgrTS = pyPlot.PlotTS(Time, TimeErr, TS)
+            gTHTS, TgrTS = plotting.PlotTS(Time, TimeErr, TS)
             CanvTS = ROOT.TCanvas()
             gTHTS.Draw()
             TgrTS.Draw('zP')
             CanvTS.Print(filebase + '_TS.eps')
             CanvTS.Print(filebase + '_TS.C')
 
-        gTHLC, TgrLC, ArrowLC = pyPlot.PlotLC(Time, TimeErr, Flux, FluxErr)
+        gTHLC, TgrLC, ArrowLC = plotting.PlotLC(Time, TimeErr, Flux, FluxErr)
         CanvLC = ROOT.TCanvas()
         gTHLC.Draw()
         TgrLC.Draw('zP')

@@ -172,12 +172,12 @@ class MakeFit(object):
     def PlotSED(self, Fit):
         """@todo: document me"""
         self._log('PlotSED', 'Generate SED plot')
-        import pyPlot
+        import plotting
         filename = self.config['out'] + '/SED_' + self.obs.srcname
-        Par = pyPlot.Params(self.obs.srcname,
-                            Emin=self.obs.Emin,
-                            Emax=3e5, extend=False, PlotName=filename)
-        pyPlot.Tgraph(Fit, Par)
+        Par = plotting.Params(self.obs.srcname,
+                              Emin=self.obs.Emin,
+                              Emax=3e5, extend=False, PlotName=filename)
+        plotting.Tgraph(Fit, Par)
 
     def ModelMap(self, xml):
         """@todo: document me"""
