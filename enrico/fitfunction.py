@@ -2,7 +2,6 @@ import numpy as np
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 import UpperLimits
-import IntegralUpperLimit
 import utils
 
 
@@ -113,6 +112,7 @@ class MakeFit(object):
 
     def ComputeUL(self, Fit):
         """@todo: document me"""
+        import IntegralUpperLimit
         self._log('UpperLimit', 'Compute upper Limit')
         print "Assumed index is ", self.config['UpperLimit']['SpectralIndex']
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
@@ -133,6 +133,7 @@ class MakeFit(object):
 
     def EnvelopeUL(self, Fit):
         """@todo: document me"""
+        import IntegralUpperLimit
         self._log('EnvelopeUL', 'Compute upper limit envelope')
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
         Nbp = 20
