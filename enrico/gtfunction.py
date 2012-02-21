@@ -1,9 +1,8 @@
 import os
 from math import sqrt, log10
 import numpy as np
-import ROOT
 import gt_apps
-import Utility
+import utils
 import pyLikelihood
 
 
@@ -191,7 +190,7 @@ class Observation(object):
         tool["irfs"] = self.irfs
         tool['outfile'] = self.ModelMap
         tool.run()
-        Utility.SubstracFits(self.cmapfile, self.ModelMap, self.config)
+        utils.SubstracFits(self.cmapfile, self.ModelMap, self.config)
 
     def GetCovar(self, Fit):
         # @todo: unused variable?
