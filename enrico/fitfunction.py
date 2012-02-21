@@ -1,10 +1,9 @@
+import numpy as np
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 import UpperLimits
 import IntegralUpperLimit
-from math import log10
-import Utility
-import numpy as np
+import utils
 
 
 class MakeFit(object):
@@ -91,16 +90,16 @@ class MakeFit(object):
                      self.config['file']['tag'] + "_out.xml")
 
         self._log('Results', 'Print results of the fit')
-        Result = Utility.PrintResult(Fit, self.obs)
+        Result = utils.PrintResult(Fit, self.obs)
         Result['log_like'] = self.log_like
         Result['Emin'] = self.obs.Emin
         Result['Emax'] = self.obs.Emax
         try:
-            Utility.GetCovar(self.obs.srcname, Fit)
+            utils.GetCovar(self.obs.srcname, Fit)
         except:
             pass
 
-        Utility.GetFlux(Fit)
+        utils.GetFlux(Fit)
 
         if float(self.config['UpperLimit']['TSlimit']) > Fit.Ts(self.obs.srcname):
             if self.config['UpperLimit']['envelope'] == 'yes':
@@ -138,7 +137,8 @@ class MakeFit(object):
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
         Nbp = 20
         Npgraph = 100
-        ener = np.logspace(log10(self.obs.Emin), log10(self.obs.Emax), Npgraph)
+        ener = np.logspace(np.log10(self.obs.Emin),
+                           np.log10(self.obs.Emax), Npgraph)
         Ulenv = np.array(Npgraph * [0.])
 
         for i in xrange(Nbp):
@@ -160,7 +160,7 @@ class MakeFit(object):
                 if model_name == 'PowerLaw2':
                     newUl = ul_val * (indx + 1) * pow(ener[j], indx + 2) / (pow(self.obs.Emax, indx + 1) - pow(self.obs.Emin, indx + 1))
                 elif model_name == 'PowerLaw':
-                    IdEScale = Utility.getParamIndx(Fit, self.obs.srcname, 'Scale')
+                    IdEScale = utils.getParamIndx(Fit, self.obs.srcname, 'Scale')
                     Escale = Fit[IdEScale].value()
                     newUl = ul_val * pow(ener[j] / Escale, indx + 2)
                 Ulenv[j] = max(Ulenv[j], newUl)

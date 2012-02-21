@@ -1,6 +1,6 @@
 import os
 import SummedLikelihood
-import Utility
+import utils
 from config import get_config
 
 
@@ -12,8 +12,8 @@ def run(infile):
     SummedLike = config['Spectrum']['SummedLike']
     if SummedLike == 'yes':
         # Create two obs instances
-        runfitfront, _ = Utility.Analysis(folder, config, tag="FRONT", convtyp=0)
-        runfitback, _ = Utility.Analysis(folder, config, tag="BACK", convtyp=1)
+        runfitfront, _ = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
+        runfitback, _ = utils.Analysis(folder, config, tag="BACK", convtyp=1)
         FitB = runfitback.CreateFit()
         FitF = runfitfront.CreateFit()
         Fit = SummedLikelihood.SummedLikelihood()
@@ -23,10 +23,10 @@ def run(infile):
     else:
         convtype = config['analysis']['convtype']
         # Create one obs instance
-        runfit, _ = Utility.Analysis(folder, config, tag="", convtyp=convtype)
+        runfit, _ = utils.Analysis(folder, config, tag="", convtyp=convtype)
         Fit = runfit.CreateFit()
     Result = runfit.PerformFit(Fit)
-    Utility.DumpResult(Result, config)
+    utils.DumpResult(Result, config)
 
     if config['Spectrum']['ResultPlots'] == 'yes':
         runfit.PlotSED(Fit)
@@ -39,7 +39,7 @@ def run(infile):
             runfit.ModelMap(outXml)
 
     if int(config['Ebin']['NumEnergyBins']) > 0:
-        configfiles = Utility.PrepareEbin(Fit, runfit)
+        configfiles = utils.PrepareEbin(Fit, runfit)
         for conf in configfiles:
             os.system('enrico_submit ' + conf)
 

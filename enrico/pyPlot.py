@@ -4,10 +4,10 @@ import array  # @todo: get rid of array, use numpy instead
 import ROOT
 import numpy as np
 import pyfits
-import Style
+import root_style
 import pyLikelihood
 from config import get_config
-import Utility
+import utils
 
 
 class Params:
@@ -150,7 +150,7 @@ def CountsPlot(Result, Parameter):
     Nbin = len(src)
 
     obs = array.array('f', (image[1].data.field(0)))
-    obs_err = array.array('f', numpy.sqrt(image[1].data.field(0)))
+    obs_err = array.array('f', np.sqrt(image[1].data.field(0)))
     summ = 0
     for i in xrange(len(image[1].data.names) - 1):
         summ = summ + image[1].data.field(i + 1)
@@ -325,7 +325,7 @@ def PlotDataPoints(config):
                     "_" + str(E) + ".conf")
         CurConf = get_config(filename)
         try:
-            results = Utility.ReadResult(CurConf)
+            results = utils.ReadResult(CurConf)
         except:
             print "cannot read the Results of energy ", E
             continue
@@ -365,7 +365,7 @@ def PlotSED(infile):
     """@todo: document me"""
     config = get_config(infile)
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
-    Style.RootStyle()
+    root_style.RootStyle()
     FilesName = config['out'] + '/SED_' + config['target']['name']
     AsciiFile = FilesName + '.dat'
 

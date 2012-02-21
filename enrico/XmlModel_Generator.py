@@ -463,5 +463,5 @@ if __name__ == '__main__':
     lib = CreateLib()
     srclist = GetlistFromFits(config, Catalog)
     # @todo: undefined variable 'doc'
-    WriteXml(lib, doc, srclist, config)
+    # WriteXml(lib, doc, srclist, config)
     Xml_to_Reg(folder + "/Roi_model", srclist, Prog=sys.argv[0])
