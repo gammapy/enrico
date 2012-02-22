@@ -30,16 +30,13 @@ def _options_to_str(options):
 
 def jobs_in_queue():
     """ Returns the number of jobs this user has in the queue """
+    from subprocess import Popen, PIPE
     user = os.environ['USER']
-    #cmd = 'qstat -u {0} | wc -l'.format(user)
-    #njobs = int(commands.getoutput(cmd))
-
-    # Dirty hack, because commands.getoutput() seems to
-    # open more and more file handles, causing a crash at some point.
-    fn = '/tmp/_temp_qsub.txt'
-    os.system('qstat -u {user} | wc -l > {fn}'
-              ''.format(user=user, fn=fn))
-    njobs = int(file(fn).read())
+    fh = Popen("qstat -u {user}".format(user=user), stdout=PIPE, shell=True)
+    njobs = len(fh.stdout.readlines())
+    # If there are no jobs we will get 0 lines.
+    # If there are jobs there will be two extra header lines.
+    # So this works for both cases:
     return max(0, njobs - 2)
 
 def wait_for_slot(max_jobs):
