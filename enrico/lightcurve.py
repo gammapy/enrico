@@ -11,41 +11,52 @@ from config import get_config
 from submit import call
 
 
-def PrepareLC(infile):
-    """@todo: document me"""
+def PrepareLC(infile,write = 'no'):
+    """Simple function to prepare the LC generation : generate and write the config files"""
     config = get_config(infile)
 
+    #Read the config
     Tag = config['file']['tag']
     Nbin = config['LightCurve']['NLCbin']
     tmin = config['time']['tmin']
     tmax = config['time']['tmax']
 
-    config['UpperLimit']['TSlimit'] = config['LightCurve']['TSLightCurve']
-    config['out'] += '/LightCurve'
+    # One point of the LC will be computed as a spectrum plot. enrico_fit will be used
+    # Do fits files will be generated
+    config['Spectrum']['FitsGeneration'] = config['LightCurve']['FitsGeneration']
 
+    #TS limit. Compute an UL if the TS is below TSLightCurve
+    config['UpperLimit']['TSlimit'] = config['LightCurve']['TSLightCurve']
+
+    #All files will be stored in a subfolder name LightCurve + NLCbin
+    config['out'] +='/LightCurve_'+str(config['LightCurve']['NLCbin'])
+
+    #No plot, no bin in energy, Normal UL
     config['Spectrum']['ResultPlots'] = 'no'
     config['Ebin']['NumEnergyBins'] = 0
     config['UpperLimit']['envelope'] = 'no'
 
-    AllConfigFile = []
+    AllConfigFile = []#All the config file in the disk are stored in a list
     for i in xrange(Nbin):
         dt = (tmax - tmin) / Nbin
         config['time']['tmin'] = tmin + i * dt
         config['time']['tmax'] = tmin + (i + 1) * dt
         config['file']['tag'] = Tag + '_LC_' + str(i)
+        #Name of the config file
         filename = (config['out'] + "/Config_" +
                     str(config['time']['tmin']) + "_" +
                     str(config['time']['tmax']))
 
-        if config['LightCurve']['Prepare'] == 'yes':
+        if write == 'yes':
             config.write(open(filename, 'w'))
 
         AllConfigFile.append(filename)
+    #Return the list of config
     return AllConfigFile
 
 
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
-    """@todo: document me"""
+    """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
     flc.write('Time (MET) Delta_Time Flux(ph cm-2 s-1) '
               'Delta_Flux TS Npred\n')
@@ -56,24 +67,41 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
     flc.close()
 
 
-def MakeLC(infile):
-    """@todo: document me"""
-    ROOT.gROOT.SetBatch(ROOT.kTRUE)
-    root_style.RootStyle()
-
-    Doplot = True
+def MakeLC(infile) :
+    '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
+    ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
 
     enricodir = environ.DIRS.get('ENRICO_DIR')
 
     config = get_config(infile)
 
     folder = config['out']
-    os.system('mkdir -p ' + folder + '/LightCurve')
+    #Create a subfolder name LightCurve
+    os.system('mkdir -p '+folder+'/LightCurve')
 
-    AllConfigFile = PrepareLC(infile)
+    AllConfigFile = PrepareLC(infile, config['LightCurve']['Prepare'])#Get the config file
 
+    for i in xrange(config['LightCurve']['NLCbin']):
+        if config['LightCurve']['Submit'] == 'yes':
+            cmd = "enrico_fit "+AllConfigFile[i]
+            scriptname=folder+"/LightCurve/LC_Script_"+str(i)+".sh"
+            JobLog = folder+"/LightCurve/LC_Job_"+str(i)+".log"
+            JobName = config['target']['name']+"_"+str(i)+".log"
+
+            call(cmd,enricodir,scriptname,JobLog,JobName)#Submit the job
+        else :
+            run(AllConfigFile[i])#run in command line
+
+def PlotLC(infile):
+    '''Plot a lightcurve which have been generated previously'''
+    root_style.RootStyle()#Nice plot style
+    config = get_config(infile) # read config file
+
+    folder = config['out']
+    print "Reading files produced by enrico"
     Nbin = config['LightCurve']['NLCbin']
 
+    #Result are stored into list. This allow to get rid of the bin which failled
     Time = []
     TimeErr = []
     Flux = []
@@ -81,83 +109,75 @@ def MakeLC(infile):
     Npred = []
     TS = []
 
-    # @todo: Do you mean '=' instead of '==' here?
-    # config['Spectrum']['FitsGeneration'] == config['LightCurve']['FitsGeneration']
-    if (config['LightCurve']['FitsGeneration'] == 'yes' or
-        config['LightCurve']['Re-Fit'] == 'yes'):
+    AllConfigFile = PrepareLC(infile)#Get the config file
 
-        for i in xrange(Nbin):
-            if config['LightCurve']['Submit'] == 'yes':
-                Doplot = False
-                cmd = "enrico_fit " + AllConfigFile[i]
-                scriptname = folder + "/LightCurve/LC_Script_" + str(i) + ".sh"
-                JobLog = folder + "/LightCurve/LC_Job_" + str(i) + ".log"
-                JobName = config['target']['name'] + "_" + str(i) + ".log"
+    for i in xrange(Nbin):
+        CurConfig = get_config(AllConfigFile[i])
+     #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
+        try :
+            ResultDic = utils.ReadResult(CurConfig)
+        except :
+            print "WARNING : fail reading the config file : ",AllConfigFile[i]
+            print "Job Number : ",i
+            print "Please have a look at this job log file"
+            continue
 
-                call(cmd, enricodir, scriptname, JobLog, JobName)
-            else:
-                RunGTlike.run(AllConfigFile[i])
+        #Update the time and time error array
+        Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
+        TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
+        #Check is an ul have been computed. The error is set to zero for the TGraph.
+        if ResultDic.has_key('Ulvalue') :
+            Flux.append(ResultDic.get("Ulvalue"))
+            FluxErr.append(0)
+        else :
+            Flux.append(ResultDic.get("Flux"))
+            FluxErr.append(ResultDic.get("dFlux"))
+        #Get the Npred and TS values
+        Npred.append(ResultDic.get("Npred"))
+        TS.append(ResultDic.get("TS"))
 
-    if config['LightCurve']['Plot'] == 'yes' and Doplot:
-        print "Reading output files"
-        for i in xrange(Nbin):
-            CurConfig = get_config(AllConfigFile[i])
-            try:
-                result = utils.ReadResult(CurConfig)
-            except:
-                print('WARNING : fail reading the configuration file : ',
-                      AllConfigFile[i])
-                print "Job Number : ", i
-                print "Please have a look at this job log file"
-                continue
+    #change the list into np array
+    TS = np.array(TS)
+    Npred = np.array(Npred)
+    Time = np.array(Time)
+    TimeErr = np.array(TimeErr)
+    Flux = np.array(Flux)
+    FluxErr = np.array(FluxErr)
 
-            Time.append((result.get("tmax") + result.get("tmin")) / 2.)
-            TimeErr.append((result.get("tmax") - result.get("tmin")) / 2.)
-            if 'Ulvalue' in result:
-                Flux.append(result.get("Ulvalue"))
-                FluxErr.append(0)
-            else:
-                Flux.append(result.get("Flux"))
-                FluxErr.append(result.get("dFlux"))
+    #Plots the diagnostic plots is asked
+    # Plots are : Npred vs flux
+    #             TS vs Time
+    if config['LightCurve']['DiagnosticPlots'] == 'yes':
+        gTHNpred,TgrNpred = plotting.PlotNpred(Npred,Flux,FluxErr)
+        CanvNpred = ROOT.TCanvas()
+        gTHNpred.Draw()
+        TgrNpred.Draw('zP')
+        CanvNpred.Print(folder+'/LightCurve/'+ config['target']['name']+'_Npred.eps')
+        CanvNpred.Print(folder+'/LightCurve/'+ config['target']['name']+'_Npred.C')
 
-            Npred.append(result.get("Npred"))
-            TS.append(result.get("TS"))
+        gTHTS,TgrTS = plotting.PlotTS(Time,TimeErr,TS)
+        CanvTS = ROOT.TCanvas()
+        gTHTS.Draw()
+        TgrTS.Draw('zP')
+        CanvTS.Print(folder+'/LightCurve/'+ config['target']['name']+'_TS.eps')
+        CanvTS.Print(folder+'/LightCurve/'+ config['target']['name']+'_TS.C')
 
-        TS = np.array(TS)
-        Npred = np.array(Npred)
-        Time = np.array(Time)
-        TimeErr = np.array(TimeErr)
-        Flux = np.array(Flux)
-        FluxErr = np.array(FluxErr)
+#    Plot the LC itself. This function return a TH2F for a nice plot
+#    a TGraph and a list of TArrow for the ULs
+    gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+    CanvLC = ROOT.TCanvas()
+    gTHLC.Draw()
+    TgrLC.Draw('zP')
 
-        filebase = join(folder, 'LightCurve', config['target']['name'])
+    #plot the ul as arrow
+    for i in xrange(len(ArrowLC)):
+        ArrowLC[i].Draw()
 
-        if config['LightCurve']['DiagnosticPlots'] == 'yes':
-            gTHNpred, TgrNpred = plotting.PlotNpred(Npred, Flux, FluxErr)
-            CanvNpred = ROOT.TCanvas()
-            gTHNpred.Draw()
-            TgrNpred.Draw('zP')
-            CanvNpred.Print(filebase + '_Npred.eps')
-            CanvNpred.Print(filebase + '_Npred.C')
+    #Save the canvas in the LightCurve subfolder
+    CanvLC.Print(folder+'/LightCurve/'+ config['target']['name']+'_LC.eps')
+    CanvLC.Print(folder+'/LightCurve/'+ config['target']['name']+'_LC.C')
 
-            gTHTS, TgrTS = plotting.PlotTS(Time, TimeErr, TS)
-            CanvTS = ROOT.TCanvas()
-            gTHTS.Draw()
-            TgrTS.Draw('zP')
-            CanvTS.Print(filebase + '_TS.eps')
-            CanvTS.Print(filebase + '_TS.C')
-
-        gTHLC, TgrLC, ArrowLC = plotting.PlotLC(Time, TimeErr, Flux, FluxErr)
-        CanvLC = ROOT.TCanvas()
-        gTHLC.Draw()
-        TgrLC.Draw('zP')
-
-        for i in xrange(len(ArrowLC)):
-            ArrowLC[i].Draw()
-
-        CanvLC.Print(filebase + '_LC.eps')
-        CanvLC.Print(filebase + '_LC.C')
-
-        filename = filebase + "_results.dat"
-        print "Write to Ascii file : ", filename
-        WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename)
+    #Dump into ascii
+    lcfilename = folder+'/LightCurve/'+ config['target']['name']+"_results.dat"
+    print "Write to Ascii file : ",lcfilename
+    WriteToAscii(Time,TimeErr,Flux,FluxErr,TS,Npred,lcfilename)

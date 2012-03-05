@@ -71,7 +71,7 @@ def MakeError(result, pars):
     j = 0
     for ene in energies:
         arg = pyLikelihood.dArg(ene)
-        partials = np.zeros_like(result.srcpars)
+        partials = np.zeros(len(result.srcpars))
         for i in xrange(len(result.srcpars)):
             x = result.srcpars[i]
             partials[i] = result.ptsrc.spectrum().derivByParam(arg, x)
