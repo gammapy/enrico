@@ -28,8 +28,10 @@ def run(infile):
     Result = runfit.PerformFit(Fit)
     utils.DumpResult(Result, config)
 
-    if config['Spectrum']['ResultPlots'] == 'yes':
+    if config['Spectrum']['ResultPlots'] == 'yes' and float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
         runfit.PlotSED(Fit)
+
+    if config['analysis']['likelihood'] == 'binned':
         outXml = (folder + "/" + runfit.obs.srcname + "_" +
                   config['file']['tag'] + "_out.xml")
         if SummedLike == 'yes':
