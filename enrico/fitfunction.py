@@ -124,7 +124,8 @@ class MakeFit(object):
             ul, _ = source_ul.compute(emin=self.obs.Emin,
                                       emax=self.obs.Emax,
                                       delta=2.71 / 2)
-            print "Upper limit using Profile method: ", ul
+            print "Upper limit using Profile method: "
+            print ul[self.obs.srcname].results
         if self.config['UpperLimit']['Method'] == "Integral":
             ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                 verbosity=0)
