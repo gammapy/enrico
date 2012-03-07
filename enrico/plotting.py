@@ -323,6 +323,7 @@ def PlotDataPoints(config):
                     "_" + str(E) + ".conf")
         CurConf = get_config(filename)
         try:
+            print "Reading ",filename
             results = utils.ReadResult(CurConf)
         except:
             print "cannot read the Results of energy ", E
@@ -339,6 +340,8 @@ def PlotDataPoints(config):
             try:
                 down = abs(results.get("dPrefactor-"))
                 up = results.get("dPrefactor+")
+                if down==0 or  up ==0 :
+                  raise RuntimeError("error")
                 FluxpointErrp[i] = 1.6022e-6 * up * Epoint[i] ** 2
                 FluxpointErrm[i] = 1.6022e-6 * down * Epoint[i] ** 2
             except:
@@ -349,10 +352,9 @@ def PlotDataPoints(config):
                     FluxpointErrm[i] = err
                 except:
                     pass
-        print Epoint[i]
-        print Fluxpoint[i]
-        print FluxpointErrp[i]
-        print FluxpointErrm[i]
+        print "Energy = ",Epoint[i]
+        print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
+
     tgpoint = ROOT.TGraphAsymmErrors(NEbin, Epoint, Fluxpoint, EpointErrm,
                                      EpointErrp, FluxpointErrm, FluxpointErrp)
     tgpoint.SetMarkerStyle(20)
@@ -378,8 +380,8 @@ def PlotSED(infile):
         SED[i] = float(words[1])
         Err[i] = float(words[2])
 
-    Fluxp = SED + Err
-    Fluxm = SED - Err
+    Fluxp = SED*np.exp(Err/SED)#SED + Err
+    Fluxm =  SED*np.exp(-Err/SED)#SED - Err
     ErrorFlux = np.zeros(2 * ilen + 1)
     ErrorE = np.zeros(2 * ilen + 1)
 
@@ -422,6 +424,8 @@ def PlotSED(infile):
 
         for i in xrange(len(Arrow)):
             Arrow[i].Draw()
+
+#TODO add a writeTOASCII
 
     c_plot.Print(filebase + '.C')
     c_plot.Print(filebase + '.eps')
