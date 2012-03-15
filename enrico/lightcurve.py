@@ -77,15 +77,16 @@ def MakeLC(infile) :
 
     folder = config['out']
     #Create a subfolder name LightCurve
-    os.system("mkdir -p "+folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"')
+    LCoutfolder = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"bins/"
+    os.system("mkdir -p "+LCoutfolder)
 
     AllConfigFile = PrepareLC(infile, config['LightCurve']['Prepare'])#Get the config file
 
     for i in xrange(config['LightCurve']['NLCbin']):
         if config['LightCurve']['Submit'] == 'yes':
             cmd = "enrico_fit "+AllConfigFile[i]
-            scriptname=folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"/LC_Script_"+str(i)+".sh"
-            JobLog = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"/LC_Job_"+str(i)+".log"
+            scriptname=LCoutfolder+"/LC_Script_"+str(i)+".sh"
+            JobLog = LCoutfolder+"LC_Job_"+str(i)+".log"
             JobName = config['target']['name']+"_"+str(i)+".log"
 
             call(cmd,enricodir,scriptname,JobLog,JobName)#Submit the job
@@ -101,7 +102,7 @@ def PlotLC(infile):
     print "Reading files produced by enrico"
     Nbin = config['LightCurve']['NLCbin']
 
-    LcOutPath = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"/"+ config['target']['name']
+    LcOutPath = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"bins/"+ config['target']['name']
 
     #Result are stored into list. This allow to get rid of the bin which failled
     Time = []
