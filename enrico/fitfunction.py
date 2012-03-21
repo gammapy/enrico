@@ -64,8 +64,8 @@ class MakeFit(object):
     #the function ends here. It does not run gtlike
 
     def CreateFit(self):
-      """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it.
-      By default, the optimizer is DRMNGB """
+        """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it.
+        By default, the optimizer is DRMNGB """
 
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
@@ -224,7 +224,7 @@ class MakeFit(object):
         plotting.Tgraph(Fit, Par)
 
     def ModelMap(self, xml):
-    """Make a model Map. Valid only if the statistic is binned"""
+        """Make a model Map. Valid only if the statistic is binned"""
         if self.config['analysis']['likelihood'] == 'binned':
             self._log('gtmodel', 'Make model map')#run gtmodel
             self.obs.ModelMaps(xml)
