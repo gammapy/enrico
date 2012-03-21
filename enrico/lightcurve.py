@@ -77,15 +77,16 @@ def MakeLC(infile) :
 
     folder = config['out']
     #Create a subfolder name LightCurve
-    os.system('mkdir -p '+folder+'/LightCurve')
+    LCoutfolder = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"bins/"
+    os.system("mkdir -p "+LCoutfolder)
 
     AllConfigFile = PrepareLC(infile, config['LightCurve']['Prepare'])#Get the config file
 
     for i in xrange(config['LightCurve']['NLCbin']):
         if config['LightCurve']['Submit'] == 'yes':
             cmd = "enrico_fit "+AllConfigFile[i]
-            scriptname=folder+"/LightCurve/LC_Script_"+str(i)+".sh"
-            JobLog = folder+"/LightCurve/LC_Job_"+str(i)+".log"
+            scriptname=LCoutfolder+"/LC_Script_"+str(i)+".sh"
+            JobLog = LCoutfolder+"LC_Job_"+str(i)+".log"
             JobName = config['target']['name']+"_"+str(i)+".log"
 
             call(cmd,enricodir,scriptname,JobLog,JobName)#Submit the job
@@ -100,6 +101,8 @@ def PlotLC(infile):
     folder = config['out']
     print "Reading files produced by enrico"
     Nbin = config['LightCurve']['NLCbin']
+
+    LcOutPath = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"bins/"+ config['target']['name']
 
     #Result are stored into list. This allow to get rid of the bin which failled
     Time = []
@@ -152,15 +155,15 @@ def PlotLC(infile):
         CanvNpred = ROOT.TCanvas()
         gTHNpred.Draw()
         TgrNpred.Draw('zP')
-        CanvNpred.Print(folder+'/LightCurve/'+ config['target']['name']+'_Npred.eps')
-        CanvNpred.Print(folder+'/LightCurve/'+ config['target']['name']+'_Npred.C')
+        CanvNpred.Print(LcOutPath+"_Npred.eps")
+        CanvNpred.Print(LcOutPath+"_Npred.C")
 
         gTHTS,TgrTS = plotting.PlotTS(Time,TimeErr,TS)
         CanvTS = ROOT.TCanvas()
         gTHTS.Draw()
         TgrTS.Draw('zP')
-        CanvTS.Print(folder+'/LightCurve/'+ config['target']['name']+'_TS.eps')
-        CanvTS.Print(folder+'/LightCurve/'+ config['target']['name']+'_TS.C')
+        CanvTS.Print(LcOutPath+'_TS.eps')
+        CanvTS.Print(LcOutPath+'_TS.C')
 
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
@@ -174,10 +177,10 @@ def PlotLC(infile):
         ArrowLC[i].Draw()
 
     #Save the canvas in the LightCurve subfolder
-    CanvLC.Print(folder+'/LightCurve/'+ config['target']['name']+'_LC.eps')
-    CanvLC.Print(folder+'/LightCurve/'+ config['target']['name']+'_LC.C')
+    CanvLC.Print(LcOutPath+'_LC.eps')
+    CanvLC.Print(LcOutPath+'_LC.C')
 
     #Dump into ascii
-    lcfilename = folder+'/LightCurve/'+ config['target']['name']+"_results.dat"
+    lcfilename = LcOutPath+"_results.dat"
     print "Write to Ascii file : ",lcfilename
     WriteToAscii(Time,TimeErr,Flux,FluxErr,TS,Npred,lcfilename)

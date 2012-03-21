@@ -1,3 +1,10 @@
+# fitfunction.py written by David Sanchez : dsanchez@poly.in2p3.fr
+# Collection of functions to run the fit (gtlike)
+# the class Makefit will call the function of the observation class (gtfunction.py) and prepare the fit
+# by computing the fits file.
+# it can distinguish between the binned and unbinnned analysis
+# begun September 2011
+
 import numpy as np
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
@@ -25,32 +32,42 @@ class MakeFit(object):
         self.task_number += 1
 
     def PreparFit(self):
-        """@todo: document me"""
-        self._log('gtselect', 'Select data from library')
+        """Run the different ST tools and compute the fits files
+           First it runs the tools that are common to the binned 
+           and unbinned analysis chain then it run the specific
+           tools following the choise of the user"""
+
+        #Run the tools common to binned and unbinned chain
+        self._log('gtselect', 'Select data from library')#run gtselect
         self.obs.FirstCut()
-        self._log('gtmktime', 'Update the GTI and cut data based on ROI')
+        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
         self.obs.MkTime()
         self._log('gtdiffrsp', 'Compute Diffuse response')
-        self.obs.DiffResps()
+        self.obs.DiffResps()#run gtbin
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
-        self._log('gtltcube', 'Make live time cube')
+        self._log('gtltcube', 'Make live time cube')#run gtexpcube
         self.obs.ExpCube()
 
-        if self.config['analysis']['likelihood'] == 'binned':
-            self._log('gtbin', 'Make count map CCUBE')
+        #Choose between the binned of the unbinned analysis
+        if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
+            self._log('gtbin', 'Make count map CCUBE')#run gtbin
             self.obs.GtCcube()
-            self._log('gtexpcube2', 'Make binned exposure cube')
+            self._log('gtexpcube2', 'Make binned exposure cube')#run gtexpcube2
             self.obs.GtBinnedMap()
-            self._log('gtsrcmap', 'Make a source map')
+            self._log('gtsrcmap', 'Make a source map')#run gtsrcmap
             self.obs.SrcMap()
 
-        if self.config['analysis']['likelihood'] == 'unbinned':
+        if self.config['analysis']['likelihood'] == 'unbinned': #unbinned analysis chain
             self._log('gtexpmap', 'Make an exposure map')
             self.obs.ExpMap()
+    #the function ends here. It does not run gtlike
 
     def CreateFit(self):
-        """@todo: document me"""
+      """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it.
+      By default, the optimizer is DRMNGB """
+
+        #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
             Obs = BinnedObs(srcMaps=self.obs.scrMap,
                             expCube=self.obs.Cubename,
@@ -59,6 +76,7 @@ class MakeFit(object):
             Fit = BinnedAnalysis(Obs, self.obs.xmlfile,
                                  optimizer='DRMNGB')
 
+        #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
             Obs = UnbinnedObs(self.obs.eventfile,
                               self.obs.ft2,
@@ -73,52 +91,68 @@ class MakeFit(object):
             Fit[PhIndex] = -float(self.config['Spectrum']['FreeSpectralIndex'])
             Fit.freeze(PhIndex)
 
-        return Fit
+        return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
     def PerformFit(self, Fit):
-        """@todo: document me"""
+        """Run gtlile tool. First it run gtlike with the DRNMGB optimizer
+        and the user optimizer after. A dictionnay is return with all
+        the releveant results"""
+
         self._log('gtlike', 'Run likelihood analysis')
         try:
-            Fit.fit()
+            Fit.fit() #first try to run gtlike to approche the minimum
         except:
             pass
+        # Now the precise fit will be done
+        #change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
+        #fit with the user optimizer and ask gtlike to compute the covariance matrix 
         self.log_like = Fit.fit(covar=True, optimizer=self.config['fitting']['optimizer'])
+        #fit with the user optimizer and ask gtlike to compute the covariance matrix 
         Fit.writeXml(self.config['out'] + "/" +
                      self.obs.srcname + "_" +
                      self.config['file']['tag'] + "_out.xml")
 
+        #Get the result of the fit and print some information
+        #A dictionnaty is created with store all the results 
         self._log('Results', 'Print results of the fit')
+       #Create and file partially a dictionnary with the results
         Result = utils.PrintResult(Fit, self.obs)
         Result['log_like'] = self.log_like
         Result['Emin'] = self.obs.Emin
         Result['Emax'] = self.obs.Emax
-        try:
+        Result['tmin'] = self.config['time']['tmin']
+        Result['tmax'] = self.config['time']['tmax']
+
+        try: # get covariance matrix
             utils.GetCovar(self.obs.srcname, Fit)
         except:
-            pass
+            pass #if the covariance matrix has not been computed
 
-        utils.GetFlux(Fit)
+        utils.GetFlux(Fit) #print the flux of all the sources
 
+        #Compute an UL if the source is too faint
+#        TODO : check this part of the UL
         if float(self.config['UpperLimit']['TSlimit']) > Fit.Ts(self.obs.srcname):
             if self.config['UpperLimit']['envelope'] == 'yes':
                 self.EnvelopeUL(Fit)
             else:
                 Ulval = self.ComputeUL(Fit)
                 Result['Ulvalue'] = Ulval
-        Result['tmin'] = self.config['time']['tmin']
-        Result['tmax'] = self.config['time']['tmax']
-        return Result
+
+        return Result # The dictionnary is returned
 
     def ComputeUL(self, Fit):
-        """@todo: document me"""
+        """Compute an Upper Limit using either the profil or integral method
+        See the ST cicerone for more information on the 2 method"""
         import IntegralUpperLimit
         self._log('UpperLimit', 'Compute upper Limit')
+        #Index given by the user  
         print "Assumed index is ", self.config['UpperLimit']['SpectralIndex']
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
-        Fit[PhIndex] = -self.config['UpperLimit']['SpectralIndex']
-        Fit.freeze(PhIndex)
-        if self.config['UpperLimit']['Method'] == "Profile":
+        Fit[PhIndex] = -self.config['UpperLimit']['SpectralIndex']#set the index
+        Fit.freeze(PhIndex)#the variable index is frozen to compute the UL
+        if self.config['UpperLimit']['Method'] == "Profile": #The method is Profile
             ul = UpperLimits.UpperLimits(Fit)
             source_ul = ul[self.obs.srcname]
             ul, _ = source_ul.compute(emin=self.obs.Emin,
@@ -126,27 +160,30 @@ class MakeFit(object):
                                       delta=2.71 / 2)
             print "Upper limit using Profile method: "
             print ul[self.obs.srcname].results
-        if self.config['UpperLimit']['Method'] == "Integral":
+        if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                 verbosity=0)
             print "Upper limit using Integral method: ", ul
-        return ul
+        return ul #Return the result
 
     def EnvelopeUL(self, Fit):
-        """@todo: document me"""
+        """Compute the envelope UL. An UL is computed for different index and the maximum is taken at each energy.
+        This is usefull when the source index is not know or can not be constrain by theoritical argument
+        The index range form 1.5 to 2.5"""
         import IntegralUpperLimit
         self._log('EnvelopeUL', 'Compute upper limit envelope')
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
-        Nbp = 20
-        Npgraph = 100
+        Nbp = 20 #Make Nbp computations
+        Npgraph = 100#The graph has Npgraph points
         ener = np.logspace(np.log10(self.obs.Emin),
-                           np.log10(self.obs.Emax), Npgraph)
-        Ulenv = np.array(Npgraph * [0.])
+                           np.log10(self.obs.Emax), Npgraph)#the array containing the energy
+        Ulenv = np.array(Npgraph * [0.])#the array containing the UL value
 
         for i in xrange(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
             Fit[PhIndex] = indx
-            Fit.freeze(PhIndex)
+            Fit.freeze(PhIndex)#Freeze the index
+            #Use either the profile or the integral method
             if self.config['UpperLimit']['Method'] == "Profile":
                 ul = UpperLimits.UpperLimits(Fit)
                 source_ul = ul[self.obs.srcname]
@@ -156,9 +193,13 @@ class MakeFit(object):
             if self.config['UpperLimit']['Method'] == "Integral":
                 ul_val, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                         verbosity=0)
-            print "Index = ", indx, " UL = ", ul_val
+            print "Index = ", indx, " UL = ", ul_val  #small print
             for j in xrange(Npgraph):
                 model_name = Fit.model.srcs[self.obs.srcname].spectrum().genericName()
+                #compute the DNDE value. The computation change is 
+                #the model is PowerLaw or PowerLaw2
+                #Note : Other model are not taken into account 
+                #and no UL will be computed
                 if model_name == 'PowerLaw2':
                     newUl = ul_val * (indx + 1) * pow(ener[j], indx + 2) / (pow(self.obs.Emax, indx + 1) - pow(self.obs.Emin, indx + 1))
                 elif model_name == 'PowerLaw':
@@ -166,15 +207,16 @@ class MakeFit(object):
                     Escale = Fit[IdEScale].value()
                     newUl = ul_val * pow(ener[j] / Escale, indx + 2)
                 Ulenv[j] = max(Ulenv[j], newUl)
+
         print
         print "Result of the UL envelope"
         for j in xrange(Npgraph):
             print ener[j], " ", Ulenv[j]
 
     def PlotSED(self, Fit):
-        """@todo: document me"""
+        """Plot the SED with the butterfly for all the model"""
         self._log('PlotSED', 'Generate SED plot')
-        import plotting
+        import plotting#plotting is the dedicated library
         filename = self.config['out'] + '/SED_' + self.obs.srcname
         Par = plotting.Params(self.obs.srcname,
                               Emin=self.obs.Emin,
@@ -182,7 +224,7 @@ class MakeFit(object):
         plotting.Tgraph(Fit, Par)
 
     def ModelMap(self, xml):
-        """@todo: document me"""
+    """Make a model Map. Valid only if the statistic is binned"""
         if self.config['analysis']['likelihood'] == 'binned':
-            self._log('gtmodel', 'Make model map')
+            self._log('gtmodel', 'Make model map')#run gtmodel
             self.obs.ModelMaps(xml)
