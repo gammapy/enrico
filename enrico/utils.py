@@ -106,68 +106,30 @@ def PrintResult(Fit, Current_Obs):
 
     stype = Fit.model.srcs[Current_Obs.srcname].spectrum().genericName()
     Result['ModelType'] = stype
-    if stype == 'PowerLaw2':
-        spectrum = Fit[Current_Obs.srcname].funcs['Spectrum']
-        integral = spectrum.getParam('Integral')
-        Flux = integral.value()
-        ErrFlux = integral.error()
-        Scale = integral.getScale()
-        Result['Flux'] = Flux * Scale
-        Result['dFlux'] = ErrFlux * Scale
-        if Fit.Ts(Current_Obs.srcname) > 5:
-            try:
-                Interror = Fit.minosError(Current_Obs.srcname, 'Integral')
-                print(" Integral:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
-                      (Flux, ErrFlux, Interror[0], Interror[1], Scale))
-                Result.update({'dFlux-': Interror[0] * Scale})
-                Result.update({'dFlux+': Interror[1] * Scale})
-            except:
-                print(" Integral:  %2.2f +/-  %2.2f  %2.0e" %
-                      (Flux, ErrFlux, Scale))
-        else:
-            print(" Integral:  %2.2f +/-  %2.2f  %2.0e" %
-                  (Flux, ErrFlux, Scale))
-    elif stype == 'PowerLaw':
-        spectrum = Fit[Current_Obs.srcname].funcs['Spectrum']
-        prefactor = spectrum.getParam('Prefactor')
-        Flux = prefactor.value()
-        ErrFlux = prefactor.error()
-        Scale = prefactor.getScale()
-        Escale = spectrum.getParam('Scale').value()
-        Result['Prefactor'] = Flux * Scale
-        Result['dPrefactor'] = ErrFlux * Scale
-        Result['Escale'] = Escale
-        if Fit.Ts(Current_Obs.srcname) > 5:
-            try:
-                Interror = Fit.minosError(Current_Obs.srcname, 'Prefactor')
-                print(" Prefactor:  %2.2f +/- %2.2f [ %2.2f, + %2.2f ] %2.0e" %
-                      (Flux, ErrFlux, Interror[0], Interror[1], Scale))
-                Result['dPrefactor-'] = Interror[0] * Scale
-                Result['dPrefactor+'] = Interror[1] * Scale
-            except:
-                print(" Prefactor:  %2.2f +/-  %2.2f %2.0e" %
-                      (Flux, ErrFlux, Scale))
-        else:
-            print(" Prefactor:  %2.2f +/-  %2.2f %2.0e" %
-                  (Flux, ErrFlux, Scale))
 
-    if stype == 'PowerLaw2' or stype == 'PowerLaw':
-        index = Fit[Current_Obs.srcname].funcs['Spectrum'].getParam('Index')
-        Gamma = index.value()
-        ErrGamma = index.error()
-        Result['Index'] = Gamma
-        Result['dIndex'] = ErrGamma
-        if Fit.Ts(Current_Obs.srcname) > 5:
+    spectrum = Fit[Current_Obs.srcname].funcs['Spectrum']
+
+    ParName = Fit[Current_Obs.srcname].funcs['Spectrum'].paramNames
+    for par in ParName :
+        ParValue = spectrum.getParam(par).value()
+        ParError = spectrum.getParam(par).error()
+        Scale = spectrum.getParam(par).getScale()
+        Result[par] = ParValue * Scale
+        Result['d'+par] = ParError * Scale
+        if Fit.Ts(Current_Obs.srcname) > 5 and ParError>0:
             try:
-                Gamerror = Fit.minosError(Current_Obs.srcname, 'Index')
-                print(" Index:  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ]" %
-                      (Gamma, ErrGamma, Gamerror[0], Gamerror[1]))
-                Result['dIndex-'] = Gamerror[0] * Scale
-                Result['dIndex+'] = Gamerror[1] * Scale
+                MinosErrors = Fit.minosError(Current_Obs.srcname, par)
+                print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
+                      (ParValue, ParError, MinosErrors[0], MinosErrors[1], Scale))
+                Result.update({'d'+par+'-': MinosErrors[0] * Scale})
+                Result.update({'d'+par+'+': MinosErrors[1] * Scale})
             except:
-                print " Index:  %2.2f +/-  %2.2f" % (Gamma, ErrGamma)
+                print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                      (ParValue, ParError, Scale))
         else:
-            print " Index:  %2.2f +/-  %2.2f" % (Gamma, ErrGamma)
+            print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                  (ParValue, ParError, Scale))
+
     return Result
 
 
