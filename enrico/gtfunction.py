@@ -112,7 +112,7 @@ class Observation:
 	evtbin["emax"] = self.Emax
 	evtbin['ebinalg'] = "LOG"
 	evtbin['axisrot'] = 0
-	evtbin['proj'] = "AIT"
+	evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
 	#The number of bin is the number of decade * the number of bin per decade (given by the users)
 	evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
 	evtbin.run()
