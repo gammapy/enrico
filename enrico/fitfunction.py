@@ -100,14 +100,14 @@ class MakeFit(object):
 
         self._log('gtlike', 'Run likelihood analysis')
         try:
-            Fit.fit() #first try to run gtlike to approche the minimum
+            Fit.fit(0) #first try to run gtlike to approche the minimum
         except:
             pass
         # Now the precise fit will be done
         #change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix 
-        self.log_like = Fit.fit(covar=True, optimizer=self.config['fitting']['optimizer'])
+        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix 
         Fit.writeXml(utils._dump_xml(self.config))
 
