@@ -109,9 +109,7 @@ class MakeFit(object):
         #fit with the user optimizer and ask gtlike to compute the covariance matrix 
         self.log_like = Fit.fit(covar=True, optimizer=self.config['fitting']['optimizer'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix 
-        Fit.writeXml(self.config['out'] + "/" +
-                     self.obs.srcname + "_" +
-                     self.config['file']['tag'] + "_out.xml")
+        Fit.writeXml(utils._dump_xml(self.config))
 
         #Get the result of the fit and print some information
         #A dictionnaty is created with store all the results 
@@ -227,4 +225,4 @@ class MakeFit(object):
         """Make a model Map. Valid only if the statistic is binned"""
         if self.config['analysis']['likelihood'] == 'binned':
             self._log('gtmodel', 'Make model map')#run gtmodel
-            self.obs.ModelMaps(xml)
+#            self.obs.ModelMaps(xml)

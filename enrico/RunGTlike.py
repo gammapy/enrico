@@ -1,8 +1,9 @@
 import os
 import SummedLikelihood
 import utils
+from submit import call
 from config import get_config
-
+import environ
 
 def run(infile):
     """@todo: document me"""
@@ -32,8 +33,7 @@ def run(infile):
         runfit.PlotSED(Fit)
 
     if config['analysis']['likelihood'] == 'binned':
-        outXml = (folder + "/" + runfit.obs.srcname + "_" +
-                  config['file']['tag'] + "_out.xml")
+        outXml = utils._dump_xml(config)
         if SummedLike == 'yes':
             runfitback.ModelMap(outXml)
             runfitfront.ModelMap(outXml)
@@ -42,8 +42,23 @@ def run(infile):
 
     if int(config['Ebin']['NumEnergyBins']) > 0:
         configfiles = utils.PrepareEbin(Fit, runfit)
+        print configfiles
+        ind = 0
+        enricodir = environ.DIRS.get('ENRICO_DIR')
         for conf in configfiles:
-            os.system('enrico_submit ' + conf)
+#            os.system('enrico_sed ' + conf)
+             config = get_config(conf)
+
+             cmd = "enrico_sed " + conf
+             prefix = config['out'] + "/Ebin" + str(ind) 
+             scriptname = prefix + "_Script.sh"
+             JobLog = prefix + "_Job.log"
+             JobName = (config['target']['name'] + "_" +
+                       config['analysis']['likelihood'] +
+                       "_Ebin_" + str(ind) + "_" + config['file']['tag'])
+
+             call(cmd, enricodir, scriptname, JobLog, JobName)
+             ind+=1
 
 # @todo: Should this be a command line utility in bin?
 if __name__ == '__main__':
