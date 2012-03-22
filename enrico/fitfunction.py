@@ -8,7 +8,7 @@
 import numpy as np
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
-import UpperLimits
+
 import utils
 
 
@@ -129,7 +129,7 @@ class MakeFit(object):
         except:
             pass #if the covariance matrix has not been computed
 
-        utils.GetFlux(Fit) #print the flux of all the sources
+        utils.GetFlux(Fit,self.obs.Emin,self.obs.Emax) #print the flux of all the sources
 
         #Compute an UL if the source is too faint
 #        TODO : check this part of the UL
@@ -145,26 +145,26 @@ class MakeFit(object):
     def ComputeUL(self, Fit):
         """Compute an Upper Limit using either the profil or integral method
         See the ST cicerone for more information on the 2 method"""
-        import IntegralUpperLimit
+        import IntegralUpperLimit,UpperLimits
         self._log('UpperLimit', 'Compute upper Limit')
         #Index given by the user  
         print "Assumed index is ", self.config['UpperLimit']['SpectralIndex']
-        PhIndex = Fit.par_index(self.obs.srcname, 'Index')
-        Fit[PhIndex] = -self.config['UpperLimit']['SpectralIndex']#set the index
-        Fit.freeze(PhIndex)#the variable index is frozen to compute the UL
+
+        IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
+        Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
+        Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
         if self.config['UpperLimit']['Method'] == "Profile": #The method is Profile
-            ul = UpperLimits.UpperLimits(Fit)
-            source_ul = ul[self.obs.srcname]
-            ul, _ = source_ul.compute(emin=self.obs.Emin,
+            ulobject = UpperLimits.UpperLimits(Fit)
+            ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
                                       emax=self.obs.Emax,
                                       delta=2.71 / 2)
             print "Upper limit using Profile method: "
-            print ul[self.obs.srcname].results
+            print ulobject[self.obs.srcname].results
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                 verbosity=0)
             print "Upper limit using Integral method: ", ul
-        return ul #Return the result
+        return ul #Return the result. This is an ul on the integral flux in ph/cm2/s 
 
     def EnvelopeUL(self, Fit):
         """Compute the envelope UL. An UL is computed for different index and the maximum is taken at each energy.
