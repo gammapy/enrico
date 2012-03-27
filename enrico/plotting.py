@@ -36,11 +36,12 @@ class Result:
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
         self.covar = np.array(utils.GetCovar(pars.srcname, self.Fit))
         self.srcpars = pyLikelihood.StringVector()
+        Fit[pars.srcname].src.spectrum().getFreeParamNames(self.srcpars)
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
         The count and residuals plot vs E is also made"""
-        E, SED = sefl.MakeSED(par)
+        E, SED = self.MakeSED(par)
         Err = self.MakeSEDError(par)
         try:
             self.CountsPlot(par)
@@ -254,6 +255,9 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
 
 def PlotDataPoints(config):
     """@todo: document me"""
+
+    ErgsToMeV = 1.6022e-6
+
     arrows = []
     NEbin = int(config['Ebin']['NumEnergyBins'])
     lEmax = np.log10(float(config['energy']['emax']))
@@ -280,23 +284,26 @@ def PlotDataPoints(config):
         Epoint[i] = E
         EpointErrm[i] = E - results.get("Emin")
         EpointErrp[i] = results.get("Emax") - E
-        try:
-            Fluxpoint[i] = 1.6022e-6 * results.get("Ulvalue") * Epoint[i] ** 2
+
+        if results.has_key('Ulvalue'):
+            PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
+                                    results.get("Emin"),results.get("Emax"),E)
+            Fluxpoint[i] = ErgsToMeV * PrefUl * Epoint[i] ** 2
             arrows.append(ROOT.TArrow(Epoint[i], Fluxpoint[i], Epoint[i],
-                                     Fluxpoint[i] * 0.7, 0.02, "|>"))
-        except:
-            Fluxpoint[i] = 1.6022e-6 * results.get("Prefactor") * Epoint[i] ** 2
+                                     Fluxpoint[i] * 0.5, 0.02, "|>"))
+        else :
+            Fluxpoint[i] = ErgsToMeV * results.get("Prefactor") * Epoint[i] ** 2
             try:
                 down = abs(results.get("dPrefactor-"))
                 up = results.get("dPrefactor+")
                 if down==0 or  up ==0 :
                   raise RuntimeError("cannot get Error value")
-                FluxpointErrp[i] = 1.6022e-6 * up * Epoint[i] ** 2
-                FluxpointErrm[i] = 1.6022e-6 * down * Epoint[i] ** 2
+                FluxpointErrp[i] = ErgsToMeV * up * Epoint[i] ** 2
+                FluxpointErrm[i] = ErgsToMeV * down * Epoint[i] ** 2
             except:
                 try:
                     prefactor = results.get("dPrefactor")
-                    err = 1.6022e-6 * prefactor * Epoint[i] ** 2
+                    err = ErgsToMeV * prefactor * Epoint[i] ** 2
                     FluxpointErrp[i] = err
                     FluxpointErrm[i] = err
                 except:
@@ -376,7 +383,7 @@ def PlotSED(infile,pars):
         tgpoint.Draw("pz")
         for i in xrange(len(Arrow)):
             Arrow[i].SetLineColor(pars.PointColor)
-            Arrow[i].SetMarkerColor(pars.PointColor)
+            Arrow[i].SetFillColor(pars.PointColor)
             Arrow[i].Draw()
 
 #TODO add a writeTOASCII

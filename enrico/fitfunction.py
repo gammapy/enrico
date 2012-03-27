@@ -131,7 +131,7 @@ class MakeFit(object):
         print '# ' + '*' * 60
         print
         # fill the dictonnary with some values
-        Result['Optimizer'] = Fit.optimizer
+        Result['Optimizer'] = self.config['fitting']['optimizer']
         Result['Npred'] = Fit.NpredValue(self.obs.srcname)
         Result['TS'] = Fit.Ts(self.obs.srcname)
         print "Values and (MINOS) errors for " + self.obs.srcname
