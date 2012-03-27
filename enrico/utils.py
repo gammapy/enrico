@@ -1,16 +1,37 @@
 """Random collection of usefull functions"""
 import os
 import numpy as np
+from math import log10
+
+def _log(text, line=True):
+    if line:
+        print('# ' + '*' * 60)
+    print("# *** %s ***" % text)
+    if line:
+        print('# ' + '*' * 60)
 
 def fluxScale(flux_value):
     """Get the scale of the flux value
-    ex : 1.4e-14 ---> 1e14"""
+    ex : 1.4e-14 ---> 1e-14"""
     return 10 ** np.floor(np.log10(flux_value) + 0.5)
 
 def fluxNorm(flux_value):
     """Return the norm from the flux_value
      ex : 1.4e-14 ---> 1.4"""
     return pow(10, np.log10(flux_value) - int(np.log10(flux_value))) * 10
+
+def Prefactor(flux,index,emin,emax,escale):
+    """Compute the prefactor at the energy escale knowing
+    the flux and index between emin and emax"""
+
+    Denomin = pow(emax,-abs(index)+1.) -pow(emin,-abs(index)+1.)
+    return flux*(-abs(index)+1)*pow(escale,-abs(index)) / Denomin
+
+def dNde(energy,Fit,name):
+    import pyLikelihood
+    ptsrc = pyLikelihood.PointSource_cast(Fit[name].src)
+    arg = pyLikelihood.dArg(energy)
+    return ptsrc.spectrum()(arg)
 
 def meanEnergy(emin, emax, index_value):
     """Get the mean energy, weighted with a power law of a given index"""
@@ -25,6 +46,9 @@ def meanEnergy(emin, emax, index_value):
         eflux = factor1 * factor2
     return eflux
 
+def GetE0(a,b):
+    """"Get the center of a bin in log space"""
+    return int(pow(10, (np.log10(a) + np.log10(b)) / 2))
 
 def calcAngSepDeg(ra0, dec0, ra1, dec1):
     '''Return the angular separation between two objects. Use the
@@ -44,10 +68,8 @@ def calcAngSepDeg(ra0, dec0, ra1, dec1):
     den = sd0 * sd1 + cd0 * cd1 * cr12
     return np.arctan2(num, den) / C
 
-
 def etag(emin, emax, fmt='%07d'):
     return ('emin_%s_emax_%s' % (fmt, fmt)) % (emin, emax)
-
 
 def cube_to_image(cube, slicepos=None, mean=False):
     """ Make an image out of a cube.
@@ -83,69 +105,22 @@ def SubstracFits(infile1, infile2, config):
     pyfits.writeto(abs_diff_file, data1 - data2, head)
     pyfits.writeto(rel_diff_file, (data1 - data2) / data2, head)
 
-
-def _log(text, line=True):
-    if line:
-        print('# ' + '*' * 60)
-    print("# *** %s ***\n" % text)
-
-
-def PrintResult(Fit, Current_Obs):
-    """Get and print some useful results. Also contruct a dictonnary and fill it with results"""
-    _log('Model Result')
-    Result = {}
-    print Fit.model
-    print
-    # Print src name, Npred and TS for source with TS > 5
-    print "Source Name\tNpred\tTS"
-    for src in Fit.model.srcNames:
-        if Fit.Ts(src) > 5:
-            print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
-    print
-    print '# ' + '*' * 60
-    print
-    # fill the dictonnary with some values
-    Result['Optimizer'] = Fit.optimizer
-    Result['Npred'] = Fit.NpredValue(Current_Obs.srcname)
-    Result['TS'] = Fit.Ts(Current_Obs.srcname)
-    print "Values and (MINOS) errors for " + Current_Obs.srcname
-    print "TS : ", Fit.Ts(Current_Obs.srcname)
-
-    # Get the python object 'Spectrum' for the source of interest
-    spectrum = Fit[Current_Obs.srcname].funcs['Spectrum']
-    # Get the names of the parameters for the source of interest
-    ParName = spectrum.paramNames
-    #Get the model type and fill the dictonnary
-    stype = Fit.model.srcs[Current_Obs.srcname].spectrum().genericName()
-    Result['ModelType'] = stype
-
-    for par in ParName : #Loop over the parameters and get value, error and scale
-        ParValue = spectrum.getParam(par).value()
-        ParError = spectrum.getParam(par).error()
-        Scale = spectrum.getParam(par).getScale()
-        Result[par] = ParValue * Scale
-        Result['d'+par] = ParError * Scale
-        if Fit.Ts(Current_Obs.srcname) > 5 and ParError>0: # Compute MINOS errors for relevent parameters
-            try:
-                MinosErrors = Fit.minosError(Current_Obs.srcname, par)
-                print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
-                      (ParValue, ParError, MinosErrors[0], MinosErrors[1], Scale))
-                Result.update({'d'+par+'-': MinosErrors[0] * Scale})
-                Result.update({'d'+par+'+': MinosErrors[1] * Scale})
-            except:
-                print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
-                      (ParValue, ParError, Scale))
-        else:
-            print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
-                  (ParValue, ParError, Scale))
-
-    return Result   #Return the dictionnary
-
+def Analysis(folder, config, tag="", convtyp='-1'):
+    """ """
+    from gtfunction import Observation
+    from fitfunction import MakeFit
+    Obs = Observation(folder, config, convtyp, tag=tag)
+    _log('SUMMARY' + tag)
+    Obs.printSum()
+    runfit = MakeFit(Obs, config)
+    if config['Spectrum']['FitsGeneration'] == 'yes':
+        runfit.PreparFit()
+    return runfit, Obs
 
 def RemoveWeakSources(Fit, SourceName=None):
     """Remove the weak source after a fit and reoptimized
      weak mens TS<1"""
-    _log('Remove all the weak sources')
+    _log('Remove all the weak (TS<1) sources')
     NoWeakSrcLeft = False
     while not(NoWeakSrcLeft):
         NoWeakSrcLeft = True
@@ -161,18 +136,16 @@ def RemoveWeakSources(Fit, SourceName=None):
     return Fit
 
 
-def GetFlux(Fit,Emin=1e2,Emax=3e5):
+def GetFluxes(Fit,Emin=1e2,Emax=3e5):
     """Print the integral flux and error for all the sources"""
     print "Source Flux  [%2.2e MeV, %2.2e MeV] : " %(Emin,Emax)
     for src in Fit.model.srcNames:
         try:
-            print(src + "Integral Flux : %2.2e +/-  %2.2e ph/cm2/s" %
-                  (Fit.flux(src,Emin,Emax), Fit.fluxError(src)))
+            print(src + "   Integral Flux : %2.2e +/-  %2.2e ph/cm2/s" %
+                  (Fit.flux(src,Emin,Emax), Fit.fluxError(src,Emin,Emax)))
         except:
             pass
     print
-    return Fit.flux(src)
-
 
 def GetCovar(srcname, Fit):
     """Extract covariance matrix"""
@@ -200,104 +173,78 @@ def GetCovar(srcname, Fit):
         my_covar.append([covar[ix][par_index_map[ypar]] for ypar in pars])
     print "The covariance matrix is :\n", np.array(my_covar)
     print
+    return my_covar
 
-
-def getParamIndx(fit, name, NAME):
+def getParamIndx(fit, name, parameter):
     """Get index for a specific parameter for a specific source
     from model in UnbinnedAnalysis object fit"""
     ID = -1
     spec = fit[name].funcs['Spectrum']
     for indx, parName in zip(spec._parIds, spec.paramNames):
-        if(parName == NAME):
+        if(parName == parameter):
             ID = indx
     if(ID == -1):
         print('Parameter %s not found for source %s in file %s.' %
-              (NAME, name, fit.srcModel))
+              (parameter, name, fit.srcModel))
     return ID
 
+def ChangeModel(Fit, E1, E2, name):
+    """Change the spectral model of a source called name
+    to allow a fit between E1 and E2
+    If the spectral model is PowerLaw, the prefactor is updated
+    if not the model is change to PowerLaw.
+    The index is frozen in all case"""
 
-def ChangeModel(Fit, Em0, Em1, name):
-    """@todo: document me"""
-    # @todo: call utility function
-    E0 = int(pow(10, (np.log10(Em1) + np.log10(Em0)) / 2))
-
+    Eav = GetE0(E2,E1)#int(pow(10, (np.log10(E2) + np.log10(E1)) / 2))
+    flux = Fit.flux(name,E1,E2) #Source flux between E2 and Em2
     generic_name = Fit.model.srcs[name].spectrum().genericName()
-    if not(generic_name == 'PowerLaw') and not(generic_name == 'PowerLaw2') :
-        return Fit
 
-    IdGamma = getParamIndx(Fit, name, 'Index')
-    Gamma = Fit[IdGamma].value()
-    Fit[IdGamma].setFree(0)
+    # if the model is not PowerLaw : change the model
+    if generic_name == 'PowerLaw' :
+        IdGamma = getParamIndx(Fit, name, 'Index')
+        Gamma = Fit[IdGamma].value()
+    else :
+        #Compute an approximation of an index
+        dnde1 = log10(dNde(E1,Fit,name))#Prefactor(flux,Gamma,E1,E2,E1)
+        dnde2 = log10(dNde(E2,Fit,name))#Prefactor(flux,Gamma,E1,E2,E2)
+        Gamma = (dnde2-dnde1)/(log10(1.*E2)-log10(1.*E1))
+        Fit.logLike.getSource(name).setSpectrum("PowerLaw") #Change model
 
-#    for name in Fit.model.srcNames:
-    if generic_name == 'PowerLaw':
-        IdNorm = getParamIndx(Fit, name, 'Prefactor')
-        IdEScale = getParamIndx(Fit, name, 'Scale')
+    Pref = dNde(Eav,Fit,name)#Prefactor(flux,Gamma,E1,E2,Eav)
 
-        Flux = Fit[IdNorm].value()
-        Scale = Fit[IdNorm].getScale()
-        Escale = Fit[IdEScale].value()
-        NewFlux = Flux * pow(E0 / Escale, Gamma) * Scale
-#        NormFlux = fluxNorm(NewFlux)#pow(10, np.log10(NewFlux) - int(np.log10(NewFlux))) * 10
-#        NewScale = fluxScale(NewFlux)#pow(10, int(np.log10(NewFlux)) - 1)
-#        print "NormFlux, Scale, Gamma:"
-#        print NormFlux, " ", Scale, " ", Gamma
-        Fit[IdEScale].setBounds(0.0, 4e5)
-        Fit[IdEScale] = E0
-        Fit[IdEScale].setBounds(E0 * 0.05, E0 * 50)
+    # Set Parameters
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(fluxScale(Pref))
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(fluxNorm(Pref))
 
-    elif generic_name == 'PowerLaw2':
-        IdNorm = getParamIndx(Fit, name, 'Integral')
-        IdEmin = getParamIndx(Fit, name, 'LowerLimit')
-        IdEmax = getParamIndx(Fit, name, 'UpperLimit')
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(-5,0)
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
 
-        Flux = Fit[IdNorm].value()
-        Scale = Fit[IdNorm].getScale()
-        Emin = Fit[IdEmin].value()
-        Emax = Fit[IdEmax].value()
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
 
-        D = pow(Em1, Gamma + 1) - pow(Em0, Gamma + 1)
-        N = pow(Emax, Gamma + 1) - pow(Emin, Gamma + 1)
-        NewFlux = Flux * D / N * Scale
-#        NormFlux = fluxNorm(NewFlux)#pow(10, np.log10(NewFlux) - int(np.log10(NewFlux))) * 10
-#        NewScale = fluxScale(NewFlux)#pow(10, int(np.log10(NewFlux)) - 1)
-        Fit[IdEmin] = Em0
-        Fit[IdEmax] = Em1
-
-    NormFlux = fluxNorm(NewFlux)#pow(10, np.log10(NewFlux) - int(np.log10(NewFlux))) * 10
-    NewScale = fluxScale(NewFlux)#pow(10, int(np.log10(NewFlux)) - 1)
-
-    print "NormFlux, NewScale, Gamma"
-    print NormFlux, " ", NewScale, " ", Gamma
-
-    Fit[IdNorm].setBounds(0, Flux * 1000)
-    Fit[IdNorm].setScale(NewScale)
-    Fit[IdNorm] = NormFlux
-    Fit[IdNorm].setBounds(NormFlux * 0.05, NormFlux * 50)
 
     return Fit
 
-
-def Analysis(folder, config, tag="", convtyp='-1'):
-    from gtfunction import Observation
-    from fitfunction import MakeFit
-    Obs = Observation(folder, config, convtyp, tag=tag)
-    _log('SUMMARY' + tag)
-    Obs.printSum()
-    runfit = MakeFit(Obs, config)
-    if config['Spectrum']['FitsGeneration'] == 'yes':
-        runfit.PreparFit()
-    return runfit, Obs
-
 def PrepareEbin(Fit, runfit):
+    """ Prepare the computation of spectral point in energy bins by
+    i) removeing the weak sources (TS<1)
+    ii) updating the config file (option and energy) 
+    and save it in a new ascii file
+    iii) changing the spectral model and saving it in a new xml file.
+    A list of the ascii files is returned"""
+
     NEbin = int(runfit.config['Ebin']['NumEnergyBins'])
 
     config = runfit.config
-    config['UpperLimit']['envelope'] = 'no'
-    config['Ebin']['NumEnergyBins'] = '0'
+    #update the config to allow the fit in energy bins
+    config['UpperLimit']['envelope'] = 'no' 
+    config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
     config['out'] = runfit.config['out'] + '/Ebin' + str(NEbin)
-    config['Spectrum']['ResultPlots'] = 'no'
-    config['Spectrum']['FitsGeneration'] = 'yes'
+    config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
+    #copy the chose of the user for the enery bin computing
+    config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration'] 
     config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
     tag = runfit.config['file']['tag']
     lEmax = np.log10(float(runfit.config['energy']['emax']))
@@ -306,22 +253,24 @@ def PrepareEbin(Fit, runfit):
     print("Emin = ", float(runfit.config['energy']['emin']),
           " Emax = ", float(runfit.config['energy']['emax']),
           " Nbins = ", NEbin)
+
     ener = np.logspace(lEmin, lEmax, NEbin + 1)
     os.system("mkdir -p " + config['out'])
     paramsfile = []
 
-    RemoveWeakSources(Fit)
+    RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
     srcname = runfit.config['target']['name']
 
-    for ibin in xrange(NEbin):
-        E = int(pow(10, (np.log10(ener[ibin + 1]) + np.log10(ener[ibin])) / 2))
+    for ibin in xrange(NEbin):#Loop over the energy bins
+        E = GetE0(ener[ibin + 1],ener[ibin])#int(pow(10, (np.log10(ener[ibin + 1]) + np.log10(ener[ibin])) / 2))
         print "Submition # ", ibin, " at energy ", E
+        #Update the model for the bin
         ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname)
         Xmlname = (config['out'] + "/" + srcname +
                     "_" + str(ibin) + ".xml")
-        Fit.writeXml(Xmlname)
+        Fit.writeXml(Xmlname)# dump the corresponding xml file
         config['file']['xml'] = Xmlname
-        config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration']
+        #update the energy bounds
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
@@ -329,7 +278,7 @@ def PrepareEbin(Fit, runfit):
                     config['target']['name'] + "_" +
                     str(ibin) + ".conf")
         paramsfile.append(filename)
-        config.write(open(paramsfile[ibin], 'w'))
+        config.write(open(paramsfile[ibin], 'w')) #save the config file in a ascii file
 
     return paramsfile
 
@@ -337,7 +286,6 @@ def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
     return (config['out'] + "/" + config['target']['name'] + "_" +
                   config['file']['tag'] + "_out.xml")
-
 
 def _dump_filename(config):
     """Give the name of the file where the results will be dumped"""
