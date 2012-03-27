@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Produce a TS map"""
 import sys
-from enrico.tsmap import runTSMap
+import enrico.tsmap as tsmap
 
 try:
     infile = sys.argv[1]
@@ -9,5 +9,7 @@ except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
-runTSMap(infile)
+
+TSm = tsmap.TSMap(infile)
+TSm.runTSMap()
 
