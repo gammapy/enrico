@@ -5,7 +5,6 @@ import ROOT
 import utils
 import root_style
 import plotting
-import RunGTlike
 import environ
 from config import get_config
 from submit import call

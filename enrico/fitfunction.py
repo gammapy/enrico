@@ -8,13 +8,11 @@
 import numpy as np
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
-
 import utils
 
-
 class MakeFit(object):
-    """@todo: document me"""
-
+    """Collection of functions to prepare/run the GTLIKE fit
+     and compute an upper limit is needed"""
     def __init__(self, obs, config):
         self.obs = obs
         self.config = config
@@ -113,21 +111,71 @@ class MakeFit(object):
 
         #Get the result of the fit and print some information
         #A dictionnaty is created with store all the results 
+#       #Create and file partially a dictionnary with the results
+#        Result = utils.PrintResult(Fit, self.obs)
+
+#        return Result # The dictionnary is returned
+
+    def GetAndPrintResults(self, Fit):
+        """Get and print some useful results. Also contruct a dictonnary and fill it with results"""
         self._log('Results', 'Print results of the fit')
-       #Create and file partially a dictionnary with the results
-        Result = utils.PrintResult(Fit, self.obs)
-        Result['log_like'] = self.log_like
+        Result = {}
+        print Fit.model
+        print
+        # Print src name, Npred and TS for source with TS > 5
+        print "Source Name\tNpred\tTS"
+        for src in Fit.model.srcNames:
+            if Fit.Ts(src) > 5:
+                print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
+        print
+        print '# ' + '*' * 60
+        print
+        # fill the dictonnary with some values
+        Result['Optimizer'] = Fit.optimizer
+        Result['Npred'] = Fit.NpredValue(self.obs.srcname)
+        Result['TS'] = Fit.Ts(self.obs.srcname)
+        print "Values and (MINOS) errors for " + self.obs.srcname
+        print "TS : ", Fit.Ts(self.obs.srcname)
+
+        # Get the python object 'Spectrum' for the source of interest
+        spectrum = Fit[self.obs.srcname].funcs['Spectrum']
+        # Get the names of the parameters for the source of interest
+        ParName = spectrum.paramNames
+        #Get the model type and fill the dictonnary
+        stype = Fit.model.srcs[self.obs.srcname].spectrum().genericName()
+        Result['ModelType'] = stype
+        Result['log_like'] = Fit.logLike.value()
+        #Add the energy information to the result dictionnary
         Result['Emin'] = self.obs.Emin
         Result['Emax'] = self.obs.Emax
+        #Add the time information to the result dictionnary
         Result['tmin'] = self.config['time']['tmin']
         Result['tmax'] = self.config['time']['tmax']
+
+        for par in ParName : #Loop over the parameters and get value, error and scale
+            ParValue = spectrum.getParam(par).value()
+            ParError = spectrum.getParam(par).error()
+            Scale = spectrum.getParam(par).getScale()
+            Result[par] = ParValue * Scale
+            Result['d'+par] = ParError * Scale
+            if Fit.Ts(self.obs.srcname) > 5 and ParError>0: # Compute MINOS errors for relevent parameters
+                try:
+                    MinosErrors = Fit.minosError(self.obs.srcname, par)
+                    print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
+                          (ParValue, ParError, MinosErrors[0], MinosErrors[1], Scale))
+                    Result.update({'d'+par+'-': MinosErrors[0] * Scale})
+                    Result.update({'d'+par+'+': MinosErrors[1] * Scale})
+                except:
+                    print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                          (ParValue, ParError, Scale))
+            else:
+                print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                      (ParValue, ParError, Scale))
 
         try: # get covariance matrix
             utils.GetCovar(self.obs.srcname, Fit)
         except:
             pass #if the covariance matrix has not been computed
-
-        utils.GetFlux(Fit,self.obs.Emin,self.obs.Emax) #print the flux of all the sources
 
         #Compute an UL if the source is too faint
 #        TODO : check this part of the UL
@@ -137,8 +185,11 @@ class MakeFit(object):
             else:
                 Ulval = self.ComputeUL(Fit)
                 Result['Ulvalue'] = Ulval
+        else : #else save the flux and error of the target in the user energy range
+            Result['Flux'] = Fit.flux(src,self.obs.Emin,self.obs.Emax)
+            Result['dFlux'] = Fit.fluxError(src,self.obs.Emin,self.obs.Emax)
 
-        return Result # The dictionnary is returned
+        return Result   #Return the dictionnary
 
     def ComputeUL(self, Fit):
         """Compute an Upper Limit using either the profil or integral method
@@ -211,15 +262,15 @@ class MakeFit(object):
         for j in xrange(Npgraph):
             print ener[j], " ", Ulenv[j]
 
-    def PlotSED(self, Fit):
-        """Plot the SED with the butterfly for all the model"""
+    def ComputeSED(self, Fit):
+        """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        filename = self.config['out'] + '/SED_' + self.obs.srcname
-        Par = plotting.Params(self.obs.srcname,
-                              Emin=self.obs.Emin,
-                              Emax=3e5, extend=False, PlotName=filename)
-        plotting.Tgraph(Fit, Par)
+        filename = self.config['out'] + '/SED_' + self.obs.srcname +'_'+ Fit[self.obs.srcname].funcs['Spectrum'].genericName()
+        Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
+                              Emax=self.obs.Emax, PlotName=filename)
+        result = plotting.Result(Fit, Param)
+        result._DumpSED(Param)
 
     def ModelMap(self, xml):
         """Make a model Map. Valid only if the statistic is binned"""

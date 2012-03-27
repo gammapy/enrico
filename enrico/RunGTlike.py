@@ -6,10 +6,13 @@ from config import get_config
 import environ
 
 def run(infile):
-    """@todo: document me"""
+    """Run an entire Fermi analysis (spectrum) by reading a config file"""
     config = get_config(infile)
     folder = config['out']
     os.system('mkdir -p ' + folder)
+
+    #check is the summed likelihood method should be used and get the 
+    #Analysis objects (observation and (Un)BinnedAnalysis objects)
     SummedLike = config['Spectrum']['SummedLike']
     if SummedLike == 'yes':
         # Create two obs instances
@@ -26,38 +29,43 @@ def run(infile):
         # Create one obs instance
         runfit, _ = utils.Analysis(folder, config, tag="", convtyp=convtype)
         Fit = runfit.CreateFit()
-    Result = runfit.PerformFit(Fit)
+    # create all the fit files and run gtlike
+    runfit.PerformFit(Fit)
+
+    utils.GetFluxes(Fit,runfit.obs.Emin,runfit.obs.Emax) #print the flux of all the sources
+
+    Result = runfit.GetAndPrintResults(Fit)#Get and dump the target specific results
     utils.DumpResult(Result, config)
 
-    if config['Spectrum']['ResultPlots'] == 'yes' and float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
-        runfit.PlotSED(Fit)
-
-    if config['analysis']['likelihood'] == 'binned':
+    #plot the SED and model map if possible and asked
+    if config['Spectrum']['ResultPlots'] == 'yes' :
+        if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
+            runfit.ComputeSED(Fit)
         outXml = utils._dump_xml(config)
-        if SummedLike == 'yes':
+        if SummedLike == 'yes': # the possiblity of making the model map is checked inside the function
             runfitback.ModelMap(outXml)
             runfitfront.ModelMap(outXml)
         else:
             runfit.ModelMap(outXml)
 
+    #  Make energy bins by run a *new* analysis
     if int(config['Ebin']['NumEnergyBins']) > 0:
         configfiles = utils.PrepareEbin(Fit, runfit)
-        print configfiles
         ind = 0
         enricodir = environ.DIRS.get('ENRICO_DIR')
         for conf in configfiles:
-#            os.system('enrico_sed ' + conf)
              config = get_config(conf)
-
              cmd = "enrico_sed " + conf
-             prefix = config['out'] + "/Ebin" + str(ind) 
-             scriptname = prefix + "_Script.sh"
-             JobLog = prefix + "_Job.log"
-             JobName = (config['target']['name'] + "_" +
-                       config['analysis']['likelihood'] +
-                       "_Ebin_" + str(ind) + "_" + config['file']['tag'])
-
-             call(cmd, enricodir, scriptname, JobLog, JobName)
+             if config['Ebin']['Submit'] == 'no' : #run directly
+                 os.system(cmd)
+             else : #submit a job to a cluster
+                 prefix = config['out'] + "/Ebin" + str(ind) 
+                 scriptname = prefix + "_Script.sh"
+                 JobLog = prefix + "_Job.log"
+                 JobName = (config['target']['name'] + "_" +
+                           config['analysis']['likelihood'] +
+                           "_Ebin_" + str(ind) + "_" + config['file']['tag'])
+                 call(cmd, enricodir, scriptname, JobLog, JobName)# submition
              ind+=1
 
 # @todo: Should this be a command line utility in bin?
