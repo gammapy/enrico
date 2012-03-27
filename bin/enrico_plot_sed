@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Plot a SED"""
 import sys
-from enrico.plotting import PlotSED
+from enrico.plotting import PlotSED,Params
+from enrico.config import get_config
 
 try:
     infile = sys.argv[1]
@@ -9,4 +10,10 @@ except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
-PlotSED(infile)
+config = get_config(infile)
+srcname = config['target']['name']
+Emin = config['energy']['emin']
+Emax = config['energy']['emax']
+filename = config['out'] + '/SED_' + srcname +'_'+ config['target']['spectrum']
+Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
+PlotSED(infile,Param)

@@ -9,240 +9,188 @@ import utils
 
 
 class Params:
-    """Collection of plot parameters"""
-    def __init__(self, srcname, Emin=100, Emax=3e5, extend=False,
-                 PlotName="LAT_SED", LineColor=1, AreaColor=2, plotRes=False):
-        self.Emin = Emin
+    """Collection of Plotting parameters like Energy bounds,
+    colors, file name, etc...."""
+    def __init__(self, srcname, Emin=100, Emax=3e5,
+                 PlotName="LAT_SED", LineColor=2,
+                 PointColor = 1, N = 500):
+        self.Emin = Emin #Energy bounds
         self.Emax = Emax
-        self.N = 500
-        self.srcname = srcname
-        self.extend = extend
-        self.PlotName = PlotName
+        self.N = N #Number of points for the TGraph
+        self.srcname = srcname # Source of interest
+        self.PlotName = PlotName #file name
+        #color options
         self.LineColor = LineColor
-        self.AreaColor = AreaColor
-        self.plotRes = plotRes
-
+        self.PointColor = PointColor
 
 class Result:
-    """Helper class to get at results"""
-    Prefac_UL = 0.
-
-    def __init__(self, like, pars):
-        self.like = like
-        self.ra = like[pars.srcname].funcs['Position'].getParam('RA').value()
-        self.dec = like[pars.srcname].funcs['Position'].getParam('DEC').value()
-        self.Model = like[pars.srcname].funcs['Spectrum'].genericName()
+    """Helper class to get the results from a (Un)BinnedAnalysis object
+    and compute the SED and errors"""
+    def __init__(self, Fit, pars):
+        self.Fit = Fit
+        self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
         try:
-            self.TS = like.Ts(pars.srcname)
+            self.TS = Fit.Ts(pars.srcname)
         except RuntimeError:
             self.TS = -1
-        self.ptsrc = pyLikelihood.PointSource_cast(like[pars.srcname].src)
-        par_index_map = {}
-        indx = 0
-        for src in like.sourceNames():
-            parNames = pyLikelihood.StringVector()
-            like[src].src.spectrum().getFreeParamNames(parNames)
-            for par in parNames:
-                par_index_map["::".join((src, par))] = indx
-                indx += 1
-        # Build the source-specific covariance matrix.
-        if like.covariance is None:
-            raise RuntimeError("Covariance matrix has not been computed.")
-        covar = np.array(like.covariance)
-        if len(covar) != len(par_index_map):
-            raise RuntimeError("Covariance matrix size does not match the " +
-                   "number of free parameters.")
-        my_covar = []
-        srcpars = pyLikelihood.StringVector()
-        like[pars.srcname].src.spectrum().getFreeParamNames(srcpars)
-        pars = ["::".join((pars.srcname, x)) for x in srcpars]
-        for xpar in pars:
-            ix = par_index_map[xpar]
-            my_covar.append([covar[ix][par_index_map[ypar]] for ypar in pars])
-        self.covar = np.array(my_covar)
-        self.srcpars = srcpars
+        self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
+        self.covar = np.array(utils.GetCovar(pars.srcname, self.Fit))
+        self.srcpars = pyLikelihood.StringVector()
 
-
-def MakeError(result, pars):
-    """@todo: document me"""
-    estep = np.log(pars.Emax / pars.Emin) / (pars.N - 1)
-    energies = pars.Emin * np.exp(estep * np.arange(np.float(pars.N)))
-    err = np.zeros(pars.N)
-    j = 0
-    for ene in energies:
-        arg = pyLikelihood.dArg(ene)
-        partials = np.zeros(len(result.srcpars))
-        for i in xrange(len(result.srcpars)):
-            x = result.srcpars[i]
-            partials[i] = result.ptsrc.spectrum().derivByParam(arg, x)
-        err[j] = np.sqrt(np.dot(partials, np.dot(result.covar, partials)))
-        j += 1
-    # @todo: document constant
-    return 1.602e-6 * energies ** 2 * err
-
-
-def dNde(result, energy):
-    arg = pyLikelihood.dArg(energy)
-    return result.ptsrc.spectrum()(arg)
-
-
-def MakeFlux(result, params):
-    """Compute differential Flux distribution and
-    corresponding energy and return a numpy array"""
-    E = np.logspace(np.log10(params.Emin), np.log10(params.Emax), params.N)
-    Flux = np.zeros(params.N)
-    for i in xrange(params.N):
-        Flux[i] = dNde(result, E[i])
-    return E, Flux
-
-
-def MakeFluxInBin(result, pars, Emin_bin, Emax_bin):
-    """Compute differential Flux distribution and
-    corresponding energy and return a numpy array"""
-    E = np.logspace(np.log10(Emin_bin), np.log10(Emax_bin), pars.N)
-    Flux = np.zeros(pars.N)
-    for i in xrange(pars.N):
-        Flux[i] = dNde(result, E[i])
-    return E, Flux
-
-
-def MakeSED(result, pars):
-    """Compute Spectral energy distribution and corresponding energy
-    and return a numpy array"""
-    E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
-    nuFnu = np.zeros(pars.N)
-    for i in xrange(pars.N):
-        nuFnu[i] = 1.602e-6 * E[i] ** 2 * dNde(result, E[i])
-    return E, nuFnu
-
-
-def MakeSEDInBin(result, pars, Emin_bin, Emax_bin):
-    """Compute Spectral energy distribution and corresponding energy
-    and return a numpy array"""
-    E = np.logspace(np.log10(Emin_bin), np.log10(Emax_bin), pars.N)
-    nuFnu = np.zeros(pars.N)
-    for i in xrange(pars.N):
-        nuFnu[i] = 1.602e-6 * E[i] ** 2 * dNde(result, E[i])
-    return E, nuFnu
-
-
-def CountsPlot(Result, Parameter):
-    """@todo: document me"""
-    ROOT.gROOT.SetBatch(ROOT.kTRUE)
-    imName = "tmp.fits"
-    Result.like.writeCountsSpectra(imName)
-    image = pyfits.open(imName)
-    #loop on the source names to find the good one
-    j = 0
-    for ID in image[1].data.names:
-        if ID == Parameter.srcname:
-            indice = j
-        j += 1
-    emax = image[3].data.field(0)
-    emin = image[3].data.field(1)
-
-    E = np.array((emax + emin) / 2.)
-    err_E = np.array((-emax + emin) / 2.)
-
-    src = np.array(image[1].data.field(indice))
-    Nbin = len(src)
-
-    obs = np.array(image[1].data.field(0))
-    obs_err = np.array(np.sqrt(image[1].data.field(0)))
-    total = 0
-    for i in xrange(len(image[1].data.names) - 1):
-        total = total + image[1].data.field(i + 1)
-
-    other = np.array(total - image[1].data.field(indice))
-    total = np.array(total)
-    residual = np.zeros(Nbin)
-    Dres = np.zeros(Nbin)
-
-    for i in xrange(Nbin):
+    def _DumpSED(self,par):
+        """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
+        The count and residuals plot vs E is also made"""
+        E, SED = sefl.MakeSED(par)
+        Err = self.MakeSEDError(par)
         try:
-            residual[i] = (obs[i] - total[i]) / total[i]
+            self.CountsPlot(par)
         except:
-            residual[i] = 0.
-        try:
-            Dres[i] = (obs_err[i] / total[i])
-        except:
-            Dres[i] = 0.
+            pass
+        # Save all in ascii file
+        # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
+        save_file = open(par.PlotName + '.dat', 'w')
+        save_file.write("log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
+        for i in xrange(par.N):
+            save_file.write("%12.4e  %12.4e  %12.4e \n" % (E[i], SED[i], Err[i]))
+        save_file.close()
 
-    cmap = ROOT.TCanvas("cmap")
-    cmap.SetLogy()
-    cmap.SetLogx()
-    ghcount = ROOT.TH2F("ghcount", "", 80, 91, 499e3, 100, 0.1, max(obs) * 2)
-    ghcount.SetStats(000)
-    ghcount.SetXTitle("E (MeV) ")
-    ghcount.SetYTitle("Counts / bin")
-    ghcount.Draw()
-    tgrobs = ROOT.TGraphErrors(Nbin, E, obs, err_E, obs_err)
-    tgrobs.SetLineColor(1)
-    tgrobs.SetMarkerColor(1)
-    tgrobs.SetMarkerStyle(1)
-    tgrobs.Draw("P")
+    def MakeFlux(self, params):
+        """Compute differential Flux distribution and
+        corresponding energy and return a numpy array"""
+        E = np.logspace(np.log10(params.Emin), np.log10(params.Emax), params.N)
+        Flux = np.zeros(params.N)
+        for i in xrange(params.N):
+            Flux[i] = self.dNde(E[i])
+        return E, Flux
 
-    tgrother = ROOT.TGraph(Nbin, E, other)
-    tgrother.SetLineWidth(2)
-    tgrother.SetLineStyle(2)
-    tgrother.Draw("L")
+    def MakeSED(self, pars):
+        """Compute Spectral energy distribution and corresponding energy
+        and return a numpy array"""
+        E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
+        nuFnu = np.zeros(pars.N)
+        for i in xrange(pars.N):
+            nuFnu[i] = 1.602e-6 * E[i] ** 2 * self.dNde(E[i]) #Mev to Ergs
+        return E, nuFnu
 
-    tgr = ROOT.TGraph(Nbin, E, src)
-    tgr.SetLineColor(1)
-    tgr.SetLineWidth(2)
-    tgr.Draw("L")
+    def MakeSEDError(self, pars):
+        """@todo: document me"""
+        estep = np.log(pars.Emax / pars.Emin) / (pars.N - 1)
+        energies = pars.Emin * np.exp(estep * np.arange(np.float(pars.N)))
+        err = np.zeros(pars.N)
+        j = 0
+        for ene in energies:
+            arg = pyLikelihood.dArg(ene)
+            partials = np.zeros(len(self.srcpars))
+            for i in xrange(len(self.srcpars)):
+                x = self.srcpars[i]
+                partials[i] = self.ptsrc.spectrum().derivByParam(arg, x)
+            err[j] = np.sqrt(np.dot(partials, np.dot(self.covar, partials)))
+            j += 1
+        return 1.602e-6 * energies ** 2 * err #Mev to Ergs
 
-    tgrsum = ROOT.TGraph(Nbin, E, total)
-    tgrsum.SetLineStyle(3)
-    tgrsum.SetLineWidth(2)
-    tgrsum.Draw("L")
+    def dNde(self, energy):
+        arg = pyLikelihood.dArg(energy)
+        return self.ptsrc.spectrum()(arg)
 
-    cres = ROOT.TCanvas("cres")
-    cres.SetLogx()
-    ymin = min(residual) - max(Dres)
-    ymax = max(residual) + max(Dres)
-    ghres = ROOT.TH2F("ghres", "", 80, 91, 499e3, 100, ymin, ymax)
-    ghres.SetStats(000)
-    ghres.SetXTitle("E (MeV) ")
-    ghres.SetYTitle("(counts -model)/model")
-    ghres.Draw()
-    tgres = ROOT.TGraphErrors(Nbin, E, residual, err_E, Dres)
-    tgres.Draw("P")
+    def CountsPlot(self, Parameter):
+        """@todo: document me"""
+        ROOT.gROOT.SetBatch(ROOT.kTRUE)
+        imName = "tmp.fits"
+        self.Fit.writeCountsSpectra(imName)
+        image = pyfits.open(imName)
 
-    zero = np.zeros(2)
-    Ezero = np.array([0, 1e10])
-    tg0 = ROOT.TGraph(2, Ezero, zero)
-    tg0.SetLineStyle(2)
-    tg0.Draw("L")
+        #loop on the source names to find the good one
+        j = 0
+        for ID in image[1].data.names:
+            if ID == Parameter.srcname:
+                indice = j
+            j += 1
 
-    # Save the plots in different formats
-    filebase = Parameter.PlotName
-    cmap.Print(filebase + "_CountsPlot.eps")
-    cmap.Print(filebase + "_CountsPlot.C")
-    cmap.Print(filebase + "_CountsPlot.png")
-    cres.Print(filebase + "_ResPlot.eps")
-    cres.Print(filebase + "_ResPlot.C")
-    cres.Print(filebase + "_ResPlot.png")
-    os.system("rm " + imName)
-    image.close()
+        emax = image[3].data.field(0)
+        emin = image[3].data.field(1)
 
+        E = np.array((emax + emin) / 2.)
+        err_E = np.array((-emax + emin) / 2.)
 
-def Tgraph(like, par):
-    """@todo: document me"""
-    Res = Result(like, par)
-    E, SED = MakeSED(Res, par)
-    Err = MakeError(Res, par)
-    try:
-        CountsPlot(Res, par)
-    except:
-        pass
-    # Save all in ascii file
-    # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
-    save_file = open(par.PlotName + '.dat', 'w')
-    save_file.write("log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)   \n")
-    for i in xrange(par.N):
-        save_file.write("%12.4e  %12.4e  %12.4e \n" % (E[i], SED[i], Err[i]))
+        src = np.array(image[1].data.field(indice))
+        Nbin = len(src)
 
+        obs = np.array(image[1].data.field(0))
+        obs_err = np.array(np.sqrt(image[1].data.field(0)))
+        total = 0
+        for i in xrange(len(image[1].data.names) - 1):
+            total = total + image[1].data.field(i + 1)
+
+        other = np.array(total - image[1].data.field(indice))
+        total = np.array(total)
+        residual = np.zeros(Nbin)
+        Dres = np.zeros(Nbin)
+
+        for i in xrange(Nbin):
+            try:
+                residual[i] = (obs[i] - total[i]) / total[i]
+                Dres[i] = (obs_err[i] / total[i])
+            except:
+                residual[i] = 0.
+                Dres[i] = 0.
+
+        cplot = ROOT.TCanvas("Count Plot")
+        cplot.SetLogy()
+        cplot.SetLogx()
+        ghcount = ROOT.TH2F("ghcount", "", 80, 91, 499e3, 100, 0.1, max(obs) * 2)
+        ghcount.SetStats(000)
+        ghcount.SetXTitle("E (MeV) ")
+        ghcount.SetYTitle("Counts / bin")
+        ghcount.Draw()
+        tgrobs = ROOT.TGraphErrors(Nbin, E, obs, err_E, obs_err)
+        tgrobs.SetLineColor(1)
+        tgrobs.SetMarkerColor(1)
+        tgrobs.SetMarkerStyle(1)
+        tgrobs.Draw("P")
+
+        tgrother = ROOT.TGraph(Nbin, E, other)
+        tgrother.SetLineWidth(2)
+        tgrother.SetLineStyle(2)
+        tgrother.Draw("L")
+
+        tgr = ROOT.TGraph(Nbin, E, src)
+        tgr.SetLineColor(1)
+        tgr.SetLineWidth(2)
+        tgr.Draw("L")
+
+        tgrsum = ROOT.TGraph(Nbin, E, total)
+        tgrsum.SetLineStyle(3)
+        tgrsum.SetLineWidth(2)
+        tgrsum.Draw("L")
+
+        cres = ROOT.TCanvas("Residuals plot")
+        cres.SetLogx()
+        ymin = min(residual) - max(Dres)
+        ymax = max(residual) + max(Dres)
+        ghres = ROOT.TH2F("ghres", "", 80, 91, 499e3, 100, ymin, ymax)
+        ghres.SetStats(000)
+        ghres.SetXTitle("E (MeV) ")
+        ghres.SetYTitle("(counts -model)/model")
+        ghres.Draw()
+        tgres = ROOT.TGraphErrors(Nbin, E, residual, err_E, Dres)
+        tgres.Draw("P")
+
+        zero = np.zeros(2)
+        Ezero = np.array([0, 1e10])
+        tg0 = ROOT.TGraph(2, Ezero, zero)
+        tg0.SetLineStyle(2)
+        tg0.Draw("L")
+
+        # Save the plots in different formats
+        filebase = Parameter.PlotName
+        cplot.Print(filebase + "_CountsPlot.eps")
+        cplot.Print(filebase + "_CountsPlot.C")
+        cploy.Print(filebase + "_CountsPlot.png")
+        cres.Print(filebase + "_ResPlot.eps")
+        cres.Print(filebase + "_ResPlot.C")
+        cres.Print(filebase + "_ResPlot.png")
+        os.system("rm " + imName)
+        image.close()
 
 def PlotTS(Time, TimeErr, TS):
     """Scatter plot TS(Time)"""
@@ -317,12 +265,13 @@ def PlotDataPoints(config):
     FluxpointErrp = np.zeros(NEbin)
     FluxpointErrm = np.zeros(NEbin)
     ener = np.logspace(lEmin, lEmax, NEbin + 1)
-    for i in xrange(NEbin):
+
+    for i in xrange(NEbin):#Loop over the energy bins
         E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
-        filename = (config['out'] + '/Ebin/' + config['target']['name'] +
-                    "_" + str(E) + ".conf")
-        CurConf = get_config(filename)
+        filename = (config['out'] + '/Ebin'+str(NEbin)+'/' + config['target']['name'] +
+                    "_" + str(i) + ".conf")
         try:
+            CurConf = get_config(filename)
             print "Reading ",filename
             results = utils.ReadResult(CurConf)
         except:
@@ -341,7 +290,7 @@ def PlotDataPoints(config):
                 down = abs(results.get("dPrefactor-"))
                 up = results.get("dPrefactor+")
                 if down==0 or  up ==0 :
-                  raise RuntimeError("error")
+                  raise RuntimeError("cannot get Error value")
                 FluxpointErrp[i] = 1.6022e-6 * up * Epoint[i] ** 2
                 FluxpointErrm[i] = 1.6022e-6 * down * Epoint[i] ** 2
             except:
@@ -361,27 +310,28 @@ def PlotDataPoints(config):
     return tgpoint, arrows
 
 
-def PlotSED(infile):
+def PlotSED(infile,pars):
     """@todo: document me"""
     config = get_config(infile)
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
     root_style.RootStyle()
-    filebase = config['out'] + '/SED_' + config['target']['name']
+    filebase = config['out'] + '/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
     lines = open(filebase + '.dat', 'r').readlines()
-    ilen = len(lines) - 1
 
-    SED = np.zeros(ilen)
-    E = np.zeros(ilen)
-    Err = np.zeros(ilen)
+    SED = []#np.zeros(ilen)
+    E = []#np.zeros(ilen)
+    Err = []# np.zeros(ilen)
 
-    for i in xrange(ilen):
+    for i in xrange(len(lines) - 1):
         words = lines[i + 1].split()
-        E[i] = float(words[0])
-        SED[i] = float(words[1])
-        Err[i] = float(words[2])
+        if float(words[0])<pars.Emax :
+            E.append(float(words[0]))
+            SED.append(float(words[1]))
+            Err.append(float(words[2]))
+    ilen = len(SED)
 
-    Fluxp = SED*np.exp(Err/SED)#SED + Err
-    Fluxm =  SED*np.exp(-Err/SED)#SED - Err
+    Fluxp = np.array(SED)*np.exp(np.array(Err)/np.array(SED))#SED + Err
+    Fluxm =  np.array(SED)*np.exp(-np.array(Err)/np.array(SED))#SED - Err
     ErrorFlux = np.zeros(2 * ilen + 1)
     ErrorE = np.zeros(2 * ilen + 1)
 
@@ -394,7 +344,7 @@ def PlotSED(infile):
     ErrorFlux[-1] = Fluxp[0]
     ErrorE[-1] = E[0]
 
-    c_plot = ROOT.TCanvas("c_plot")
+    c_plot = ROOT.TCanvas("Fermi-LAT SED")
     c_plot.SetLogx()
     c_plot.SetLogy()
 
@@ -403,26 +353,30 @@ def PlotSED(infile):
     ymax = max(SED[0] + Err[0], SED[-1] + Err[-1]) * 3
     ghSED = ROOT.TH2F("ghSED", "", 10000, xmin, xmax, 100, ymin, ymax)
     ghSED.SetStats(000)
-    ghSED.SetTitle("Fermi SED")
+    ghSED.SetTitle("Fermi-LAT SED")
     ghSED.SetXTitle("E [MeV]")
     ghSED.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
     ghSED.Draw()
 
-    tgr = ROOT.TGraph(ilen, E, SED)
+    tgr = ROOT.TGraph(ilen, np.array(E), np.array(SED))
     tgr.SetLineWidth(2)
+    tgr.SetLineColor(pars.LineColor)
     tgr.Draw("L")
 
     tgerr = ROOT.TGraph(2 * ilen + 1, ErrorE, ErrorFlux)
-    tgerr.SetLineColor(2)
+    tgerr.SetLineColor(pars.LineColor)
     tgerr.Draw("L")
 
     #Plot points
     NEbin = int(config['Ebin']['NumEnergyBins'])
     if NEbin > 0:
         tgpoint, Arrow = PlotDataPoints(config)
+        tgpoint.SetLineColor(pars.PointColor)
+        tgpoint.SetMarkerColor(pars.PointColor)
         tgpoint.Draw("pz")
-
         for i in xrange(len(Arrow)):
+            Arrow[i].SetLineColor(pars.PointColor)
+            Arrow[i].SetMarkerColor(pars.PointColor)
             Arrow[i].Draw()
 
 #TODO add a writeTOASCII
