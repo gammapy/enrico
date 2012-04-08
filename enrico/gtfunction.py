@@ -48,8 +48,8 @@ class Observation:
         self.t2        = float(Configuration['time']['tmax'])
         self.Emin      = float(Configuration['energy']['emin'])
         self.Emax      = float(Configuration['energy']['emax'])
-        self.ra        = float(Configuration['target']['ra'])
-        self.dec       = float(Configuration['target']['dec'])
+        self.ra        = float(Configuration['space']['xref'])
+        self.dec       = float(Configuration['space']['yref'])
         self.roi       = float(Configuration['space']['rad'])
         self.irfs      = Configuration['analysis']['irfs']
 

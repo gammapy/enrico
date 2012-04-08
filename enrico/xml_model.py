@@ -287,11 +287,14 @@ def GetlistFromFits(config, catalog):
     srcname = config['target']['name']
     ra_src = config['target']['ra']
     dec_src = config['target']['dec']
+    ra_space = config['space']['xref']
+    dec_space = config['space']['yref']
     emin = config['energy']['emin']
     roi = config['space']['rad']
     max_radius = config['model']['max_radius']
     min_significance = config['model']['min_significance']
     model = config['target']['spectrum']
+
     cfile = pyfits.open(catalog)
     data = cfile[1].data
     names = data.field('Source_Name')
@@ -312,16 +315,17 @@ def GetlistFromFits(config, catalog):
 
     Nfree = 1
     for i in xrange(len(names)):
+        rspace = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_space, dec_space)
+        rsrc = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
 
-        r = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
-        if  r < max_radius and r > .1 and  sigma[i] > min_significance:
+        if  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
             Nfree += 1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
                             'SpectrumType': spectype[i]})
         else:
-            if  r < roi and r > .1  and  sigma[i] > min_significance:
+            if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                 'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
@@ -441,27 +445,3 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
                    color + " text={" + str(name) + "}\n")
     fds9.close()
 
-# @todo: Move this main to a script if it doesn't exist already
-if __name__ == '__main__':
-    import sys
-    try:
-        infile = sys.argv[1]
-    except:
-        print('FATAL: Config file not found.')
-        sys.exit(1)
-
-    try:
-        Catalog = sys.argv[2]
-    except:
-        print('FATAL: Catalog file not found.')
-        sys.exit(1)
-
-    config = get_config(infile)
-    folder = config['out']
-    os.system('mkdir -p ' + folder)
-
-    lib = CreateLib()
-    srclist = GetlistFromFits(config, Catalog)
-    # @todo: undefined variable 'doc'
-    # WriteXml(lib, doc, srclist, config)
-    Xml_to_Reg(folder + "/Roi_model", srclist, Prog=sys.argv[0])
