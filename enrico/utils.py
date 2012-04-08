@@ -28,6 +28,7 @@ def Prefactor(flux,index,emin,emax,escale):
     return flux*(-abs(index)+1)*pow(escale,-abs(index)) / Denomin
 
 def dNde(energy,Fit,name):
+    '''Compute the dN/dE value at energy E fir the source name'''
     import pyLikelihood
     ptsrc = pyLikelihood.PointSource_cast(Fit[name].src)
     arg = pyLikelihood.dArg(energy)
@@ -106,7 +107,7 @@ def SubstracFits(infile1, infile2, config):
     pyfits.writeto(rel_diff_file, (data1 - data2) / data2, head)
 
 def Analysis(folder, config, tag="", convtyp='-1'):
-    """ """
+    """ run an analysis"""
     from gtfunction import Observation
     from fitfunction import MakeFit
     Obs = Observation(folder, config, convtyp, tag=tag)
@@ -195,7 +196,7 @@ def ChangeModel(Fit, E1, E2, name):
     if not the model is change to PowerLaw.
     The index is frozen in all case"""
 
-    Eav = GetE0(E2,E1)#int(pow(10, (np.log10(E2) + np.log10(E1)) / 2))
+    Eav = GetE0(E2,E1)
     flux = Fit.flux(name,E1,E2) #Source flux between E2 and Em2
     generic_name = Fit.model.srcs[name].spectrum().genericName()
 
@@ -205,12 +206,12 @@ def ChangeModel(Fit, E1, E2, name):
         Gamma = Fit[IdGamma].value()
     else :
         #Compute an approximation of an index
-        dnde1 = log10(dNde(E1,Fit,name))#Prefactor(flux,Gamma,E1,E2,E1)
-        dnde2 = log10(dNde(E2,Fit,name))#Prefactor(flux,Gamma,E1,E2,E2)
+        dnde1 = log10(dNde(E1,Fit,name))
+        dnde2 = log10(dNde(E2,Fit,name))
         Gamma = (dnde2-dnde1)/(log10(1.*E2)-log10(1.*E1))
         Fit.logLike.getSource(name).setSpectrum("PowerLaw") #Change model
 
-    Pref = dNde(Eav,Fit,name)#Prefactor(flux,Gamma,E1,E2,Eav)
+    Pref = dNde(Eav,Fit,name)
 
     # Set Parameters
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
@@ -223,7 +224,6 @@ def ChangeModel(Fit, E1, E2, name):
 
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
-
 
     return Fit
 
@@ -262,7 +262,7 @@ def PrepareEbin(Fit, runfit):
     srcname = runfit.config['target']['name']
 
     for ibin in xrange(NEbin):#Loop over the energy bins
-        E = GetE0(ener[ibin + 1],ener[ibin])#int(pow(10, (np.log10(ener[ibin + 1]) + np.log10(ener[ibin])) / 2))
+        E = GetE0(ener[ibin + 1],ener[ibin])
         print "Submition # ", ibin, " at energy ", E
         #Update the model for the bin
         ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname)
