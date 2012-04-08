@@ -13,46 +13,53 @@ Hi, I am Enrico, and I will help you run your
 
 `Fermi <http://fermi.gsfc.nasa.gov/>`_
 
+Enrico is based on a configuration file which contains all the setup for your analysis. For each enrico tool, you just have to type
+
+.. code-block:: bash
+
+   enrico_'tool' Configuration.conf
+
+A simple analysis
+--------
+
 After you have done the :ref:`setup`, running an analysis is as simple as
 typing these commands:
 
 .. code-block:: bash
 
-   enrico_config <answer a few questions like the position of your target>
-   enrico_xml <answer a few questions about how you'd like to model sources in your ROI>
+   enrico_config Myconfig.conf <answer a few questions like the position of your target>
 
-Now you have to get the data from the 
-`FSSC LAT Data Server <http://fermi.gsfc.nasa.gov/cgi-bin/ssc/LAT/LATDataQuery.cgi>`_
-or if you set up weekly files you can apply selections once so that subsequent analysis will be faster
+It will create an file named Myconfig.conf. Be sure that it contains all your setup. After you should generate an xml file for the sky model : 
 
 .. code-block:: bash
 
-   enrico_get_data (runs gtselect on the weekly photon files)
+   enrico_xml Myconfig.conf
 
-Now run the likelihood analysis for the full energy band:
+
+Now run the likelihood analysis for the full spectrum and data points:
+
+.. code-block:: bash
+
+   enrico_sed Myconfig.conf
+
+If you like,  a light curve or a TS map:
 
 .. code-block:: bash
 
-   enrico_like (runs the analysis for the full energy band)
-
-If you like, you can additionally compute flux points, a light curve,
-a TS map:
-
-.. code-block:: bash
-   
-   enrico_fluxpoints (run gtlike in energy bins) 
-   enrico_lightcurve (run gtlike in time bins)
-   enrico_tsmap (make a TS or residual TS map)
+   enrico_lc Myconfig.conf
+   enrico_tsmap Myconfig.conf
 
 Note that if you have a computing cluster at your disposal, these
 compute-time-intensive tasks can be run in parallel.
 
-Finally at the end you should run the summary command to make
-inspecting your results easy:
+Finally at the end you should plot your results using: 
 
 .. code-block:: bash
 
-   enrico_summary (make plots and a html summary of your analysis)
+   enrico_plot_sed Myconfig.conf (plot the SED)
+   enrico_plot_lc Myconfig.conf (plot the lightcurve)
+   enrico_plot_tsmap Myconfig.conf (generate a fits file for the TS map)
+
 
 Features
 --------
