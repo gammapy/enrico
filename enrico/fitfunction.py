@@ -109,13 +109,6 @@ class MakeFit(object):
         #fit with the user optimizer and ask gtlike to compute the covariance matrix 
         Fit.writeXml(utils._dump_xml(self.config))
 
-        #Get the result of the fit and print some information
-        #A dictionnaty is created with store all the results 
-#       #Create and file partially a dictionnary with the results
-#        Result = utils.PrintResult(Fit, self.obs)
-
-#        return Result # The dictionnary is returned
-
     def GetAndPrintResults(self, Fit):
         """Get and print some useful results. Also contruct a dictonnary and fill it with results"""
         self._log('Results', 'Print results of the fit')
@@ -178,7 +171,6 @@ class MakeFit(object):
             pass #if the covariance matrix has not been computed
 
         #Compute an UL if the source is too faint
-#        TODO : check this part of the UL
         if float(self.config['UpperLimit']['TSlimit']) > Fit.Ts(self.obs.srcname):
             if self.config['UpperLimit']['envelope'] == 'yes':
                 self.EnvelopeUL(Fit)
