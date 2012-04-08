@@ -1,4 +1,4 @@
-"""@todo: document me"""
+"""Central place for the XML generation"""
 import os
 import xml.dom.minidom
 import numpy as np
@@ -8,8 +8,8 @@ import utils
 import enrico.environ as env
 from enrico.config import get_config
 
-
 def addParameter(el, name, free, value, scale, min, max):
+    """Add a parameter to a source"""
     doc = el.ownerDocument
     param = doc.createElement('parameter')
     param.setAttribute('name', name)
@@ -20,10 +20,9 @@ def addParameter(el, name, free, value, scale, min, max):
     param.setAttribute('min', '%g' % min)
     el.appendChild(param)
 
-
-# @todo:  unused parameter: value, scale
-def addDiffusePL(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=1.0,
+def addDiffusePL(lib, file, free=1, value=1.0, max=10.0, min=1.0,
                name='EG_v02'):
+    """Add the diffuse extragalactic diffuse"""
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
@@ -39,9 +38,9 @@ def addDiffusePL(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=1.0,
     src.appendChild(spatial)
     lib.appendChild(src)
 
-
 def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
                name='GAL_v02'):
+    """Add the diffuse galactic diffuse"""
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
@@ -57,48 +56,12 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
     src.appendChild(spatial)
     lib.appendChild(src)
 
-
-def addDiffusePL2(lib, file, name, emin=200, emax=3e5,
-                   flux_free=1, flux_value=1.6e-8, flux_scale=0,
-                   flux_max=1000.0, flux_min=1e-5,
-                   index_free=1, index_value=-2.0,
-                   index_min=-5.0, index_max=-0.5):
-    elim_min = 30
-    elim_max = 300000
-    if emin < elim_min:
-        elim_min = emin
-    if emax > elim_max:
-        elim_max = emax
-    if flux_scale == 0:
-        flux_scale = utils.fluxScale(flux_value)
-    flux_value /= flux_scale
-
-    doc = lib.ownerDocument
-    src = doc.createElement('source')
-    src.setAttribute('name', name)
-    src.setAttribute('type', 'DiffuseSource')
-    spec = doc.createElement('spectrum')
-    spec.setAttribute('type', 'PowerLaw2')
-    addParameter(spec, 'Integral',
-                 flux_free, flux_value, flux_scale, flux_min, flux_max)
-    addParameter(spec, 'Index', index_free, index_value, 1.0,
-                 index_min, index_max)
-    addParameter(spec, 'LowerLimit', 0, emin, 1.0, elim_min, elim_max)
-    addParameter(spec, 'UpperLimit', 0, emax, 1.0, elim_min, elim_max)
-    src.appendChild(spec)
-    spatial = doc.createElement('spatialModel')
-    spatial.setAttribute('file', file)
-    spatial.setAttribute('type', 'SpatialMap')
-    addParameter(spatial, 'Prefactor', 0, 1, 1, 0.001, 1000)
-    src.appendChild(spatial)
-    lib.appendChild(src)
-
-
 def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
                    index_min=-5.0, index_max=-0.5):
+    """Add a source with a POWERLAW1 model"""
     elim_min = 30
     elim_max = 300000
     if flux_scale == 0:
@@ -129,6 +92,7 @@ def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
                    index_min=-5.0, index_max=-0.5):
+    """Add a source with a POWERLAW2 model"""
     elim_min = 30
     elim_max = 300000
     if emin < elim_min:
@@ -166,6 +130,7 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
                    beta_min=0.05, beta_max=5.0):
+    """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
 
@@ -204,6 +169,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
                          index_lo_min=-5.0, index_lo_max=-1.0,
                          index_hi_free=1, index_hi_value=-2.0,
                          index_hi_min=-5.0, index_hi_max=-1.0):
+    """Add a source with a BROKENPOWERLAW2 model"""
     elim_min = 30
     elim_max = 300000
     if emin < elim_min:
@@ -252,6 +218,7 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    cutoff_min=200, cutoff_max=3e5,
                    index2_free=0, index2_value=-1.0,
                    index2_min=-5.0, index2_max=-0.5):
+    """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000
     if flux_scale == 0:
@@ -283,7 +250,8 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
 
 
 def GetlistFromFits(config, catalog):
-    """@todo: document me"""
+    """Read the config and catalog file and generate the list of sources to include"""
+    #Get the informations for the config file
     srcname = config['target']['name']
     ra_src = config['target']['ra']
     dec_src = config['target']['dec']
@@ -295,6 +263,7 @@ def GetlistFromFits(config, catalog):
     min_significance = config['model']['min_significance']
     model = config['target']['spectrum']
 
+    #read the catalog file
     cfile = pyfits.open(catalog)
     data = cfile[1].data
     names = data.field('Source_Name')
@@ -308,16 +277,23 @@ def GetlistFromFits(config, catalog):
     beta = data.field('beta')
     sigma = data.field('Signif_Avg')
 
+    #add the target to the list of sources
     sources = [{'name':srcname, 'ra': ra_src, 'dec': dec_src,
                    'flux': 1e-9, 'index':-2, 'scale': emin,
                    'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
                    'SpectrumType': model}]
 
     Nfree = 1
+    #loop over all the sources of the catalog
     for i in xrange(len(names)):
+        #distance from the center of the maps
         rspace = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_space, dec_space)
+        #distance for the target
         rsrc = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
 
+        # sources with angular separation less than 0.1 degree
+        # from the target are not added
+        # if the source is close to the target : add it as a free source
         if  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
             Nfree += 1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
@@ -325,6 +301,7 @@ def GetlistFromFits(config, catalog):
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
                             'SpectrumType': spectype[i]})
         else:
+            # if the source is inside the ROI: add it as a frozen source
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
@@ -335,20 +312,18 @@ def GetlistFromFits(config, catalog):
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     return sources
 
-
 def IsIn(name, sources):
     for source in sources:
         if source == name:
             return True
     return False
 
-
 def WriteXml(lib, doc, srclist, config):
-    """@todo: document me"""
+    """Fill and write the library of sources into an XML file"""
     emin = config['energy']['emin']
     emax = config['energy']['emax']
 
-    #test if the user provides diffuse files
+    #test if the user provides diffuse files. if not  use the default one
     if config['model']['diffuse_gal_dir'] == "":
         Gal_dir = env.DIFFUSE_DIR
     else:
@@ -369,17 +344,20 @@ def WriteXml(lib, doc, srclist, config):
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
 
-    addDiffusePL(lib, Iso, free=1, value=1.0, scale=1.0,
+    #add diffuse sources
+    addDiffusePL(lib, Iso, free=1, value=1.0,
                  max=10.0, min=1.0, name='iso_p7v6source.txt')
     addGalprop(lib, Gal, free=1, value=1.0, scale=1.0,
                max=10.0, min=.010, name='gal_2yearp7v6_v0')
 
+    # loop over the list of sources and add it to the library
     for i in xrange(len(srclist)):
         name = srclist[i].get('name')
         ra = srclist[i].get('ra')
         dec = srclist[i].get('dec')
         free = srclist[i].get('IsFree')
         spectype = srclist[i].get('SpectrumType')
+        # Check the spectrum model
         if spectype == "PowerLaw":
             addPSPowerLaw1(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
@@ -407,7 +385,7 @@ def WriteXml(lib, doc, srclist, config):
 
     output = config['file']['xml']
     print "write the Xml file in ", output
-    open(output, 'w').write(doc.toprettyxml('  '))
+    open(output, 'w').write(doc.toprettyxml('  '))#save it
 
 
 def CreateLib():
