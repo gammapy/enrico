@@ -254,10 +254,12 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
 
 
 def PlotDataPoints(config):
-    """@todo: document me"""
+    """Collect the data points/UL and generate a TGraph for the points
+    and a list of TArrow for the UL. All is SED format"""
 
     ErgsToMeV = 1.6022e-6
 
+    #Preparation + declaration of arrays
     arrows = []
     NEbin = int(config['Ebin']['NumEnergyBins'])
     lEmax = np.log10(float(config['energy']['emax']))
@@ -274,24 +276,26 @@ def PlotDataPoints(config):
         E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/Ebin'+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
-        try:
+        try:#read the config file of each data points
             CurConf = get_config(filename)
             print "Reading ",filename
             results = utils.ReadResult(CurConf)
         except:
             print "cannot read the Results of energy ", E
             continue
+        #fill the energy arrays
         Epoint[i] = E
         EpointErrm[i] = E - results.get("Emin")
         EpointErrp[i] = results.get("Emax") - E
 
+        #Compute the flux or the UL (in SED format)
         if results.has_key('Ulvalue'):
             PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
                                     results.get("Emin"),results.get("Emax"),E)
             Fluxpoint[i] = ErgsToMeV * PrefUl * Epoint[i] ** 2
             arrows.append(ROOT.TArrow(Epoint[i], Fluxpoint[i], Epoint[i],
                                      Fluxpoint[i] * 0.5, 0.02, "|>"))
-        else :
+        else : #Not an UL : compute points + errors
             Fluxpoint[i] = ErgsToMeV * results.get("Prefactor") * Epoint[i] ** 2
             try:
                 down = abs(results.get("dPrefactor-"))
@@ -311,6 +315,7 @@ def PlotDataPoints(config):
         print "Energy = ",Epoint[i]
         print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
 
+    #create a TGraph for the points
     tgpoint = ROOT.TGraphAsymmErrors(NEbin, Epoint, Fluxpoint, EpointErrm,
                                      EpointErrp, FluxpointErrm, FluxpointErrp)
     tgpoint.SetMarkerStyle(20)
@@ -318,16 +323,17 @@ def PlotDataPoints(config):
 
 
 def PlotSED(infile,pars):
-    """@todo: document me"""
+    """plot a nice SED with a butterfly and points"""
     config = get_config(infile)
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
     root_style.RootStyle()
+
+    # Read the ascii file where the butterfly is stored
     filebase = config['out'] + '/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
     lines = open(filebase + '.dat', 'r').readlines()
-
-    SED = []#np.zeros(ilen)
-    E = []#np.zeros(ilen)
-    Err = []# np.zeros(ilen)
+    SED = []
+    E = []
+    Err = []
 
     for i in xrange(len(lines) - 1):
         words = lines[i + 1].split()
@@ -337,11 +343,13 @@ def PlotSED(infile,pars):
             Err.append(float(words[2]))
     ilen = len(SED)
 
-    Fluxp = np.array(SED)*np.exp(np.array(Err)/np.array(SED))#SED + Err
-    Fluxm =  np.array(SED)*np.exp(-np.array(Err)/np.array(SED))#SED - Err
+    #From dN/dE to SED
+    Fluxp = np.array(SED)*np.exp(np.array(Err)/np.array(SED))
+    Fluxm =  np.array(SED)*np.exp(-np.array(Err)/np.array(SED))
     ErrorFlux = np.zeros(2 * ilen + 1)
     ErrorE = np.zeros(2 * ilen + 1)
 
+    #Compute the butterfly and close it
     for i in xrange(ilen):
         ErrorFlux[i] = Fluxp[i]
         ErrorE[i] = E[i]
@@ -351,6 +359,7 @@ def PlotSED(infile,pars):
     ErrorFlux[-1] = Fluxp[0]
     ErrorE[-1] = E[0]
 
+    #Actually make the plot
     c_plot = ROOT.TCanvas("Fermi-LAT SED")
     c_plot.SetLogx()
     c_plot.SetLogy()
@@ -377,7 +386,7 @@ def PlotSED(infile,pars):
     #Plot points
     NEbin = int(config['Ebin']['NumEnergyBins'])
     if NEbin > 0:
-        tgpoint, Arrow = PlotDataPoints(config)
+        tgpoint, Arrow = PlotDataPoints(config) #collect data points
         tgpoint.SetLineColor(pars.PointColor)
         tgpoint.SetMarkerColor(pars.PointColor)
         tgpoint.Draw("pz")
@@ -386,8 +395,7 @@ def PlotSED(infile,pars):
             Arrow[i].SetFillColor(pars.PointColor)
             Arrow[i].Draw()
 
-#TODO add a writeTOASCII
-
+    #save the canvas
     c_plot.Print(filebase + '.C')
     c_plot.Print(filebase + '.eps')
     c_plot.Print(filebase + '.png')
