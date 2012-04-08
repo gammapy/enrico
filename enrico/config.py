@@ -37,19 +37,51 @@ def get_default_config(configspec=join(CONFIG_DIR, 'default.conf')):
 
 
 def query_config():
+    import os
     """Make a new config object, asking the user for required options"""
     config = ConfigObj(indent_type='\t')
-    print('Please provide the following required options:')
-    config['out'] = raw_input('Output directory: ')
+    print('Please provide the following required options [default] :')
+    config['out'] = os.getcwd()
+    out = raw_input('Output directory ['+config['out']+'] : ')
+    if not(out=='') :
+      config['out'] = out
+
+#    Informations about the source
     config['target'] = {}
     config['target']['name'] = raw_input('Target Name : ')
     config['target']['ra'] = raw_input('Right Ascension: ')
     config['target']['dec'] = raw_input('Declination: ')
     message = ('Options are : PowerLaw, PowerLaw2, LogParabola, '
-               'PLExpCutoff\nSpectral Model : ')
-    config['target']['spectrum'] = raw_input(message)
+               'PLExpCutoff\nSpectral Model [PowerLaw] : ')
+    config['target']['spectrum'] = 'PowerLaw'
+    model = raw_input(message)
+    if not(model=='') :
+      config['target']['spectrum'] = model
+
+#    informations about the ROI
     config['space'] = {}
     config['space']['xref'] = config['target']['ra']
     config['space']['yref'] = config['target']['dec']
-    config['space']['rad'] = raw_input('ROI Size: ')
+    config['space']['rad'] = '15'
+    roi = raw_input('ROI Size [15] : ')
+    if not(roi=='') :
+      config['space']['rad'] = roi
+
+#    informations about the input files
+    config['file'] = {}
+    config['file']['spacecraft'] = config['out']+'/spacecraft.fits'
+    ft2 = raw_input('FT2 file ['+config['file']['spacecraft']+'] : ')
+    if not(ft2=='') :
+      config['file']['spacecraft'] = ft2
+    config['file']['event'] = config['out']+'/events.lis'
+    ft1list = raw_input('FT1 list of files ['+config['file']['event']+'] : ')
+    if not(ft1list=='') :
+      config['file']['event'] = ft1list
+    config['file']['xml'] = config['out']+'/'+config['target']['name']+'_'+config['target']['spectrum']+'_model.xml'
+    tag = raw_input('tag [LAT_Analysis] : ')
+    if not(tag=='') :
+      config['file']['tag'] = tag
+    else :
+      config['file']['tag'] = 'LAT_Analysis'
+
     return get_config(config)
