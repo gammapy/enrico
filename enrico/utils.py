@@ -189,7 +189,7 @@ def getParamIndx(fit, name, parameter):
               (parameter, name, fit.srcModel))
     return ID
 
-def ChangeModel(Fit, E1, E2, name):
+def ChangeModel(Fit, E1, E2, name, model_type):
     """Change the spectral model of a source called name
     to allow a fit between E1 and E2
     If the spectral model is PowerLaw, the prefactor is updated
@@ -198,10 +198,9 @@ def ChangeModel(Fit, E1, E2, name):
 
     Eav = GetE0(E2,E1)
     flux = Fit.flux(name,E1,E2) #Source flux between E2 and Em2
-    generic_name = Fit.model.srcs[name].spectrum().genericName()
 
     # if the model is not PowerLaw : change the model
-    if generic_name == 'PowerLaw' :
+    if model_type == 'PowerLaw' :
         IdGamma = getParamIndx(Fit, name, 'Index')
         Gamma = Fit[IdGamma].value()
     else :
@@ -260,12 +259,14 @@ def PrepareEbin(Fit, runfit):
 
     RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
     srcname = runfit.config['target']['name']
+    Model_type = Fit.model.srcs[srcname].spectrum().genericName()
+
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = GetE0(ener[ibin + 1],ener[ibin])
         print "Submition # ", ibin, " at energy ", E
         #Update the model for the bin
-        ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname)
+        ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Model_type)
         Xmlname = (config['out'] + "/" + srcname +
                     "_" + str(ibin) + ".xml")
         Fit.writeXml(Xmlname)# dump the corresponding xml file
