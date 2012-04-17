@@ -197,20 +197,20 @@ def ChangeModel(Fit, E1, E2, name, model_type):
     The index is frozen in all case"""
 
     Eav = GetE0(E2,E1)
-    flux = Fit.flux(name,E1,E2) #Source flux between E2 and Em2
+#    flux = Fit.flux(name,E1,E2) #Source flux between E2 and Em2
 
     # if the model is not PowerLaw : change the model
     if model_type == 'PowerLaw' :
-        IdGamma = getParamIndx(Fit, name, 'Index')
-        Gamma = Fit[IdGamma].value()
+      IdGamma = getParamIndx(Fit, name, 'Index')
+      Gamma = Fit[IdGamma].value()
+      Pref = dNde(Eav,Fit,name)
     else :
-        #Compute an approximation of an index
-        dnde1 = log10(dNde(E1,Fit,name))
-        dnde2 = log10(dNde(E2,Fit,name))
-        Gamma = (dnde2-dnde1)/(log10(1.*E2)-log10(1.*E1))
-        Fit.logLike.getSource(name).setSpectrum("PowerLaw") #Change model
-
-    Pref = dNde(Eav,Fit,name)
+      #Compute an approximation of an index
+      dnde1 = log10(dNde(E1,Fit,name))
+      dnde2 = log10(dNde(E2,Fit,name))
+      Pref = dNde(Eav,Fit,name)
+      Gamma = (dnde2-dnde1)/(log10(1.*E2)-log10(1.*E1))
+      Fit.logLike.getSource(name).setSpectrum("PowerLaw") #Change model
 
     # Set Parameters
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)

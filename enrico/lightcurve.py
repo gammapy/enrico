@@ -8,7 +8,7 @@ import plotting
 import environ
 from config import get_config
 from submit import call
-
+from enrico.RunGTlike import run
 
 def PrepareLC(infile,write = 'no'):
     """Simple function to prepare the LC generation : generate and write the config files"""
@@ -28,12 +28,14 @@ def PrepareLC(infile,write = 'no'):
     config['UpperLimit']['TSlimit'] = config['LightCurve']['TSLightCurve']
 
     #All files will be stored in a subfolder name LightCurve + NLCbin
-    config['out'] +='/LightCurve_'+str(config['LightCurve']['NLCbin'])
+    config['out'] +='/LightCurve_'+str(config['LightCurve']['NLCbin'])+'bins'
 
     #No plot, no bin in energy, Normal UL
     config['Spectrum']['ResultPlots'] = 'no'
     config['Ebin']['NumEnergyBins'] = 0
     config['UpperLimit']['envelope'] = 'no'
+    #No submition
+    config['Spectrum']['Submit'] = 'no'
 
     AllConfigFile = []#All the config file in the disk are stored in a list
     for i in xrange(Nbin):
@@ -79,14 +81,16 @@ def MakeLC(infile) :
     LCoutfolder = folder+"/LightCurve_"+str(config['LightCurve']['NLCbin'])+"bins/"
     os.system("mkdir -p "+LCoutfolder)
 
-    AllConfigFile = PrepareLC(infile, config['LightCurve']['Prepare'])#Get the config file
+    AllConfigFile = PrepareLC(infile, config['LightCurve']['MakeConfFile'])#Get the config file
 
     for i in xrange(config['LightCurve']['NLCbin']):
         if config['LightCurve']['Submit'] == 'yes':
-            cmd = "enrico_fit "+AllConfigFile[i]
+            cmd = "enrico_sed "+AllConfigFile[i]
             scriptname=LCoutfolder+"/LC_Script_"+str(i)+".sh"
             JobLog = LCoutfolder+"LC_Job_"+str(i)+".log"
-            JobName = config['target']['name']+"_"+str(i)+".log"
+            JobName = (config['target']['name'] + "_" +
+                   config['analysis']['likelihood'] +
+                   "_LC_" + config['file']['tag'])+"_"+str(i)+".log"
 
             call(cmd,enricodir,scriptname,JobLog,JobName)#Submit the job
         else :
@@ -130,6 +134,7 @@ def PlotLC(infile):
         #Check is an ul have been computed. The error is set to zero for the TGraph.
         if ResultDic.has_key('Ulvalue') :
             Flux.append(ResultDic.get("Ulvalue"))
+            print ResultDic.get("Ulvalue")
             FluxErr.append(0)
         else :
             Flux.append(ResultDic.get("Flux"))
