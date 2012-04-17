@@ -83,10 +83,10 @@ class MakeFit(object):
                               irfs=self.obs.irfs)
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer='DRMNGB')
-        # @todo: Casting to float should not be necessary
-        if float(self.config['Spectrum']['FreeSpectralIndex']) > 0:
+
+        if float(self.config['Spectrum']['FrozenSpectralIndex']) > 0:
             PhIndex = Fit.par_index(self.obs.srcname, 'Index')
-            Fit[PhIndex] = -float(self.config['Spectrum']['FreeSpectralIndex'])
+            Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
             Fit.freeze(PhIndex)
 
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
