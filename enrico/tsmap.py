@@ -35,6 +35,7 @@ class TSMap:
         """ Launch a job (either pixel evaluation or row evaluation). 
         Can be the submittion of a job to a cluster """
         enricodir = environ.DIRS.get('ENRICO_DIR')
+        fermidir = environ.DIRS.get('FERMI_DIR')
         cmd = enricodir+"/enrico/"+sys.argv[0]+" "+os.getcwd()+"/"+self.infile +" "+ str(ra) +" "+ str(dec) +" "+ str(i) +" "+ str(j) #cmd line to send
 
         if self.config['TSMap']['Submit'] == 'yes':
@@ -42,7 +43,7 @@ class TSMap:
             scriptname = prefix + "_Script.sh"
             JobLog = prefix + "_Job.log"
             JobName = (self.config['target']['name'] + "_TSMap_" + str(i) +"_"+ str(j))
-            call(cmd, enricodir, scriptname, JobLog, JobName) #submition
+            call(cmd, enricodir, fermidir, scriptname, JobLog, JobName) #submition
         else : 
             os.system(cmd) #run directly 
 

@@ -51,6 +51,7 @@ def wait_for_slot(max_jobs):
 
 def call(cmd,
          enricoDir, 
+         fermiDir,
          scriptfile=None,
          qsub_log=None,
          jobname=None,
@@ -95,9 +96,12 @@ def call(cmd,
         # anyway in a new shell.
         if exec_dir:
             text += '\ncd {0}\n\n'.format(exec_dir)
-	    
-	text = text.format(enricodir=enricoDir)
-	
+
+        text +='export FERMI_DIR='+fermiDir+'\n'
+        text +='source $FERMI_DIR/fermi-init.sh\n'
+        text +='export ENRICO_DIR='+enricoDir+'\n'
+        text +='source $ENRICO_DIR/enrico-init.sh\n'
+
         text += cmd
 
         # Now reset cmd to be the qsub command

@@ -16,6 +16,3 @@ echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 export HEADASNOQUERY=1
 echo HEADASNOQUERY: $HEADASNOQUERY
 
-source {enricodir}/init.sh
-
-echo " ~~~~~~~~ GO FOR GTLIKE ANALYSIS ~~~~~~~~ "

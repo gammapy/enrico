@@ -73,7 +73,7 @@ def MakeLC(infile) :
     ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
 
     enricodir = environ.DIRS.get('ENRICO_DIR')
-
+    fermidir = environ.DIRS.get('FERMI_DIR')
     config = get_config(infile)
 
     folder = config['out']
@@ -92,7 +92,7 @@ def MakeLC(infile) :
                    config['analysis']['likelihood'] +
                    "_LC_" + config['file']['tag'])+"_"+str(i)+".log"
 
-            call(cmd,enricodir,scriptname,JobLog,JobName)#Submit the job
+            call(cmd,enricodir,fermidir,scriptname,JobLog,JobName)#Submit the job
         else :
             run(AllConfigFile[i])#run in command line
 

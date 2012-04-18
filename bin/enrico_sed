@@ -29,6 +29,7 @@ if config['Spectrum']['Submit'] == 'no':# or forceNoSubmit == "yes":
 else :
 
     enricodir = environ.DIRS.get('ENRICO_DIR')
+    fermidir = environ.DIRS.get('FERMI_DIR')
 
     if config['Spectrum']['SummedLike'] == 'yes':
         GenericName = (config['target']['name'] + "_" +
@@ -54,4 +55,4 @@ else :
     JobLog = prefix + "_Job.log"
     JobName = GenericName
 
-    call(cmd, enricodir, scriptname, JobLog, JobName)
+    call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)

@@ -53,6 +53,7 @@ def run(infile):
         configfiles = utils.PrepareEbin(Fit, runfit)
         ind = 0
         enricodir = environ.DIRS.get('ENRICO_DIR')
+        fermidir = environ.DIRS.get('FERMI_DIR')
         for conf in configfiles:
              config = get_config(conf)
              cmd = "enrico_sed " + conf
@@ -65,7 +66,7 @@ def run(infile):
                  JobName = (config['target']['name'] + "_" +
                            config['analysis']['likelihood'] +
                            "_Ebin_" + str(ind) + "_" + config['file']['tag'])
-                 call(cmd, enricodir, scriptname, JobLog, JobName)# submition
+                 call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)# submition
              ind+=1
 
 # @todo: Should this be a command line utility in bin?

@@ -10,6 +10,7 @@ from extern.odict import OrderedDict as dict
 
 # Directory names
 ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
+FERMI_DIR = os.environ.get('FERMI_DIR', '')
 FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
@@ -21,6 +22,7 @@ CONFIG_DIR = join(os.path.dirname(__file__), 'data', 'config')
 XML_DIR = join(os.path.dirname(__file__), 'data', 'xml')
 
 DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
+            FERMI_DIR=FERMI_DIR,
             CATALOG_DIR=CATALOG_DIR,
             DIFFUSE_DIR=DIFFUSE_DIR,
             PREPROCESSED_DIR=PREPROCESSED_DIR,
