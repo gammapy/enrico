@@ -329,7 +329,7 @@ def PlotSED(infile,pars):
     root_style.RootStyle()
 
     # Read the ascii file where the butterfly is stored
-    filebase = config['out'] + '/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
+    filebase = config['out'] + '/Spectrum/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
     lines = open(filebase + '.dat', 'r').readlines()
     SED = []
     E = []

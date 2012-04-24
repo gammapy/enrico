@@ -14,6 +14,6 @@ config = get_config(infile)
 srcname = config['target']['name']
 Emin = config['energy']['emin']
 Emax = config['energy']['emax']
-filename = config['out'] + '/SED_' + srcname +'_'+ config['target']['spectrum']
+filename = config['out'] + '/Spectrum/SED_' + srcname +'_'+ config['target']['spectrum']
 Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
 PlotSED(infile,Param)

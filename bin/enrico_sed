@@ -13,18 +13,9 @@ except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
-##A extra option can be passed to force the no submition of a job
-## This is used for the Lightcurve generetation
-##This enrico_sed call himself when submiting a job, then this extra option
-## allow to not submit again a job
-#try:
-#    forceNoSubmit = sys.argv[2]
-#except:
-#    forceNoSubmit = "no"
-
 config = get_config(infile)
 
-if config['Spectrum']['Submit'] == 'no':# or forceNoSubmit == "yes":
+if config['Spectrum']['Submit'] == 'no':
     run(infile)
 else :
 
@@ -43,13 +34,8 @@ else :
     prefix = config['out'] + "/" + GenericName
 
     os.system("mkdir -p " + config['out'] + "\n")
-    config['Spectrum']['Submit'] = 'no' 
-    infile_tmp = config['out']+'/'+infile+".tempor"
-    config.write(open(infile_tmp, 'w'))
 
-#    cmd = "cp "+os.getcwd()+ "/" +infile+" . && enrico_sed " + infile
-    cmd = "enrico_sed " + infile_tmp
-
+    cmd = enricodir+"/enrico/RunGTlike.py "+os.getcwd()+"/" + infile
 
     scriptname = prefix + "_Script.sh"
     JobLog = prefix + "_Job.log"

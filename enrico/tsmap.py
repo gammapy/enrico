@@ -27,16 +27,21 @@ class TSMap:
         self.TSfits = self.config['target']['name']+'_'+self.config['file']['tag']+"_TSMap.fits"
         self.infile = infile
         self.npix = self.config['TSMap']['npix']
-        self.RAref = 0
-        self.DECref = 0
-        self.binsz = 0
+        # Read the cmap produced before to get the grid for the TS map
+        runfit = Observation(self.config['out'], self.config)
+        cmap = pyfits.open(runfit.cmapfile)
+        npix_im = min(cmap[0].header['NAXIS1'],cmap[0].header['NAXIS2'])
+        self.npix = min(self.npix,npix_im)
+        self.RAref = cmap[0].header['CRVAL1']
+        self.DECref = cmap[0].header['CRVAL2']
+        self.binsz = cmap[0].header['CDELT1']
 
     def _launch(self,ra,dec,i,j):
         """ Launch a job (either pixel evaluation or row evaluation). 
         Can be the submittion of a job to a cluster """
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
-        cmd = enricodir+"/enrico/"+sys.argv[0]+" "+os.getcwd()+"/"+self.infile +" "+ str(ra) +" "+ str(dec) +" "+ str(i) +" "+ str(j) #cmd line to send
+        cmd = enricodir+"/enrico/tsmap.py "+os.getcwd()+"/"+self.infile +" "+ str(ra) +" "+ str(dec) +" "+ str(i) +" "+ str(j) #cmd line to send
 
         if self.config['TSMap']['Submit'] == 'yes':
             prefix = self.tsfolder + "/TSMap_" + str(i) +"_"+ str(j)
@@ -91,22 +96,14 @@ class TSMap:
         """ function which run the evaluation of 1 row of the TS map
         using a loop and calling the fit for 1 pixel"""
         for j in xrange(self.npix):
-            dec = self.DECref + binsz*(j-npix/2.)
+            dec = self.DECref + self.binsz*(j-self.npix/2.)
+            print 'FitOneRow ',dec
             self.FitOnePixel(ra,dec,i,j)
 
     def runTSMap(self) :
         """ Run a TS map using the configuration file given"""
         folder = self.config['out']
         os.system('mkdir -p ' + self.tsfolder)
-
-        # Read the cmap produced before to get the grid for the TS map
-        runfit = Observation(folder, self.config)
-        cmap = pyfits.open(runfit.cmapfile)
-        npix_im = min(cmap[0].header['NAXIS1'],cmap[0].header['NAXIS2'])
-        self.npix = min(self.npix,npix_im)
-        self.RAref = cmap[0].header['CRVAL1']
-        self.DECref = cmap[0].header['CRVAL2']
-        self.binsz = cmap[0].header['CDELT1']
 
         for i in xrange(self.npix): #loop over the X axis
             ra = self.RAref + self.binsz*(i-self.npix/2.)
@@ -134,7 +131,6 @@ class TSMap:
         Yref = header['CRPIX2']
         binsz = header['CDELT1']
 
-        print npix
         import string # read the results
         for i in xrange(npix):
             for j in xrange(npix):
@@ -176,13 +172,14 @@ def GetSrc(Fit,ra,dec):
 
 def GetFitObjectForTSmap(config,xmlfile=""):
     """ return a fit object with the xmlmodel provided."""
+    folder = config['out']
     if config['Spectrum']['SummedLike'] == 'yes':
         # Create two obs instances
         runfitfront, _ = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
         runfitback, _ = utils.Analysis(folder, config, tag="BACK", convtyp=1)
-        if not(outXml ==""):
-            runfitfront.obs.xmlfile = outXml
-            runfitback.obs.xmlfile = outXml
+        if not(xmlfile ==""):
+            runfitfront.obs.xmlfile = xmlfile
+            runfitback.obs.xmlfile = xmlfile
         FitB = runfitback.CreateFit()
         FitF = runfitfront.CreateFit()
         Fit = SummedLikelihood.SummedLikelihood()
@@ -193,8 +190,8 @@ def GetFitObjectForTSmap(config,xmlfile=""):
         convtype = config['analysis']['convtype']
         # Create one obs instanceFit.addSource
         runfit, _ = utils.Analysis(folder, config, tag="", convtyp=convtype)
-        if not(outXml ==""):
-            runfit.obs.xmlfile = outXml
+        if not(xmlfile ==""):
+            runfit.obs.xmlfile = xmlfile
         Fit = runfit.CreateFit()
     return Fit
 

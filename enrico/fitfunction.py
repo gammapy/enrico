@@ -9,6 +9,7 @@ import numpy as np
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 import utils
+import os
 
 class MakeFit(object):
     """Collection of functions to prepare/run the GTLIKE fit
@@ -258,7 +259,8 @@ class MakeFit(object):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        filename = self.config['out'] + '/SED_' + self.obs.srcname +'_'+ Fit[self.obs.srcname].funcs['Spectrum'].genericName()
+        os.system("mkdir -p "+self.config['out'] + '/Spectrum/')
+        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ Fit[self.obs.srcname].funcs['Spectrum'].genericName()
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)
