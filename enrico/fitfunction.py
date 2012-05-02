@@ -187,7 +187,7 @@ class MakeFit(object):
     def ComputeUL(self, Fit):
         """Compute an Upper Limit using either the profil or integral method
         See the ST cicerone for more information on the 2 method"""
-        import IntegralUpperLimit,UpperLimits
+
         self._log('UpperLimit', 'Compute upper Limit')
         #Index given by the user  
         print "Assumed index is ", self.config['UpperLimit']['SpectralIndex']
@@ -203,6 +203,7 @@ class MakeFit(object):
             print "Upper limit using Profile method: "
             print ulobject[self.obs.srcname].results
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
+            import IntegralUpperLimit,UpperLimits
             ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                 verbosity=0)
             print "Upper limit using Integral method: ", ul

@@ -175,8 +175,8 @@ def GetFitObjectForTSmap(config,xmlfile=""):
     folder = config['out']
     if config['Spectrum']['SummedLike'] == 'yes':
         # Create two obs instances
-        runfitfront, _ = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
-        runfitback, _ = utils.Analysis(folder, config, tag="BACK", convtyp=1)
+        runfitfront = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
+        runfitback = utils.Analysis(folder, config, tag="BACK", convtyp=1)
         if not(xmlfile ==""):
             runfitfront.obs.xmlfile = xmlfile
             runfitback.obs.xmlfile = xmlfile
@@ -189,7 +189,7 @@ def GetFitObjectForTSmap(config,xmlfile=""):
     else:
         convtype = config['analysis']['convtype']
         # Create one obs instanceFit.addSource
-        runfit, _ = utils.Analysis(folder, config, tag="", convtyp=convtype)
+        runfit = utils.Analysis(folder, config, tag="", convtyp=convtype)
         if not(xmlfile ==""):
             runfit.obs.xmlfile = xmlfile
         Fit = runfit.CreateFit()

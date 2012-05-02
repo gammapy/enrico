@@ -17,8 +17,8 @@ def run(infile):
     SummedLike = config['Spectrum']['SummedLike']
     if SummedLike == 'yes':
         # Create two obs instances
-        runfitfront, _ = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
-        runfitback, _ = utils.Analysis(folder, config, tag="BACK", convtyp=1)
+        runfitfront = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
+        runfitback = utils.Analysis(folder, config, tag="BACK", convtyp=1)
         FitB = runfitback.CreateFit()
         FitF = runfitfront.CreateFit()
         Fit = SummedLikelihood.SummedLikelihood()
@@ -28,7 +28,7 @@ def run(infile):
     else:
         convtype = config['analysis']['convtype']
         # Create one obs instance
-        runfit, _ = utils.Analysis(folder, config, tag="", convtyp=convtype)
+        runfit = utils.Analysis(folder, config, tag="", convtyp=convtype)
         Fit = runfit.CreateFit()
     # create all the fit files and run gtlike
     runfit.PerformFit(Fit)
@@ -50,23 +50,25 @@ def run(infile):
             runfit.ModelMap(outXml)
 
     #  Make energy bins by run a *new* analysis
-    if int(config['Ebin']['NumEnergyBins']) > 0:
+    Nbin = config['Ebin']['NumEnergyBins']
+    if int(Nbin) > 0:
         configfiles = utils.PrepareEbin(Fit, runfit)
         ind = 0
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
         for conf in configfiles:
-             config = get_config(conf)
-             cmd = "enrico_sed " + conf
-             if config['Ebin']['Submit'] == 'no' : #run directly
+             pathconf = folder + "/Ebin" + str(Nbin) +"/" + conf
+             Newconfig = get_config(pathconf)
+             cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
+             if Newconfig['Ebin']['Submit'] == 'no' : #run directly
                  os.system(cmd)
              else : #submit a job to a cluster
-                 prefix = config['out'] + "/Ebin" + str(ind) 
+                 prefix = Newconfig['out'] + "/Ebin" + str(ind) 
                  scriptname = prefix + "_Script.sh"
                  JobLog = prefix + "_Job.log"
-                 JobName = (config['target']['name'] + "_" +
-                           config['analysis']['likelihood'] +
-                           "_Ebin_" + str(ind) + "_" + config['file']['tag'])
+                 JobName = (Newconfig['target']['name'] + "_" +
+                           Newconfig['analysis']['likelihood'] +
+                           "_Ebin_" + str(ind) + "_" + Newconfig['file']['tag'])
                  call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)# submition
              ind+=1
 
@@ -75,6 +77,7 @@ if __name__ == '__main__':
     import sys
     try:
         infile = sys.argv[1]
+        config = get_config(infile)
     except:
         print('FATAL: Config file not found.')
         sys.exit(1)

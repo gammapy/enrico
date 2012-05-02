@@ -116,7 +116,7 @@ def Analysis(folder, config, tag="", convtyp='-1'):
     runfit = MakeFit(Obs, config)
     if config['Spectrum']['FitsGeneration'] == 'yes':
         runfit.PreparFit()
-    return runfit, Obs
+    return runfit
 
 def RemoveWeakSources(Fit, SourceName=None):
     """Remove the weak source after a fit and reoptimized
@@ -237,6 +237,10 @@ def PrepareEbin(Fit, runfit):
     NEbin = int(runfit.config['Ebin']['NumEnergyBins'])
 
     config = runfit.config
+
+    #Replace the evt file with the fits file produced before
+    #in order to speed up the production of the fits files
+    config['file']['event'] = runfit.obs.eventfile
     #update the config to allow the fit in energy bins
     config['UpperLimit']['envelope'] = 'no' 
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
@@ -261,7 +265,6 @@ def PrepareEbin(Fit, runfit):
     srcname = runfit.config['target']['name']
     Model_type = Fit.model.srcs[srcname].spectrum().genericName()
 
-
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = GetE0(ener[ibin + 1],ener[ibin])
         print "Submition # ", ibin, " at energy ", E
@@ -275,11 +278,9 @@ def PrepareEbin(Fit, runfit):
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
-        filename = (config['out'] + '/' +
-                    config['target']['name'] + "_" +
-                    str(ibin) + ".conf")
+        filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
-        config.write(open(paramsfile[ibin], 'w')) #save the config file in a ascii file
+        config.write(open(config['out'] + '/' +paramsfile[ibin], 'w')) #save the config file in a ascii file
 
     return paramsfile
 
