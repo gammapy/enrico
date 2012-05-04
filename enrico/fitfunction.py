@@ -196,6 +196,7 @@ class MakeFit(object):
         Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
         Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
         if self.config['UpperLimit']['Method'] == "Profile": #The method is Profile
+            import UpperLimits
             ulobject = UpperLimits.UpperLimits(Fit)
             ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
                                       emax=self.obs.Emax,
@@ -203,7 +204,7 @@ class MakeFit(object):
             print "Upper limit using Profile method: "
             print ulobject[self.obs.srcname].results
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
-            import IntegralUpperLimit,UpperLimits
+            import IntegralUpperLimit
             ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                 verbosity=0)
             print "Upper limit using Integral method: ", ul
