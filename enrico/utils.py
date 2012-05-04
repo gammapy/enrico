@@ -304,6 +304,7 @@ def DumpResult(Result, config):
     Dumpfile = open(_dump_filename(config), "w")
     for key in Result.iterkeys():
         Dumpfile.write(key + '\t' + str(Result[key]) + '\n')
+        print key + '\t' + str(Result[key])
     Dumpfile.close()
 
 

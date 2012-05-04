@@ -145,6 +145,10 @@ class MakeFit(object):
         #Add the time information to the result dictionnary
         Result['tmin'] = self.config['time']['tmin']
         Result['tmax'] = self.config['time']['tmax']
+        Result['SrcName'] = self.obs.srcname
+        Result['Flux'] = Fit.flux(self.obs.srcname,self.obs.Emin,self.obs.Emax)
+        Result['dFlux'] = Fit.fluxError(self.obs.srcname,self.obs.Emin,self.obs.Emax)
+
 
         for par in ParName : #Loop over the parameters and get value, error and scale
             ParValue = spectrum.getParam(par).value()
@@ -152,7 +156,8 @@ class MakeFit(object):
             Scale = spectrum.getParam(par).getScale()
             Result[par] = ParValue * Scale
             Result['d'+par] = ParError * Scale
-            if Fit.Ts(self.obs.srcname) > 5 and ParError>0: # Compute MINOS errors for relevent parameters
+            print par," ",ParValue
+            if ParError>0: # Compute MINOS errors for relevent parameters  Fit.Ts(self.obs.srcname) > 5 and
                 try:
                     MinosErrors = Fit.minosError(self.obs.srcname, par)
                     print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
@@ -178,9 +183,6 @@ class MakeFit(object):
             else:
                 Ulval = self.ComputeUL(Fit)
                 Result['Ulvalue'] = Ulval
-        else : #else save the flux and error of the target in the user energy range
-            Result['Flux'] = Fit.flux(src,self.obs.Emin,self.obs.Emax)
-            Result['dFlux'] = Fit.fluxError(src,self.obs.Emin,self.obs.Emax)
 
         return Result   #Return the dictionnary
 
