@@ -173,6 +173,7 @@ def GetSrc(Fit,ra,dec):
 def GetFitObjectForTSmap(config,xmlfile=""):
     """ return a fit object with the xmlmodel provided."""
     folder = config['out']
+    config['Spectrum']['FitsGeneration'] = 'no'
     if config['Spectrum']['SummedLike'] == 'yes':
         # Create two obs instances
         runfitfront = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
