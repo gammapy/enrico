@@ -148,7 +148,7 @@ def GetFluxes(Fit,Emin=1e2,Emax=3e5):
             pass
     print
 
-def GetCovar(srcname, Fit):
+def GetCovar(srcname, Fit, verbose = True):
     """Extract covariance matrix"""
     import pyLikelihood
     par_index_map = {}
@@ -172,8 +172,10 @@ def GetCovar(srcname, Fit):
     for xpar in pars:
         ix = par_index_map[xpar]
         my_covar.append([covar[ix][par_index_map[ypar]] for ypar in pars])
-    print "The covariance matrix is :\n", np.array(my_covar)
-    print
+    if verbose :
+      print "The covariance matrix is :\n", np.array(my_covar)
+      print
+
     return my_covar
 
 def getParamIndx(fit, name, parameter):

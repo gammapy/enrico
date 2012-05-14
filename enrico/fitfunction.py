@@ -156,7 +156,6 @@ class MakeFit(object):
             Scale = spectrum.getParam(par).getScale()
             Result[par] = ParValue * Scale
             Result['d'+par] = ParError * Scale
-            print par," ",ParValue
             if ParError>0: # Compute MINOS errors for relevent parameters  Fit.Ts(self.obs.srcname) > 5 and
                 try:
                     MinosErrors = Fit.minosError(self.obs.srcname, par)

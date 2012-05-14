@@ -34,7 +34,7 @@ class Result:
         except RuntimeError:
             self.TS = -1
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
-        self.covar = np.array(utils.GetCovar(pars.srcname, self.Fit))
+        self.covar = np.array(utils.GetCovar(pars.srcname, self.Fit, False))
         self.srcpars = pyLikelihood.StringVector()
         Fit[pars.srcname].src.spectrum().getFreeParamNames(self.srcpars)
 
@@ -43,6 +43,14 @@ class Result:
         The count and residuals plot vs E is also made"""
         E, SED = self.MakeSED(par)
         Err = self.MakeSEDError(par)
+
+        print
+        for i in xrange(par.N):
+          if Err[i] == min(Err):
+            print "Decorrelation energy : %4.2e MeV"%E[i]
+            print "SED at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i])
+        print
+
         try:
             self.CountsPlot(par)
         except:
@@ -87,6 +95,7 @@ class Result:
                 partials[i] = self.ptsrc.spectrum().derivByParam(arg, x)
             err[j] = np.sqrt(np.dot(partials, np.dot(self.covar, partials)))
             j += 1
+
         return 1.602e-6 * energies ** 2 * err #Mev to Ergs
 
     def dNde(self, energy):
