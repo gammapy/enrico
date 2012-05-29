@@ -130,7 +130,7 @@ Get the enrico package and build the documentation if you like:
 
 .. code-block:: bash
 
-   git clone ~deil/git/enrico
+   git clone https://github.com/gammapy/enrico.git
    cd doc
    make html
    firefox build/html/index.html
@@ -140,22 +140,14 @@ and PYTHONPATH contain the enrico python package:
 
 .. code-block:: bash
 
-   export PYTHONPATH=$PYTHONPATH:<...>
-   export PATH=$PATH:<...>
-
-If you like, you can also install Enrico into your `site-packages`:
-
-.. code-block:: bash
-
-   cd enrico
-   python setup.py install --user 
-   (or however you install python packages on your system)
+   export ENRICO_DIR=< location of your Enrico software checkout >
+   source $ENRICO_DIR/enrico-init.sh
 
 Run the following command to check the status of your analysis environment:
 
 .. code-block:: bash
 
-   enrico_setup --check
+   enrico_setupcheck
 
 Download the diffuse model and 2FGL catalog files
 -------------------------------------------------

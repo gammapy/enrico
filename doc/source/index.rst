@@ -11,16 +11,53 @@ Welcome
 Hi, I am Enrico, and I will help you run your 
 `Fermi <http://fermi.gsfc.nasa.gov/>`_ data analysis!
 
-`Fermi <http://fermi.gsfc.nasa.gov/>`_
 
-Enrico is based on a configuration file which contains all the setup for your analysis. For each enrico tool, you just have to type
+Features
+--------
+
+* Get your results easy and fast by using the enrico command line tools.
+* Results are reproducible, because config files and logs are used. 
+* The enrico command line tools are just frontends for functions and
+  classes in the enrico python package, so if you know the Fermi tools
+  and some python it is easy for you to modify things to your needs.
+
+
+Enrico is based on a configuration file which contains all the setup for your
+analysis. For each enrico tool, you just have to type
 
 .. code-block:: bash
 
    enrico_'tool' Configuration.conf
 
+Quick setup
+-----------
+
+You need to have the Fermi ScienceTools installed on you machine. 
+
+The provided scripts enrico-init.sh will set up enrico for you. Before you need
+to define few global variables.
+
+.. code-block:: bash
+
+   export FERMI_DIR=< location of your Fermi software installation >
+   export FERMI_DATA_DIR=< location of your Fermi weekly and preprocessed data > 
+   # (not mandatory)
+   source $FERMI_DIR/fermi-init.sh
+
+   export ENRICO_DIR=< location of your Enrico software checkout >
+   source $ENRICO_DIR/enrico-init.sh
+
+Sourcing init_enrico.sh will setup your environment. You can check your
+installation by typing 
+
+.. code-block:: bash
+
+  enrico_setupcheck
+
+For more informations, go to :ref:`setup`
+
 A simple analysis
---------
+-----------------
 
 After you have done the :ref:`setup`, running an analysis is as simple as
 typing these commands:
@@ -29,7 +66,8 @@ typing these commands:
 
    enrico_config Myconfig.conf <answer a few questions like the position of your target>
 
-It will create an file named Myconfig.conf. Be sure that it contains all your setup. After you should generate an xml file for the sky model : 
+It will create an file named Myconfig.conf. Be sure that it contains all your
+setup. After you should generate an xml file for the sky model : 
 
 .. code-block:: bash
 
@@ -61,14 +99,8 @@ Finally at the end you should plot your results using:
    enrico_plot_tsmap Myconfig.conf (generate a fits file for the TS map)
 
 
-Features
---------
+For more information, see :ref:`tutorial`
 
-* Get your results easy and fast by using the enrico command line tools.
-* Results are reproducible, because config files and logs are used. 
-* The enrico command line tools are just frontends for functions and
-  classes in the enrico python package, so if you know the Fermi tools
-  and some python it is easy for you to modify things to your needs.
 
 Table of Contents
 -----------------
@@ -78,7 +110,7 @@ Table of Contents
 
    setup
    tutorial
-   sed_fit
+   configfile
    developer
 
 .. code-block:: python
