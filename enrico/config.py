@@ -87,12 +87,12 @@ def query_config():
 #    informations about the time
     config['time'] = {}
     tmin = raw_input('Start time [239557418] : ')
-    if not(tag=='') :
+    if not(tmin=='') :
       config['time']['tmin'] = tmin
     else :
       config['time']['tmin'] = '239557418'
     tmax = raw_input('End time [334165418] : ')
-    if not(tag=='') :
+    if not(tmax=='') :
       config['time']['tmax'] = tmax
     else :
       config['time']['tmax'] = '334165418'
@@ -100,12 +100,12 @@ def query_config():
 #    informations about the energy
     config['energy'] = {}
     emin = raw_input('Emin [100] : ')
-    if not(tag=='') :
+    if not(emin=='') :
       config['energy']['emin'] = emin
     else :
       config['energy']['emin'] = '100'
     emax = raw_input('Emax [300000] : ')
-    if not(tag=='') :
+    if not(emax=='') :
       config['energy']['emax'] = emax
     else :
       config['energy']['emax'] = '300000'
