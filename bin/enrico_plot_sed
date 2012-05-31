@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """Plot a SED"""
 import sys
-from enrico.plotting import PlotSED,Params
+from enrico.plotting import PlotSED,PlotUL,Params
 from enrico.config import get_config
+from enrico.utils import ReadResult,_SpecFileName
+
 
 try:
     infile = sys.argv[1]
@@ -14,6 +16,16 @@ config = get_config(infile)
 srcname = config['target']['name']
 Emin = config['energy']['emin']
 Emax = config['energy']['emax']
-filename = config['out'] + '/Spectrum/SED_' + srcname +'_'+ config['target']['spectrum']
+filename = _SpecFileName(config)
 Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
-PlotSED(infile,Param)
+
+Result = ReadResult(config)
+
+# if the TS > ts limit plot the butterfly, if not draw UL
+if Result["TS"]> config['UpperLimit']['TSlimit'] :
+    PlotSED(infile,Param)
+else :
+    try :
+        PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
+    except :
+        print "Not able to plot an upper limit in a SED diagram. UL computed?"

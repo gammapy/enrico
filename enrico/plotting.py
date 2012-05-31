@@ -29,10 +29,6 @@ class Result:
     def __init__(self, Fit, pars):
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
-        try:
-            self.TS = Fit.Ts(pars.srcname)
-        except RuntimeError:
-            self.TS = -1
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
         self.covar = np.array(utils.GetCovar(pars.srcname, self.Fit, False))
         self.srcpars = pyLikelihood.StringVector()
@@ -338,7 +334,8 @@ def PlotSED(infile,pars):
     root_style.RootStyle()
 
     # Read the ascii file where the butterfly is stored
-    filebase = config['out'] + '/Spectrum/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
+    filebase = utils._SpecFileName(config)
+
     lines = open(filebase + '.dat', 'r').readlines()
     SED = []
     E = []
@@ -369,7 +366,7 @@ def PlotSED(infile,pars):
     ErrorE[-1] = E[0]
 
     #Actually make the plot
-    c_plot = ROOT.TCanvas("Fermi-LAT SED")
+    c_plot = ROOT.TCanvas(pars.PlotName)
     c_plot.SetLogx()
     c_plot.SetLogy()
 
@@ -378,7 +375,7 @@ def PlotSED(infile,pars):
     ymax = max(SED[0] + Err[0], SED[-1] + Err[-1]) * 3
     ghSED = ROOT.TH2F("ghSED", "", 10000, xmin, xmax, 100, ymin, ymax)
     ghSED.SetStats(000)
-    ghSED.SetTitle("Fermi-LAT SED")
+    ghSED.SetTitle(pars.PlotName)
     ghSED.SetXTitle("E [MeV]")
     ghSED.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
     ghSED.Draw()
@@ -408,3 +405,42 @@ def PlotSED(infile,pars):
     c_plot.Print(filebase + '.C')
     c_plot.Print(filebase + '.eps')
     c_plot.Print(filebase + '.png')
+
+def PlotUL(pars,config,ULFlux,Index):
+
+    ROOT.gROOT.SetBatch(ROOT.kTRUE)
+    root_style.RootStyle()
+
+    #Compute the SED
+    E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
+    SED = 1.602e-6 * E ** 2 * (-Index+1)*ULFlux* np.power(E,-Index)/(np.power(pars.Emax,-Index+1)-np.power(pars.Emin,-Index+1))
+
+    #Actually make the plot
+    c_plot = ROOT.TCanvas(pars.PlotName)
+    c_plot.SetLogx()
+    c_plot.SetLogy()
+
+    xmin, xmax = E[0] * 0.7, E[-1] * 1.6
+    ymin = min(SED[0], SED[-1]) * 0.15
+    ymax = max(SED[0], SED[-1]) * 3
+    ghSED = ROOT.TH2F("ghSED", "", 10000, xmin, xmax, 100, ymin, ymax)
+    ghSED.SetStats(000)
+    ghSED.SetTitle(pars.PlotName)
+    ghSED.SetXTitle("E [MeV]")
+    ghSED.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
+    ghSED.Draw()
+
+    tgr = ROOT.TGraph(pars.N, np.array(E), np.array(SED))
+    tgr.Draw("L")
+
+    Ar_1=ROOT.TArrow(E[0],SED[0]*0.2,E[0],SED[0],0.02)
+    Ar_2=ROOT.TArrow(E[-1],SED[-1]*0.2,E[-1],SED[-1],0.02)
+    Ar_2.Draw("<|")
+    Ar_1.Draw("<|")
+
+    #save the canvas
+    filebase = utils._SpecFileName(config)
+    c_plot.Print(filebase + '.C')
+    c_plot.Print(filebase + '.eps')
+    c_plot.Print(filebase + '.png')
+

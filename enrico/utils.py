@@ -286,6 +286,10 @@ def PrepareEbin(Fit, runfit):
 
     return paramsfile
 
+def _SpecFileName(config):
+    """return a generic name for the file related to the spectrum (plot, results...)"""
+    return  config['out'] + '/Spectrum/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
+
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
     return (config['out'] + "/" + config['target']['name'] + "_" +
@@ -306,7 +310,6 @@ def DumpResult(Result, config):
     Dumpfile = open(_dump_filename(config), "w")
     for key in Result.iterkeys():
         Dumpfile.write(key + '\t' + str(Result[key]) + '\n')
-        print key + '\t' + str(Result[key])
     Dumpfile.close()
 
 
