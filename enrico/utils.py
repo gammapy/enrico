@@ -191,28 +191,33 @@ def getParamIndx(fit, name, parameter):
               (parameter, name, fit.srcModel))
     return ID
 
-def ChangeModel(Fit, E1, E2, name, model_type):
+def ApproxPref(Fit, ener,name):
+    Pref = np.zeros(len(ener)-1)
+    for ibin in xrange(len(ener)-1):
+      Eav = GetE0(ener[ibin+1],ener[ibin])
+      Pref[ibin] = dNde(Eav,Fit,name)
+
+    return Pref
+
+def ApproxGamma(Fit, ener,name):
+    """ Get an approximation of the index for different bin in energy"""
+    Gamma = np.zeros(len(ener)-1)
+    for ibin in xrange(len(ener)-1):
+      #Compute an approximation of an index
+      dnde1 = log10(dNde(ener[ibin],Fit,name))
+      dnde2 = log10(dNde(ener[ibin+1],Fit,name))
+      Gamma[ibin] = (dnde2-dnde1)/(log10(1.*ener[ibin+1])-log10(1.*ener[ibin]))
+
+    return Gamma
+
+def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     """Change the spectral model of a source called name
     to allow a fit between E1 and E2
     If the spectral model is PowerLaw, the prefactor is updated
     if not the model is change to PowerLaw.
     The index is frozen in all case"""
 
-    Eav = GetE0(E2,E1)
-#    flux = Fit.flux(name,E1,E2) #Source flux between E2 and Em2
-
-    # if the model is not PowerLaw : change the model
-    if model_type == 'PowerLaw' :
-      IdGamma = getParamIndx(Fit, name, 'Index')
-      Gamma = Fit[IdGamma].value()
-      Pref = dNde(Eav,Fit,name)
-    else :
-      #Compute an approximation of an index
-      dnde1 = log10(dNde(E1,Fit,name))
-      dnde2 = log10(dNde(E2,Fit,name))
-      Pref = dNde(Eav,Fit,name)
-      Gamma = (dnde2-dnde1)/(log10(1.*E2)-log10(1.*E1))
-      Fit.logLike.getSource(name).setSpectrum("PowerLaw") #Change model
+    Eav = GetE0(E1, E2)
 
     # Set Parameters
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
@@ -265,16 +270,23 @@ def PrepareEbin(Fit, runfit):
 
     RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
     srcname = runfit.config['target']['name']
+
+    Pref = ApproxPref(Fit, ener, srcname)
+    Gamma = ApproxGamma(Fit, ener, srcname)
+
     Model_type = Fit.model.srcs[srcname].spectrum().genericName()
+    # if the model is not PowerLaw : change the model
+    if not(Model_type == 'PowerLaw') :
+      Fit.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = GetE0(ener[ibin + 1],ener[ibin])
         print "Submition # ", ibin, " at energy ", E
         #Update the model for the bin
-        ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Model_type)
+        NewFitObject = ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
         Xmlname = (config['out'] + "/" + srcname +
                     "_" + str(ibin) + ".xml")
-        Fit.writeXml(Xmlname)# dump the corresponding xml file
+        NewFitObject.writeXml(Xmlname)# dump the corresponding xml file
         config['file']['xml'] = Xmlname
         #update the energy bounds
         config['energy']['emin'] = str(ener[ibin])
