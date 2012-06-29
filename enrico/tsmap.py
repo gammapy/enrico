@@ -124,7 +124,7 @@ class TSMap:
         # Read the cmap produced before to get the grid for the TS map
         runfit = Observation(folder, self.config)
         header = pyfits.getheader(runfit.cmapfile)
-        data = pyfits.getdata(runfit.cmapfile)*0
+        data = pyfits.getdata(runfit.cmapfile)*0.
         npix_im = min(header['NAXIS1'],header['NAXIS2'])
         npix = min(self.config['TSMap']['npix'],npix_im)
         Xref = header['CRPIX1']
