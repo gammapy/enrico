@@ -217,23 +217,19 @@ def PlotTS(Time, TimeErr, TS):
 
 def PlotNpred(Npred, Flux, FluxErr):
     """Scatter plot Flux(Npred)"""
-    Npred = np.asarray(Npred)
-    Flux = np.asarray(Flux)
-    FluxErr = np.asarray(FluxErr)
-    FdF = Flux / (FluxErr + 0.0001)
-    NpredErr = np.sqrt(Npred)
-    xmin = min(Npred / NpredErr) * 0.8
-    xmax = max(Npred / NpredErr) * 1.2
+    NdN = np.asarray(Npred) /np.sqrt(Npred)
+    FdF = np.asarray(Flux) / (np.asarray(FluxErr) + 0.0001)
+    xmin = min(NdN) * 0.8
+    xmax = max(NdN) * 1.2
     ymin, ymax = min(FdF) * 0.8, max(FdF) * 1.2
     gh = ROOT.TH2F("ghnpred", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     gh.SetXTitle("Npred/sqrt(Npred)")
     gh.SetYTitle("Flux/#Delta Flux")
-    tgraph = ROOT.TGraph(len(Npred), Npred / NpredErr, FdF)
+    tgraph = ROOT.TGraph(len(Npred), NdN, FdF)
     tgraph.SetMarkerColor(1)
     tgraph.SetMarkerStyle(5)
     return gh, tgraph
-
 
 def PlotLC(Time, TimeErr, Flux, FluxErr):
     """Scatter plot Flux(Time)"""
