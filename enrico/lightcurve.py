@@ -30,6 +30,8 @@ def PrepareLC(infile,write = 'no'):
     #All files will be stored in a subfolder name LightCurve + NLCbin
     config['out'] +='/LightCurve_'+str(config['LightCurve']['NLCbin'])+'bins'
 
+    config['verbose'] ='no' #Be quiet
+
     #No plot, no bin in energy, Normal UL
     config['Spectrum']['ResultPlots'] = 'no'
     config['Ebin']['NumEnergyBins'] = 0
@@ -157,6 +159,8 @@ def PlotLC(infile):
     if config['LightCurve']['DiagnosticPlots'] == 'yes':
         gTHNpred,TgrNpred = plotting.PlotNpred(Npred,Flux,FluxErr)
         CanvNpred = ROOT.TCanvas()
+        CanvNpred.SetGridx()
+        CanvNpred.SetGridy()
         gTHNpred.Draw()
         TgrNpred.Draw('zP')
         CanvNpred.Print(LcOutPath+"_Npred.eps")

@@ -218,7 +218,7 @@ def PlotTS(Time, TimeErr, TS):
 def PlotNpred(Npred, Flux, FluxErr):
     """Scatter plot Flux(Npred)"""
     NdN = np.asarray(Npred) /np.sqrt(Npred)
-    FdF = np.asarray(Flux) / (np.asarray(FluxErr) + 0.0001)
+    FdF = np.asarray(Flux) / (np.asarray(FluxErr) + 1e-20)
     xmin = min(NdN) * 0.8
     xmax = max(NdN) * 1.2
     ymin, ymax = min(FdF) * 0.8, max(FdF) * 1.2
@@ -254,7 +254,7 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
     return gh, tgraph, arrows
 
 
-def PlotDataPoints(config):
+def PlotDataPoints(config,pars):
     """Collect the data points/UL and generate a TGraph for the points
     and a list of TArrow for the UL. All is SED format"""
 
@@ -273,6 +273,10 @@ def PlotDataPoints(config):
     FluxpointErrm = np.zeros(NEbin)
     ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
+    print "Save Ebin results in ",pars.PlotName+".Ebin.dat"
+    dumpfile = open(pars.PlotName+".Ebin.dat",'w')
+    dumpfile.write("Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
+
     for i in xrange(NEbin):#Loop over the energy bins
         E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/Ebin'+str(NEbin)+'/' + config['target']['name'] +
@@ -288,6 +292,7 @@ def PlotDataPoints(config):
         Epoint[i] = E
         EpointErrm[i] = E - results.get("Emin")
         EpointErrp[i] = results.get("Emax") - E
+        dprefactor = 0
 
         #Compute the flux or the UL (in SED format)
         if results.has_key('Ulvalue'):
@@ -298,6 +303,7 @@ def PlotDataPoints(config):
                                      Fluxpoint[i] * 0.5, 0.02, "|>"))
         else : #Not an UL : compute points + errors
             Fluxpoint[i] = ErgsToMeV * results.get("Prefactor") * Epoint[i] ** 2
+            dprefactor = results.get("dPrefactor")
             try:
                 down = abs(results.get("dPrefactor-"))
                 up = results.get("dPrefactor+")
@@ -307,8 +313,7 @@ def PlotDataPoints(config):
                 FluxpointErrm[i] = ErgsToMeV * down * Epoint[i] ** 2
             except:
                 try:
-                    prefactor = results.get("dPrefactor")
-                    err = ErgsToMeV * prefactor * Epoint[i] ** 2
+                    err = ErgsToMeV * dprefactor * Epoint[i] ** 2
                     FluxpointErrp[i] = err
                     FluxpointErrm[i] = err
                 except:
@@ -316,10 +321,13 @@ def PlotDataPoints(config):
         print "Energy = ",Epoint[i]
         print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
 
+        #Save the data point in a ascii file
+        dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( ErgsToMeV * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
     #create a TGraph for the points
     tgpoint = ROOT.TGraphAsymmErrors(NEbin, Epoint, Fluxpoint, EpointErrm,
                                      EpointErrp, FluxpointErrm, FluxpointErrp)
     tgpoint.SetMarkerStyle(20)
+    dumpfile.close()
     return tgpoint, arrows
 
 
@@ -388,7 +396,7 @@ def PlotSED(infile,pars):
     #Plot points
     NEbin = int(config['Ebin']['NumEnergyBins'])
     if NEbin > 0:
-        tgpoint, Arrow = PlotDataPoints(config) #collect data points
+        tgpoint, Arrow = PlotDataPoints(config,pars) #collect data points
         tgpoint.SetLineColor(pars.PointColor)
         tgpoint.SetMarkerColor(pars.PointColor)
         tgpoint.Draw("pz")

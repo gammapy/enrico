@@ -41,8 +41,9 @@ class MakeFit(object):
         self.obs.FirstCut()
         self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
         self.obs.MkTime()
-        self._log('gtdiffrsp', 'Compute Diffuse response')
-        self.obs.DiffResps()#run gtbin
+        if self.config["analysis"]["ComputeDiffrsp"] == "yes":
+            self._log('gtdiffrsp', 'Compute Diffuse response')
+            self.obs.DiffResps()#run gtbin
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
         self._log('gtltcube', 'Make live time cube')#run gtexpcube
@@ -112,24 +113,27 @@ class MakeFit(object):
 
     def GetAndPrintResults(self, Fit):
         """Get and print some useful results. Also contruct a dictonnary and fill it with results"""
-        self._log('Results', 'Print results of the fit')
+        if self.config['verbose'] == 'yes' :
+            self._log('Results', 'Print results of the fit')
         Result = {}
-        print Fit.model
-        print
-        # Print src name, Npred and TS for source with TS > 5
-        print "Source Name\tNpred\tTS"
-        for src in Fit.model.srcNames:
-            if Fit.Ts(src) > 5:
-                print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
-        print
-        print '# ' + '*' * 60
-        print
+
+        if self.config['verbose'] == 'yes' :
+            print Fit.model
+            print
+            # Print src name, Npred and TS for source with TS > 5
+            print "Source Name\tNpred\tTS"
+            for src in Fit.model.srcNames:
+                if Fit.Ts(src) > 5:
+                    print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
+            print '\n# ' + '*' * 60 +'\n'
+
         # fill the dictonnary with some values
         Result['Optimizer'] = self.config['fitting']['optimizer']
         Result['Npred'] = Fit.NpredValue(self.obs.srcname)
         Result['TS'] = Fit.Ts(self.obs.srcname)
-        print "Values and (MINOS) errors for " + self.obs.srcname
-        print "TS : ", Fit.Ts(self.obs.srcname)
+        if self.config['verbose'] == 'yes' :
+            print "Values and (MINOS) errors for " + self.obs.srcname
+            print "TS : ", Fit.Ts(self.obs.srcname)
 
         # Get the python object 'Spectrum' for the source of interest
         spectrum = Fit[self.obs.srcname].funcs['Spectrum']
@@ -159,19 +163,23 @@ class MakeFit(object):
             if ParError>0: # Compute MINOS errors for relevent parameters  Fit.Ts(self.obs.srcname) > 5 and
                 try:
                     MinosErrors = Fit.minosError(self.obs.srcname, par)
-                    print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
+                    if self.config['verbose'] == 'yes' :
+                       print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
                           (ParValue, ParError, MinosErrors[0], MinosErrors[1], Scale))
-                    Result.update({'d'+par+'-': MinosErrors[0] * Scale})
-                    Result.update({'d'+par+'+': MinosErrors[1] * Scale})
+                       Result.update({'d'+par+'-': MinosErrors[0] * Scale})
+                       Result.update({'d'+par+'+': MinosErrors[1] * Scale})
                 except:
-                    print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                    if self.config['verbose'] == 'yes' :
+                        print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
                           (ParValue, ParError, Scale))
             else:
-                print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                if self.config['verbose'] == 'yes' :
+                    print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
                       (ParValue, ParError, Scale))
 
         try: # get covariance matrix
-            utils.GetCovar(self.obs.srcname, Fit)
+            if self.config['verbose'] == 'yes' :
+                utils.GetCovar(self.obs.srcname, Fit)
         except:
             pass #if the covariance matrix has not been computed
 

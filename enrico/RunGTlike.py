@@ -33,7 +33,8 @@ def run(infile):
     # create all the fit files and run gtlike
     runfit.PerformFit(Fit)
 
-    utils.GetFluxes(Fit,runfit.obs.Emin,runfit.obs.Emax) #print the flux of all the sources
+    if config['verbose'] == 'yes' :
+        utils.GetFluxes(Fit,runfit.obs.Emin,runfit.obs.Emax) #print the flux of all the sources
 
     Result = runfit.GetAndPrintResults(Fit)#Get and dump the target specific results
     utils.DumpResult(Result, config)

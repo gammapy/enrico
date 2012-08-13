@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+"""Print the help"""
+
+print "Enrico is a python package designed to simplify the Fermi analysis\n"
+
+
+print "To generate a configuration file :"
+print ">enrico_config myconfig.cong\n"
+
+print "To generate xml model :"
+print ">enrico_xml myconfig.cong\n"
+
+print "To generate spectrum :"
+print ">enrico_sed myconfig.cong\n"
+
+print "To generate a light-curve :"
+print ">enrico_lc myconfig.cong\n"
+
+print "To plot the results  :"
+print ">enrico_plot_sed myconfig.cong"
+print ">enrico_plot_lc myconfig.cong\n"
+
+print "Code: https://github.com/gammapy/enrico"
+print "Issues: https://github.com/gammapy/enrico/issues"
+print "Documentation: http://enrico.readthedocs.org/"
+print "Mailing List: http://groups.google.com/group/gammapy enrico"
+print "Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/"
+print "License: BSD-3-Clause"
+

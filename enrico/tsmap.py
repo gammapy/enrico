@@ -100,7 +100,7 @@ class TSMap:
             print 'FitOneRow ',dec
             self.FitOnePixel(ra,dec,i,j)
 
-    def runTSMap(self) :
+    def runTSMap(self,row=-1,column=-1) :
         """ Run a TS map using the configuration file given"""
         folder = self.config['out']
         os.system('mkdir -p ' + self.tsfolder)
@@ -108,13 +108,15 @@ class TSMap:
         for i in xrange(self.npix): #loop over the X axis
             ra = self.RAref + self.binsz*(i-self.npix/2.)
             if self.config['TSMap']['method'] == 'row' : # a row is evaluated in once
+                if row<0 or i==row:
                      print 'Run Row evaluation at ',ra
                      self._launch(ra,0,i,0)
             else : # each pixel is evaluated by one job
                 for j in xrange(self.npix): #loop over the Y axis
-                     dec = self.DECref + self.binsz*(j-self.npix/2.)
-                     print 'Run Pixel evaluation at ',ra,' ',dec
-                     self._launch(ra,dec,i,j) 
+                    if (row<0 and column<0) or (i==row and column<0) or (i==row and j==column):
+                         dec = self.DECref + self.binsz*(j-self.npix/2.)
+                         print 'Run Pixel evaluation at ',ra,' ',dec
+                         self._launch(ra,dec,i,j) 
 
     def PlotTSmap(self) :
         """ Gather the results of the evaluation of 

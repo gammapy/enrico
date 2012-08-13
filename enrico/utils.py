@@ -126,8 +126,9 @@ def RemoveWeakSources(Fit, SourceName=None):
     while not(NoWeakSrcLeft):
         NoWeakSrcLeft = True
         for src in Fit.model.srcNames:
-            if Fit.Ts(src) < 1 and not(src == SourceName):
-                print "delete source : ", src
+	    ts = Fit.Ts(src)
+            if  ts< 1 and not(src == SourceName):
+                print "delete source : ", src," with TS = ",ts
                 NoWeakSrcLeft = False
                 Fit.deleteSource(src)
         if not(NoWeakSrcLeft):
@@ -245,6 +246,7 @@ def PrepareEbin(Fit, runfit):
 
     config = runfit.config
 
+    config['verbose'] ='no' #Be quiet
     #Replace the evt file with the fits file produced before
     #in order to speed up the production of the fits files
     config['file']['event'] = runfit.obs.eventfile
@@ -268,8 +270,14 @@ def PrepareEbin(Fit, runfit):
     os.system("mkdir -p " + config['out'])
     paramsfile = []
 
-    RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
     srcname = runfit.config['target']['name']
+    if config['UpperLimit']['TSlimit']>Fit.Ts(srcname) :
+        _log('Re-optimize', False)
+	print "An upper limit has been computed. The fit need to be re-optmized"
+        Fit.optimize(0)
+	
+    RemoveWeakSources(Fit,srcname)#remove source with TS<1 to be sure that MINUIT will converge
+
 
     Pref = ApproxPref(Fit, ener, srcname)
     Gamma = ApproxGamma(Fit, ener, srcname)

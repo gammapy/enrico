@@ -18,6 +18,12 @@ The `out` option gives the main folder where enrico will put the produced files 
 
    out = ~/myanalysis
 
+The `verbose` option (default is 'yes') allow enrico to print information on the main output like TS, fluxes, predicted numbers of gammas, etc... Such values need computation time which can be saved by turning the option to 'no'
+
+.. code-block:: ini
+
+   verbose = yes
+
 Target
 ------
 
@@ -336,3 +342,15 @@ In order to speed up the process, parallel computation can be used. Either each 
       #Generate the TS map pixel by pixel or by grouping the pixels by row.
       #(reduce the numbers of jobs but each job are longer)
       method = row
+
+
+If a pixel (or a row) has failed you can rerun it. For the pixel 49,4 :
+
+.. code-block:: ini
+   enrico_tsmap myanalysis.conf 49 4
+
+
+For the entire row 49 :
+
+.. code-block:: ini
+   enrico_tsmap myanalysis.conf 49

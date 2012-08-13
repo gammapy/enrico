@@ -10,10 +10,20 @@ except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
+try:
+    row = int(sys.argv[2])
+except:
+    row = -1
+
+try:
+    column = int(sys.argv[3])
+except:
+    column = -1
+
 
 config = get_config(infile)
 TSm = tsmap.TSMap(infile)
-TSm.runTSMap()
+TSm.runTSMap(row,column)
 
 
 

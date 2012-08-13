@@ -21,7 +21,7 @@ def addParameter(el, name, free, value, scale, min, max):
     el.appendChild(param)
 
 def addDiffusePL(lib, file, free=1, value=1.0, max=10.0, min=1.0,
-               name='EG_v02'):
+               name='iso_p7v6source'):
     """Add the diffuse extragalactic diffuse"""
     doc = lib.ownerDocument
     src = doc.createElement('source')
@@ -39,7 +39,7 @@ def addDiffusePL(lib, file, free=1, value=1.0, max=10.0, min=1.0,
     lib.appendChild(src)
 
 def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
-               name='GAL_v02'):
+               name='gal_2yearp7v6_v0'):
     """Add the diffuse galactic diffuse"""
     doc = lib.ownerDocument
     src = doc.createElement('source')
@@ -323,6 +323,9 @@ def WriteXml(lib, doc, srclist, config):
     emin = config['energy']['emin']
     emax = config['energy']['emax']
 
+    Galname = "GalDiffModel"
+    Isoname = "IsoDiffModel"
+
     #test if the user provides diffuse files. if not  use the default one
     if config['model']['diffuse_gal_dir'] == "":
         Gal_dir = env.DIFFUSE_DIR
@@ -336,19 +339,26 @@ def WriteXml(lib, doc, srclist, config):
 
     if config['model']['diffuse_gal'] == "":
         Gal = Gal_dir + "/" + env.DIFFUSE_GAL
+#        Galname = "DIFRSP1"
+#        if config['analysis']['irfs'] == "P7CLEAN_V6" and config['analysis']['convtype'] == -1:
+#            Galname = "DIFRSP3"
     else:
         Gal = Gal_dir + "/" + config['model']['diffuse_gal']
 
-    if config['model']['diffuse_gal_dir'] == "":
+    if config['model']['diffuse_iso'] == "":
         Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
+#        Isoname = "DIFRSP0"
+        if config['analysis']['irfs'] == "P7CLEAN_V6":# and config['analysis']['convtype'] == -1:
+            Iso = Iso_dir + "/" + env.DIFFUSE_ISO_CLEAN
+#            Isoname = "DIFRSP2"
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
 
     #add diffuse sources
     addDiffusePL(lib, Iso, free=1, value=1.0,
-                 max=10.0, min=1.0, name='iso_p7v6source.txt')
+                 max=10.0, min=1.0, name=Isoname)
     addGalprop(lib, Gal, free=1, value=1.0, scale=1.0,
-               max=10.0, min=.010, name='gal_2yearp7v6_v0')
+               max=10.0, min=.010, name=Galname)
 
     # loop over the list of sources and add it to the library
     for i in xrange(len(srclist)):
