@@ -339,18 +339,15 @@ def WriteXml(lib, doc, srclist, config):
 
     if config['model']['diffuse_gal'] == "":
         Gal = Gal_dir + "/" + env.DIFFUSE_GAL
-#        Galname = "DIFRSP1"
-#        if config['analysis']['irfs'] == "P7CLEAN_V6" and config['analysis']['convtype'] == -1:
-#            Galname = "DIFRSP3"
     else:
         Gal = Gal_dir + "/" + config['model']['diffuse_gal']
 
     if config['model']['diffuse_iso'] == "":
         Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
-#        Isoname = "DIFRSP0"
+
         if config['analysis']['irfs'] == "P7CLEAN_V6":# and config['analysis']['convtype'] == -1:
             Iso = Iso_dir + "/" + env.DIFFUSE_ISO_CLEAN
-#            Isoname = "DIFRSP2"
+
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
 

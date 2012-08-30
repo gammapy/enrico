@@ -105,18 +105,31 @@ class TSMap:
         folder = self.config['out']
         os.system('mkdir -p ' + self.tsfolder)
 
+        # This part is used to rerun either a row or a pixel.
+        if row>0:#rerun only 1 row
+            ra = self.RAref + self.binsz*(row-self.npix/2.)
+            if column>0: #rerun only 1 pixel
+                dec = self.DECref + self.binsz*(column-self.npix/2.)
+                print 'Run Pixel evaluation at ',ra,' ',dec
+                self._launch(ra,dec,row,column) 
+            else :
+                print 'Run Row evaluation at ',ra
+                self._launch(ra,0,row,0)
+            return 
+
+        # Normal operation : all row and piwel are computed
         for i in xrange(self.npix): #loop over the X axis
             ra = self.RAref + self.binsz*(i-self.npix/2.)
-            if self.config['TSMap']['method'] == 'row' : # a row is evaluated in once
-                if row<0 or i==row:
-                     print 'Run Row evaluation at ',ra
-                     self._launch(ra,0,i,0)
+            if self.config['TSMap']['method'] == 'row' : # a row is evaluated in one job
+#                if row<0 or i==row:
+                 print 'Run Row evaluation at ',ra
+                 self._launch(ra,0,i,0)
             else : # each pixel is evaluated by one job
                 for j in xrange(self.npix): #loop over the Y axis
-                    if (row<0 and column<0) or (i==row and column<0) or (i==row and j==column):
-                         dec = self.DECref + self.binsz*(j-self.npix/2.)
-                         print 'Run Pixel evaluation at ',ra,' ',dec
-                         self._launch(ra,dec,i,j) 
+#                    if (row<0 and column<0) or (i==row and column<0) or (i==row and j==column):
+                     dec = self.DECref + self.binsz*(j-self.npix/2.)
+                     print 'Run Pixel evaluation at ',ra,' ',dec
+                     self._launch(ra,dec,i,j) 
 
     def PlotTSmap(self) :
         """ Gather the results of the evaluation of 

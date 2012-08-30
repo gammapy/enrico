@@ -231,17 +231,20 @@ If you want of remove the source your are interested in from the TS map (i.e. fr
    For the `enrico_tsmap` tool, most of the relevant options are in the [TSMap]
    section
 
+It can happend that some job failed of the obtain TS is not good (due to convergence problems) If a pixel (or a row) has failed, you can rerun it.
 
-If a pixel (or a row) has failed you can rerun it. For the pixel 49,4 :
+To re-run a single pixel, i.e. the pixel (49,4) :
 
 .. code-block:: ini
    enrico_tsmap myanalysis.conf 49 4
 
 
-For the entire row 49 :
+To re-run a row, ie row number 49 :
 
 .. code-block:: ini
    enrico_tsmap myanalysis.conf 49
+
+
 
 Upper Limits
 -------------

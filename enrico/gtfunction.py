@@ -171,9 +171,10 @@ class Observation:
         "Run gtltcube tool to produce livetime cube"
         expCube['evfile']=self.eventfile
         expCube['scfile']=self.ft2
-        expCube['outfile'] =self.Cubename
+        expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
         expCube['binsz']=1
+	expCube['phibins']=self.Configuration['space']['phibins'] 
         expCube.run()
 
     def ExpMap(self):
