@@ -347,10 +347,12 @@ In order to speed up the process, parallel computation can be used. Either each 
 If a pixel (or a row) has failed you can rerun it. For the pixel 49,4 :
 
 .. code-block:: ini
+
    enrico_tsmap myanalysis.conf 49 4
 
 
 For the entire row 49 :
 
 .. code-block:: ini
+
    enrico_tsmap myanalysis.conf 49

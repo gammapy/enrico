@@ -236,12 +236,14 @@ It can happend that some job failed of the obtain TS is not good (due to converg
 To re-run a single pixel, i.e. the pixel (49,4) :
 
 .. code-block:: ini
+
    enrico_tsmap myanalysis.conf 49 4
 
 
 To re-run a row, ie row number 49 :
 
 .. code-block:: ini
+
    enrico_tsmap myanalysis.conf 49
 
 
