@@ -39,9 +39,11 @@ class Observation:
         self.Mapname   = folder+'/'+self.srcname+inttag+"_ExpMap.fits"
         self.BinnedMapfile = folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
         self.cmapfile  = folder+'/'+self.srcname+inttag+"_CountMap.fits"
+        self.lcfile    = folder+'/'+self.srcname+inttag+"_applc.fits"
         self.ccube     = folder+'/'+self.srcname+inttag+"_CCUBE.fits"
         self.scrMap    = folder+'/'+self.srcname+inttag+"_srcMap.fits"
         self.ModelMap  = folder+'/'+self.srcname+inttag+"_ModelMap.fits"
+        self.BinDef  = folder+'/'+self.srcname+inttag+"_BinDef.fits"
 
         #Variables
         self.t1        = float(Configuration['time']['tmin'])
@@ -92,6 +94,39 @@ class Observation:
         evtbin['yref'] = self.dec
         evtbin['axisrot'] = 0
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
+        evtbin.run()
+
+    def GtBinDef(self,filename):
+        bindef = GtApp('gtbindef', 'Likelihood')
+        bindef['bintype'] = 'T'
+        bindef['binfile'] = filename
+        bindef['outfile'] = self.BinDef
+        bindef.run()
+
+    def GtExposure(self):
+        exposure = GtApp('gtexposure', 'Likelihood')
+        exposure['infile'] = self.lcfile
+        exposure['scfile'] = self.ft2
+        exposure['irfs'] = self.irfs
+        exposure['srcmdl'] = "none"
+        exposure['specin'] = -self.Configuration['AppLC']['index']
+        exposure.run()
+
+    def GtLCbin(self,dt=60):
+        """Run gtbin with the LC option. the default dt is 60 sec and data can be rebinned after.
+          Can also take a file as input to define the time bins"""
+        evtbin['evfile'] = self.eventfile
+        evtbin['scfile'] = self.ft2
+        evtbin['outfile'] = self.lcfile
+        evtbin['algorithm'] = "LC"
+        evtbin["tstart"] = self.t1
+        evtbin["tstop"] = self.t2
+        evtbin["dtime"] = dt
+        if dt > 0 :
+            evtbin["tbinalg"] = "LIN"
+        else :
+            evtbin["tbinalg"] = "FILE"
+            evtbin["tbinfile"] = self.BinDef
         evtbin.run()
 
     def GtCcube(self):

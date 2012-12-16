@@ -270,7 +270,6 @@ class MakeFit(object):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        os.system("mkdir -p "+self.config['out'] + '/Spectrum/')
         filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ Fit[self.obs.srcname].funcs['Spectrum'].genericName()
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
                               Emax=self.obs.Emax, PlotName=filename)

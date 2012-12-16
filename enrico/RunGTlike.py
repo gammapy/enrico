@@ -41,6 +41,7 @@ def run(infile):
 
     #plot the SED and model map if possible and asked
     if config['Spectrum']['ResultPlots'] == 'yes' :
+    	os.system("mkdir -p "+config['out'] + '/Spectrum/')
         if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
             runfit.ComputeSED(Fit)
         outXml = utils._dump_xml(config)

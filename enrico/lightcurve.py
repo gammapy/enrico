@@ -24,6 +24,10 @@ def PrepareLC(infile,write = 'no'):
     # Do fits files will be generated
     config['Spectrum']['FitsGeneration'] = config['LightCurve']['FitsGeneration']
 
+    #Froze the Spectral index at a value of 2
+    config['Spectrum']['FrozenSpectralIndex'] = 2
+
+
     #TS limit. Compute an UL if the TS is below TSLightCurve
     config['UpperLimit']['TSlimit'] = config['LightCurve']['TSLightCurve']
 

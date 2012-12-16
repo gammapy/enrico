@@ -42,7 +42,7 @@ class Result:
 
         print
         for i in xrange(par.N):
-          if Err[i] == min(Err):
+          if Err[i]/SED[i] == min(Err/SED):
             print "Decorrelation energy : %4.2e MeV"%E[i]
             print "SED at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i])
         print
@@ -375,8 +375,8 @@ def PlotSED(infile,pars):
     c_plot.SetLogy()
 
     xmin, xmax = E[0] * 0.8, E[-1] * 1.5
-    ymin = min(SED[0] - Err[0], SED[-1] - Err[-1]) * 0.2
-    ymax = max(SED[0] + Err[0], SED[-1] + Err[-1]) * 3
+    ymin = min(np.array(SED) - np.array(Err)) * 0.2
+    ymax = max(np.array(SED) + np.array(Err)) * 3
     ghSED = ROOT.TH2F("ghSED", "", 10000, xmin, xmax, 100, ymin, ymax)
     ghSED.SetStats(000)
     ghSED.SetTitle(pars.PlotName)
