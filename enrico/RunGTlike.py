@@ -6,19 +6,16 @@ from submit import call
 from config import get_config
 import environ
 
-def run(infile):
-    """Run an entire Fermi analysis (spectrum) by reading a config file"""
-    config = get_config(infile)
-    folder = config['out']
-    os.system('mkdir -p ' + folder)
 
+def GenAnalysisObject(config, verbose = 1):
     #check is the summed likelihood method should be used and get the 
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
     SummedLike = config['Spectrum']['SummedLike']
+    folder = config['out']
     if SummedLike == 'yes':
         # Create two obs instances
-        runfitfront = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
-        runfitback = utils.Analysis(folder, config, tag="BACK", convtyp=1)
+        runfitfront = utils.Analysis(folder, config, tag="FRONT", convtyp=0, verbose = verbose)
+        runfitback = utils.Analysis(folder, config, tag="BACK", convtyp=1, verbose = verbose)
         FitB = runfitback.CreateFit()
         FitF = runfitfront.CreateFit()
         Fit = SummedLikelihood.SummedLikelihood()
@@ -28,8 +25,17 @@ def run(infile):
     else:
         convtype = config['analysis']['convtype']
         # Create one obs instance
-        runfit = utils.Analysis(folder, config, tag="", convtyp=convtype)
+        runfit = utils.Analysis(folder, config, tag="", convtyp=convtype, verbose = verbose)
         Fit = runfit.CreateFit()
+    return runfit,Fit
+
+def run(infile):
+    """Run an entire Fermi analysis (spectrum) by reading a config file"""
+    config = get_config(infile)
+    folder = config['out']
+    os.system('mkdir -p ' + folder)
+
+    runfit,Fit = GenAnalysisObject(config)
     # create all the fit files and run gtlike
     runfit.PerformFit(Fit)
 

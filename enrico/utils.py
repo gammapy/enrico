@@ -106,16 +106,17 @@ def SubstracFits(infile1, infile2, config):
     pyfits.writeto(abs_diff_file, data1 - data2, head)
     pyfits.writeto(rel_diff_file, (data1 - data2) / data2, head)
 
-def Analysis(folder, config, tag="", convtyp='-1'):
+def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     """ run an analysis"""
     from gtfunction import Observation
     from fitfunction import MakeFit
     Obs = Observation(folder, config, convtyp, tag=tag)
-    _log('SUMMARY' + tag)
-    Obs.printSum()
-    runfit = MakeFit(Obs, config)
+    if verbose:
+        _log('SUMMARY: ' + tag)
+        Obs.printSum()
+    runfit = MakeFit(Obs, config)##Class
     if config['Spectrum']['FitsGeneration'] == 'yes':
-        runfit.PreparFit()
+        runfit.PreparFit() #Generates fits files
     return runfit
 
 def RemoveWeakSources(Fit, SourceName=None):
@@ -192,6 +193,10 @@ def getParamIndx(fit, name, parameter):
               (parameter, name, fit.srcModel))
     return ID
 
+def FreezeParams(fit, name, parameter, value):
+    fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
+    fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
+
 def ApproxPref(Fit, ener,name):
     Pref = np.zeros(len(ener)-1)
     for ibin in xrange(len(ener)-1):
@@ -216,7 +221,7 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     to allow a fit between E1 and E2
     If the spectral model is PowerLaw, the prefactor is updated
     if not the model is change to PowerLaw.
-    The index is frozen in all case"""
+    The index is frozen in all cases"""
 
     Eav = GetE0(E1, E2)
 
@@ -277,7 +282,6 @@ def PrepareEbin(Fit, runfit):
         Fit.optimize(0)
 	
     RemoveWeakSources(Fit,srcname)#remove source with TS<1 to be sure that MINUIT will converge
-
 
     Pref = ApproxPref(Fit, ener, srcname)
     Gamma = ApproxGamma(Fit, ener, srcname)
