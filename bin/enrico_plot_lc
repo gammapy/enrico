@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Plot a lightcurve"""
 import sys
-from enrico.lightcurve import PlotLC
+import enrico.lightcurve  as lc
 
 try:
     infile = sys.argv[1]
@@ -9,4 +9,5 @@ except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
-PlotLC(infile)
+lc = lc.LightCurve(infile)
+lc.PlotLC()
