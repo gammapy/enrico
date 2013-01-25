@@ -34,6 +34,9 @@ def AppLC(infile):
     #Change the ROI to 1 degree
     config['space']['rad'] = 1
 
+    #Get The time bin
+    dt = 60 #sec
+
     Obs = Observation(LCoutfolder, config, config['analysis']['convtype'], tag="")
     if config['AppLC']["FitsGeneration"] == "yes":
         _log('gtselect', 'Select data from library')#run gtselect
@@ -148,7 +151,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     CanvExposure.Print(LCoutfolder+'/Exposure.C')
 
     CanvFlux = ROOT.TCanvas()
-    flux_histo.SetNameTitle("Apperture Photometry Flux","Apperture Photometry Flux")
+    flux_histo.SetNameTitle("Apperture_Photometry_Flux","Apperture_Photometry_Flux")
     flux_histo.SetYTitle("Flux")
     flux_histo.SetXTitle("Time (MJD)")
     flux_histo.SetMarkerStyle(20)

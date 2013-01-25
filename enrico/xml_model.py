@@ -129,7 +129,7 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0.05, beta_max=5.0):
+                   beta_min=0.0005, beta_max=5.0):
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
@@ -217,7 +217,7 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    cutoff_free=1, cutoff_value=1e4,
                    cutoff_min=200, cutoff_max=3e5,
                    index2_free=0, index2_value=-1.0,
-                   index2_min=-5.0, index2_max=-0.5):
+                   index2_min=-5.0, index2_max=-0.05):
     """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000

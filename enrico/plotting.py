@@ -39,12 +39,12 @@ class Result:
         The count and residuals plot vs E is also made"""
         E, SED = self.MakeSED(par)
         Err = self.MakeSEDError(par)
-
         print
         for i in xrange(par.N):
           if Err[i]/SED[i] == min(Err/SED):
             print "Decorrelation energy : %4.2e MeV"%E[i]
-            print "SED at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i])
+            print "Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" %(SED[i]/E[i]**2*624152.206,Err[i]/E[i]**2*624152.206)
+            print "SED value at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i])
         print
 
         try:

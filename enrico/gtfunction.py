@@ -68,15 +68,15 @@ class Observation:
 
     def printSum(self):
         """Print a summary of the value stored in the class"""
-        print "Source = ",self.srcname
-        print "Center RA = ",self.ra," degrees"
-        print "Center Dec = ",self.dec," degrees"
-        print "Start Time = ",self.t1,"  MET (s)"
-        print "Stop Time = ",self.t2,"  MET (s)"
-        print "ROI size = ",self.roi," degrees"
-        print "E min = ",self.Emin," MeV"
-        print "E max = ",self.Emax," MeV"
-        print "IRFs = ",self.irfs
+        print "Source\t=\t",self.srcname
+        print "RA\t=\t",self.ra," degrees"
+        print "Dec\t=\t",self.dec," degrees"
+        print "Start\t=\t",self.t1,"  MET (s)"
+        print "Stop\t=\t",self.t2,"  MET (s)"
+        print "ROI\t=\t",self.roi," degrees"
+        print "E min\t=\t",self.Emin," MeV"
+        print "E max\t=\t",self.Emax," MeV"
+        print "IRFs\t=\t",self.irfs
 
     def Gtbin(self):
         """Run gtbin with the CMAP option. A count map is produced"""
@@ -250,33 +250,4 @@ class Observation:
         model_map.run()
         #Compute the residual map
         utils.SubstracFits(self.cmapfile,self.ModelMap,self.Configuration)
-
-    def GetCovar(self,Fit):
-        "Get the covariance matrix"
-        ptsrc = pyLike.PointSource_cast(Fit[self.srcname].src)
-        par_index_map = {}
-        indx = 0
-        for src in Fit.sourceNames():#loop over the sources
-            parNames = pyLike.StringVector()
-            Fit[src].src.spectrum().getFreeParamNames(parNames) #get params of a surce
-            for par in parNames:
-                par_index_map["::".join((src, par))] = indx
-                indx += 1
-        # Build the source-specific covariance matrix.
-        if Fit.covariance is None: #in this case the user did not ask to compute the covariance matrix
-            raise RuntimeError("Covariance matrix has not been computed.")
-        covar = num.array(Fit.covariance)
-        if len(covar) != len(par_index_map):
-            raise RuntimeError("Covariance matrix size does not match the " +
-                               "number of free parameters.")
-        my_covar = []
-        srcpars = pyLike.StringVector()
-        #Get the specific covariance matrix for the source
-        Fit[self.srcname].src.spectrum().getFreeParamNames(srcpars)
-        pars = ["::".join((self.srcname, x)) for x in srcpars]
-        for xpar in pars:
-            ix = par_index_map[xpar]
-            my_covar.append([covar[ix][par_index_map[ypar]] for ypar in pars])
-        print "The covariance matrix is :\n",numpy.array(my_covar)
-        print 
 

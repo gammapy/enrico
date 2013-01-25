@@ -6,6 +6,7 @@ import utils
 from submit import call
 from config import get_config
 import environ
+from RunGTlike import Analysis
 from gtfunction import Observation
 
 class TSMap:
@@ -28,8 +29,8 @@ class TSMap:
         self.infile = infile
         self.npix = self.config['TSMap']['npix']
         # Read the cmap produced before to get the grid for the TS map
-        runfit = Observation(self.config['out'], self.config)
-        cmap = pyfits.open(runfit.cmapfile)
+        FitRunner = Observation(self.config['out'], self.config)
+        cmap = pyfits.open(FitRunner.cmapfile)
         npix_im = min(cmap[0].header['NAXIS1'],cmap[0].header['NAXIS2'])
         self.npix = min(self.npix,npix_im)
         self.RAref = cmap[0].header['CRVAL1']
@@ -61,8 +62,8 @@ class TSMap:
         """Run a evaluation of the pixel (i,j) corresponding to position (ra,dec)"""
         outXml = utils._dump_xml(self.config)
         folder = self.config['out']
-
-        Fit = GetFitObjectForTSmap(self.config,xmlfile=outXml) #get the Fit object
+        Fit,_ = GenAnalysisObjects(self.config,xmlfile=outXml) #get the Fit object
+#        Fit = GetFitObjectForTSmap(self.config,xmlfile=outXml) #get the Fit object
 
         src = GetSrc(Fit,ra,dec) # get the Source object at postion ra dec
 
@@ -137,9 +138,9 @@ class TSMap:
         folder = self.config['out']
 
         # Read the cmap produced before to get the grid for the TS map
-        runfit = Observation(folder, self.config)
-        header = pyfits.getheader(runfit.cmapfile)
-        data = pyfits.getdata(runfit.cmapfile)*0.
+        FitRunner = Observation(folder, self.config)
+        header = pyfits.getheader(FitRunner.cmapfile)
+        data = pyfits.getdata(FitRunner.cmapfile)*0.
         npix_im = min(header['NAXIS1'],header['NAXIS2'])
         npix = min(self.config['TSMap']['npix'],npix_im)
         Xref = header['CRPIX1']
@@ -185,31 +186,31 @@ def GetSrc(Fit,ra,dec):
 
             return src
 
-def GetFitObjectForTSmap(config,xmlfile=""):
-    """ return a fit object with the xmlmodel provided."""
-    folder = config['out']
-    config['Spectrum']['FitsGeneration'] = 'no'
-    if config['Spectrum']['SummedLike'] == 'yes':
-        # Create two obs instances
-        runfitfront = utils.Analysis(folder, config, tag="FRONT", convtyp=0)
-        runfitback = utils.Analysis(folder, config, tag="BACK", convtyp=1)
-        if not(xmlfile ==""):
-            runfitfront.obs.xmlfile = xmlfile
-            runfitback.obs.xmlfile = xmlfile
-        FitB = runfitback.CreateFit()
-        FitF = runfitfront.CreateFit()
-        Fit = SummedLikelihood.SummedLikelihood()
-        Fit.addComponent(FitB)
-        Fit.addComponent(FitF)
+#def GetFitObjectForTSmap(config,xmlfile=""):
+#    """ return a fit object with the xmlmodel provided."""
+#    folder = config['out']
+#    config['Spectrum']['FitsGeneration'] = 'no'
+#    if config['Spectrum']['SummedLike'] == 'yes':
+#        # Create two obs instances
+#        FitRunnerfront = Analysis(folder, config, tag="FRONT", convtyp=0)
+#        FitRunnerback = Analysis(folder, config, tag="BACK", convtyp=1)
+#        if not(xmlfile ==""):
+#            FitRunnerfront.obs.xmlfile = xmlfile
+#            FitRunnerback.obs.xmlfile = xmlfile
+#        FitB = FitRunnerback.CreateLikeObject()
+#        FitF = FitRunnerfront.CreateLikeObject()
+#        Fit = SummedLikelihood.SummedLikelihood()
+#        Fit.addComponent(FitB)
+#        Fit.addComponent(FitF)
 
-    else:
-        convtype = config['analysis']['convtype']
-        # Create one obs instanceFit.addSource
-        runfit = utils.Analysis(folder, config, tag="", convtyp=convtype)
-        if not(xmlfile ==""):
-            runfit.obs.xmlfile = xmlfile
-        Fit = runfit.CreateFit()
-    return Fit
+#    else:
+#        convtype = config['analysis']['convtype']
+#        # Create one obs instanceFit.addSource
+#        FitRunner = Analysis(folder, config, tag="", convtyp=convtype)
+#        if not(xmlfile ==""):
+#            FitRunner.obs.xmlfile = xmlfile
+#        Fit = FitRunner.CreateLikeObject()
+#    return Fit
 
 if __name__ == '__main__':
     try:

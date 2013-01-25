@@ -106,38 +106,6 @@ def SubstracFits(infile1, infile2, config):
     pyfits.writeto(abs_diff_file, data1 - data2, head)
     pyfits.writeto(rel_diff_file, (data1 - data2) / data2, head)
 
-def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
-    """ run an analysis"""
-    from gtfunction import Observation
-    from fitfunction import MakeFit
-    Obs = Observation(folder, config, convtyp, tag=tag)
-    if verbose:
-        _log('SUMMARY: ' + tag)
-        Obs.printSum()
-    runfit = MakeFit(Obs, config)##Class
-    if config['Spectrum']['FitsGeneration'] == 'yes':
-        runfit.PreparFit() #Generates fits files
-    return runfit
-
-def RemoveWeakSources(Fit, SourceName=None):
-    """Remove the weak source after a fit and reoptimized
-     weak mens TS<1"""
-    _log('Remove all the weak (TS<1) sources')
-    NoWeakSrcLeft = False
-    while not(NoWeakSrcLeft):
-        NoWeakSrcLeft = True
-        for src in Fit.model.srcNames:
-	    ts = Fit.Ts(src)
-            if  ts< 1 and not(src == SourceName):
-                print "delete source : ", src," with TS = ",ts
-                NoWeakSrcLeft = False
-                Fit.deleteSource(src)
-        if not(NoWeakSrcLeft):
-            _log('Re-optimize', False)
-            Fit.optimize(0)
-        print
-    return Fit
-
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):
     """Print the integral flux and error for all the sources"""
@@ -216,99 +184,6 @@ def ApproxGamma(Fit, ener,name):
 
     return Gamma
 
-def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
-    """Change the spectral model of a source called name
-    to allow a fit between E1 and E2
-    If the spectral model is PowerLaw, the prefactor is updated
-    if not the model is change to PowerLaw.
-    The index is frozen in all cases"""
-
-    Eav = GetE0(E1, E2)
-
-    # Set Parameters
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(fluxScale(Pref))
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(fluxNorm(Pref))
-
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(-5,0)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
-
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
-
-    return Fit
-
-def PrepareEbin(Fit, runfit):
-    """ Prepare the computation of spectral point in energy bins by
-    i) removeing the weak sources (TS<1)
-    ii) updating the config file (option and energy) 
-    and save it in a new ascii file
-    iii) changing the spectral model and saving it in a new xml file.
-    A list of the ascii files is returned"""
-
-    NEbin = int(runfit.config['Ebin']['NumEnergyBins'])
-
-    config = runfit.config
-
-    config['verbose'] ='no' #Be quiet
-    #Replace the evt file with the fits file produced before
-    #in order to speed up the production of the fits files
-    config['file']['event'] = runfit.obs.eventfile
-    #update the config to allow the fit in energy bins
-    config['UpperLimit']['envelope'] = 'no' 
-    config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
-    config['out'] = runfit.config['out'] + '/Ebin' + str(NEbin)
-    config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
-    #copy the chose of the user for the enery bin computing
-    config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration'] 
-    config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
-    tag = runfit.config['file']['tag']
-    lEmax = np.log10(float(runfit.config['energy']['emax']))
-    lEmin = np.log10(float(runfit.config['energy']['emin']))
-    print("Preparing submission of fit into energy bins")
-    print("Emin = ", float(runfit.config['energy']['emin']),
-          " Emax = ", float(runfit.config['energy']['emax']),
-          " Nbins = ", NEbin)
-
-    ener = np.logspace(lEmin, lEmax, NEbin + 1)
-    os.system("mkdir -p " + config['out'])
-    paramsfile = []
-
-    srcname = runfit.config['target']['name']
-    if config['UpperLimit']['TSlimit']>Fit.Ts(srcname) :
-        _log('Re-optimize', False)
-	print "An upper limit has been computed. The fit need to be re-optmized"
-        Fit.optimize(0)
-	
-    RemoveWeakSources(Fit,srcname)#remove source with TS<1 to be sure that MINUIT will converge
-
-    Pref = ApproxPref(Fit, ener, srcname)
-    Gamma = ApproxGamma(Fit, ener, srcname)
-
-    Model_type = Fit.model.srcs[srcname].spectrum().genericName()
-    # if the model is not PowerLaw : change the model
-    if not(Model_type == 'PowerLaw') :
-      Fit.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
-
-    for ibin in xrange(NEbin):#Loop over the energy bins
-        E = GetE0(ener[ibin + 1],ener[ibin])
-        print "Submition # ", ibin, " at energy ", E
-        #Update the model for the bin
-        NewFitObject = ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
-        Xmlname = (config['out'] + "/" + srcname +
-                    "_" + str(ibin) + ".xml")
-        NewFitObject.writeXml(Xmlname)# dump the corresponding xml file
-        config['file']['xml'] = Xmlname
-        #update the energy bounds
-        config['energy']['emin'] = str(ener[ibin])
-        config['energy']['emax'] = str(ener[ibin + 1])
-        config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
-        filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
-        paramsfile.append(filename)
-        config.write(open(config['out'] + '/' +paramsfile[ibin], 'w')) #save the config file in a ascii file
-
-    return paramsfile
 
 def _SpecFileName(config):
     """return a generic name for the file related to the spectrum (plot, results...)"""

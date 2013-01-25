@@ -6,9 +6,10 @@ import utils
 import root_style
 import plotting
 import environ
+from math import sqrt
 from config import get_config
 from submit import call
-from enrico.RunGTlike import run,GenAnalysisObject
+from enrico.RunGTlike import run,GenAnalysisObjects
 
 class LightCurve:
     """Class to calculate light curves and variability indexes."""
@@ -48,6 +49,11 @@ class LightCurve:
         self.config['verbose'] ='no' #Be quiet
 
         self.configfile = []#All the config file in the disk are stored in a list
+
+    def _errorReading(self,message,i):
+        print "WARNING : "+message+" : ",self.configfile[i]
+        print "Job Number : ",i
+        print "Please have a look at this job log file"
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
@@ -96,7 +102,10 @@ class LightCurve:
         TimeErr = []
         Flux = []
         FluxErr = []
+        FluxForNpred = []
+        FluxErrForNpred = []
         Npred = []
+        Npred_detected_indices = []
         TS = []
 
         self.PrepareLC()#Get the config file
@@ -107,9 +116,7 @@ class LightCurve:
             try :
                 ResultDic = utils.ReadResult(CurConfig)
             except :
-                print "WARNING : fail reading the config file : ",self.configfile[i]
-                print "Job Number : ",i
-                print "Please have a look at this job log file"
+                self._errorReading("fail reading config file",i)
                 continue
 
             #Update the time and time error array
@@ -122,26 +129,42 @@ class LightCurve:
             else :
                 Flux.append(ResultDic.get("Flux"))
                 FluxErr.append(ResultDic.get("dFlux"))
+            FluxErrForNpred.append(ResultDic.get("dFlux"))
+            FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
             Npred.append(ResultDic.get("Npred"))
             TS.append(ResultDic.get("TS"))
+            if (CurConfig['LightCurve']['TSLightCurve']<float(ResultDic.get("TS"))):
+                Npred_detected_indices.append(i)
 
         #change the list into np array
         TS = np.array(TS)
         Npred = np.array(Npred)
+        Npred_detected = Npred[Npred_detected_indices]
         Time = np.array(Time)
         TimeErr = np.array(TimeErr)
         Flux = np.array(Flux)
         FluxErr = np.array(FluxErr)
+        FluxForNpred = np.array(FluxForNpred)
+        FluxErrForNpred = np.array(FluxErrForNpred)
+
+        fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
 
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
-            gTHNpred,TgrNpred = plotting.PlotNpred(Npred,Flux,FluxErr)
+            gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
             TgrNpred.Draw('zP')
+
+            _,TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
+            TgrNpred_detected.SetLineColor(2)
+            TgrNpred_detected.SetMarkerColor(2)
+            TgrNpred_detected.Draw('zP')
+            fittedFunc.Draw("SAME")
+
             CanvNpred.Print(LcOutPath+"_Npred.eps")
             CanvNpred.Print(LcOutPath+"_Npred.C")
 
@@ -163,6 +186,10 @@ class LightCurve:
         for i in xrange(len(ArrowLC)):
             ArrowLC[i].Draw()
 
+        # compute Fvar and probability of being cst
+        self.FitWithCst(TgrLC)
+        self.Fvar(Flux,FluxErr)
+
         #Save the canvas in the LightCurve subfolder
         CanvLC.Print(LcOutPath+'_LC.eps')
         CanvLC.Print(LcOutPath+'_LC.C')
@@ -175,8 +202,49 @@ class LightCurve:
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
 
+    def CheckNpred(self,Npred,Flux,FluxErr,detected_indices):
+        """check if the errors are well computed using the Npred/sqrt(Npred) vs Flux/FluxErr relation
+           and print corresponding point which failled"""
+        _,TgrNpred = plotting.PlotNpred(Npred[detected_indices],Flux[detected_indices],FluxErr[detected_indices])
+        func = ROOT.TF1("func","pol1",np.min(np.sqrt(Npred)),np.max(np.sqrt(Npred)))
+        TgrNpred.Fit(func,"Q")
+        for i in xrange(len(Flux)):
+            if Flux[i]/FluxErr[i]>2*func.Eval(sqrt(Npred[i])):
+                self._errorReading("problem in errors calculation for",i)
+                print "Flux +/- error = ",Flux[i]," +/- ",FluxErr[i]
+                print "V(Npred) = ",sqrt(Npred[i])
+                print 
+        func.SetLineColor(15)
+        func.SetLineStyle(2)
+        return func
+
+    def Fvar(self,Flux,FluxErr):
+        """Compute the Fvar as defined in Vaughan et al."""
+        moy=np.average(Flux)
+        var=np.var(Flux)
+        expvar=np.average((np.array(FluxErr))**2)
+        intvar=var-expvar #Correct for errors
+        print 
+        try :
+            fvar=sqrt(intvar)/moy
+            err_fvar = sqrt( ( 1./sqrt(2*len(Int))*expvar/moy**2/fvar)**2 + (sqrt(expvar/len(Int))*1./moy)**2)
+            print "\t Fvar = ",fvar," +/- ",err_fvar
+        except :
+            print  "\t Fvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
+        print 
+
+    def FitWithCst(self,tgrFlux):
+        """Fit the LC with a constant function an
+           print the chi2 and proba"""
+        func = ROOT.TF1('func','pol0')
+        tgrFlux.Fit('func','Q')
+        print
+        print '\tChi2 = ',func.GetChisquare()," NDF = ",func.GetNDF()
+        print '\tprobability of being cst = ',func.GetProb()
+        print
 
     def VariabilityIndex(self):
+        """Compute the variability index as in the 2FLG catalogue. (see Nolan et al, 2012)"""
         LcOutPath = self.LCfolder + self.config['target']['name']
 
         utils._log('Computing Variability index ')
@@ -207,7 +275,7 @@ class LightCurve:
             ##############################################################
             # Create one obs instance
             CurConfig['Spectrum']['FitsGeneration'] = 'no'
-            _,Fit = GenAnalysisObject(CurConfig,verbose=0)#be quiet
+            _,Fit = GenAnalysisObjects(CurConfig,verbose=0)#be quiet
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!
@@ -221,6 +289,8 @@ class LightCurve:
                 utils.FreezeParams(Fit, self.srcname, 'Integral', utils.fluxNorm(ResultDicDC['Integral']))
             LogL0.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
+            del Fit #Clean memory
+
         Can = _GetCanvas()
         TgrDC = ROOT.TGraph(len(Time),np.array(Time),np.array(LogL0))
         TgrDC.Draw("ALP*")
@@ -231,10 +301,10 @@ class LightCurve:
         Can.Print(LcOutPath+'_VarIndex.eps')
         Can.Print(LcOutPath+'_VarIndex.C')
         print 
-        print "TSvar = ",2*(sum(LogL1)-sum(LogL0))
-        print "NDF = ",len(LogL0)-1
-        print "Chi2 prob = ",ROOT.TMath.Prob(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
-
+        print "\t TSvar = ",2*(sum(LogL1)-sum(LogL0))
+        print "\t NDF = ",len(LogL0)-1
+        print "\t Chi2 prob = ",ROOT.TMath.Prob(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
+        print 
 def _GetCanvas():
     Canv = ROOT.TCanvas()
     Canv.SetGridx()
