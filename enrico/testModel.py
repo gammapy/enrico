@@ -1,6 +1,7 @@
 from fitmaker import FitMaker
 from gtfunction import Observation
 from enrico.config import get_config
+import SummedLikelihood
 import os
 
 class ModelTester:
@@ -12,9 +13,19 @@ class ModelTester:
          os.system("mkdir -p "+self.folder+"/TestModel")
          convtype = self.config['analysis']['convtype']
 
-         Obs = Observation(self.folder, self.config, convtype, tag="")
-         FitRunner = FitMaker(Obs, self.config)##Class
-         self.Fit = FitRunner.CreateLikeObject()
+         if self.config['Spectrum']['SummedLike'] == 'yes':
+             Obs1 = Observation(self.folder, self.config, convtype=0, tag="FRONT")
+             Obs2 = Observation(self.folder, self.config, convtype=1, tag="BACK")
+             FitRunnerfront = FitMaker(Obs1, self.config)
+             FitRunnerback = FitMaker(Obs2, self.config)
+             FitRunnerfront.CreateLikeObject()
+             FitRunnerback.CreateLikeObject()
+             self.Fit = SummedLikelihood.SummedLikelihood()
+         else:
+             Obs = Observation(self.folder, self.config, convtype, tag="")
+             FitRunner = FitMaker(Obs, self.config)##Class
+             self.Fit = FitRunner.CreateLikeObject()
+
          # Store the results in a dictionnary
          self.Results = {}
          self.Results["PowerLaw"] = 0
@@ -39,9 +50,11 @@ class ModelTester:
         if model=="PLSuperExpCutoff":
             self._setPLSuperExpCutoff(srcname)
 
-        self.Fit.fit(0,optimizer=self.config["fitting"]["optimizer"])
-        return self.Fit.logLike.value()
+        #change the fit tolerance to the one given by the user
+        self.Fit.ftol = float(self.config['fitting']['ftol'])
+        self.Fit.fit(optimizer=self.config["fitting"]["optimizer"])
 
+        return self.Fit.logLike.value()
 
     def _setPowerLaw(self,name):
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
@@ -69,9 +82,8 @@ class ModelTester:
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setFree(1)
 
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setValue(self.config['energy']['emin'])
+        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setFree(0)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setBounds(20,3e6)
-
-
 
     def _setPLSuperExpCutoff(self,name):
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
