@@ -52,7 +52,8 @@ def query_config():
     config['target']['ra'] = raw_input('Right Ascension: ')
     config['target']['dec'] = raw_input('Declination: ')
     message = ('Options are : PowerLaw, PowerLaw2, LogParabola, '
-               'PLExpCutoff\nSpectral Model [PowerLaw] : ')
+               'PLExpCutoff, Generic\nGeneric is design to allow the user to fit with non-supported models\n'
+                'Spectral Model [PowerLaw] : ')
     config['target']['spectrum'] = 'PowerLaw'
     model = raw_input(message)
     if not(model=='') :

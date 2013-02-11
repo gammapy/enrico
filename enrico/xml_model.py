@@ -8,6 +8,10 @@ import utils
 import enrico.environ as env
 from enrico.config import get_config
 
+import logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
 def addParameter(el, name, free, value, scale, min, max):
     """Add a parameter to a source"""
     doc = el.ownerDocument
@@ -262,6 +266,10 @@ def GetlistFromFits(config, catalog):
     max_radius = config['model']['max_radius']
     min_significance = config['model']['min_significance']
     model = config['target']['spectrum']
+
+    if model == "Generic":
+        log.warning("Generic model found. Will turn it to PowerLaw")
+        model = "PowerLaw"
 
     #read the catalog file
     cfile = pyfits.open(catalog)
