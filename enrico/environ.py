@@ -18,8 +18,7 @@ DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
 WEEKLY_DIR = join(DOWNLOAD_DIR, 'weekly/photon') if DOWNLOAD_DIR else ''
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
-CONFIG_DIR = join(os.path.dirname(__file__), 'data', 'config')
-XML_DIR = join(os.path.dirname(__file__), 'data', 'xml')
+CONFIG_DIR = join(os.path.dirname(__file__), 'config')
 
 DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
             FERMI_DIR=FERMI_DIR,
@@ -29,7 +28,6 @@ DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
             DOWNLOAD_DIR=DOWNLOAD_DIR,
             WEEKLY_DIR=WEEKLY_DIR,
             CONFIG_DIR=CONFIG_DIR,
-            XML_DIR=XML_DIR,
             ENRICO_DIR=ENRICO_DIR)
 
 # File names
