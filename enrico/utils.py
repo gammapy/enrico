@@ -191,7 +191,8 @@ def _SpecFileName(config):
 
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
-    return (config['out'] + "/" + config['target']['name'] + "_" +
+    return (config['out'] + "/" + config['target']['name'] 
+                  + "_" + config['target']['spectrum'] + "_"+
                   config['file']['tag'] + "_out.xml")
 
 def _dump_filename(config):
