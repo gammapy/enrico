@@ -10,6 +10,9 @@ from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 import utils
 import os
+import logging
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 class FitMaker(object):
     """Collection of functions to prepare/run the GTLIKE fit
@@ -87,10 +90,13 @@ class FitMaker(object):
                                    optimizer='DRMNGB')
 
         if float(self.config['Spectrum']['FrozenSpectralIndex']) > 0:
-            PhIndex = Fit.par_index(self.obs.srcname, 'Index')
-            Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-            Fit.freeze(PhIndex)
-
+            if Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw" or Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw2":
+                PhIndex = Fit.par_index(self.obs.srcname, 'Index')
+                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+                Fit.freeze(PhIndex)
+                print "Freezing spectral index at ",-float(self.config['Spectrum']['FrozenSpectralIndex'])
+            else:
+              log.warning("The model is not a PowerLaw. Cannot freeze the index.")
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
     def PerformFit(self, Fit):
@@ -123,7 +129,7 @@ class FitMaker(object):
             NoWeakSrcLeft = True
             for src in Fit.model.srcNames:
                 ts = Fit.Ts(src)
-                if  ts< 1 and not(src == self.obs.srcname):
+                if  ts< 1 and not(src == self.obs.srcname) and Fit.logLike.getSource(src).getType() == 'Point':
                     print "delete source : ", src," with TS = ",ts
                     NoWeakSrcLeft = False
                     Fit.deleteSource(src)
