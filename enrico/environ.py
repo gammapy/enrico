@@ -31,7 +31,7 @@ DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
             ENRICO_DIR=ENRICO_DIR)
 
 # File names
-CATALOG_VERSION = '06'
+CATALOG_VERSION = '08'
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
 DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
