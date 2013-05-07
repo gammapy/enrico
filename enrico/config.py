@@ -1,8 +1,8 @@
 """Central place for config file handling"""
 import sys
 from os.path import join
-from configobj import ConfigObj, flatten_errors
-from extern.configobj.validate import Validator
+from extern.configobj import ConfigObj, flatten_errors
+from extern.validate import Validator
 from environ import CONFIG_DIR
 
 
