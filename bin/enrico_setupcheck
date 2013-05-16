@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Check setup and / or weekly / preprocessed files"""
 from optparse import OptionParser
-from enrico.environ import check_command_line_tools, check_python_modules
+from enrico.environ import check_command_line_tools, check_python_modules, print_farm
 from enrico.data import check_dirs, check_files
 
 message = """
@@ -23,4 +23,5 @@ if options.check:
     check_python_modules()
     check_dirs()
     check_files()
+    print_farm()
     print(message)

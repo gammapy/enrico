@@ -15,6 +15,7 @@ import commands
 import time
 import datetime
 import tempfile
+import enrico.environ as environ
 
 def _cmd_to_str(cmd):
     """ Convert entries to strings and join with spaces """
@@ -48,6 +49,17 @@ def wait_for_slot(max_jobs):
                      ''.format(time_str, njobs, max_jobs))
         time.sleep(10) # 10 seconds
         njobs = jobs_in_queue()
+
+##Function to chose the Farm commands
+def GetSubCmd():
+  cmd = {'LAPP' : ['qsub -V','-l mem=4096mb'], 'MPIK' : ['qsub']}
+  return cmd[environ.FARM]
+
+def GetSubOutput(qsub_log):
+  cmd = {'LAPP' :  ['-o', qsub_log, '-j', 'oe'], 'MPIK' : ['-o', qsub_log, '-j', 'y']}
+  return cmd[environ.FARM]
+###
+
 
 def call(cmd,
          enricoDir, 
@@ -87,7 +99,7 @@ def call(cmd,
         # Note that qsub needs a shell script which sets
         # up the environment and then executes cmd.
         template = join(dirname(__file__), 
-                        'qsub.sh')
+                        'qsub_'+environ.FARM+'.sh')
         fh = file(template)
         text = fh.read()
         fh.close()
@@ -105,7 +117,7 @@ def call(cmd,
         text += cmd
 
         # Now reset cmd to be the qsub command
-        cmd = ['qsub']
+        cmd = GetSubCmd()
         if jobname:
             cmd += ['-N', jobname]
 
@@ -126,7 +138,7 @@ def call(cmd,
             outsock.close()
             del outfd
             
-        cmd += ['-o', qsub_log, '-j', 'y']
+        cmd += GetSubOutput(qsub_log)
         cmd += [scriptfile]
 
         cmd = _cmd_to_str(cmd)

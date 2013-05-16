@@ -8,6 +8,10 @@ log = logging.getLogger(__name__)
 from extern.odict import OrderedDict as dict
 
 
+#Submission farm name
+#Currently supported : LAPP-Annecy, MPIK-HD
+FARM = os.environ.get('FARM','MPKI')
+
 # Directory names
 ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
 FERMI_DIR = os.environ.get('FERMI_DIR', '')
@@ -67,3 +71,13 @@ def check_python_modules():
             print('{0:.<20} {1}'.format(package, filename))
         except ImportError:
             print('{0:.<20} {1}'.format(package, 'MISSING'))
+
+
+def print_farm():
+   """Print the name of the submission farm"""
+   print('*** FARM ***')
+   if FARM=='':
+     print('{0:.<20} {1}'.format("FARM", 'MISSING'))
+   else:
+     print('{0:.<20} {1}'.format("FARM", FARM))
+

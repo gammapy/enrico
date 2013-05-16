@@ -25,5 +25,8 @@ export FERMI_DIFFUSE_DIR=$FERMI_DATA_DIR/diffuse
 export FERMI_DOWNLOAD_DIR=$FERMI_DATA_DIR/download
 export FERMI_PREPROCESSED_DIR=$FERMI_DATA_DIR/preprocessed
 
+export FARM=LAPP
+#Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
+
 echo "Run enrico_setupcheck to check if you are set up correctly."
 echo "Check your PATH and PYTHONPATH if enrico_setup is not found or gives an error."
