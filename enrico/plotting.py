@@ -6,7 +6,7 @@ import root_style
 import pyLikelihood
 from config import get_config
 import utils
-
+import array as ar
 
 class Params:
     """Collection of Plotting parameters like Energy bounds,
@@ -116,7 +116,7 @@ class Result:
         emin = image[3].data.field(1)
 
         E = np.array((emax + emin) / 2.)
-        err_E = np.array((-emax + emin) / 2.)
+        err_E = np.array((emax - emin) / 2.)
 
         src = np.array(image[1].data.field(indice))
         Nbin = len(src)
@@ -132,6 +132,47 @@ class Result:
         residual = np.zeros(Nbin)
         Dres = np.zeros(Nbin)
 
+        cplot = ROOT.TCanvas("Counts_Plot")
+        cplot.SetLogy()
+        cplot.SetLogx()
+        ghcount = ROOT.TH2F("ghcount", "", 80, min(E)*0.3,max(E)*2, 100, 0.1, max(obs) * 2)
+        ghcount.SetStats(000)
+        ghcount.SetXTitle("E (MeV) ")
+        ghcount.SetYTitle("Counts / bin")
+        ghcount.Draw()
+
+        tgrobs = ROOT.TGraphErrors(Nbin, ar.array('f',E), ar.array('f',obs), ar.array('f',err_E), ar.array('f',obs_err))
+        tgrobs.SetLineColor(2)
+        tgrobs.SetMarkerColor(2)
+        tgrobs.SetMarkerStyle(20)
+        tgrobs.Draw("pz")
+
+        tgrother = ROOT.TGraph(Nbin, ar.array('f',E), ar.array('f',other))
+        tgrother.SetLineWidth(2)
+        tgrother.SetLineStyle(2)
+        tgrother.Draw("L")
+
+        tgr = ROOT.TGraph(Nbin, ar.array('f',E), ar.array('f',src) )
+        tgr.SetLineColor(1)
+        tgr.SetLineWidth(2)
+        tgr.Draw("L")
+
+        tgrsum = ROOT.TGraph(Nbin,  ar.array('f',E),  ar.array('f',total))
+        tgrsum.SetLineStyle(3)
+        tgrsum.SetLineWidth(2)
+        tgrsum.Draw("L")
+
+        legarc =ROOT.TLegend(0.6968391,0.6716102,0.8807471,0.845339);
+        legarc.AddEntry(tgrobs,"Data","lp");
+        legarc.AddEntry(tgr,Parameter.srcname,"l");
+        legarc.AddEntry(tgrother,"Other Sources","l");
+        legarc.AddEntry(tgrsum,"All Sources","l");
+        legarc.SetFillColor(0)
+        legarc.Draw()
+
+        cres = ROOT.TCanvas("Residuals_Plot")
+        cres.SetLogx()
+
         for i in xrange(Nbin):
             try:
                 residual[i] = (obs[i] - total[i]) / total[i]
@@ -139,51 +180,24 @@ class Result:
             except:
                 residual[i] = 0.
                 Dres[i] = 0.
+            if residual[i] == -1.:
+               residual[i] = 0.
 
-        cplot = ROOT.TCanvas("Count Plot")
-        cplot.SetLogy()
-        cplot.SetLogx()
-        ghcount = ROOT.TH2F("ghcount", "", 80, 91, 499e3, 100, 0.1, max(obs) * 2)
-        ghcount.SetStats(000)
-        ghcount.SetXTitle("E (MeV) ")
-        ghcount.SetYTitle("Counts / bin")
-        ghcount.Draw()
-        tgrobs = ROOT.TGraphErrors(Nbin, E, obs, err_E, obs_err)
-        tgrobs.SetLineColor(1)
-        tgrobs.SetMarkerColor(1)
-        tgrobs.SetMarkerStyle(1)
-        tgrobs.Draw("P")
-
-        tgrother = ROOT.TGraph(Nbin, E, other)
-        tgrother.SetLineWidth(2)
-        tgrother.SetLineStyle(2)
-        tgrother.Draw("L")
-
-        tgr = ROOT.TGraph(Nbin, E, src)
-        tgr.SetLineColor(1)
-        tgr.SetLineWidth(2)
-        tgr.Draw("L")
-
-        tgrsum = ROOT.TGraph(Nbin, E, total)
-        tgrsum.SetLineStyle(3)
-        tgrsum.SetLineWidth(2)
-        tgrsum.Draw("L")
-
-        cres = ROOT.TCanvas("Residuals plot")
-        cres.SetLogx()
         ymin = min(residual) - max(Dres)
         ymax = max(residual) + max(Dres)
-        ghres = ROOT.TH2F("ghres", "", 80, 91, 499e3, 100, ymin, ymax)
+        ghres = ROOT.TH2F("ghres", "", 80, min(E)*0.3,max(E)*2, 100, ymin, ymax)
         ghres.SetStats(000)
         ghres.SetXTitle("E (MeV) ")
         ghres.SetYTitle("(counts -model)/model")
         ghres.Draw()
-        tgres = ROOT.TGraphErrors(Nbin, E, residual, err_E, Dres)
-        tgres.Draw("P")
+        tgres = ROOT.TGraphErrors(Nbin, ar.array('f',E), ar.array('f',residual), ar.array('f',err_E), ar.array('f',Dres))
+        tgres.SetLineColor(2)
+        tgres.SetMarkerColor(2)
+        tgres.Draw("p*z")
 
         zero = np.zeros(2)
         Ezero = np.array([0, 1e10])
-        tg0 = ROOT.TGraph(2, Ezero, zero)
+        tg0 = ROOT.TGraph(2, ar.array('f',Ezero), ar.array('f',zero))
         tg0.SetLineStyle(2)
         tg0.Draw("L")
 
@@ -191,7 +205,7 @@ class Result:
         filebase = Parameter.PlotName
         cplot.Print(filebase + "_CountsPlot.eps")
         cplot.Print(filebase + "_CountsPlot.C")
-        cploy.Print(filebase + "_CountsPlot.png")
+        cplot.Print(filebase + "_CountsPlot.png")
         cres.Print(filebase + "_ResPlot.eps")
         cres.Print(filebase + "_ResPlot.C")
         cres.Print(filebase + "_ResPlot.png")
