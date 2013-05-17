@@ -6,7 +6,7 @@ import utils
 from submit import call
 from config import get_config
 import environ
-from RunGTlike import Analysis
+from RunGTlike import Analysis,GenAnalysisObjects
 from gtfunction import Observation
 
 class TSMap:
@@ -62,8 +62,7 @@ class TSMap:
         """Run a evaluation of the pixel (i,j) corresponding to position (ra,dec)"""
         outXml = utils._dump_xml(self.config)
         folder = self.config['out']
-        Fit,_ = GenAnalysisObjects(self.config,xmlfile=outXml) #get the Fit object
-#        Fit = GetFitObjectForTSmap(self.config,xmlfile=outXml) #get the Fit object
+        _,Fit = GenAnalysisObjects(self.config,xmlfile=outXml) #get the Fit object
 
         src = GetSrc(Fit,ra,dec) # get the Source object at postion ra dec
 
@@ -82,7 +81,7 @@ class TSMap:
 
         # a new Fit object with the new xml file is needed.
         # just changing the position of the spurious source does not work 
-        TSFit = GetFitObjectForTSmap(self.config,xmlfile=self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml")
+        _,TSFit = GenAnalysisObjects(self.config,xmlfile=self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") #get the Fit object
 
         TSFit.fit(0,optimizer=self.config['fitting']['optimizer'])
 
@@ -186,31 +185,7 @@ def GetSrc(Fit,ra,dec):
 
             return src
 
-#def GetFitObjectForTSmap(config,xmlfile=""):
-#    """ return a fit object with the xmlmodel provided."""
-#    folder = config['out']
-#    config['Spectrum']['FitsGeneration'] = 'no'
-#    if config['Spectrum']['SummedLike'] == 'yes':
-#        # Create two obs instances
-#        FitRunnerfront = Analysis(folder, config, tag="FRONT", convtyp=0)
-#        FitRunnerback = Analysis(folder, config, tag="BACK", convtyp=1)
-#        if not(xmlfile ==""):
-#            FitRunnerfront.obs.xmlfile = xmlfile
-#            FitRunnerback.obs.xmlfile = xmlfile
-#        FitB = FitRunnerback.CreateLikeObject()
-#        FitF = FitRunnerfront.CreateLikeObject()
-#        Fit = SummedLikelihood.SummedLikelihood()
-#        Fit.addComponent(FitB)
-#        Fit.addComponent(FitF)
 
-#    else:
-#        convtype = config['analysis']['convtype']
-#        # Create one obs instanceFit.addSource
-#        FitRunner = Analysis(folder, config, tag="", convtyp=convtype)
-#        if not(xmlfile ==""):
-#            FitRunner.obs.xmlfile = xmlfile
-#        Fit = FitRunner.CreateLikeObject()
-#    return Fit
 
 if __name__ == '__main__':
     try:
