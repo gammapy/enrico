@@ -34,8 +34,9 @@ def AppLC(infile):
     #Change the ROI to 1 degree
     config['space']['rad'] = 1
 
+    Nbins = config['AppLC']['NLCbin']#Number of bins
     #Get The time bin
-    dt = 60 #sec
+    dt = (config['time']['tmax']-config['time']['tmin'])/Nbins #sec
 
     Obs = Observation(LCoutfolder, config, config['analysis']['convtype'], tag="")
     if config['AppLC']["FitsGeneration"] == "yes":
@@ -93,6 +94,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     spfile=pyfits.open(FITSfile)
 
     Time = mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/3600./24
+    dTime = (spfile[1].data.field(1)[:-1])/3600./24
     Counts = (spfile[1].data.field(2)[:-1])
     Exposure = (spfile[1].data.field(4)[:-1])
 
@@ -116,8 +118,9 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     file_evt = open(LCoutfolder+'/TimeExposureCount.txt',"w")
 
     #Write into file
+    file_evt.write("Time\tdTime\tExposure\tCounts\n")
     for i in xrange(len(Time)):
-       file_evt.write(str(Time[i])+"\t"+str(Exposure[i])+"\t"+str(Counts[i])+"\n")
+       file_evt.write(str(Time[i])+"\t"+str(dTime[i])+"\t"+str(Exposure[i])+"\t"+str(Counts[i])+"\n")
     file_evt.close()
     ######################################################################################
 

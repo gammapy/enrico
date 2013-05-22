@@ -227,7 +227,7 @@ class LightCurve:
         print 
         try :
             fvar=sqrt(intvar)/moy
-            err_fvar = sqrt( ( 1./sqrt(2*len(Int))*expvar/moy**2/fvar)**2 + (sqrt(expvar/len(Int))*1./moy)**2)
+            err_fvar = sqrt( ( 1./sqrt(2*len(Flux))*expvar/moy**2/fvar)**2 + (sqrt(expvar/len(Flux))*1./moy)**2)
             print "\t Fvar = ",fvar," +/- ",err_fvar
         except :
             print  "\t Fvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
@@ -237,6 +237,8 @@ class LightCurve:
         """Fit the LC with a constant function an
            print the chi2 and proba"""
         func = ROOT.TF1('func','pol0')
+        func.SetLineColor(15)
+        func.SetLineStyle(3)
         tgrFlux.Fit('func','Q')
         print
         print '\tChi2 = ',func.GetChisquare()," NDF = ",func.GetNDF()

@@ -52,9 +52,12 @@ class ModelTester:
 
         #change the fit tolerance to the one given by the user
         self.Fit.ftol = float(self.config['fitting']['ftol'])
-        self.Fit.fit(optimizer=self.config["fitting"]["optimizer"])
-
-        return self.Fit.logLike.value()
+        try :
+          self.Fit.fit(0,covar=False,optimizer=self.config["fitting"]["optimizer"])
+          return self.Fit.logLike.value()
+        except :
+          print "No convergence for model : ",model," ??"
+          return 0
 
     def _setPowerLaw(self,name):
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
