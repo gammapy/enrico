@@ -231,17 +231,23 @@ class FitMaker(object):
         IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
         Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
         Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
+
+        import scipy.stats
+        cl = float(self.config['UpperLimit']['cl'])
+        delta = 0.5*scipy.stats.chi2.isf(1-2*(cl-0.5), 1)
+        print cl,' ',delta
+
         if self.config['UpperLimit']['Method'] == "Profile": #The method is Profile
             import UpperLimits
             ulobject = UpperLimits.UpperLimits(Fit)
             ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
-                                      emax=self.obs.Emax,
-                                      delta=2.71 / 2)
+                                      emax=self.obs.Emax,delta=delta)
+                                      #delta=2.71 / 2)
             print "Upper limit using Profile method: "
             print ulobject[self.obs.srcname].results
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             import IntegralUpperLimit
-            ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
+            ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname, cl=cl,
                                                 verbosity=0)
             print "Upper limit using Integral method: ", ul
         return ul #Return the result. This is an ul on the integral flux in ph/cm2/s 

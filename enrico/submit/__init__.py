@@ -67,6 +67,8 @@ def call(cmd,
          scriptfile=None,
          qsub_log=None,
          jobname=None,
+	 submit=True,
+	 max_jobs=50,
          #logfile=None,
          check_present=None,
          clobber=False,
@@ -81,9 +83,8 @@ def call(cmd,
                          ''.format(check_present))
             return
 
-    max_jobs = 50
-    if environ.FARM!="LAPP":
-        max_jobs = 1000
+ #   if logfile:
+  #      cmd += '>'+ logfile+ '2>&1'
 
     if not isinstance(cmd, str):
         cmd = _cmd_to_str(cmd)
@@ -91,59 +92,70 @@ def call(cmd,
         cmd += _options_to_str(options)
     logging.info(cmd)
 
-    ## Wait to submit! be nice!
-    wait_for_slot(max_jobs)
+    #Number of Max jobs in the queue
+    max_jobs = 50
+    if environ.FARM=="LAPP":
+        max_jobs = 1000
 
-    # Note that qsub needs a shell script which sets
-    # up the environment and then executes cmd.
-    template = join(dirname(__file__), 
+    # The following steps are different if you submit or not
+    if submit:
+        wait_for_slot(max_jobs)
+
+        # Note that qsub needs a shell script which sets
+        # up the environment and then executes cmd.
+        template = join(dirname(__file__), 
                         'qsub_'+environ.FARM+'.sh')
-    fh = file(template)
-    text = fh.read()
-    fh.close()
+        fh = file(template)
+        text = fh.read()
+        fh.close()
 
-    # Changes to home dir by default, which happens
-    # anyway in a new shell.
-    if exec_dir:
-        text += '\ncd {0}\n\n'.format(exec_dir)
+        # Changes to home dir by default, which happens
+        # anyway in a new shell.
+        if exec_dir:
+            text += '\ncd {0}\n\n'.format(exec_dir)
 
-    text +='export FERMI_DIR='+fermiDir+'\n'
-    text +='source $FERMI_DIR/fermi-init.sh\n'
-    text +='export ENRICO_DIR='+enricoDir+'\n'
-    text +='source $ENRICO_DIR/enrico-init.sh\n'
+        text +='export FERMI_DIR='+fermiDir+'\n'
+        text +='source $FERMI_DIR/fermi-init.sh\n'
+        text +='export ENRICO_DIR='+enricoDir+'\n'
+        text +='source $ENRICO_DIR/enrico-init.sh\n'
 
-    text += cmd
+        text += cmd
 
-    # Now reset cmd to be the qsub command
-    cmd = GetSubCmd()
-    if jobname:
-        cmd += ['-N', jobname]
+        # Now reset cmd to be the qsub command
+        cmd = GetSubCmd()
+        if jobname:
+            cmd += ['-N', jobname]
 
-    if scriptfile == None:
-        # Note that mkstemp() returns an int,
-        # which represents an open file handle,
-        # which we have to close explicitly to
-        # avoid running out of file handles foer
-        # > 100s of jobs.
-        (outfd,scriptfile)=tempfile.mkstemp()
-        outsock=os.fdopen(outfd,'w')
-        outsock.close()
-        del outfd
-    if qsub_log == None:
-        (outfd,qsub_log)=tempfile.mkstemp()
-        outsock=os.fdopen(outfd,'w')
-        outsock.close()
-        del outfd
+        if scriptfile == None:
+            # Note that mkstemp() returns an int,
+            # which represents an open file handle,
+            # which we have to close explicitly to
+            # avoid running out of file handles foer
+            # > 100s of jobs.
+            (outfd,scriptfile)=tempfile.mkstemp()
+            outsock=os.fdopen(outfd,'w')
+            outsock.close()
+            del outfd
+
+        if qsub_log == None:
+            (outfd,qsub_log)=tempfile.mkstemp()
+            outsock=os.fdopen(outfd,'w')
+            outsock.close()
+            del outfd
             
-    cmd += GetSubOutput(qsub_log)
-    cmd += [scriptfile]
+        cmd += GetSubOutput(qsub_log)
+        cmd += [scriptfile]
 
-    cmd = _cmd_to_str(cmd)
-    logging.info(cmd)
+        cmd = _cmd_to_str(cmd)
+        logging.info(cmd)
+    else:
+        if exec_dir:
+            os.chdir(exec_dir)
 
+        text = cmd
 
-    text = cmd
-
+    # Now the following steps are again identical
+    # for submitting or not
     if scriptfile:
         logging.debug('Saving command in file: {0}'
                       ''.format(scriptfile))
