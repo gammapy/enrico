@@ -10,7 +10,7 @@ from RunGTlike import Analysis,GenAnalysisObjects
 from gtfunction import Observation
 
 class TSMap:
-    # This class groups all the need functions and 
+    # This class groups all the needed functions and 
     # variables to compute a TS map
     # Variables : RAref, DECref and binsz are related to the cmap used
     # to define the grip for the TS map and are respectively 
@@ -24,6 +24,7 @@ class TSMap:
     # computes the TS in one pixel or in one row
     def __init__(self,infile):
         self.config = get_config(infile)
+        self.config['Spectrum']['FitsGeneration'] = 'no'
         self.tsfolder = self.config['out']+"/TSMap"
         self.TSfits = self.config['target']['name']+'_'+self.config['file']['tag']+"_TSMap.fits"
         self.infile = infile
