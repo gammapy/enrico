@@ -10,7 +10,7 @@ from extern.odict import OrderedDict as dict
 
 #Submission farm name
 #Currently supported : LAPP-Annecy, MPIK-HD
-FARM = os.environ.get('FARM','MPKI')
+FARM = os.environ.get('FARM','MPIK')
 
 # Directory names
 ENRICO_DIR = os.environ.get('ENRICO_DIR', '')

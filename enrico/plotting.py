@@ -13,7 +13,7 @@ class Params:
     colors, file name, etc...."""
     def __init__(self, srcname, Emin=100, Emax=3e5,
                  PlotName="LAT_SED", LineColor=2,
-                 PointColor = 1, N = 500):
+                 PointColor = 1, N = 2000):
         self.Emin = Emin #Energy bounds
         self.Emax = Emax
         self.N = N #Number of points for the TGraph
