@@ -3,7 +3,7 @@ import sys
 from os.path import join
 from extern.configobj import ConfigObj, flatten_errors
 from extern.validate import Validator
-from environ import CONFIG_DIR
+from environ import CONFIG_DIR,DOWNLOAD_DIR
 
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
@@ -70,11 +70,11 @@ def query_config():
 
 #    informations about the input files
     config['file'] = {}
-    config['file']['spacecraft'] = config['out']+'/spacecraft.fits'
+    config['file']['spacecraft'] = DOWNLOAD_DIR+'/lat_spacecraft_merged.fits'
     ft2 = raw_input('FT2 file ['+config['file']['spacecraft']+'] : ')
     if not(ft2=='') :
       config['file']['spacecraft'] = ft2
-    config['file']['event'] = config['out']+'/events.lis'
+    config['file']['event'] = DOWNLOAD_DIR+'/events.lis'
     ft1list = raw_input('FT1 list of files ['+config['file']['event']+'] : ')
     if not(ft1list=='') :
       config['file']['event'] = ft1list

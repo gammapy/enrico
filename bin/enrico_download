@@ -2,6 +2,8 @@
 """Download weekly data files and / or preprocess them"""
 from optparse import OptionParser
 from enrico.data import Data
+import os
+from enrico.environ import DOWNLOAD_DIR
 
 parser = OptionParser(description=__doc__)
 parser.add_option("--download_data",
@@ -50,6 +52,14 @@ data = Data()
 
 if options.download_data:
     data.download()
+    from os.path import join
+    weekly_dir = join(DOWNLOAD_DIR+'/weekly/photon')
+    os.system('ls '+weekly_dir+'/*fits > '+join(weekly_dir,'evt.lis'))
+    liste =  open(join(weekly_dir,'evt.lis'),'r').readlines()
+    saved = open(join(DOWNLOAD_DIR,'events.lis'),"w")
+    for evt in liste:
+      saved.write(join(weekly_dir,evt)+'\n')
+    saved.close()
 
 if options.download_aux:
     data.download_aux()
