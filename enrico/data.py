@@ -123,7 +123,7 @@ class Data(object):
             filename = join(CATALOG_TEMPLATE_DIR, 'CenALobes.fits')
             if not os.path.isfile(filename):
                 # Now we know that we want to download
-                filename = 'gll_psc_v%s_templates.tgz' % CATALOG_VERSION
+                filename = 'gll_psc_v%s_templates.tgz' % TEMPLATE_VERSION
                 url = join(CATALOG_URL, filename)
                 path = join(CATALOG_DIR, filename)
                 print('Downloading %s' % path)

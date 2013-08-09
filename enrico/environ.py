@@ -20,7 +20,7 @@ CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
-WEEKLY_DIR = join(DOWNLOAD_DIR, 'weekly/photon') if DOWNLOAD_DIR else ''
+WEEKLY_DIR = join(DOWNLOAD_DIR, 'photon') if DOWNLOAD_DIR else ''
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
 
@@ -36,6 +36,7 @@ DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
 
 # File names
 CATALOG_VERSION = '08'
+TEMPLATE_VERSION = '07'
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
 DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'

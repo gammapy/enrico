@@ -20,10 +20,31 @@ export PATH=$PATH:$ENRICO_DIR/bin
 export PYTHONPATH=$ENRICO_DIR:$PYTHONPATH
 
 echo "Setting environment variables for data file locations"
-export FERMI_CATALOG_DIR=$FERMI_DATA_DIR/catalog
-export FERMI_DIFFUSE_DIR=$FERMI_DATA_DIR/diffuse
-export FERMI_DOWNLOAD_DIR=$FERMI_DATA_DIR/download
-export FERMI_PREPROCESSED_DIR=$FERMI_DATA_DIR/preprocessed
+if [ ! -d "${FERMI_DATA_DIR}" ]; then
+    export FERMI_DATA_DIR=$ENRICO_DIR/Data/
+fi
+
+if [ ! -d "${FERMI_CATALOG_DIR}" ]; then
+    export FERMI_CATALOG_DIR=$FERMI_DATA_DIR/catalog
+fi
+
+if [ ! -d "${FERMI_DIFFUSE_DIR}" ]; then
+    export FERMI_DIFFUSE_DIR=$FERMI_DATA_DIR/diffuse
+fi
+
+if [ ! -d "${FERMI_DOWNLOAD_DIR}" ]; then
+    export FERMI_DOWNLOAD_DIR=$FERMI_DATA_DIR/download
+fi
+
+if [ ! -d "${FERMI_PREPROCESSED_DIR}" ]; then
+    export FERMI_PREPROCESSED_DIR=$FERMI_DATA_DIR/preprocessed
+fi
+
+mkdir -p $FERMI_DATA_DIR
+mkdir -p $FERMI_DIFFUSE_DIR
+mkdir -p $FERMI_DOWNLOAD_DIR
+mkdir -p $FERMI_PREPROCESSED_DIR
+mkdir -p $FERMI_CATALOG_DIR
 
 export FARM=LAPP
 #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
