@@ -11,6 +11,12 @@ Welcome
 Hi, I am Enrico, and I will help you run your 
 `Fermi <http://fermi.gsfc.nasa.gov/>`_ data analysis!
 
+Informations, questions, bug report and other :
+
+David Sanchez david.sanchez@lapp.in2p3.fr
+
+Christoph Deil christoph.deil@mpi-hd.mpg.de
+
 
 Features
 --------
@@ -111,9 +117,9 @@ Table of Contents
    setup
    tutorial
    configfile
+   script
    developer
 
-.. code-block:: python
 
 
 Indices and tables

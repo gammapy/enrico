@@ -12,16 +12,11 @@ The config file is there to defined the parameters of your analysis. A config fi
 
 This page will go through all the section, one by one. As for the :ref:`tutorial`, we will asume that the working directory is  `~/myanalysis`.
 
-The `out` option gives the main folder where enrico will put the produced files and the results
+The `out` option gives the main folder where enrico will put the produced files and the results. The `verbose` option (default is 'yes') allow enrico to print information on the main output like TS, fluxes, predicted numbers of gammas, etc... Such values need computation time which can be saved by turning the option to 'no'
 
 .. code-block:: ini
 
    out = ~/myanalysis
-
-The `verbose` option (default is 'yes') allow enrico to print information on the main output like TS, fluxes, predicted numbers of gammas, etc... Such values need computation time which can be saved by turning the option to 'no'
-
-.. code-block:: ini
-
    verbose = yes
 
 Target
@@ -34,7 +29,7 @@ Note :
  * Coordinate are in degrees.
  * Available models are 'PowerLaw', 'PowerLaw2', 'LogParabola', 'PLExpCutoff'
 
-The parameter `spectrum` is used for the generation of the sky model. Of course, you can change the model describing the spectrum of any sources (by hand...). All the models supported by the ST are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/documentation/Cicerone/Cicerone_Likelihood/Model_Selection.html>`_.
+The parameter `spectrum` is used for the generation of the sky model. Of course, you can change the model describing the spectrum of any sources (by hand...). All the models supported by the ST are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/documentation/Cicerone/Cicerone_Likelihood/Model_Selection.html>`_. For now, the supported models by `enrico` are PowerLaw, PowerLaw2, LogParabola, PLExpCutoff, Generic. `Generic` is for the non-supported models. By supported, we mean that enrico can produce a xml file with such model and has some optional features. It is completely possible to run an analyze with enrico and a non-supported model.
 
 .. code-block:: ini
 
@@ -47,9 +42,8 @@ The parameter `spectrum` is used for the generation of the sky model. Of course,
 Space
 -----
 
-The space option defined the properties of the ROI. The names are the same as for the ScienceTools.
-The centre of the ROI is xref, yref and the size is rad (in degrees).
-
+The space option defined the properties of the region of interest (ROI). The names are the same as for the ScienceTools.
+The center of the ROI is xref, yref and the size is rad (in degrees). By default xref and yred are the target coordinates but this might be changed.
 
 .. code-block:: ini
 
@@ -65,6 +59,7 @@ The centre of the ROI is xref, yref and the size is rad (in degrees).
       binsz = 0.1
       coordsys = CEL
       proj = AIT
+      phibins = 0
 
 .. note:: 
    if you used binned analysis or for the generation of a TS map, the ROI
@@ -74,7 +69,7 @@ The centre of the ROI is xref, yref and the size is rad (in degrees).
 File
 ----
 
-Here you defined where the FT2 and FT1 files are (this can be an ascii list). The xml option gives the location of the sky model. The `tag` is added to all files produced by enrico.
+Here you defined where the FT2 and FT1 files are (this can be an ascii list). The xml option gives the location of the sky model. The `tag` is added to all files produced by enrico. When generating a config file, the value of spacecraft and event are set in such way that is point towards the the file downloaded with `enrico_download`
 
 
 .. code-block:: ini
@@ -103,7 +98,7 @@ Start and stop time of your analysis in MET
 Energy
 ------
 
-Minimal and maximal energy of your analysis in MeV
+Minimal and maximal energy of your analysis in MeV. `enumbins_per_decade` is the number of bins per decade for the BINNED analysis chain.
 
 
 .. code-block:: ini
@@ -242,7 +237,7 @@ computation, the spectral index of the source (it is assumed that a POWERLAW or
 POWERLAW2 model is used) is frozen to `SpectralIndex`. Two methods can be used,
 Profile of Integral, see the Fermi web site for more informations.
 
-An upper limit is computed if the TS is below TSlimit. This hold only for `enrico_sed`
+An upper limit, at the confidence level `cl`, is computed if the TS is below TSlimit. This hold only for `enrico_sed`
 
 
 .. code-block:: ini
@@ -255,7 +250,8 @@ An upper limit is computed if the TS is below TSlimit. This hold only for `enric
       envelope = no
       #Compute an UL if the TS of the sources is <TSlimit
       TSlimit = 25.0
-
+      # Confidence level for the Ul computation
+      cl = 0.95
 
 LightCurve
 ----------

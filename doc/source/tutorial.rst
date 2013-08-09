@@ -272,4 +272,9 @@ Both implementations are provided by the ScienceTools and used by enrico.
 Check results
 -------------
 
+counts map, model maps
+
+count spectrum
+
+
 
