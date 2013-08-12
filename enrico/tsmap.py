@@ -4,7 +4,6 @@ import pyfits
 import SummedLikelihood
 import utils
 from submit import call
-from config import get_config
 import environ
 from RunGTlike import Analysis,GenAnalysisObjects
 from gtfunction import Observation
@@ -22,8 +21,8 @@ class TSMap:
     # A TS map can be computed by submiting jobs to a cluster
     # There is two way to compute a TS map : Each job
     # computes the TS in one pixel or in one row
-    def __init__(self,infile):
-        self.config = get_config(infile)
+    def __init__(self,config):
+        self.config = config
         self.config['Spectrum']['FitsGeneration'] = 'no'
         self.tsfolder = self.config['out']+"/TSMap"
         self.TSfits = self.config['target']['name']+'_'+self.config['file']['tag']+"_TSMap.fits"
@@ -194,8 +193,11 @@ if __name__ == '__main__':
     except:
         print('FATAL: Config file not found.')
         sys.exit(1)
+	
 
-    TSmap = TSMap(infile)
+    from enrico.config import get_config
+    config = get_config(infile)
+    TSmap = TSMap(config)
 
     if len(sys.argv)== 6 :
         if TSmap.config['TSMap']['method'] == 'row' :

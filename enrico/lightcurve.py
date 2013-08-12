@@ -7,15 +7,15 @@ import root_style
 import plotting
 import environ
 from math import sqrt
-from config import get_config
+from enrico.config import get_config
 from submit import call
 from enrico.RunGTlike import run,GenAnalysisObjects
 
 class LightCurve:
     """Class to calculate light curves and variability indexes."""
-    def __init__(self, infile):
+    def __init__(self, config):
         ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
-        self.config = get_config(infile)
+        self.config = config
 
         #Read the config
         self.srcname = self.config['target']['name'] #src name

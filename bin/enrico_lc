@@ -2,6 +2,7 @@
 """Make a lightcurve"""
 import sys
 import enrico.lightcurve  as lc
+from enrico.config import get_config
 
 try:
     infile = sys.argv[1]
@@ -9,5 +10,6 @@ except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
-lc = lc.LightCurve(infile)
+config = get_config(infile)
+lc = lc.LightCurve(config)
 lc.MakeLC()

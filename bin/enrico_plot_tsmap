@@ -2,12 +2,15 @@
 """Put together all the pixel produced for the TS map and save them into a fits file"""
 import sys
 import enrico.tsmap as tsmap
+from enrico.config import get_config
+
 try:
     infile = sys.argv[1]
 except:
     print('FATAL: Config file not found.')
     sys.exit(1)
 
-TSm = tsmap.TSMap(infile)
+config = get_config(infile)
+TSm = tsmap.TSMap(config)
 TSm.PlotTSmap()
 
