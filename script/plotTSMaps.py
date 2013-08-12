@@ -29,11 +29,23 @@ except:
 
 try :
   vmax = float(sys.argv[2])
-  print "use user vmax for the color scale: "+sys.argv[2]
+  print "use user's vmax for the color scale: "+sys.argv[2]
 except:
   print "use default vmax for the color scale: 40"
-  print "you can change it by python "+sys.argv[0]+" config [vmax]"
+  print "you can change it by typing python "+sys.argv[0]+" config [vmax] [stretch]\n stretch can be linear (default), log, sqrt, arcsinh or power"
   vmax=40
+
+try :
+  st = [sys.argv[3]]
+except:
+  st = ['linear']
+
+stretch =[ 'linear', 'log', 'sqrt', 'arcsinh', 'power']
+if not(bool(sum(map(lambda x: x in st, stretch)))):
+  print "use user's stretch for the color scale: "+st[0]
+else:
+  print "use default stretch value: "+st[0]
+
 
 def set_hgps_style(f):
     """Set HGPS style for a f = aplpy.FITSFigure"""
@@ -72,13 +84,13 @@ x_center, y_center = wcs.wcs_pix2world(lon, lat, 0)
 radius = header['CDELT2'] * header['NAXIS2'] / 2.
 
 # Computing the sub-figure sizes is surprisingly hard
-figsize=(5, 15)
+figsize=(5, 5)
 figure = mpl.figure(figsize=figsize)
 
 f = FITSFigure(tsimage['filename'], figure=figure)
 f.recenter(x_center, y_center, 0.95 * radius)
 set_hgps_style(f)
-f.show_colorscale(vmin=-1, vmax=vmax, stretch='power', exponent=1, cmap='jet') #vmid=-3, stretch='log', )
+f.show_colorscale(vmin=1e-5, vmax=vmax, stretch=st[0], exponent=1, cmap='jet') #vmid=-3, stretch='log', )
 
 f.show_colorbar()
 
