@@ -46,7 +46,7 @@ mkdir -p $FERMI_DOWNLOAD_DIR
 mkdir -p $FERMI_PREPROCESSED_DIR
 mkdir -p $FERMI_CATALOG_DIR
 
-export FARM=LAPP
+export FARM=MPIK
 #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
 
 echo "Run enrico_setupcheck to check if you are set up correctly."

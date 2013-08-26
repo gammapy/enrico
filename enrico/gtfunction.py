@@ -164,10 +164,11 @@ class Observation:
 
     def FirstCut(self):
         """Run gtselect tool"""
+
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventfile
-        filter['ra'] = self.ra 
-        filter['dec'] = self.dec 
+        filter['ra'] = self.ra
+        filter['dec'] = self.dec
         filter['rad'] = self.roi
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
@@ -179,10 +180,43 @@ class Observation:
         filter['convtype'] = self.convtyp
         filter.run()
 
+    def _phase_filter(self):
+        mjd_ref=51910.
+        met_0 = 239557417
+        T0met=(self.Configuration['OrbitalLC']['epoch']-mjd_ref)*86400.
+        P=self.Configuration['OrbitalLC']['P']
+        if T0met>met_0:
+            T0met-=np.ceil((T0met-met_0)/P)*P
+
+        def sel_string(met1,met2):
+            return ' ((TIME>={0:.2f})&&(TIME<={1:.2f})) '.format(met1,met2)
+        def phase(met):
+            pp=(met-T0met)/P
+            return pp-int(pp)
+        def metp(norb,p):
+            return T0met+(norb+p)*P
+
+        t1=self.Configuration['time']['tmin']
+        t2=self.Configuration['time']['tmax']
+        p1=self.Configuration['OrbitalLC']['phasemin']
+        p2=self.Configuration['OrbitalLC']['phasemax']
+        selstr=''
+        # find orbit numbers covered by range (t1,t2)
+        norbt1=int(np.floor((t1-T0met)/P))
+        norbt2=int(np.ceil((t2-T0met)/P))
+        for norb in range(norbt1,norbt2+1):
+            selstr+=sel_string(metp(norb,p1),metp(norb,p2))+'||'
+        # remove last || enclose in parens, add &&
+        selstr=selstr[:-2]
+        selstr='&&('+selstr+')'
+        return selstr
+
     def MkTime(self):
         """run gtmktime tool"""
         maketime['scfile']=self.ft2
         maketime['filter']=self.Configuration['analysis']['filter']
+        if self.Configuration['OrbitalLC']['phasemin'] > 0.0 or self.Configuration['OrbitalLC']['phasemax'] < 1.0:
+            maketime['filter'] += _phase_filter()
         maketime['roicut']='yes'
         maketime['tstart'] = self.t1
         maketime['tstop'] = self.t2
