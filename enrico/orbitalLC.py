@@ -117,10 +117,12 @@ class OrbitalLC(LightCurve):
         Npred_detected = Npred[Npred_detected_indices]
         Time = np.array(Time)
         TimeErr = np.array(TimeErr)
-        Flux = np.array(Flux)
-        FluxErr = np.array(FluxErr)
-        FluxForNpred = np.array(FluxForNpred)
-        FluxErrForNpred = np.array(FluxErrForNpred)
+        # Flux values must be multiplied by Nbin because phase selection through
+        # gtpphase is not taken into account by gtmktime
+        Flux = np.array(Flux)*self.Nbin
+        FluxErr = np.array(FluxErr)*self.Nbin
+        FluxForNpred = np.array(FluxForNpred)*self.Nbin
+        FluxErrForNpred = np.array(FluxErrForNpred)*self.Nbin
 
         fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
 
@@ -142,7 +144,7 @@ class OrbitalLC(LightCurve):
             CanvNpred.Print(LcOutPath+"_Npred.eps")
             CanvNpred.Print(LcOutPath+"_Npred.C")
 
-            gTHTS,TgrTS = plotting.PlotTS(Time,TimeErr,TS)
+            gTHTS,TgrTS = plotting.PlotOrbTS(Time,TimeErr,TS)
             CanvTS = _GetCanvas()
             gTHTS.Draw()
             TgrTS.Draw('zP')
@@ -151,7 +153,7 @@ class OrbitalLC(LightCurve):
 
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
-        gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+        gTHLC,TgrLC,ArrowLC = plotting.PlotOrbLC(Time,TimeErr,Flux,FluxErr)
         CanvLC = ROOT.TCanvas()
         gTHLC.Draw()
         TgrLC.Draw('zP')

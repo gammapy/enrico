@@ -228,6 +228,20 @@ def PlotTS(Time, TimeErr, TS):
     tgraph.SetMarkerStyle(5)
     return gh, tgraph
 
+def PlotOrbTS(Time, TimeErr, TS):
+    """Scatter plot TS(Time)"""
+    Time = np.asarray(Time)
+    TimeErr = np.asarray(TimeErr)
+    TS = np.asarray(TS)
+    zero = np.zeros_like(TS)
+    gh = ROOT.TH2F("ghts", "", 80, 0.0, 1.0, 100, 0, max(TS) * 1.2)
+    gh.SetStats(000)
+    gh.SetXTitle("Orbital Phase")
+    gh.SetYTitle("Test Statistic")
+    tgraph = ROOT.TGraphErrors(len(TS), Time, TS, TimeErr, zero)
+    tgraph.SetMarkerColor(1)
+    tgraph.SetMarkerStyle(5)
+    return gh, tgraph
 
 def PlotNpred(Npred, Flux, FluxErr):
     """Scatter plot Flux(Npred)"""
@@ -267,6 +281,27 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
     tgraph.SetMarkerStyle(20)
     return gh, tgraph, arrows
 
+def PlotOrbLC(Time, TimeErr, Flux, FluxErr):
+    """Scatter plot Flux(Phase)"""
+    ArrowSize = (max(Flux) + max(FluxErr) * 1.3 -
+                 (min(Flux) - max(FluxErr) * 1.3)) * 0.1
+    arrows = []
+    for i in xrange(len(Time)):
+        if FluxErr[i] == 0:
+            arrows.append(ROOT.TArrow(Time[i], Flux[i], Time[i],
+                                     Flux[i] - ArrowSize, 0.015, "|>"))
+    xmin = 0.0
+    xmax = 1.0
+    ymin = min(Flux) - max(FluxErr) * 1.3
+    ymax = max(Flux) + max(FluxErr) * 1.3
+    gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
+    gh.SetStats(000)
+    gh.SetXTitle("Orbital Phase")
+    gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
+    tgraph = ROOT.TGraphErrors(len(Time), Time, Flux, TimeErr, FluxErr)
+    tgraph.SetMarkerColor(1)
+    tgraph.SetMarkerStyle(20)
+    return gh, tgraph, arrows
 
 def PlotDataPoints(config,pars):
     """Collect the data points/UL and generate a TGraph for the points
