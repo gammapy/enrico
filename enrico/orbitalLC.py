@@ -1,16 +1,13 @@
 import os
-from os.path import join
 import numpy as np
 import ROOT
 import utils
 import root_style
 import plotting
-import environ
-from math import sqrt
 from enrico.config import get_config
 from submit import call
 from enrico.RunGTlike import run,GenAnalysisObjects
-from enrico.lightcurve import LightCurve, WriteToAscii
+from enrico.lightcurve import LightCurve
 
 
 class OrbitalLC(LightCurve):
@@ -125,12 +122,12 @@ class OrbitalLC(LightCurve):
         FluxForNpred = np.array(FluxForNpred)*self.Nbin
         FluxErrForNpred = np.array(FluxErrForNpred)*self.Nbin
 
-        fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
 
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
+            fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
             gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
@@ -142,15 +139,15 @@ class OrbitalLC(LightCurve):
             TgrNpred_detected.Draw('zP')
             fittedFunc.Draw("SAME")
 
-            CanvNpred.Print(LcOutPath+"_Npred.eps")
-            CanvNpred.Print(LcOutPath+"_Npred.C")
+            CanvNpred.Print(LcOutPath+"_OrbitalNpred.eps")
+            CanvNpred.Print(LcOutPath+"_OrbitalNpred.C")
 
             gTHTS,TgrTS = plotting.PlotOrbTS(Time,TimeErr,TS)
             CanvTS = _GetCanvas()
             gTHTS.Draw()
             TgrTS.Draw('zP')
-            CanvTS.Print(LcOutPath+'_TS.eps')
-            CanvTS.Print(LcOutPath+'_TS.C')
+            CanvTS.Print(LcOutPath+'_OrbitalTS.eps')
+            CanvTS.Print(LcOutPath+'_OrbitalTS.C')
 
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
@@ -168,15 +165,25 @@ class OrbitalLC(LightCurve):
         self.Fvar(Flux,FluxErr)
 
         #Save the canvas in the LightCurve subfolder
-        CanvLC.Print(LcOutPath+'_LC.eps')
-        CanvLC.Print(LcOutPath+'_LC.C')
+        CanvLC.Print(LcOutPath+'_OrbitalLC.eps')
+        CanvLC.Print(LcOutPath+'_OrbitalLC.C')
 
         #Dump into ascii
-        lcfilename = LcOutPath+"_results.dat"
+        lcfilename = LcOutPath+"_OrbitalLC_results.dat"
         print "Write to Ascii file : ",lcfilename
         WriteToAscii(Time,TimeErr,Flux,FluxErr,TS,Npred,lcfilename)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
 
+def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
+    """Write the results of the LC in a Ascii file"""
+    flc = open(filename, 'w')
+    flc.write('Orbital Phase Delta_Phase   Flux(ph cm-2 s-1)   '
+              'Delta_Flux   TS   Npred\n')
+    for i in xrange(len(Time)):
+        flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
+                  str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
+                  str(TS[i]) + "\t" + str(Npred[i]) + "\n")
+    flc.close()
 

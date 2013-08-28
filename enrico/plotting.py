@@ -292,8 +292,13 @@ def PlotOrbLC(Time, TimeErr, Flux, FluxErr):
                                      Flux[i] - ArrowSize, 0.015, "|>"))
     xmin = 0.0
     xmax = 1.0
-    ymin = min(Flux) - max(FluxErr) * 1.3
-    ymax = max(Flux) + max(FluxErr) * 1.3
+    if max(FluxErr) == 0.0:
+        # For the sad, sad, sad all-UL orbital plots
+        ymin = min(Flux)*0.8
+        ymax = max(Flux)*1.2
+    else:
+        ymin = min(Flux) - max(FluxErr) * 1.3
+        ymax = max(Flux) + max(FluxErr) * 1.3
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     gh.SetXTitle("Orbital Phase")
