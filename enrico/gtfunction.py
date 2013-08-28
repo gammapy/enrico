@@ -181,7 +181,7 @@ class Observation:
         filter['convtype'] = self.convtyp
         filter.run()
 
-    def _phase_filter(self):
+    def _phase_filter(self,norb0):
         mjd_ref=51910.
         met_0 = 239557417
         T0met=(self.Configuration['OrbitalLC']['epoch']-mjd_ref)*86400.
@@ -204,42 +204,88 @@ class Observation:
         p2=self.Configuration['OrbitalLC']['phasemax']
         selstr=''
         # find orbit numbers covered by range (t1,t2)
-        norbt1=int(floor((t1-T0met)/P))
+        if norb0==None:
+            norbt1=int(floor((t1-T0met)/P))
+        else:
+            norbt1=norb0
         norbt2=int(ceil((t2-T0met)/P))
+        last=True
         for norb in range(norbt1,norbt2+1):
             selstr+=sel_string(metp(norb,p1),metp(norb,p2))+'||'
+            if len(selstr)>=800:
+                last=False
+                break
         # remove last || enclose in parens, add &&
         selstr=selstr[:-2]
-        #selstr='('+selstr+')'
-        print selstr
-        return selstr
+        selstr='('+selstr+')'
+        return selstr,norb,last
+
+    def _phase_MkTime(self):
+        """
+        Filter event list by orbital phase
+
+        CFITSIO won't allow filenames (including filter expression) longer than
+        ~1100 chars, so for selections that require very long filters (i.e.,
+        more than ~30 periods covered) we have to split the gtmktime calls into
+        chunks of ~20 orbital periods.
+        """
+        eventlist=[]
+        last=False
+        norb=None
+        while not last:
+            selstr,norb,last = self._phase_filter(norb)
+            maketime['scfile']=self.ft2
+            maketime['filter'] = selstr
+            maketime['roicut']='no'
+            maketime['tstart'] = self.t1
+            maketime['tstop'] = self.t2
+            maketime['evfile']= self.eventfile
+            outfile=(self.eventfile.replace('.fits','') + 
+                    "_p{0}_Norb{1}.fits".format(self.Configuration['OrbitalLC']['phasemin'],norb))
+            eventlist.append(outfile+'\n')
+            maketime['outfile']=outfile
+            maketime.run()
+
+        evlist_filename = (self.eventfile.replace('.fits','') +
+                "_p{0}.list".format(self.Configuration['OrbitalLC']['phasemin']))
+
+        with open(evlist_filename,'w') as ff:
+            ff.writelines(eventlist)
+
+        # Redo first-cut to consolidate into single fits file (gtmktime does not accept lists!)
+        filter['infile'] = evlist_filename
+        filter['outfile'] = self.eventfile+'.tmp'
+        filter['ra'] = self.ra
+        filter['dec'] = self.dec
+        filter['rad'] = self.roi
+        filter['emin'] = self.Emin
+        filter['emax'] = self.Emax
+        filter['tmin'] = self.t1
+        filter['tmax'] = self.t2
+        filter['zmax'] = self.Configuration['analysis']['zmax'] 
+        filter['evclsmin'] = self.Configuration['analysis']['evclass']
+        filter['evclsmax'] = 4
+        filter['convtype'] = self.convtyp
+        filter.run()
+        os.system("mv "+self.eventfile+".tmp "+self.eventfile)
+
+        # Clean cruft: all temp event files and event file list
+        os.unlink(evlist_filename)
+        for file in eventlist:
+            os.unlink(file.strip()) # strip of endline char
 
     def MkTime(self):
         """run gtmktime tool"""
-        maketime['scfile']=self.ft2
-        # Cut for orbital phase with external file filter (cfitsio crashes with string)
         if self.Configuration['OrbitalLC']['phasemin'] > 0.0 or self.Configuration['OrbitalLC']['phasemax'] < 1.0:
-            filterfile=(self.folder+'/filter_{0}_{1}.tmp'.format(self.Configuration['OrbitalLC']['phasemin'],
-                self.Configuration['OrbitalLC']['phasemax']))
-            with open(filterfile,'w') as ff:
-                ff.write(self._phase_filter())
-            maketime['filter'] = '@'+filterfile
-            maketime['filter'] = self._phase_filter()
-            maketime['roicut']='no'
-            maketime['tstart'] = 0
-            maketime['tstop'] = 0
-            maketime['evfile']= self.eventfile
-            maketime['outfile']=self.eventfile+".tmp"
-            maketime.run()
-            os.unlink(filterfile)
-            os.system("mv "+self.eventfile+".tmp "+self.eventfile)
-        # regular gtmktime run
+            self._phase_MkTime()
+
+        maketime['scfile']=self.ft2
         maketime['filter']=self.Configuration['analysis']['filter']
         maketime['roicut']='yes'
         maketime['tstart'] = self.t1
         maketime['tstop'] = self.t2
         maketime['evfile']= self.eventfile
-        maketime['outfile']=self.eventfile+".tmp"
+        maketime['outfile']= self.eventfile+".tmp"
         maketime.run()
         os.system("mv "+self.eventfile+".tmp "+self.eventfile)
 
