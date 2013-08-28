@@ -197,13 +197,16 @@ def _dump_xml(config) :
 
 def _dump_filename(config):
     """Give the name of the file where the results will be dumped"""
-    return (config['out'] + '/' + config['target']['name'] + '_' +
+    filename = (config['out'] + '/' + config['target']['name'] + '_' +
             str(config['target']['spectrum']) + '_' +
             str(int(config['time']['tmin'])) + '_' +
             str(int(config['time']['tmax'])) + '_' +
             str(int(config['energy']['emin'])) + '_' +
             str(int(config['energy']['emax'])) + ".results")
-
+    if config['OrbitalLC']['phasemin'] > 0.0 or config['OrbitalLC']['phasemin'] > 1.0:
+        filename.replace('.results', '_' +
+                str(int(config['OrbitalLC']['phasemin'])) + '_' +
+                str(int(config['OrbitalLC']['phasemax'])) + '.results' )
 
 def DumpResult(Result, config):
     """Dump the result into an ascii file """
