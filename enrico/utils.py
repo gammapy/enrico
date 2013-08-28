@@ -203,10 +203,13 @@ def _dump_filename(config):
             str(int(config['time']['tmax'])) + '_' +
             str(int(config['energy']['emin'])) + '_' +
             str(int(config['energy']['emax'])) + ".results")
-    if config['OrbitalLC']['phasemin'] > 0.0 or config['OrbitalLC']['phasemin'] > 1.0:
-        filename.replace('.results', '_' +
+
+    if config['OrbitalLC']['phasemin'] > 0.0 or config['OrbitalLC']['phasemax'] < 1.0:
+        filename = filename.replace('.results', '_' +
                 str(int(config['OrbitalLC']['phasemin'])) + '_' +
                 str(int(config['OrbitalLC']['phasemax'])) + '.results' )
+
+    return filename
 
 def DumpResult(Result, config):
     """Dump the result into an ascii file """
