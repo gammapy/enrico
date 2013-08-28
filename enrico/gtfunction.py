@@ -195,10 +195,11 @@ class Observation:
         T0met=(self.Configuration['OrbitalLC']['epoch']-mjd_ref)*86400.
         P=self.Configuration['OrbitalLC']['P']
         if T0met>met_0:
-            T0met-=np.ceil((T0met-met_0)/P)*P
+            T0met-=ceil((T0met-met_0)/P)*P
 
         def sel_string(met1,met2):
-            return ' ((TIME>={0:.2f})&&(TIME<={1:.2f})) '.format(met1,met2)
+            """ Filter on SC file ranges """
+            return '((START>{0:.0f})&&(STOP<{1:.0f}))'.format(met1,met2)
         def phase(met):
             pp=(met-T0met)/P
             return pp-int(pp)
@@ -211,21 +212,37 @@ class Observation:
         p2=self.Configuration['OrbitalLC']['phasemax']
         selstr=''
         # find orbit numbers covered by range (t1,t2)
-        norbt1=int(np.floor((t1-T0met)/P))
-        norbt2=int(np.ceil((t2-T0met)/P))
+        norbt1=int(floor((t1-T0met)/P))
+        norbt2=int(ceil((t2-T0met)/P))
         for norb in range(norbt1,norbt2+1):
             selstr+=sel_string(metp(norb,p1),metp(norb,p2))+'||'
         # remove last || enclose in parens, add &&
         selstr=selstr[:-2]
-        selstr='&&('+selstr+')'
+        #selstr='('+selstr+')'
+        print selstr
         return selstr
 
     def MkTime(self):
         """run gtmktime tool"""
         maketime['scfile']=self.ft2
-        maketime['filter']=self.Configuration['analysis']['filter']
+        # Cut for orbital phase with external file filter (cfitsio crashes with string)
         if self.Configuration['OrbitalLC']['phasemin'] > 0.0 or self.Configuration['OrbitalLC']['phasemax'] < 1.0:
-            maketime['filter'] += _phase_filter()
+            filterfile=(self.folder+'/filter_{0}_{1}.tmp'.format(self.Configuration['OrbitalLC']['phasemin'],
+                self.Configuration['OrbitalLC']['phasemax']))
+            with open(filterfile,'w') as ff:
+                ff.write(self._phase_filter())
+            maketime['filter'] = '@'+filterfile
+            maketime['filter'] = self._phase_filter()
+            maketime['roicut']='no'
+            maketime['tstart'] = 0
+            maketime['tstop'] = 0
+            maketime['evfile']= self.eventfile
+            maketime['outfile']=self.eventfile+".tmp"
+            maketime.run()
+            os.unlink(filterfile)
+            os.system("mv "+self.eventfile+".tmp "+self.eventfile)
+        # regular gtmktime run
+        maketime['filter']=self.Configuration['analysis']['filter']
         maketime['roicut']='yes'
         maketime['tstart'] = self.t1
         maketime['tstop'] = self.t2
@@ -234,6 +251,7 @@ class Observation:
         maketime['clobber'] = self.clobber
         maketime.run()
         os.system("mv "+self.eventfile+".tmp "+self.eventfile)
+
  
     def DiffResps(self):
         """run gtdiffresp"""
