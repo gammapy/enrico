@@ -177,6 +177,10 @@ class FitMaker(object):
         #Add the time information to the result dictionnary
         Result['tmin'] = self.config['time']['tmin']
         Result['tmax'] = self.config['time']['tmax']
+        #Add phasemin, phasemax if they have been used
+        if self.config['OrbitalLC']['phasemin'] > 0.0 or self.config['OrbitalLC']['phasemax'] < 1.0:
+            Result['phasemin'] = self.config['OrbitalLC']['phasemin']
+            Result['phasemax'] = self.config['OrbitalLC']['phasemax']
         Result['SrcName'] = self.obs.srcname
         Result['Flux'] = Fit.flux(self.obs.srcname,self.obs.Emin,self.obs.Emax)
         Result['dFlux'] = Fit.fluxError(self.obs.srcname,self.obs.Emin,self.obs.Emax)

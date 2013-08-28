@@ -205,9 +205,9 @@ def _dump_filename(config):
             str(int(config['energy']['emax'])) + ".results")
 
     if config['OrbitalLC']['phasemin'] > 0.0 or config['OrbitalLC']['phasemax'] < 1.0:
-        filename = filename.replace('.results', '_' +
-                str(int(config['OrbitalLC']['phasemin'])) + '_' +
-                str(int(config['OrbitalLC']['phasemax'])) + '.results' )
+        # multiply phase ranges by 1000 and show int to avoid points in filename
+        filename = filename.replace('.results', '_{0:03.0f}_{1:03.0f}.results'.format(
+                config['OrbitalLC']['phasemin']*1000, config['OrbitalLC']['phasemax']*1000))
 
     return filename
 

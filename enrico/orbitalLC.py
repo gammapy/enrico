@@ -56,9 +56,10 @@ class OrbitalLC(LightCurve):
             self.config['OrbitalLC']['phasemin'] = i / float(self.Nbin)
             self.config['OrbitalLC']['phasemax'] = (i + 1) / float(self.Nbin)
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
-            filename = (self.config['out'] + "Config_" +
-                    str(self.config['OrbitalLC']['phasemin']) + "_" +
-                    str(self.config['OrbitalLC']['phasemax']))#Name of the config file
+            filename = (self.config['out'] + "LC_{0}_{1:03.0f}_{2:03.0f}.conf".format(
+                    i,
+                    self.config['OrbitalLC']['phasemin']*1000,
+                    self.config['OrbitalLC']['phasemax']*1000,))#Name of the config file
             if write == 'yes':
                 self.config.write(open(filename, 'w'))
 
