@@ -303,7 +303,7 @@ class FitMaker(object):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ Fit[self.obs.srcname].funcs['Spectrum'].genericName()
+        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)
