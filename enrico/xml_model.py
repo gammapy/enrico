@@ -220,8 +220,8 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    index1_min=-5.0, index1_max=-0.5,
                    cutoff_free=1, cutoff_value=1e4,
                    cutoff_min=200, cutoff_max=3e5,
-                   index2_free=0, index2_value=-1.0,
-                   index2_min=-5.0, index2_max=-0.05):
+                   index2_free=0, index2_value=1.0,
+                   index2_min=0.0, index2_max=5.0):
     """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000
