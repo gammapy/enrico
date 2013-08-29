@@ -107,7 +107,7 @@ class OrbitalLC(LightCurve):
             Npred.append(ResultDic.get("Npred"))
             TS.append(ResultDic.get("TS"))
             if (CurConfig['LightCurve']['TSLightCurve']<float(ResultDic.get("TS"))):
-                Npred_detected_indices.append(i)
+                Npred_detected_indices.append(len(Npred)-1)
 
         #change the list into np array
         TS = np.array(TS)
@@ -175,6 +175,12 @@ class OrbitalLC(LightCurve):
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
+
+def _GetCanvas():
+    Canv = ROOT.TCanvas()
+    Canv.SetGridx()
+    Canv.SetGridy()
+    return Canv
 
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
