@@ -280,9 +280,17 @@ def GetlistFromFits(config, catalog):
     flux = data.field('Flux_Density')
     pivot = data.field('Pivot_Energy')
     index = data.field('Spectral_Index')
-    cutoff = data.field('Cutoff')
-    spectype = data.field('SpectrumType')
-    beta = data.field('beta')
+    try :  # valid for the 2FGH, not for the 1FHL
+      cutoff = data.field('Cutoff')
+      beta = data.field('beta')
+      spectype = data.field('SpectrumType')
+    except :
+      cutoff = np.zeros(names.size)
+      beta = np.zeros(names.size)
+      spectype = np.array(names.size*["PowerLaw"])
+      pivot *= 1e3 ## energy in the 1FHL are in GeV
+      flux *= 1e3
+
     sigma = data.field('Signif_Avg')
 
     #add the target to the list of sources
