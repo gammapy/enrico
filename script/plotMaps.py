@@ -22,11 +22,11 @@ except:
   sys.exit("Module aplpy missing")
 
 #enrico imports
-#try:
-from enrico.config import get_config
-from enrico.gtfunction import Observation
-#except:
-#  sys.exit("Enrico Module missing? Fermi ST installed?")
+try:
+  from enrico.config import get_config
+  from enrico.gtfunction import Observation
+except:
+  sys.exit("Enrico Module missing? Fermi ST installed?")
 
 try :
   vmax = float(sys.argv[2])
