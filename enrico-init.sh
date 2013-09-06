@@ -47,10 +47,10 @@ mkdir -p $FERMI_PREPROCESSED_DIR
 mkdir -p $FERMI_CATALOG_DIR
 
 # Default names as of ScienceTools 20130410
-export DIFFUSE_GAL        = "gal_2yearp7v6_v0.fits"
-export DIFFUSE_ISO_SOURCE = "iso_p7v6source.txt"
+export DIFFUSE_GAL="gal_2yearp7v6_v0.fits"
+export DIFFUSE_ISO_SOURCE="iso_p7v6source.txt"
 # v08 of 2-year Fermi-LAT catalog
-export FERMI_CATALOG      = "gll_psc_v08.fit"
+export FERMI_CATALOG="gll_psc_v08.fit"
 
 export FARM=LAPP
 #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
