@@ -29,7 +29,7 @@ if [ ! -d "${FERMI_CATALOG_DIR}" ]; then
 fi
 
 if [ ! -d "${FERMI_DIFFUSE_DIR}" ]; then
-    export FERMI_DIFFUSE_DIR=$FERMI_DATA_DIR/diffuse
+    export FERMI_DIFFUSE_DIR=$FERMI_DIR/refdata/fermi/galdiffuse/
 fi
 
 if [ ! -d "${FERMI_DOWNLOAD_DIR}" ]; then
@@ -45,6 +45,12 @@ mkdir -p $FERMI_DIFFUSE_DIR
 mkdir -p $FERMI_DOWNLOAD_DIR
 mkdir -p $FERMI_PREPROCESSED_DIR
 mkdir -p $FERMI_CATALOG_DIR
+
+# Default names as of ScienceTools 20130410
+export DIFFUSE_GAL        = "gal_2yearp7v6_v0.fits"
+export DIFFUSE_ISO_SOURCE = "iso_p7v6source.txt"
+# v08 of 2-year Fermi-LAT catalog
+export FERMI_CATALOG      = "gll_psc_v08.fit"
 
 export FARM=LAPP
 #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
