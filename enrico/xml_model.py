@@ -258,12 +258,12 @@ def AddSpatial(doc,ra,dec,extendedName=""):
       spatial.setAttribute('type', 'SkyDirFunction')
       addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
       addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
-    else : 
-      from environ import *
+    else :
+      import environ as env
       from os.path import join
       filename = extendedName+'.fits'
       filename = filename.replace(' ','')
-      spatialModel = join(CATALOG_TEMPLATE_DIR, filename)
+      spatialModel = join(env.CATALOG_TEMPLATE_DIR, filename)
       spatial.setAttribute('type', 'SpatialMap')
       spatial.setAttribute('file', spatialModel)
       addParameter(spatial, 'Prefactor', 1, 1, 1.0, 0.0001,1000)
