@@ -29,7 +29,7 @@ if [ ! -d "${FERMI_CATALOG_DIR}" ]; then
 fi
 
 if [ ! -d "${FERMI_DIFFUSE_DIR}" ]; then
-    export FERMI_DIFFUSE_DIR=$FERMI_DATA_DIR/diffuse
+    export FERMI_DIFFUSE_DIR=$FERMI_DIR/refdata/fermi/galdiffuse
 fi
 
 if [ ! -d "${FERMI_DOWNLOAD_DIR}" ]; then
