@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<?eclipse-pydev version="1.0"?>
-
-<pydev_project>
+<?eclipse-pydev version="1.0"?><pydev_project>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">fermi_python</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.6</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
 <path>/enrico</path>
-<path>/enrico/scripts</path>
+<path>/enrico/script</path>
 </pydev_pathproperty>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
-<path>/Users/deil/bin/fermi/ScienceTools-v9r23p1-fssc-20111006-i386-apple-darwin10.8.0/i386-apple-darwin10.8.0/lib/python</path>
-<path>/Users/deil/bin/fermi/ScienceTools-v9r23p1-fssc-20111006-i386-apple-darwin10.8.0/i386-apple-darwin10.8.0/lib</path>
+<path>${FERMI_DIR}/lib</path>
+<path>${FERMI_DIR}/lib/python</path>
 </pydev_pathproperty>
+<pydev_variables_property name="org.python.pydev.PROJECT_VARIABLE_SUBSTITUTION">
+<key>FERMI_DIR</key>
+<value>/Users/deil/software/fermi/ScienceTools-v9r31p1-fssc-20130410-x86_64-apple-darwin12.2.0/x86_64-apple-darwin12.2.0</value>
+</pydev_variables_property>
 </pydev_project>
