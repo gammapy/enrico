@@ -202,6 +202,9 @@ class Observation:
         t2=self.Configuration['time']['tmax']
         p1=self.Configuration['OrbitalLC']['phasemin']
         p2=self.Configuration['OrbitalLC']['phasemax']
+        if p2<p1:
+            # allow selections through phase 0.0 (e.g., from p1=0.8 to p2=0.4)
+            p2+=1.0
         selstr=''
         # find orbit numbers covered by range (t1,t2)
         if norb0==None:
