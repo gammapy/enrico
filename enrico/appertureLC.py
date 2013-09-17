@@ -118,7 +118,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     file_evt = open(LCoutfolder+'/TimeExposureCount.txt',"w")
 
     #Write into file
-    file_evt.write("Time\tdTime\tExposure\tCounts\n")
+    file_evt.write("# Time\tdTime\tExposure\tCounts\n")
     for i in xrange(len(Time)):
        file_evt.write(str(Time[i])+"\t"+str(dTime[i])+"\t"+str(Exposure[i])+"\t"+str(Counts[i])+"\n")
     file_evt.close()
