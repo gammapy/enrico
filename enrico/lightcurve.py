@@ -316,7 +316,7 @@ def _GetCanvas():
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
-    flc.write('Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+    flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
               'Delta_Flux TS Npred\n')
     for i in xrange(len(Time)):
         flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
