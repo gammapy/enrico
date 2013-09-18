@@ -249,5 +249,5 @@ class Observation:
         model_map['outfile'] = self.ModelMap
         model_map.run()
         #Compute the residual map
-        utils.SubstracFits(self.cmapfile,self.ModelMap,self.Configuration)
+        utils.SubtractFits(self.cmapfile,self.ModelMap,self.Configuration)
 
