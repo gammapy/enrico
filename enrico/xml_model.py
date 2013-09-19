@@ -315,14 +315,8 @@ def GetlistFromFits(config, catalog):
 
     sigma = data.field('Signif_Avg')
 
-    #add the target to the list of sources
-    sources = [{'name':srcname, 'ra': ra_src, 'dec': dec_src,
-                   'flux': 1e-9, 'index':-2, 'scale': emin,
-                   'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
-                   'SpectrumType': model, 'ExtendedName': ''}]
-
-    Nextended = 0
-    Nfree = 1
+    sources = []
+    Nfree = 0
     #loop over all the sources of the catalog
     for i in xrange(len(names)):
         #distance from the center of the maps
@@ -330,10 +324,18 @@ def GetlistFromFits(config, catalog):
         #distance for the target
         rsrc = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
 
-        # sources with angular separation less than 0.1 degree
-        # from the target are not added
-        # if the source is close to the target : add it as a free source
-        if  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
+        # if the source has a separation less than 0.1deg to the target and has
+        # the same model type as the one we want to use, insert as our target
+        # with our given coordinates
+        if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model:
+            Nfree += 1
+            sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
+                            'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
+                            'SpectrumType': spectype[i]})
+
+        elif  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
+            # if the source is close to the target : add it as a free source
             Nfree += 1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
@@ -355,6 +357,18 @@ def GetlistFromFits(config, catalog):
     print "Add ", len(sources), " source(s) in the ROI of ", roi, " degrees"
     print Nfree, " source(s) have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
+
+    # if the target has not been added from catalog, add it now
+    if sources[0]['name']!=srcname:
+        Nfree += 1
+        #add the target to the list of sources in first position
+        sources.insert(0,{'name':srcname, 'ra': ra_src, 'dec': dec_src,
+                       'flux': 1e-9, 'index':-2, 'scale': emin,
+                       'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
+                       'SpectrumType': model})
+
+    print "Add ", len(sources), " sources in the ROI of ", roi, " degrees"
+    print Nfree, " sources have free parameters inside ", max_radius, " degrees"
 
     return sources
 
