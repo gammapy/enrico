@@ -232,12 +232,16 @@ def time_selection(config,numbin0):
     if numbin0==None:
         numbin0=0
 
-    def sel_string(met1,met2):
-        """ Filter on SC file ranges """
-        return '((START>{0:.0f})&&(STOP<{1:.0f}))'.format(met1,met2)
-
     # Read MET_TSTART, MET_TSTOP pairs from file
     bins = np.loadtxt(config['time']['file'])
+
+    mjd_ref = 51910.
+    jd_ref  = mjd_ref + 2400000.5
+
+    if config['time']['type']=='MJD':
+        bins = (bins - mjd_ref)*86400.
+    elif config['time']['type']=='JD':
+        bins = (bins - jd_ref)*86400.
 
     selstr=''
     last=True

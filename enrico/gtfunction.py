@@ -172,11 +172,10 @@ class Observation:
 
     def FirstCut(self):
         """Run gtselect tool"""
-
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventfile
-        filter['ra'] = self.ra
-        filter['dec'] = self.dec
+        filter['ra'] = self.ra 
+        filter['dec'] = self.dec 
         filter['rad'] = self.roi
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
