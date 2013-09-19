@@ -147,6 +147,7 @@ if the found TS is below the value set in [UpperLimit]/TSlimit, then an upper li
 .. note:: 
    For the `enrico_sed` tool, most of the relevant options in the [spectrum] section
 
+You can use `enrico_testmodel` to compute the log(likelihood) of the models `POWERLAW`, `LogParabola` and `PLExpCutoff`. An ascii file is then produced in the Spectrum folder with the value of the log(likelihood) for each model. You can then use the Wilk's theorem to decide which model best describe the data.
 
 Make flux points
 ----------------
@@ -180,33 +181,6 @@ It will divide the time range in [LightCurve]/NLCbin bins and run a proper analy
    Note that you give options for this step simply by mentioning the config file.
    For the `enrico_lc` tool, most of the relevant options are in the [LightCurve]
    section
-
-Plot results
--------------
-
-
-
-Now, we want to plot the results of the analysis we performed. Some plots can be produced by enrico. Using the tools `enrico_plot_*` allow to plot the results of your analysis.
-
-The 1 sigma contour plot can be computed by `enrico_sed` if the option [Spectrum]/ResultPlots=yes. Then to plot it, call `enrico_plot_sed myanalysis.conf` which will make a SED with the 1 sigma contour and add the data points computed previously (section `Make flux points`).
-
-
-.. figure::  _static/SED.png
-   :align:   center
-
-   SED of PG 1553+113
-
-
-If you ran a binned analysis and with the option [Spectrum]/ResultPlots=yes then a model map is produced to compare with the real count map
-
-RESULTS
-
- * The light curve can be plotted using  `enrico_plot_lc myanalysis.conf` as well as diagnostic plot (TS vs time, Npred vs time, etc...)
-
-
-RESULTS
-
- * The TS map (see the section `Make a TS map`) can be plotted and save in a fits file using  `enrico_plot_tsmap myanalysis.conf`
 
 
 Make a TS map
@@ -269,12 +243,86 @@ Both implementations are provided by the ScienceTools and used by enrico.
    For upper limits, most of the relevant options are in the [UpperLimits]
    section
 
+
+Plot results
+-------------
+
+
+
+Now, we want to plot the results of the analysis we performed. Some plots can be produced by enrico. Using the tools `enrico_plot_*` allow to plot the results of your analysis.
+
+The 1 sigma contour plot can be computed by `enrico_sed` if the option [Spectrum]/ResultPlots=yes. Then to plot it, call `enrico_plot_sed myanalysis.conf` which will make a SED with the 1 sigma contour and add the data points computed previously (section `Make flux points`).
+
+
+.. figure::  _static/SED.png
+   :align:   center
+
+   SED of PG 1553+113
+
+
+If you ran a binned analysis and with the option [Spectrum]/ResultPlots=yes then a model map is produced to compare with the real count map (see the section check results).
+
+ * The light curve can be plotted using  `enrico_plot_lc myanalysis.conf` as well as diagnostic plot (TS vs time, Npred vs time, etc...)
+
+
+.. code-block:: bash
+
+   Chi2 =  33.4499766302  NDF =  19
+   probability of being cst =  0.0213192240717
+
+    Fvar =  0.17999761777  +/-  0.089820202452
+
+.. figure::  _static/LC.png
+   :align:   center
+
+   Light curve of PG 1553+113. The dashed gray line is the results of a fit with a constant.
+
+enrico also computes the variability index as described in the 2FGL catalog (see `here <http://fermi.gsfc.nasa.gov/ssc/data/access/lat/2yr_catalog/>`__).
+
+
+ * The TS map (see the section `Make a TS map`) can be plotted and save in a fits file using  `enrico_plot_tsmap myanalysis.conf`. This will generate a fits file that can be plotted using the script `plotTSmap.py`
+
+.. figure::  _static/TSMaps.png
+   :align:   center
+
+   TS Map of PG 1553+113.
+
+
 Check results
 -------------
 
-counts map, model maps
+There is different way to check the quality of a results. First have a look the log file and loff for any error or warning messages. Enrico also produce maps that can use to check the results
 
-count spectrum
+`Spectrum`
+
+ * counts map, model map and subtract map. 
 
 
+.. figure::  _static/Maps.png
+   :align:   center
 
+   Maps of  PG 1553+113, from top to bottom: counts map, model map, residuals map.
+
+These maps are use to visualize the ROI and check and see any misfitted sources. You can plot then using the script 'plotMaps.py'
+
+ * Counts Plot and Residuals. The points  (# counts/bin) are the data, and the solide line  is the source model. Dashed line is the sum of all other model and dotted line is the sum of both. Error bars on the points represent sqrt(Nobs) in that band, where Nobs is the observed number of counts. The Residuals are computed between the sum model and the data.
+
+.. figure::  _static/CountsPlot.png
+   :align:   center
+
+   Count plot of PG 1553+113
+
+.. figure::  _static/Residuals.png
+   :align:   center
+
+   Residuals plot of PG 1553+113
+
+`Light-curves`
+
+ * The generation of light-curves might suffer from troubles, especially in the error bars computation. To check this, enrico plots the flux/dflux vs Npred/DNpred. If the errors are well computed the two variables are highly correlated.
+
+
+.. figure::  _static/Npred.png
+   :align:   center
+
+   flux/dflux vs Npred/DNpred plot of PG 1553+113. Red points are time-bins with TS> TSlimit, black (if any) are point for which an upper-limits on the flux was calculated and the points can be safely ignored in this plot. The gray dashed line is the fit with a linear function. to guide the eyes.

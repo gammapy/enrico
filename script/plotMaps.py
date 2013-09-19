@@ -26,14 +26,14 @@ try:
   from enrico.config import get_config
   from enrico.gtfunction import Observation
 except:
-  sys.exit("Enrico Module missing?")
+  sys.exit("Enrico Module missing? Fermi ST installed?")
 
 try :
   vmax = float(sys.argv[2])
   print "use user vmax for the color scale: "+sys.argv[2]
 except:
   print "use default vmax for the color scale: 8"
-  print "you can change it by python "+sys.argv[0]+" config [vmax]"
+  print "you can change it by typing python "+sys.argv[0]+" config [vmax]"
   vmax=8
 
 def set_hgps_style(f):
@@ -94,13 +94,13 @@ for ii, image in enumerate(images):
     f = FITSFigure(image['filename'], figure=figure, subplot=subplot)
     f.recenter(x_center, y_center, 0.95 * radius)
     set_hgps_style(f)
-    f.show_colorscale(vmin=-1, vmax=8, stretch='power', exponent=1, cmap='jet') #vmid=-3, stretch='log', )
+    f.show_colorscale(vmin=-1, vmax=vmax, stretch='power', exponent=1, cmap='jet') #vmid=-3, stretch='log', )
     # TODO: overplot sources  
 #    f.show_regions("sources.reg")
 
-filename = config["out"]+'Maps.eps'
+filename = config["out"]+'/Maps.eps'
 print('Writing {}'.format(filename))
 figure.savefig(filename)
-filename = config["out"]+'Maps.png'
+filename = config["out"]+'/Maps.png'
 print('Writing {}'.format(filename))
 figure.savefig(filename)

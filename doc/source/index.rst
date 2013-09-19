@@ -117,6 +117,7 @@ Table of Contents
    setup
    tutorial
    configfile
+   tools
    script
    developer
 
