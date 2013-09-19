@@ -188,8 +188,50 @@ class Observation:
         filter['clobber'] = self.clobber
         filter.run()
 
+    def time_selection(self):
+        """
+        Do a GTI selection based on a file of time spans
+
+        CFITSIO won't allow filenames (including filter expression) longer than
+        ~1100 chars, so for selections that require very long filters (i.e.,
+        more than ~30 time spans covered) we split the gtmktime calls into
+        chunks of ~20 time spans.
+        """
+        eventlist = []
+        last = False
+        numbin = None
+        while not last:
+            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
+            maketime['scfile'] = self.ft2
+            maketime['filter'] = selstr
+            maketime['roicut'] = 'no'
+            maketime['tstart'] = self.t1
+            maketime['tstop']  = self.t2
+            maketime['evfile'] = self.eventfile
+            outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            eventlist.append(outfile+'\n')
+            maketime['outfile'] = outfile
+            maketime.run()
+
+        evlist_filename = self.eventfile.replace('.fits','.list')
+        with open(evlist_filename,'w') as evlistfile:
+            evlistfile.writelines(eventlist)
+
+        # Redo first-cut to consolidate into single fits file (gtmktime does not accept lists!)
+        ft1 = self.ft1 # Store FT1 to restore it later
+        self.ft1 = evlist_filename
+        self.FirstCut()
+        self.ft1 = ft1
+
+        # Clean cruft: all temp event files and event file list
+        os.unlink(evlist_filename)
+        for file in eventlist:
+            os.unlink(file.strip()) # strip of endline char
+
     def MkTime(self):
         """run gtmktime tool"""
+        if self.Configuration['time']['file'] != '':
+            self.time_selection()
         maketime['scfile']=self.ft2
         maketime['filter']=self.Configuration['analysis']['filter']
         maketime['roicut']='yes'
@@ -200,7 +242,7 @@ class Observation:
         maketime['clobber'] = self.clobber
         maketime.run()
         os.system("mv "+self.eventfile+".tmp "+self.eventfile)
- 
+
     def DiffResps(self):
         """run gtdiffresp"""
         diffResps['evfile']=self.eventfile
