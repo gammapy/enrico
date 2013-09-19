@@ -226,7 +226,7 @@ def ReadResult(config):
         results[key] = value
     return results
 
-def time_selection(config,numbin0):
+def time_selection_string(config,numbin0):
     """Convert file with start stop pairs to gtmktime filter string"""
 
     if numbin0==None:

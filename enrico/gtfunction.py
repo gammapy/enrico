@@ -201,7 +201,7 @@ class Observation:
         last = False
         numbin = None
         while not last:
-            selstr,numbin,last = utils.time_selection(self.Configuration,numbin)
+            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
             maketime['scfile'] = self.ft2
             maketime['filter'] = selstr
             maketime['roicut'] = 'no'
