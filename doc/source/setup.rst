@@ -78,7 +78,7 @@ Build the documentation if you like:
    firefox build/html/index.html
 
 Install additional (optional)  python packages
-----------------------------------
+----------------------------------------------
 
 .. note::
    You don't have to install all of the following packages,
