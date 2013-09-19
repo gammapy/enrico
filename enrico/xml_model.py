@@ -1,5 +1,5 @@
 """Central place for the XML generation"""
-import os
+import os,sys
 import xml.dom.minidom
 import numpy as np
 import pyfits
@@ -64,7 +64,7 @@ def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
-                   index_min=-5.0, index_max=-0.5):
+                   index_min=-5.0, index_max=-0.5,extendedName=""):
     """Add a source with a POWERLAW1 model"""
     elim_min = 30
     elim_max = 300000
@@ -74,7 +74,10 @@ def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
-    src.setAttribute('type', 'PointSource')
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'PowerLaw')
     addParameter(spec, 'Prefactor',
@@ -83,10 +86,7 @@ def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
                  index_min, index_max)
     addParameter(spec, 'Scale', 0, eflux, 1.0, elim_min, elim_max)
     src.appendChild(spec)
-    spatial = doc.createElement('spatialModel')
-    spatial.setAttribute('type', 'SkyDirFunction')
-    addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
-    addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
 
@@ -95,7 +95,7 @@ def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
                    flux_free=1, flux_value=1.6e-8, flux_scale=0,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
-                   index_min=-5.0, index_max=-0.5):
+                   index_min=-5.0, index_max=-0.5,extendedName=""):
     """Add a source with a POWERLAW2 model"""
     elim_min = 30
     elim_max = 300000
@@ -109,7 +109,10 @@ def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
-    src.setAttribute('type', 'PointSource')
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'PowerLaw2')
     addParameter(spec, 'Integral',
@@ -119,10 +122,7 @@ def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
     addParameter(spec, 'LowerLimit', 0, emin, 1.0, elim_min, elim_max)
     addParameter(spec, 'UpperLimit', 0, emax, 1.0, elim_min, elim_max)
     src.appendChild(spec)
-    spatial = doc.createElement('spatialModel')
-    spatial.setAttribute('type', 'SkyDirFunction')
-    addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
-    addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
 
@@ -133,7 +133,7 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0.0005, beta_max=5.0):
+                   beta_min=0.0005, beta_max=5.0,extendedName=""):
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
@@ -147,7 +147,10 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
-    src.setAttribute('type', 'PointSource')
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'LogParabola')
     addParameter(spec, 'norm',
@@ -157,10 +160,7 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
     addParameter(spec, 'Eb', 0, enorm, 1.0, elim_min, elim_max)
     addParameter(spec, 'beta', beta_free, beta_value, 1.0, beta_min, beta_max)
     src.appendChild(spec)
-    spatial = doc.createElement('spatialModel')
-    spatial.setAttribute('type', 'SkyDirFunction')
-    addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
-    addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
 
@@ -172,7 +172,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
                          index_lo_free=1, index_lo_value=-2.0,
                          index_lo_min=-5.0, index_lo_max=-1.0,
                          index_hi_free=1, index_hi_value=-2.0,
-                         index_hi_min=-5.0, index_hi_max=-1.0):
+                         index_hi_min=-5.0, index_hi_max=-1.0,extendedName=""):
     """Add a source with a BROKENPOWERLAW2 model"""
     elim_min = 30
     elim_max = 300000
@@ -189,7 +189,10 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
-    src.setAttribute('type', 'PointSource')
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'BrokenPowerLaw2')
     addParameter(spec, 'Integral',
@@ -205,10 +208,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
     addParameter(spec, 'LowerLimit', 0, emin, 1.0, elim_min, elim_max)
     addParameter(spec, 'UpperLimit', 0, emax, 1.0, elim_min, elim_max)
     src.appendChild(spec)
-    spatial = doc.createElement('spatialModel')
-    spatial.setAttribute('type', 'SkyDirFunction')
-    addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
-    addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
 
@@ -220,8 +220,8 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    index1_min=-5.0, index1_max=-0.5,
                    cutoff_free=1, cutoff_value=1e4,
                    cutoff_min=200, cutoff_max=3e5,
-                   index2_free=0, index2_value=-1.0,
-                   index2_min=-5.0, index2_max=-0.05):
+                   index2_free=0, index2_value=1.0,
+                   index2_min=0.0, index2_max=5.0,extendedName=""):
     """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000
@@ -231,7 +231,10 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
     doc = lib.ownerDocument
     src = doc.createElement('source')
     src.setAttribute('name', name)
-    src.setAttribute('type', 'PointSource')
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'PLSuperExpCutoff')
     addParameter(spec, 'Prefactor',
@@ -245,13 +248,27 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                  index2_min, index2_max)
 
     src.appendChild(spec)
-    spatial = doc.createElement('spatialModel')
-    spatial.setAttribute('type', 'SkyDirFunction')
-    addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
-    addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
 
+def AddSpatial(doc,ra,dec,extendedName=""):
+    spatial = doc.createElement('spatialModel')
+    if extendedName=="":
+      spatial.setAttribute('type', 'SkyDirFunction')
+      addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
+      addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
+    else : 
+      from environ import CATALOG_TEMPLATE_DIR
+      from os.path import join
+      filename = extendedName+'.fits'
+      filename = filename.replace(' ','')
+      spatialModel = join(CATALOG_TEMPLATE_DIR, filename)
+      spatial.setAttribute('type', 'SpatialMap')
+      spatial.setAttribute('file', spatialModel)
+      addParameter(spatial, 'Prefactor', 1, 1, 1.0, 0.0001,1000)
+
+    return spatial
 
 def GetlistFromFits(config, catalog):
     """Read the config and catalog file and generate the list of sources to include"""
@@ -280,17 +297,31 @@ def GetlistFromFits(config, catalog):
     flux = data.field('Flux_Density')
     pivot = data.field('Pivot_Energy')
     index = data.field('Spectral_Index')
-    cutoff = data.field('Cutoff')
-    spectype = data.field('SpectrumType')
-    beta = data.field('beta')
+    try :  # valid for the 2FGH, not for the 1FHL
+      cutoff = data.field('Cutoff')
+      beta = data.field('beta')
+      spectype = data.field('SpectrumType')
+    except :
+      cutoff = np.zeros(names.size)
+      beta = np.zeros(names.size)
+      spectype = np.array(names.size*["PowerLaw"])
+      pivot *= 1e3 ## energy in the 1FHL are in GeV
+      flux *= 1e3
+    try :
+      extendedName = data.field('Extended_Source_Name')
+    except:
+      logging.warning("Cannot find th extended source list: please check the xml")
+      extendedName = np.array(names.size*[""])
+
     sigma = data.field('Signif_Avg')
 
     #add the target to the list of sources
     sources = [{'name':srcname, 'ra': ra_src, 'dec': dec_src,
                    'flux': 1e-9, 'index':-2, 'scale': emin,
                    'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
-                   'SpectrumType': model}]
+                   'SpectrumType': model, 'ExtendedName': ''}]
 
+    Nextended = 0
     Nfree = 1
     #loop over all the sources of the catalog
     for i in xrange(len(names)):
@@ -307,17 +338,24 @@ def GetlistFromFits(config, catalog):
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
-                            'SpectrumType': spectype[i]})
+                            'SpectrumType': spectype[i], 'ExtendedName': extendedName[i]})
+            if not(extendedName[i]==""):
+                print "Adding extended source ",extendedName[i]," 2FGL name is ",names[i]
+                Nextended=+1
         else:
             # if the source is inside the ROI: add it as a frozen source
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                 'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
-                                'SpectrumType': spectype[i]})
+                                'SpectrumType': spectype[i],'ExtendedName': extendedName[i]})
+                if not(extendedName[i]==""):
+                  print "Adding extended source ",extendedName[i]," 2FGL name is ",names[i]
+                  Nextended=+1
+    print "Add ", len(sources), " source(s) in the ROI of ", roi, " degrees"
+    print Nfree, " source(s) have free parameters inside ", max_radius, " degrees"
+    print Nextended, " source(s) is (are) extended"
 
-    print "Add ", len(sources), " sources in the ROI of ", roi, " degrees"
-    print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     return sources
 
 def IsIn(name, sources):
@@ -372,28 +410,29 @@ def WriteXml(lib, doc, srclist, config):
         dec = srclist[i].get('dec')
         free = srclist[i].get('IsFree')
         spectype = srclist[i].get('SpectrumType')
+        extendedName = srclist[i].get('ExtendedName')
         # Check the spectrum model
         if spectype == "PowerLaw":
             addPSPowerLaw1(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
-                              index_free=free, index_value=srclist[i].get('index'))
+                              index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
         if spectype == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec,
                             emin=emin, emax=emax,
                             flux_free=free, flux_value=srclist[i].get('flux'),
-                            index_free=free, index_value=srclist[i].get('index'))
+                            index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
         if spectype == "LogParabola":
             addPSLogparabola(lib, name, ra, dec, enorm=srclist[i].get('scale'),
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=free, alpha_value=abs(srclist[i].get('index')),
-                              beta_free=free, beta_value=srclist[i].get('beta'))
+                              beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName)
         if spectype == "PLExpCutoff":
             addPSPLSuperExpCutoff(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=free, index1_value=srclist[i].get('index'),
-                              cutoff_free=free, cutoff_value=srclist[i].get('cutoff'))
+                              cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
 
     folder = config['out']
     os.system('mkdir -p ' + folder)
@@ -438,3 +477,29 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
                    color + " text={" + str(name) + "}\n")
     fds9.close()
 
+
+def XmlMaker(config):
+  folder = config['out']
+  os.system('mkdir -p ' + folder)
+
+# test if the user provide a catalog or not.
+#if not use the default one
+  if config['environ']['FERMI_CATALOG_DIR'] == '':
+    catalogDir = env.CATALOG_DIR
+    print "use the default location of the catalog"
+  else:
+    catalogDir = config['environ']['FERMI_CATALOG_DIR']
+
+  if config['environ']['FERMI_CATALOG'] == '':
+    catalog = catalogDir + "/" + env.CATALOG
+    print "use the default catalog"
+  else:
+    catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
+
+  print "Use the catalog : ", catalog
+
+  lib, doc = CreateLib()
+  srclist = GetlistFromFits(config, catalog)
+  WriteXml(lib, doc, srclist, config)
+  Xml_to_Reg(folder + "/Roi_model",
+                            srclist, Prog=sys.argv[0])

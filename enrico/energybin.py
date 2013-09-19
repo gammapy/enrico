@@ -66,8 +66,8 @@ def PrepareEbin(Fit, FitRunner):
 
     srcname = FitRunner.config['target']['name']
     if config['UpperLimit']['TSlimit']>Fit.Ts(srcname) :
-        _log('Re-optimize', False)
-	print "An upper limit has been computed. The fit need to be re-optmized"
+        utils._log('Re-optimize', False)
+        print "An upper limit has been computed. The fit need to be re-optmized"
         Fit.optimize(0)
 
 #    utils.RemoveWeakSources(Fit,srcname)#remove source with TS<1 to be sure that MINUIT will converge
@@ -110,7 +110,7 @@ def RunEbin(folder,Nbin,Fit,FitRunner):
              pathconf = folder + "/Ebin" + str(Nbin) +"/" + conf
              Newconfig = get_config(pathconf)
              cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
-             if Newconfig['Ebin']['Submit'] == 'no' : #run directly
+             if Newconfig['Submit'] == 'no' : #run directly
                  os.system(cmd)
              else : #submit a job to a cluster
                  prefix = Newconfig['out'] + "/Ebin" + str(ind) 

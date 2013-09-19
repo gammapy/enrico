@@ -7,15 +7,15 @@ import root_style
 import plotting
 import environ
 from math import sqrt
-from config import get_config
+from enrico.config import get_config
 from submit import call
 from enrico.RunGTlike import run,GenAnalysisObjects
 
 class LightCurve:
     """Class to calculate light curves and variability indexes."""
-    def __init__(self, infile):
+    def __init__(self, config):
         ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
-        self.config = get_config(infile)
+        self.config = config
 
         #Read the config
         self.srcname = self.config['target']['name'] #src name
@@ -24,11 +24,12 @@ class LightCurve:
         self.tmin = self.config['time']['tmin']
         self.tmax = self.config['time']['tmax']
         self.dt = (self.tmax - self.tmin) / self.Nbin
+        self.submit = self.config['Submit']
         # One point of the LC will be computed as a spectrum plot.
         # enrico_sed will be used
         # Do fits files will be generated
         self.config['Spectrum']['FitsGeneration'] = self.config['LightCurve']['FitsGeneration']
-        #Froze the Spectral index at a value of self.config['LightCurve']['SpectralIndex']
+        #Froze the Spectral index at a value of self.config['LightCurve']['SpectralIndex'] (no effect if 0)
         self.config['Spectrum']['FrozenSpectralIndex'] = self.config['LightCurve']['SpectralIndex']
         #TS limit. Compute an UL if the TS is below TSLightCurve
         self.config['UpperLimit']['TSlimit'] = self.config['LightCurve']['TSLightCurve']
@@ -45,7 +46,7 @@ class LightCurve:
         self.config['Ebin']['NumEnergyBins'] = 0
         self.config['UpperLimit']['envelope'] = 'no'
         #No submition. Submission will be directly handle by this soft
-        self.config['Spectrum']['Submit'] = 'no'
+        self.config['Submit'] = 'no'
         self.config['verbose'] ='no' #Be quiet
 
         self.configfile = []#All the config file in the disk are stored in a list
@@ -78,7 +79,7 @@ class LightCurve:
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
 
         for i in xrange(self.config['LightCurve']['NLCbin']):
-            if self.config['LightCurve']['Submit'] == 'yes':
+            if self.submit == 'yes':
                 cmd = "enrico_sed "+self.configfile[i]
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"
                 JobLog = self.LCfolder+"LC_Job_"+str(i)+".log"
@@ -281,7 +282,7 @@ class LightCurve:
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!
-            utils.FreezeParams(Fit, self.srcname, 'Index', -self.config['LightCurve']['SpectralIndex'])
+            utils.FreezeParams(Fit, self.srcname, 'Index', -2)
             LogL1.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
             Model_type = Fit.model.srcs[self.srcname].spectrum().genericName()
@@ -316,7 +317,7 @@ def _GetCanvas():
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
-    flc.write('Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+    flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
               'Delta_Flux TS Npred\n')
     for i in xrange(len(Time)):
         flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +

@@ -92,14 +92,14 @@ def cube_to_image(cube, slicepos=None, mean=False):
     return PrimaryHDU(data, header)
 
 
-def SubstracFits(infile1, infile2, config):
+def SubtractFits(infile1, infile2, config):
     """Create (absolute and relative) difference images"""
     import pyfits
     data1 = pyfits.getdata(infile1)
     data2 = pyfits.getdata(infile2)
     head = pyfits.getheader(infile2)
     filebase = config['out'] + "/" + config['target']['name']
-    abs_diff_file = filebase + "_Substract_Model_cmap.fits"
+    abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
     rel_diff_file = filebase + "_Residual_Model_cmap.fits"
     os.system("rm " + abs_diff_file)
     os.system("rm " + rel_diff_file)

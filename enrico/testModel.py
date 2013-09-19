@@ -1,14 +1,13 @@
 from fitmaker import FitMaker
 from gtfunction import Observation
-from enrico.config import get_config
 import SummedLikelihood
 import os
 
 class ModelTester:
     """Class to est several models to check
         which is statistically prefered."""
-    def __init__(self, infile):
-         self.config = get_config(infile)
+    def __init__(self, config):
+         self.config = config
          self.folder = self.config['out']
          os.system("mkdir -p "+self.folder+"/TestModel")
          convtype = self.config['analysis']['convtype']

@@ -1,4 +1,4 @@
-# gtfunction.py written by David Sanchez : dsanchez@poly.in2p3.fr
+# gtfunction.py written by David Sanchez : david.sanchez@lapp.in2p3.fr
 # Collection of function to run the ST tools.
 #The description of each ST tool is given in the dedicated NASA website
 # The Observation class contains all the variables needed  to run the ST like file path, energy, time etc, ...
@@ -66,6 +66,9 @@ class Observation:
         self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
         self.convtyp   = convtyp
 
+        #tool options
+        self.clobber = self.Configuration['clobber']
+
     def printSum(self):
         """Print a summary of the value stored in the class"""
         print "Source\t=\t",self.srcname
@@ -84,8 +87,8 @@ class Observation:
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.cmapfile
         evtbin['algorithm'] = "CMAP"
-        evtbin['nxpix'] = self.npix # 160 #
-        evtbin['nypix'] = self.npix #160
+        evtbin['nxpix'] = self.npix 
+        evtbin['nypix'] = self.npix 
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = 'CEL'
         evtbin["emin"] = self.Emin
@@ -93,7 +96,8 @@ class Observation:
         evtbin['xref'] = self.ra 
         evtbin['yref'] = self.dec
         evtbin['axisrot'] = 0
-        evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
+        evtbin['proj'] = self.Configuration['space']['proj'] 
+        evtbin['clobber'] = self.clobber
         evtbin.run()
 
     def GtBinDef(self,filename):
@@ -110,6 +114,7 @@ class Observation:
         exposure['irfs'] = self.irfs
         exposure['srcmdl'] = "none"
         exposure['specin'] = -self.Configuration['AppLC']['index']
+        exposure['clobber'] = self.clobber
         exposure.run()
 
     def GtLCbin(self,dt=60):
@@ -127,6 +132,7 @@ class Observation:
         else :
             evtbin["tbinalg"] = "FILE"
             evtbin["tbinfile"] = self.BinDef
+        evtbin['clobber'] = self.clobber
         evtbin.run()
 
     def GtCcube(self):
@@ -149,6 +155,7 @@ class Observation:
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
+        evtbin['clobber'] = self.clobber
         evtbin.run()
 
     def GtBinnedMap(self):
@@ -160,6 +167,7 @@ class Observation:
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
+        expcube2['clobber'] = self.clobber
         expcube2.run()
 
     def FirstCut(self):
@@ -177,6 +185,7 @@ class Observation:
         filter['evclsmin'] = self.Configuration['analysis']['evclass']
         filter['evclsmax'] = 4
         filter['convtype'] = self.convtyp
+        filter['clobber'] = self.clobber
         filter.run()
 
     def MkTime(self):
@@ -188,6 +197,7 @@ class Observation:
         maketime['tstop'] = self.t2
         maketime['evfile']= self.eventfile
         maketime['outfile']=self.eventfile+".tmp"
+        maketime['clobber'] = self.clobber
         maketime.run()
         os.system("mv "+self.eventfile+".tmp "+self.eventfile)
  
@@ -199,6 +209,7 @@ class Observation:
         diffResps['irfs']=self.irfs
         diffResps['convert']="no"
         diffResps['evclsmin']=self.Configuration['analysis']['evclass']
+        diffResps['clobber'] = self.clobber
         diffResps.run()
         print "\ndone"
 
@@ -209,7 +220,8 @@ class Observation:
         expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
         expCube['binsz']=1
-	expCube['phibins']=self.Configuration['space']['phibins'] 
+        expCube['phibins']=self.Configuration['space']['phibins']
+        expCube['clobber'] = self.clobber
         expCube.run()
 
     def ExpMap(self):
@@ -223,7 +235,7 @@ class Observation:
         expMap['srcrad'] = self.roi+10
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
-#int(self.Configuration['energy']['enumbins_per_decade']*(log10(self.Emax)-log10(self.Emin)))+1
+        expMap['clobber'] = self.clobber
         expMap.run() 
 
     def SrcMap(self):
@@ -236,6 +248,7 @@ class Observation:
         srcMaps['irfs']= self.irfs
         srcMaps['outfile'] = self.scrMap
         srcMaps['emapbnds']='no'
+        srcMaps['clobber'] = self.clobber
         srcMaps.run()
 
     def ModelMaps(self,xml):
@@ -247,7 +260,8 @@ class Observation:
         model_map['srcmdl'] = xml
         model_map["irfs"]=self.irfs
         model_map['outfile'] = self.ModelMap
+        model_map['clobber'] = self.clobber
         model_map.run()
         #Compute the residual map
-        utils.SubstracFits(self.cmapfile,self.ModelMap,self.Configuration)
+        utils.SubtractFits(self.cmapfile,self.ModelMap,self.Configuration)
 

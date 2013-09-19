@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import SummedLikelihood
 import utils
 import energybin
 from submit import call
@@ -35,6 +34,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             FitRunnerback.obs.xmlfile = xmlfile
         FitB = FitRunnerback.CreateLikeObject()
         FitF = FitRunnerfront.CreateLikeObject()
+        import SummedLikelihood
         Fit = SummedLikelihood.SummedLikelihood()
         Fit.addComponent(FitB)
         Fit.addComponent(FitF)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     import sys
     try:
         infile = sys.argv[1]
-        config = get_config(infile)
+#        config = get_config(infile)
     except:
         print('FATAL: Config file not found.')
         sys.exit(1)

@@ -42,9 +42,9 @@ class FitMaker(object):
         #Run the tools common to binned and unbinned chain
         self._log('gtselect', 'Select data from library')#run gtselect
         self.obs.FirstCut()
-        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
+        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtmktime
         self.obs.MkTime()
-        if self.config["analysis"]["ComputeDiffrsp"] == "yes":
+        if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
             self._log('gtdiffrsp', 'Compute Diffuse response')
             self.obs.DiffResps()#run gtbin
         self._log('gtbin', 'Create a count map')
@@ -303,7 +303,7 @@ class FitMaker(object):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ Fit[self.obs.srcname].funcs['Spectrum'].genericName()
+        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)

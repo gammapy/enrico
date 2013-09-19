@@ -1,23 +1,15 @@
 #!/usr/bin/env python
 """Run a fit for all energies and then in energy bins. Can submit on a cluster"""
-import sys
-import os
+import os,sys,numpy
 from enrico.config import get_config
 import enrico.environ as environ
 from enrico.submit import call
 from enrico.RunGTlike import run
 
-try:
-    infile = sys.argv[1]
-except:
-    print('FATAL: Config file not found.')
-    sys.exit(1)
-
-config = get_config(infile)
-
-if config['Spectrum']['Submit'] == 'no':
+def sed(config,infile):
+  if config['Submit'] == 'no':
     run(infile)
-else :
+  else :
 
     enricodir = environ.DIRS.get('ENRICO_DIR')
     fermidir = environ.DIRS.get('FERMI_DIR')
@@ -42,3 +34,31 @@ else :
     JobName = GenericName
 
     call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)
+
+import logging
+
+try:
+    infile = sys.argv[1]
+except:
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    sys.exit(1)
+
+print len(sys.argv)
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try : 
+    liste = numpy.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      print "work on the config file ",inf
+      config = get_config(inf)
+      sed(config,inf)
+  except :
+    config = get_config(infile)
+    sed(config,infile)
+else:
+  for inf in sys.argv[1:]:
+    print "work on the config file ",inf
+    config = get_config(inf)
+    sed(config,inf)
+

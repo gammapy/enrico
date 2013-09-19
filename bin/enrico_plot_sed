@@ -1,31 +1,51 @@
 #!/usr/bin/env python
 """Plot a SED"""
-import sys
+import sys,numpy
 from enrico.plotting import PlotSED,PlotUL,Params
 from enrico.config import get_config
 from enrico.utils import ReadResult,_SpecFileName
 
+def plot(config):
+  srcname = config['target']['name']
+  Emin = config['energy']['emin']
+  Emax = config['energy']['emax']
+  filename = _SpecFileName(config)
+  Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
 
-try:
-    infile = sys.argv[1]
-except:
-    print('FATAL: Config file not found.')
-    sys.exit(1)
-
-config = get_config(infile)
-srcname = config['target']['name']
-Emin = config['energy']['emin']
-Emax = config['energy']['emax']
-filename = _SpecFileName(config)
-Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
-
-Result = ReadResult(config)
+  Result = ReadResult(config)
 
 # if the TS > ts limit plot the butterfly, if not draw UL
-if Result["TS"]> config['UpperLimit']['TSlimit'] :
-    PlotSED(infile,Param)
-else :
+  if Result["TS"]> config['UpperLimit']['TSlimit'] :
+    PlotSED(config,Param)
+  else :
     try :
         PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
     except :
         print "Not able to plot an upper limit in a SED diagram. UL computed?"
+
+import logging
+
+try:
+    infile = sys.argv[1]
+except:
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    sys.exit(1)
+
+
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try : 
+    liste = numpy.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      print "work on the config file ",inf
+      config = get_config(inf)
+      plot(config)
+  except :
+    config = get_config(infile)
+    plot(config)
+else:
+  for inf in sys.argv[1:]:
+    print "work on the config file ",inf
+    config = get_config(inf)
+    plot(config)
