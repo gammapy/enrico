@@ -214,7 +214,6 @@ class Observation:
             maketime.run()
 
         evlist_filename = self.eventfile.replace('.fits','.list')
-
         with open(evlist_filename,'w') as evlistfile:
             evlistfile.writelines(eventlist)
 
@@ -233,7 +232,6 @@ class Observation:
         """run gtmktime tool"""
         if self.Configuration['time']['file'] != '':
             self.time_selection()
-
         maketime['scfile']=self.ft2
         maketime['filter']=self.Configuration['analysis']['filter']
         maketime['roicut']='yes'
@@ -245,7 +243,6 @@ class Observation:
         maketime.run()
         os.system("mv "+self.eventfile+".tmp "+self.eventfile)
 
- 
     def DiffResps(self):
         """run gtdiffresp"""
         diffResps['evfile']=self.eventfile

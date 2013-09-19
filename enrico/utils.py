@@ -253,7 +253,6 @@ def time_selection(config,numbin0):
             break
 
     # remove last ||, and enclose in parens
-    selstr=selstr[:-2]
-    selstr='('+selstr+')'
+    selstr='('+selstr[:-2]+')'
     # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
     return selstr, numbin+1, last
