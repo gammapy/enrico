@@ -189,62 +189,20 @@ class Observation:
         filter['clobber'] = self.clobber
         filter.run()
 
-    def _phase_filter(self,norb0):
-        mjd_ref=51910.
-        met_0 = 239557417
-        T0met=(self.Configuration['OrbitalLC']['epoch']-mjd_ref)*86400.
-        P=self.Configuration['OrbitalLC']['P']
-        if T0met>met_0:
-            T0met-=ceil((T0met-met_0)/P)*P
-
-        def sel_string(met1,met2):
-            """ Filter on SC file ranges """
-            return '((START>{0:.0f})&&(STOP<{1:.0f}))'.format(met1,met2)
-        def phase(met):
-            pp=(met-T0met)/P
-            return pp-int(pp)
-        def metp(norb,p):
-            return T0met+(norb+p)*P
-
-        t1=self.Configuration['time']['tmin']
-        t2=self.Configuration['time']['tmax']
-        p1=self.Configuration['OrbitalLC']['phasemin']
-        p2=self.Configuration['OrbitalLC']['phasemax']
-        if p2<p1:
-            # allow selections through phase 0.0 (e.g., from p1=0.8 to p2=0.4)
-            p2+=1.0
-        selstr=''
-        # find orbit numbers covered by range (t1,t2)
-        if norb0==None:
-            norbt1=int(floor((t1-T0met)/P))
-        else:
-            norbt1=norb0
-        norbt2=int(ceil((t2-T0met)/P))
-        last=True
-        for norb in range(norbt1,norbt2+1):
-            selstr+=sel_string(metp(norb,p1),metp(norb,p2))+'||'
-            if len(selstr)>=800:
-                last=False
-                break
-        # remove last || enclose in parens, add &&
-        selstr=selstr[:-2]
-        selstr='('+selstr+')'
-        return selstr,norb,last
-
-    def _phase_MkTime(self):
+    def time_selection(self):
         """
         Filter event list by orbital phase
 
         CFITSIO won't allow filenames (including filter expression) longer than
         ~1100 chars, so for selections that require very long filters (i.e.,
-        more than ~30 periods covered) we have to split the gtmktime calls into
-        chunks of ~20 orbital periods.
+        more than ~30 time spans covered) we split the gtmktime calls into
+        chunks of ~20 time spans.
         """
         eventlist=[]
         last=False
-        norb=None
+        numbin=None
         while not last:
-            selstr,norb,last = self._phase_filter(norb)
+            selstr,numbin,last = utils.time_selection(self.Configuration,numbin)
             maketime['scfile']=self.ft2
             maketime['filter'] = selstr
             maketime['roicut']='no'
@@ -252,16 +210,15 @@ class Observation:
             maketime['tstop'] = self.t2
             maketime['evfile']= self.eventfile
             outfile=(self.eventfile.replace('.fits','') + 
-                    "_p{0}_Norb{1}.fits".format(self.Configuration['OrbitalLC']['phasemin'],norb))
+                    "_NumBin{0}.fits".format(numbin))
             eventlist.append(outfile+'\n')
             maketime['outfile']=outfile
             maketime.run()
 
-        evlist_filename = (self.eventfile.replace('.fits','') +
-                "_p{0}.list".format(self.Configuration['OrbitalLC']['phasemin']))
+        evlist_filename = self.eventfile.replace('.fits','.list')
 
-        with open(evlist_filename,'w') as ff:
-            ff.writelines(eventlist)
+        with open(evlist_filename,'w') as evlistfile:
+            evlistfile.writelines(eventlist)
 
         # Redo first-cut to consolidate into single fits file (gtmktime does not accept lists!)
         filter['infile'] = evlist_filename
@@ -287,8 +244,8 @@ class Observation:
 
     def MkTime(self):
         """run gtmktime tool"""
-        if self.Configuration['OrbitalLC']['phasemin'] > 0.0 or self.Configuration['OrbitalLC']['phasemax'] < 1.0:
-            self._phase_MkTime()
+        if self.Configuration['time']['file'] != '':
+            self.time_selection()
 
         maketime['scfile']=self.ft2
         maketime['filter']=self.Configuration['analysis']['filter']
