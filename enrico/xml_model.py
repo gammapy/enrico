@@ -1,5 +1,5 @@
 """Central place for the XML generation"""
-import os
+import os,sys
 import xml.dom.minidom
 import numpy as np
 import pyfits
@@ -259,7 +259,7 @@ def AddSpatial(doc,ra,dec,extendedName=""):
       addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
       addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
     else : 
-      from environ import *
+      from environ import CATALOG_TEMPLATE_DIR
       from os.path import join
       filename = extendedName+'.fits'
       filename = filename.replace(' ','')
@@ -307,8 +307,12 @@ def GetlistFromFits(config, catalog):
       spectype = np.array(names.size*["PowerLaw"])
       pivot *= 1e3 ## energy in the 1FHL are in GeV
       flux *= 1e3
+    try :
+      extendedName = data.field('Extended_Source_Name')
+    except:
+      logging.warning("Cannot find th extended source list: please check the xml")
+      extendedName = np.array(names.size*[""])
 
-    extendedName = data.field('Extended_Source_Name')
     sigma = data.field('Signif_Avg')
 
     #add the target to the list of sources
@@ -473,3 +477,29 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
                    color + " text={" + str(name) + "}\n")
     fds9.close()
 
+
+def XmlMaker(config):
+  folder = config['out']
+  os.system('mkdir -p ' + folder)
+
+# test if the user provide a catalog or not.
+#if not use the default one
+  if config['environ']['FERMI_CATALOG_DIR'] == '':
+    catalogDir = env.CATALOG_DIR
+    print "use the default location of the catalog"
+  else:
+    catalogDir = config['environ']['FERMI_CATALOG_DIR']
+
+  if config['environ']['FERMI_CATALOG'] == '':
+    catalog = catalogDir + "/" + env.CATALOG
+    print "use the default catalog"
+  else:
+    catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
+
+  print "Use the catalog : ", catalog
+
+  lib, doc = CreateLib()
+  srclist = GetlistFromFits(config, catalog)
+  WriteXml(lib, doc, srclist, config)
+  Xml_to_Reg(folder + "/Roi_model",
+                            srclist, Prog=sys.argv[0])

@@ -54,7 +54,7 @@ class Result:
         # Save all in ascii file
         # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
         save_file = open(par.PlotName + '.dat', 'w')
-        save_file.write("log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
+        save_file.write("# log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
         for i in xrange(par.N):
             save_file.write("%12.4e  %12.4e  %12.4e \n" % (E[i], SED[i], Err[i]))
         save_file.close()
@@ -289,7 +289,7 @@ def PlotDataPoints(config,pars):
 
     print "Save Ebin results in ",pars.PlotName+".Ebin.dat"
     dumpfile = open(pars.PlotName+".Ebin.dat",'w')
-    dumpfile.write("Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
+    dumpfile.write("# Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
 
     for i in xrange(NEbin):#Loop over the energy bins
         E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
@@ -345,9 +345,8 @@ def PlotDataPoints(config,pars):
     return tgpoint, arrows
 
 
-def PlotSED(infile,pars):
+def PlotSED(config,pars):
     """plot a nice SED with a butterfly and points"""
-    config = get_config(infile)
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
     root_style.RootStyle()
 

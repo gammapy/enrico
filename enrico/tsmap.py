@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os,sys
+import os,sys,logging
 import pyfits
 import SummedLikelihood
 import utils
@@ -21,7 +21,7 @@ class TSMap:
     # A TS map can be computed by submiting jobs to a cluster
     # There is two way to compute a TS map : Each job
     # computes the TS in one pixel or in one row
-    def __init__(self,config):
+    def __init__(self,config,infile):
         self.config = config
         self.config['Spectrum']['FitsGeneration'] = 'no'
         self.tsfolder = self.config['out']+"/TSMap"
@@ -30,7 +30,12 @@ class TSMap:
         self.npix = self.config['TSMap']['npix']
         # Read the cmap produced before to get the grid for the TS map
         FitRunner = Observation(self.config['out'], self.config)
-        cmap = pyfits.open(FitRunner.cmapfile)
+        try :
+             cmap = pyfits.open(FitRunner.cmapfile)
+        except :
+             logging.error('Count map not found.')
+             sys.exit(1)
+        
         npix_im = min(cmap[0].header['NAXIS1'],cmap[0].header['NAXIS2'])
         self.npix = min(self.npix,npix_im)
         self.RAref = cmap[0].header['CRVAL1']
@@ -44,7 +49,7 @@ class TSMap:
         fermidir = environ.DIRS.get('FERMI_DIR')
         cmd = enricodir+"/enrico/tsmap.py "+os.getcwd()+"/"+self.infile +" "+ str(ra) +" "+ str(dec) +" "+ str(i) +" "+ str(j) #cmd line to send
 
-        if self.config['TSMap']['Submit'] == 'yes':
+        if self.config['Submit'] == 'yes':
             prefix = self.tsfolder + "/TSMap_" + str(i) +"_"+ str(j)
             scriptname = prefix + "_Script.sh"
             JobLog = prefix + "_Job.log"
@@ -138,7 +143,11 @@ class TSMap:
 
         # Read the cmap produced before to get the grid for the TS map
         FitRunner = Observation(folder, self.config)
-        header = pyfits.getheader(FitRunner.cmapfile)
+        try :
+             header = pyfits.getheader(FitRunner.cmapfile)
+        except :
+             logging.error('Count map not found.')
+             sys.exit(1)
         data = pyfits.getdata(FitRunner.cmapfile)*0.
         npix_im = min(header['NAXIS1'],header['NAXIS2'])
         npix = min(self.config['TSMap']['npix'],npix_im)
@@ -197,7 +206,7 @@ if __name__ == '__main__':
 
     from enrico.config import get_config
     config = get_config(infile)
-    TSmap = TSMap(config)
+    TSmap = TSMap(config,infile)
 
     if len(sys.argv)== 6 :
         if TSmap.config['TSMap']['method'] == 'row' :

@@ -42,9 +42,9 @@ class FitMaker(object):
         #Run the tools common to binned and unbinned chain
         self._log('gtselect', 'Select data from library')#run gtselect
         self.obs.FirstCut()
-        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
+        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtmktime
         self.obs.MkTime()
-        if self.config["analysis"]["ComputeDiffrsp"] == "yes":
+        if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
             self._log('gtdiffrsp', 'Compute Diffuse response')
             self.obs.DiffResps()#run gtbin
         self._log('gtbin', 'Create a count map')

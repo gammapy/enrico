@@ -110,7 +110,7 @@ def RunEbin(folder,Nbin,Fit,FitRunner):
              pathconf = folder + "/Ebin" + str(Nbin) +"/" + conf
              Newconfig = get_config(pathconf)
              cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
-             if Newconfig['Ebin']['Submit'] == 'no' : #run directly
+             if Newconfig['Submit'] == 'no' : #run directly
                  os.system(cmd)
              else : #submit a job to a cluster
                  prefix = Newconfig['out'] + "/Ebin" + str(ind) 

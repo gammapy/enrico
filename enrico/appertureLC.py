@@ -166,3 +166,13 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     CanvFlux.Print(LCoutfolder+'/AppLC.eps')
     CanvFlux.Print(LCoutfolder+'/AppLC.C')
 
+
+if __name__ == '__main__':
+    import sys
+    try:
+        infile = sys.argv[1]
+    except:
+        print('FATAL: Config file not found.')
+        sys.exit(1)
+    AppLC(infile)
+
