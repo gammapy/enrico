@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Enrico'
-copyright = u'2011, Christoph Deil, David Sanchez'
+copyright = u'2011 - 2013, The Enrico Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -179,7 +179,7 @@ htmlhelp_basename = 'Enricodoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'Enrico.tex', u'Enrico Documentation',
-   u'Christoph Deil, David Sanchez', 'manual'),
+   u'The Enrico Developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -212,5 +212,5 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'enrico', u'Enrico Documentation',
-     [u'Christoph Deil, David Sanchez'], 1)
+     [u'The Enrico Developers'], 1)
 ]

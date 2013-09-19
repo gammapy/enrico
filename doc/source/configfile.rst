@@ -1,7 +1,7 @@
 .. _configfile:
 
-Confiuration Files
-==================
+Configuration Files
+===================
 
 
 Generalities

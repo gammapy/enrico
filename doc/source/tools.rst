@@ -1,7 +1,7 @@
 .. _tools:
 
 Description of each tool
-==================
+========================
 
 ScienceTools are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/scitools/references.html>`__
 
