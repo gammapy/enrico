@@ -11,12 +11,11 @@ Welcome
 Hi, I am Enrico, and I will help you run your 
 `Fermi <http://fermi.gsfc.nasa.gov/>`_ data analysis!
 
-Informations, questions, bug report and other :
-
-David Sanchez david.sanchez@lapp.in2p3.fr
-
-Christoph Deil christoph.deil@mpi-hd.mpg.de
-
+* Code: https://github.com/gammapy/enrico
+* Issues: https://github.com/gammapy/enrico/issues
+* Documentation: http://enrico.readthedocs.org/
+* Mailing List: http://groups.google.com/group/gammapy_enrico
+* Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/
 
 Features
 --------
@@ -120,7 +119,7 @@ Table of Contents
    tools
    script
    developer
-
+   team
 
 
 Indices and tables

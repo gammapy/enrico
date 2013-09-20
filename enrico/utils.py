@@ -225,3 +225,34 @@ def ReadResult(config):
             pass
         results[key] = value
     return results
+
+def time_selection_string(config,numbin0):
+    """Convert file with start stop pairs to gtmktime filter string"""
+
+    if numbin0==None:
+        numbin0=0
+
+    # Read MET_TSTART, MET_TSTOP pairs from file
+    bins = np.loadtxt(config['time']['file'])
+
+    mjd_ref = 51910.
+    jd_ref  = mjd_ref + 2400000.5
+
+    if config['time']['type']=='MJD':
+        bins = (bins - mjd_ref)*86400.
+    elif config['time']['type']=='JD':
+        bins = (bins - jd_ref)*86400.
+
+    selstr=''
+    last=True
+    for numbin in range(numbin0,len(bins)):
+        tbin=bins[numbin]
+        selstr+='((START>{0:.0f})&&(STOP<{1:.0f}))||'.format(tbin[0],tbin[1])
+        if len(selstr)>=800:
+            last=False
+            break
+
+    # remove last ||, and enclose in parens
+    selstr='('+selstr[:-2]+')'
+    # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
+    return selstr, numbin+1, last
