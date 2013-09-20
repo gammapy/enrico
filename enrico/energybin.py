@@ -19,7 +19,15 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(utils.fluxScale(Pref))
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(utils.fluxNorm(Pref))
 
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(-5,0)
+    Gamma_min=-5
+    Gamma_max=0
+    # if approximated Gamma is outside of bounds set it to limit
+    if Gamma < Gamma_min:
+        Gamma = Gamma_min
+    elif Gamma > Gamma_max:
+        Gamma = Gamma_max
+
+    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(Gamma_min,Gamma_max)
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
     Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
 
