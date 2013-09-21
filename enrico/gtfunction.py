@@ -1,19 +1,16 @@
-# gtfunction.py written by David Sanchez : david.sanchez@lapp.in2p3.fr
-# Collection of function to run the ST tools.
-#The description of each ST tool is given in the dedicated NASA website
-# The Observation class contains all the variables needed  to run the ST like file path, energy, time etc, ...
-#begun October 2010
-
-from gt_apps import *
-from UnbinnedAnalysis import *
-from BinnedAnalysis import *
+"""
+gtfunction.py written by David Sanchez : david.sanchez@lapp.in2p3.fr
+Collection of function to run the ST tools.
+The description of each ST tool is given in the dedicated NASA website
+The Observation class contains all the variables needed  to run the ST like file path, energy, time etc, ...
+begun October 2010
+"""
+import os
+from math import sqrt, log10
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map
 from GtApp import GtApp
-import ROOT
-import numpy
-import utils
+from enrico import utils
 
-import os,string
-from math import *
 
 class Observation:
     # init function of the Observation class. 

@@ -1,7 +1,7 @@
-from fitmaker import FitMaker
-from gtfunction import Observation
-import SummedLikelihood
 import os
+import SummedLikelihood
+from enrico.fitmaker import FitMaker
+from enrico.gtfunction import Observation
 
 class ModelTester:
     """Class to est several models to check

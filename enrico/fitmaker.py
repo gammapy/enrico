@@ -1,18 +1,18 @@
-# fitmake.py written by David Sanchez : david.sanchez@mpi-hd.mpg.de
-# Collection of functions to run the fit (gtlike)
-# the class Makefit will call the function of the observation class (gtfunction.py) and prepare the fit
-# by computing the fits file.
-# it can distinguish between the binned and unbinnned analysis
-# begun September 2011
-
-import numpy as np
-from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
-from BinnedAnalysis import BinnedAnalysis, BinnedObs
-import utils
-import os
+"""
+fitmake.py written by David Sanchez : david.sanchez@mpi-hd.mpg.de
+Collection of functions to run the fit (gtlike)
+the class Makefit will call the function of the observation class (gtfunction.py) and prepare the fit
+by computing the fits file.
+it can distinguish between the binned and unbinnned analysis
+begun September 2011
+"""
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+import numpy as np
+from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
+from BinnedAnalysis import BinnedAnalysis, BinnedObs
+from enrico import utils
 
 class FitMaker(object):
     """Collection of functions to prepare/run the GTLIKE fit

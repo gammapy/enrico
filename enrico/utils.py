@@ -1,8 +1,8 @@
 """Random collection of usefull functions"""
 import os
-import numpy as np
 from math import log10
-from enrico.constants import mjd_ref,jd_ref,DAY_IN_SECOND
+import numpy as np
+from enrico.constants import mjd_ref, jd_ref, DAY_IN_SECOND
 
 def _log(text, line=True):
     if line:
@@ -179,9 +179,9 @@ def ApproxGamma(Fit, ener,name):
     Gamma = np.zeros(len(ener)-1)
     for ibin in xrange(len(ener)-1):
       #Compute an approximation of an index
-      dnde1 = log10(dNde(ener[ibin],Fit,name))
-      dnde2 = log10(dNde(ener[ibin+1],Fit,name))
-      Gamma[ibin] = (dnde2-dnde1)/(log10(1.*ener[ibin+1])-log10(1.*ener[ibin]))
+      dnde1 = np.log10(dNde(ener[ibin],Fit,name))
+      dnde2 = np.log10(dNde(ener[ibin+1],Fit,name))
+      Gamma[ibin] = (dnde2-dnde1)/(np.log10(1.*ener[ibin+1])-np.log10(1.*ener[ibin]))
 
     return Gamma
 

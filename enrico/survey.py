@@ -4,7 +4,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-from environ import *
 
 class MapMaker(object):
     """Make survey maps using binned Fermi tools"""
