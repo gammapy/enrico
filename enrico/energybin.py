@@ -4,6 +4,7 @@ import numpy as np
 import environ,os
 from submit import call
 from config import get_config
+from enrico.constants import EbinPath
 
 def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     """Change the spectral model of a source called name
@@ -55,7 +56,7 @@ def PrepareEbin(Fit, FitRunner):
     #update the config to allow the fit in energy bins
     config['UpperLimit']['envelope'] = 'no' 
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
-    config['out'] = FitRunner.config['out'] + '/Ebin' + str(NEbin)
+    config['out'] = FitRunner.config['out'] + '/'+EbinPath + str(NEbin)
     config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
     #copy the chose of the user for the enery bin computing
     config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration'] 
@@ -100,6 +101,7 @@ def PrepareEbin(Fit, FitRunner):
         #update the energy bounds
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
+
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
@@ -115,13 +117,13 @@ def RunEbin(folder,Nbin,Fit,FitRunner):
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
         for conf in configfiles:
-             pathconf = folder + "/Ebin" + str(Nbin) +"/" + conf
+             pathconf = folder + "/"+ EbinPath + str(Nbin) +"/" + conf
              Newconfig = get_config(pathconf)
              cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
              if Newconfig['Submit'] == 'no' : #run directly
                  os.system(cmd)
              else : #submit a job to a cluster
-                 prefix = Newconfig['out'] + "/Ebin" + str(ind) 
+                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind) 
                  scriptname = prefix + "_Script.sh"
                  JobLog = prefix + "_Job.log"
                  JobName = (Newconfig['target']['name'] + "_" +

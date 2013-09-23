@@ -10,6 +10,7 @@ from math import sqrt
 from enrico.config import get_config
 from submit import call
 from enrico.RunGTlike import run,GenAnalysisObjects
+from enrico.constants import LightcurvePath
 
 class LightCurve:
     """Class to calculate light curves and variability indexes."""
@@ -20,10 +21,11 @@ class LightCurve:
         #Read the config
         self.srcname = self.config['target']['name'] #src name
         self.Tag = self.config['file']['tag']
-        self.Nbin = self.config['LightCurve']['NLCbin']
         self.tmin = self.config['time']['tmin']
         self.tmax = self.config['time']['tmax']
-        self.dt = (self.tmax - self.tmin) / self.Nbin
+
+        self._MakeTimeBins()
+
         self.submit = self.config['Submit']
         # One point of the LC will be computed as a spectrum plot.
         # enrico_sed will be used
@@ -37,7 +39,7 @@ class LightCurve:
         self.folder = self.config['out']
         #All files will be stored in a subfolder name LightCurve + NLCbin
         #Create a subfolder name LightCurve
-        self.LCfolder =  self.folder+"/LightCurve_"+str(self.config['LightCurve']['NLCbin'])+"bins/"
+        self.LCfolder =  self.folder+"/"+LightcurvePath+"_"+str(self.Nbin)+"bins/"
         os.system("mkdir -p "+self.LCfolder)
         self.config['out'] = self.LCfolder
 
@@ -51,6 +53,38 @@ class LightCurve:
 
         self.configfile = []#All the config file in the disk are stored in a list
 
+    def _MakeTimeBins(self):
+        self.time_array = np.zeros(0)
+        self.Nbin = 0
+        self.gtifile = ""
+        if self.config['time']['file'] != '':
+            print "use ",self.config['time']['file'] 
+            self.gtifile = self.config['time']['file'].split(",")
+            self.Nbin = len(self.gtifile)
+            if self.Nbin==1:
+                times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
+                self.Nbin = times.size/2
+                self.time_array=np.reshape(times,times.size,'F')          
+            else :
+                self.phase = np.arange(0,1.000000001,1./self.Nbin)
+                self.time_array = np.zeros(self.Nbin*2)
+                for i in xrange(self.Nbin):
+                    self.time_array[2*i] = self.tmin
+                    self.time_array[2*i+1] = self.tmax
+        else:
+	    self.Nbin = self.config['LightCurve']['NLCbin']
+            self.time_array = np.zeros(self.Nbin*2)
+#            self.dt = (self.tmax - self.tmin) / self.Nbin
+            t = np.arange(self.tmin,self.tmax+0.000001,(self.tmax - self.tmin) / self.Nbin)
+            for i in xrange(self.Nbin):
+                self.time_array[2*i] = t[i]
+                self.time_array[2*i+1]= t[i+1]
+
+        print "Running LC with ",self.Nbin," bins"
+        for i in xrange(self.Nbin):
+            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
+        print 
+
     def _errorReading(self,message,i):
         print "WARNING : "+message+" : ",self.configfile[i]
         print "Job Number : ",i
@@ -60,12 +94,19 @@ class LightCurve:
         """Simple function to prepare the LC generation : generate and write the config files"""
 
         for i in xrange(self.Nbin):
-            self.config['time']['tmin'] = self.tmin + i * self.dt
-            self.config['time']['tmax'] = self.tmin + (i + 1) * self.dt
+            self.config['time']['tmin'] = self.time_array[2*i]
+            self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
-            filename = (self.config['out'] + "Config_" +
+            filename = (self.config['out'] + "Config_" + str(i) + "_" +
                     str(self.config['time']['tmin']) + "_" +
                     str(self.config['time']['tmax']))#Name of the config file
+
+            if len(self.gtifile)==1:
+                self.config['time']['file']=self.gtifile[0]
+            elif len(self.gtifile)>1:
+                print self.gtifile[i]
+                self.config['time']['file']=self.gtifile[i]
+
             if write == 'yes':
                 self.config.write(open(filename, 'w'))
 
@@ -78,7 +119,7 @@ class LightCurve:
 
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
 
-        for i in xrange(self.config['LightCurve']['NLCbin']):
+        for i in xrange(self.Nbin):
             if self.submit == 'yes':
                 cmd = "enrico_sed "+self.configfile[i]
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"

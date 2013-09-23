@@ -6,6 +6,7 @@ from enrico.config import get_config
 import enrico.environ as environ
 from enrico.submit import call
 import logging
+from enrico.constants import AppLCPath
 
 def run(infile):
   config = get_config(infile)
@@ -17,7 +18,7 @@ def run(infile):
 
     cmd = enricodir+"/enrico/appertureLC.py "+os.getcwd()+"/" + infile
 
-    LCoutfolder =  config['out']+"/AppertureLightCurve"
+    LCoutfolder =  config['out']+"/"+AppLCPath
     os.system("mkdir -p "+LCoutfolder)
     prefix = LCoutfolder +"/"+ config['target']['name'] + "_AppertureLightCurve"
     scriptname = prefix+"_Script.sh"

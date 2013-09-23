@@ -66,14 +66,12 @@ def run(infile):
 
     #plot the SED and model map if possible and asked
     if config['Spectrum']['ResultPlots'] == 'yes' :
-    	os.system("mkdir -p "+config['out'] + '/Spectrum/')
+        from enrico.constants import SpectrumPath
+    	os.system("mkdir -p "+config['out'] + '/'+SpectrumPath+'/')
         if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
             FitRunner.ComputeSED(Fit)
         outXml = utils._dump_xml(config)
-        if config['Spectrum']['SummedLike'] == 'yes': # the possiblity of making the model map is checked inside the function
-            FitRunnerback.ModelMap(outXml)
-            FitRunnerfront.ModelMap(outXml)
-        else:
+        if config['Spectrum']['SummedLike'] != 'yes': # the possiblity of making the model map is checked inside the function
             FitRunner.ModelMap(outXml)
 
     #  Make energy bins by running a *new* analysis

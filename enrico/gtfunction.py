@@ -202,13 +202,8 @@ class Observation:
         numbin = None
         while not last:
             selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            maketime['scfile'] = self.ft2
-            maketime['filter'] = selstr
-            maketime['roicut'] = 'no'
-            maketime['tstart'] = self.t1
-            maketime['tstop']  = self.t2
-            maketime['evfile'] = self.eventfile
             outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
             maketime['outfile'] = outfile
             maketime.run()
@@ -229,19 +224,25 @@ class Observation:
             os.unlink(file.strip()) # strip of endline char
 
     def MkTime(self):
-        """run gtmktime tool"""
+        """compute GTI"""
         if self.Configuration['time']['file'] != '':
             self.time_selection()
-        maketime['scfile']=self.ft2
-        maketime['filter']=self.Configuration['analysis']['filter']
-        maketime['roicut']='yes'
+        selstr = self.Configuration['analysis']['filter']
+        outfile = self.eventfile+".tmp"
+        self._RunMktime(selstr,outfile,'yes')
+        os.system("mv "+self.eventfile+".tmp "+self.eventfile)
+
+    def _RunMktime(self,selstr,outfile,roicut):
+        """run gtmktime tool"""
+        maketime['scfile'] = self.ft2
+        maketime['filter'] = selstr#self.Configuration['analysis']['filter']
+        maketime['roicut'] = roicut
         maketime['tstart'] = self.t1
         maketime['tstop'] = self.t2
         maketime['evfile']= self.eventfile
-        maketime['outfile']=self.eventfile+".tmp"
+        maketime['outfile']=outfile
         maketime['clobber'] = self.clobber
         maketime.run()
-        os.system("mv "+self.eventfile+".tmp "+self.eventfile)
 
     def DiffResps(self):
         """run gtdiffresp"""

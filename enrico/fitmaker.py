@@ -257,6 +257,7 @@ class FitMaker(object):
         This is usefull when the source index is not know or can not be constrain by theoritical argument
         The index range form 1.5 to 2.5"""
         import IntegralUpperLimit
+        import UpperLimits
         self._log('EnvelopeUL', 'Compute upper limit envelope')
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
         Nbp = 20 #Make Nbp computations
@@ -303,7 +304,8 @@ class FitMaker(object):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
+        from enrico.constants import SpectrumPath
+        filename = self.config['out'] + '/'+SpectrumPath+'/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)

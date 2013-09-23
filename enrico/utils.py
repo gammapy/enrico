@@ -2,6 +2,7 @@
 import os
 import numpy as np
 from math import log10
+from enrico.constants import mjd_ref,jd_ref,DAY_IN_SECOND
 
 def _log(text, line=True):
     if line:
@@ -187,7 +188,8 @@ def ApproxGamma(Fit, ener,name):
 
 def _SpecFileName(config):
     """return a generic name for the file related to the spectrum (plot, results...)"""
-    return  config['out'] + '/Spectrum/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
+    from enrico.constants import SpectrumPath
+    return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
 
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
@@ -202,7 +204,8 @@ def _dump_filename(config):
             str(int(config['time']['tmin'])) + '_' +
             str(int(config['time']['tmax'])) + '_' +
             str(int(config['energy']['emin'])) + '_' +
-            str(int(config['energy']['emax'])) + ".results")
+            str(int(config['energy']['emax'])) + "_"+
+                  config['file']['tag'] +  ".results")
 
 
 def DumpResult(Result, config):
@@ -235,13 +238,10 @@ def time_selection_string(config,numbin0):
     # Read MET_TSTART, MET_TSTOP pairs from file
     bins = np.loadtxt(config['time']['file'])
 
-    mjd_ref = 51910.
-    jd_ref  = mjd_ref + 2400000.5
-
     if config['time']['type']=='MJD':
-        bins = (bins - mjd_ref)*86400.
+        bins = (bins - mjd_ref)*DAY_IN_SECOND
     elif config['time']['type']=='JD':
-        bins = (bins - jd_ref)*86400.
+        bins = (bins - jd_ref)*DAY_IN_SECOND
 
     selstr=''
     last=True

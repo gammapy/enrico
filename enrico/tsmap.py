@@ -7,6 +7,7 @@ from submit import call
 import environ
 from RunGTlike import Analysis,GenAnalysisObjects
 from gtfunction import Observation
+from enrico.constants import TSMapPath
 
 class TSMap:
     # This class groups all the needed functions and 
@@ -24,7 +25,7 @@ class TSMap:
     def __init__(self,config,infile):
         self.config = config
         self.config['Spectrum']['FitsGeneration'] = 'no'
-        self.tsfolder = self.config['out']+"/TSMap"
+        self.tsfolder = self.config['out']+"/"+TSMapPath
         self.TSfits = self.config['target']['name']+'_'+self.config['file']['tag']+"_TSMap.fits"
         self.infile = infile
         self.npix = self.config['TSMap']['npix']
@@ -50,7 +51,7 @@ class TSMap:
         cmd = enricodir+"/enrico/tsmap.py "+os.getcwd()+"/"+self.infile +" "+ str(ra) +" "+ str(dec) +" "+ str(i) +" "+ str(j) #cmd line to send
 
         if self.config['Submit'] == 'yes':
-            prefix = self.tsfolder + "/TSMap_" + str(i) +"_"+ str(j)
+            prefix = self.tsfolder + "/"+TSMapPath+"_" + str(i) +"_"+ str(j)
             scriptname = prefix + "_Script.sh"
             JobLog = prefix + "_Job.log"
             JobName = (self.config['target']['name'] + "_TSMap_" + str(i) +"_"+ str(j))
