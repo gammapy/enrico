@@ -1,13 +1,13 @@
 import os
-import ROOT
+import array
 import numpy as np
+import ROOT
 import pyfits
-import root_style
 import pyLikelihood
-from config import get_config
-import utils
-import array as ar
-from enrico.constants import MEV_TO_ERG,ERG_TO_MEV
+from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
+from enrico import root_style
+from enrico.config import get_config
+from enrico import utils
 
 class Params:
     """Collection of Plotting parameters like Energy bounds,
@@ -142,23 +142,23 @@ class Result:
         ghcount.SetYTitle("Counts / bin")
         ghcount.Draw()
 
-        tgrobs = ROOT.TGraphErrors(Nbin, ar.array('f',E), ar.array('f',obs), ar.array('f',err_E), ar.array('f',obs_err))
+        tgrobs = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',obs), array.array('f',err_E), array.array('f',obs_err))
         tgrobs.SetLineColor(2)
         tgrobs.SetMarkerColor(2)
         tgrobs.SetMarkerStyle(20)
         tgrobs.Draw("pz")
 
-        tgrother = ROOT.TGraph(Nbin, ar.array('f',E), ar.array('f',other))
+        tgrother = ROOT.TGraph(Nbin, array.array('f',E), array.array('f',other))
         tgrother.SetLineWidth(2)
         tgrother.SetLineStyle(2)
         tgrother.Draw("L")
 
-        tgr = ROOT.TGraph(Nbin, ar.array('f',E), ar.array('f',src) )
+        tgr = ROOT.TGraph(Nbin, array.array('f',E), array.array('f',src) )
         tgr.SetLineColor(1)
         tgr.SetLineWidth(2)
         tgr.Draw("L")
 
-        tgrsum = ROOT.TGraph(Nbin,  ar.array('f',E),  ar.array('f',total))
+        tgrsum = ROOT.TGraph(Nbin,  array.array('f',E),  array.array('f',total))
         tgrsum.SetLineStyle(3)
         tgrsum.SetLineWidth(2)
         tgrsum.Draw("L")
@@ -191,14 +191,14 @@ class Result:
         ghres.SetXTitle("E (MeV) ")
         ghres.SetYTitle("(counts -model)/model")
         ghres.Draw()
-        tgres = ROOT.TGraphErrors(Nbin, ar.array('f',E), ar.array('f',residual), ar.array('f',err_E), ar.array('f',Dres))
+        tgres = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',residual), array.array('f',err_E), array.array('f',Dres))
         tgres.SetLineColor(2)
         tgres.SetMarkerColor(2)
         tgres.Draw("p*z")
 
         zero = np.zeros(2)
         Ezero = np.array([0, 1e10])
-        tg0 = ROOT.TGraph(2, ar.array('f',Ezero), ar.array('f',zero))
+        tg0 = ROOT.TGraph(2, array.array('f',Ezero), array.array('f',zero))
         tg0.SetLineStyle(2)
         tg0.Draw("L")
 

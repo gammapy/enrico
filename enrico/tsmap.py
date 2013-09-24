@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-import os,sys,logging
+import os
+import sys
+import logging
 import pyfits
-import SummedLikelihood
-import utils
-from submit import call
-import environ
-from RunGTlike import Analysis,GenAnalysisObjects
-from gtfunction import Observation
 from enrico.constants import TSMapPath
+from enrico import utils
+from enrico.submit import call
+from enrico import environ
+from enrico.RunGTlike import GenAnalysisObjects
+from enrico.gtfunction import Observation
+
 
 class TSMap:
     # This class groups all the needed functions and 
@@ -203,7 +205,6 @@ if __name__ == '__main__':
     except:
         print('FATAL: Config file not found.')
         sys.exit(1)
-	
 
     from enrico.config import get_config
     config = get_config(infile)

@@ -6,7 +6,9 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # @todo: use config file for this?
-from environ import *
+from enrico.environ import CATALOG_DIR, CATALOG, DIFFUSE_DIR, DIFFUSE_GAL, DIFFUSE_ISO_SOURCE, DIFFUSE_ISO_CLEAN
+from enrico.environ import DIRS, DOWNLOAD_DIR, CATALOG_TEMPLATE_DIR, TEMPLATE_VERSION, PREPROCESSED_DIR
+from enrico.environ import WEEKLY_DIR, SPACECRAFT
 
 #TODO: Read from default config
 default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'

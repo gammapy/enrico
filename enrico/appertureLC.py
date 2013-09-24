@@ -1,14 +1,11 @@
-#!/usr/bin/env python
 import os
-import utils
-from submit import call
-from config import get_config
-import environ
 import numpy as np
 import ROOT
 import pyfits
-from gtfunction import Observation
-from enrico.constants import met_ref,mdj_ref,DAY_IN_SECOND,AppLCPath
+from enrico.constants import met_ref, mdj_ref, DAY_IN_SECOND, AppLCPath
+from enrico.gtfunction import Observation
+from enrico.config import get_config
+from enrico import environ
 
 def _log(self, task='', description=''):
     print

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Run fit with gtlike and different models to compute the log like and see which model is statistically prefered. works only for normal likelihood (not summed likelihood) and cannot be submitted"""
-import os,numpy,sys
-import enrico.environ as environ
-from enrico.submit import call
-from enrico.testModel import ModelTester
+import sys
 import logging
+import numpy as np
+from enrico.config import get_config
+from enrico.testModel import ModelTester
 
 try:
     infile = sys.argv[1]
@@ -17,7 +17,7 @@ except:
 if len(sys.argv)==2 :
 #read an config file alone. If not working, try to read an ascii file with different conf file
   try : 
-    liste = numpy.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
     for inf in liste:
       print "work on the config file ",inf
       config = get_config(inf)

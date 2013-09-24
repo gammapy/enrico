@@ -1,10 +1,11 @@
-#!/usr/bin/env python
-import utils
+import os
 import numpy as np
-import environ,os
-from submit import call
-from config import get_config
+from enrico import utils
+from enrico import environ
 from enrico.constants import EbinPath
+from enrico.submit import call
+from enrico.config import get_config
+
 
 def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     """Change the spectral model of a source called name
