@@ -257,9 +257,9 @@ def time_selection_string(config,numbin0):
     # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
     return selstr, numbin+1, last
 
-def FoldedLC_gtifiles(config):
+def foldedlc_gtifiles(config):
     Nbin = config['FoldedLC']['NLCbin']
-    lcoutdir = os.path.join(config['out'],FoldedLCPath+"_"+str(config['FoldedLC']['NLCbin'])+"bins")
+    lcoutdir = os.path.join(config['out'],FoldedLCPath+"_"+str(Nbin)+"bins")
     T0 = config['FoldedLC']['epoch']
     P = self.Configuration['FoldedLC']['P']
     t1 = mjd_ref + config['time']['tmin']*DAY_IN_SECOND
