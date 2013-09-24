@@ -15,7 +15,7 @@ import commands
 import time
 import datetime
 import tempfile
-import enrico.environ as environ
+from enrico import environ
 
 def _cmd_to_str(cmd):
     """ Convert entries to strings and join with spaces """

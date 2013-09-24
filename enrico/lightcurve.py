@@ -1,16 +1,15 @@
 import os
-from os.path import join
+from math import sqrt
 import numpy as np
 import ROOT
-import utils
-import root_style
-import plotting
-import environ
-from math import sqrt
+from enrico import utils
+from enrico import root_style
+from enrico import plotting
+from enrico import environ
 from enrico.config import get_config
-from submit import call
-from enrico.RunGTlike import run,GenAnalysisObjects
 from enrico.constants import LightcurvePath
+from enrico.submit import call
+from enrico.RunGTlike import run, GenAnalysisObjects
 
 class LightCurve:
     """Class to calculate light curves and variability indexes."""
@@ -248,7 +247,7 @@ class LightCurve:
         """check if the errors are well computed using the Npred/sqrt(Npred) vs Flux/FluxErr relation
            and print corresponding point which failled"""
         _,TgrNpred = plotting.PlotNpred(Npred[detected_indices],Flux[detected_indices],FluxErr[detected_indices])
-        func = ROOT.TF1("func","pol1",np.min(np.sqrt(Npred)),np.max(np.sqrt(Npred)))
+        func = ROOT.TF1("func","pol1",np.min(sqrt(Npred)),np.max(sqrt(Npred)))
         TgrNpred.Fit(func,"Q")
         for i in xrange(len(Flux)):
             if Flux[i]/FluxErr[i]>2*func.Eval(sqrt(Npred[i])):

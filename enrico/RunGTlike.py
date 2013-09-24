@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 import os
-import utils
-import energybin
-from submit import call
-from config import get_config
-from gtfunction import Observation
-from fitmaker import FitMaker
-import environ
+from enrico import utils
+from enrico import energybin
+from enrico.config import get_config
+from enrico.gtfunction import Observation
+from enrico.fitmaker import FitMaker
 
 
 def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):

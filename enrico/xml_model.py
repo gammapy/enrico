@@ -1,16 +1,15 @@
 """Central place for the XML generation"""
-import os,sys
-import xml.dom.minidom
-import numpy as np
-import pyfits
-import utils
-
-import enrico.environ as env
-from enrico.config import get_config
-
+import os
+import sys
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+import xml.dom.minidom
+import numpy as np
+import pyfits
+from enrico import utils
+import enrico.environ as env
+
 
 def addParameter(el, name, free, value, scale, min, max):
     """Add a parameter to a source"""
