@@ -246,7 +246,7 @@ def PlotNpred(Npred, Flux, FluxErr):
     tgraph.SetMarkerStyle(5)
     return gh, tgraph
 
-def PlotLC(Time, TimeErr, Flux, FluxErr):
+def PlotLC(Time, TimeErr, Flux, FluxErr,folded=False):
     """Scatter plot Flux(Time)"""
     ArrowSize = (max(Flux) + max(FluxErr) * 1.3 -
                  (min(Flux) - max(FluxErr) * 1.3)) * 0.1
@@ -255,13 +255,26 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
         if FluxErr[i] == 0:
             arrows.append(ROOT.TArrow(Time[i], Flux[i], Time[i],
                                      Flux[i] - ArrowSize, 0.015, "|>"))
-    xmin = min(Time) - max(TimeErr) * 10
-    xmax = max(Time) + max(TimeErr) * 10
-    ymin = min(Flux) - max(FluxErr) * 1.3
-    ymax = max(Flux) + max(FluxErr) * 1.3
+    if folded:
+        xmin = 0.0
+        xmax = 1.0
+    else:
+        xmin = min(Time) - max(TimeErr) * 10
+        xmax = max(Time) + max(TimeErr) * 10
+
+    if max(FluxErr) == 0.0:
+        # LCs with ULs in *all* bins
+        ymin = min(Flux)*0.8
+        ymax = max(Flux)*1.2
+    else:
+        ymin = min(Flux) - max(FluxErr) * 1.3
+        ymax = max(Flux) + max(FluxErr) * 1.3
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
-    gh.SetXTitle("Time ")
+    if folded:
+        gh.setXTitle("Orbital Phase")
+    else:
+        gh.SetXTitle("Time")
     gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
     tgraph = ROOT.TGraphErrors(len(Time), Time, Flux, TimeErr, FluxErr)
     tgraph.SetMarkerColor(1)
