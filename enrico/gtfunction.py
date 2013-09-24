@@ -7,7 +7,7 @@ begun October 2010
 """
 import os
 from math import sqrt, log10
-from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
 from GtApp import GtApp
 from enrico import utils
 

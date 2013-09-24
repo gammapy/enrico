@@ -247,7 +247,7 @@ class LightCurve:
         """check if the errors are well computed using the Npred/sqrt(Npred) vs Flux/FluxErr relation
            and print corresponding point which failled"""
         _,TgrNpred = plotting.PlotNpred(Npred[detected_indices],Flux[detected_indices],FluxErr[detected_indices])
-        func = ROOT.TF1("func","pol1",np.min(sqrt(Npred)),np.max(sqrt(Npred)))
+        func = ROOT.TF1("func","pol1",np.min(np.sqrt(Npred)),np.max(np.sqrt(Npred)))
         TgrNpred.Fit(func,"Q")
         for i in xrange(len(Flux)):
             if Flux[i]/FluxErr[i]>2*func.Eval(sqrt(Npred[i])):

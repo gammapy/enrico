@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import numpy as np
 import ROOT
@@ -6,15 +7,6 @@ from enrico.constants import met_ref, mdj_ref, DAY_IN_SECOND, AppLCPath
 from enrico.gtfunction import Observation
 from enrico.config import get_config
 from enrico import environ
-
-def _log(self, task='', description=''):
-    print
-    print('# ' + '*' * 60)
-    if task:
-        task = '%10s --- ' % task
-    print('# *** %s%s' %
-        ( task, description))
-    print '# ' + '*' * 60
 
 def AppLC(infile):
     '''Main function of the apperture photometrie Lightcurve script. Read the config file and run the analysis'''
@@ -160,6 +152,15 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
    #Save the canvas in the Apperture LightCurve subfolder
     CanvFlux.Print(LCoutfolder+'/AppLC.eps')
     CanvFlux.Print(LCoutfolder+'/AppLC.C')
+
+def _log(task='', description=''):
+    print
+    print('# ' + '*' * 60)
+    if task:
+        task = '%10s --- ' % task
+    print('# *** %s%s' %
+        ( task, description))
+    print '# ' + '*' * 60
 
 
 if __name__ == '__main__':
