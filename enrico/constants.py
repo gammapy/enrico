@@ -12,5 +12,6 @@ DAY_IN_SECOND = 86400
 SpectrumPath = "Spectrum"
 EbinPath = "Ebin"
 LightcurvePath = "LightCurve"
+FoldedLCPath = "FoldedLC"
 TSMapPath = "TSMap"
 AppLCPath = "AppertureLightCurve"

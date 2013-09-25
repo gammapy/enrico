@@ -7,7 +7,7 @@ from enrico import root_style
 from enrico import plotting
 from enrico import environ
 from enrico.config import get_config
-from enrico.constants import LightcurvePath
+from enrico.constants import LightcurvePath, FoldedLCPath
 from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
 
@@ -38,7 +38,10 @@ class LightCurve:
         self.folder = self.config['out']
         #All files will be stored in a subfolder name LightCurve + NLCbin
         #Create a subfolder name LightCurve
-        self.LCfolder =  self.folder+"/"+LightcurvePath+"_"+str(self.Nbin)+"bins/"
+        if self.folded:
+            self.LCfolder =  self.folder+"/"+FoldedLCPath+"_"+str(self.Nbin)+"bins/"
+        else:
+            self.LCfolder =  self.folder+"/"+LightcurvePath+"_"+str(self.Nbin)+"bins/"
         os.system("mkdir -p "+self.LCfolder)
         self.config['out'] = self.LCfolder
 
@@ -56,6 +59,7 @@ class LightCurve:
         self.time_array = np.zeros(0)
         self.Nbin = 0
         self.gtifile = ""
+        self.folded = False
         if self.config['time']['file'] != '':
             print "use ",self.config['time']['file'] 
             self.gtifile = self.config['time']['file'].split(",")
@@ -65,24 +69,31 @@ class LightCurve:
                 self.Nbin = times.size/2
                 self.time_array=np.reshape(times,times.size,'F')          
             else :
-                self.phase = np.arange(0,1.000000001,1./self.Nbin)
+                self.folded = True
+                self.phase = np.linspace(0,1.,self.Nbin+1)
                 self.time_array = np.zeros(self.Nbin*2)
                 for i in xrange(self.Nbin):
                     self.time_array[2*i] = self.tmin
                     self.time_array[2*i+1] = self.tmax
         else:
-	    self.Nbin = self.config['LightCurve']['NLCbin']
+            self.Nbin = self.config['LightCurve']['NLCbin']
             self.time_array = np.zeros(self.Nbin*2)
 #            self.dt = (self.tmax - self.tmin) / self.Nbin
-            t = np.arange(self.tmin,self.tmax+0.000001,(self.tmax - self.tmin) / self.Nbin)
+            t = np.linspace(self.tmin,self.tmax,self.Nbin+1)
             for i in xrange(self.Nbin):
                 self.time_array[2*i] = t[i]
                 self.time_array[2*i+1]= t[i+1]
 
-        print "Running LC with ",self.Nbin," bins"
-        for i in xrange(self.Nbin):
-            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
-        print 
+        if self.folded:
+            print "Running Folded LC with ",self.Nbin," bins"
+            for i in xrange(self.Nbin):
+                print "Bin ",i," Phase Start= {0:.3f} Phase Stop= {1:.3f}".format(self.phase[i],self.phase[i+1])
+            print
+        else:
+            print "Running LC with ",self.Nbin," bins"
+            for i in xrange(self.Nbin):
+                print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
+            print
 
     def _errorReading(self,message,i):
         print "WARNING : "+message+" : ",self.configfile[i]
@@ -103,7 +114,7 @@ class LightCurve:
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
             elif len(self.gtifile)>1:
-                print self.gtifile[i]
+                print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
                 self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
@@ -161,8 +172,12 @@ class LightCurve:
                 continue
 
             #Update the time and time error array
-            Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
-            TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
+            if self.folded:
+                Time.append((self.phase[i]+self.phase[i+1])/2.)
+                TimeErr.append((self.phase[i+1]-self.phase[i])/2.)
+            else:
+                Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
+                TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
             if ResultDic.has_key('Ulvalue') :
                 Flux.append(ResultDic.get("Ulvalue"))
@@ -189,12 +204,12 @@ class LightCurve:
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
-        fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
 
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
+            fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
             gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
@@ -218,7 +233,7 @@ class LightCurve:
 
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
-        gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+        gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr,folded=self.folded)
         CanvLC = ROOT.TCanvas()
         gTHLC.Draw()
         TgrLC.Draw('zP')

@@ -2,7 +2,7 @@
 import os
 from math import log10
 import numpy as np
-from enrico.constants import mjd_ref, jd_ref, DAY_IN_SECOND
+from enrico.constants import mjd_ref, jd_ref, DAY_IN_SECOND, FoldedLCPath
 
 def _log(text, line=True):
     if line:
@@ -256,3 +256,43 @@ def time_selection_string(config,numbin0):
     selstr='('+selstr[:-2]+')'
     # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
     return selstr, numbin+1, last
+
+def foldedlc_gtifiles(config):
+    Nbin = config['FoldedLC']['NLCbin']
+    lcoutdir = os.path.join(config['out'],FoldedLCPath+"_"+str(Nbin)+"bins")
+    if not os.path.exists(lcoutdir):
+        os.mkdir(lcoutdir)
+    T0 = config['FoldedLC']['epoch']
+    P = config['FoldedLC']['P']
+    t1 = mjd_ref + config['time']['tmin']/DAY_IN_SECOND
+    t2 = mjd_ref + config['time']['tmax']/DAY_IN_SECOND
+    if t1 < T0:
+        T0 -= np.ceil((T0-t1)/P)*P
+    # find orbit numbers covered by range (t1,t2)
+    norbt1 = int(np.floor((t1-T0)/P))
+    norbt2 = int(np.ceil((t2-T0)/P))
+
+    def phase(mjd):
+        pp=(mjd-T0)/P
+        return pp-int(pp)
+    def mjd(norb,p):
+        return T0+(norb+p)*P
+
+
+    def intervals(p1,p2):
+        ints=[]
+        for norb in range(norbt1,norbt2+1):
+            ints.append((mjd(norb,p1),mjd(norb,p2)))
+        return np.array(ints)
+
+    phase = np.linspace(0,1,Nbin+1)
+
+    gtifiles=[]
+    for i in range(Nbin):
+        gtifn = os.path.join(lcoutdir,"TimeSelection_{0:02.0f}.dat".format(i))
+        tsel=intervals(phase[i],phase[i+1])
+        np.savetxt(gtifn,tsel)
+        gtifiles.append(gtifn)
+
+    return ','.join(gtifiles)
+
