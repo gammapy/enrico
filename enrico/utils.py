@@ -260,10 +260,12 @@ def time_selection_string(config,numbin0):
 def foldedlc_gtifiles(config):
     Nbin = config['FoldedLC']['NLCbin']
     lcoutdir = os.path.join(config['out'],FoldedLCPath+"_"+str(Nbin)+"bins")
+    if not os.path.exists(lcoutdir):
+        os.mkdir(lcoutdir)
     T0 = config['FoldedLC']['epoch']
-    P = self.Configuration['FoldedLC']['P']
-    t1 = mjd_ref + config['time']['tmin']*DAY_IN_SECOND
-    t2 = mjd_ref + config['time']['tmax']*DAY_IN_SECOND
+    P = config['FoldedLC']['P']
+    t1 = mjd_ref + config['time']['tmin']/DAY_IN_SECOND
+    t2 = mjd_ref + config['time']['tmax']/DAY_IN_SECOND
     if t1 < T0:
         T0 -= np.ceil((T0-t1)/P)*P
     # find orbit numbers covered by range (t1,t2)
@@ -289,7 +291,7 @@ def foldedlc_gtifiles(config):
     for i in range(Nbin):
         gtifn = os.path.join(lcoutdir,"TimeSelection_{0:02.0f}.dat".format(i))
         tsel=intervals(phase[i],phase[i+1])
-        np.savetxt(gtifn,tsel,header="Time selection for orbital phase interval {0:.3f}-{1:.3f}".format(phase[i],phase[i+1]))
+        np.savetxt(gtifn,tsel)
         gtifiles.append(gtifn)
 
     return ','.join(gtifiles)

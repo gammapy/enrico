@@ -76,7 +76,7 @@ class LightCurve:
                     self.time_array[2*i] = self.tmin
                     self.time_array[2*i+1] = self.tmax
         else:
-	        self.Nbin = self.config['LightCurve']['NLCbin']
+            self.Nbin = self.config['LightCurve']['NLCbin']
             self.time_array = np.zeros(self.Nbin*2)
 #            self.dt = (self.tmax - self.tmin) / self.Nbin
             t = np.linspace(self.tmin,self.tmax,self.Nbin+1)
@@ -84,10 +84,16 @@ class LightCurve:
                 self.time_array[2*i] = t[i]
                 self.time_array[2*i+1]= t[i+1]
 
-        print "Running LC with ",self.Nbin," bins"
-        for i in xrange(self.Nbin):
-            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
-        print
+        if self.folded:
+            print "Running Folded LC with ",self.Nbin," bins"
+            for i in xrange(self.Nbin):
+                print "Bin ",i," Phase Start= {0:.3f} Phase Stop= {1:.3f}".format(self.phase[i],self.phase[i+1])
+            print
+        else:
+            print "Running LC with ",self.Nbin," bins"
+            for i in xrange(self.Nbin):
+                print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
+            print
 
     def _errorReading(self,message,i):
         print "WARNING : "+message+" : ",self.configfile[i]
@@ -108,7 +114,7 @@ class LightCurve:
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
             elif len(self.gtifile)>1:
-                print self.gtifile[i]
+                print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
                 self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
