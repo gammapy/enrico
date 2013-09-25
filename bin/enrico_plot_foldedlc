@@ -3,6 +3,7 @@
 import sys
 import enrico.lightcurve  as lc
 from enrico.config import get_config
+from enrico.utils import foldedlc_gtifiles
 
 try:
     infile = sys.argv[1]
@@ -11,5 +12,8 @@ except:
     sys.exit(1)
 
 config = get_config(infile)
+gtifiles = foldedlc_gtifiles(config)
+config['time']['file'] = gtifiles
+config['time']['type'] = 'MJD'
 FoldedLC = lc.LightCurve(config)
 FoldedLC.PlotLC()

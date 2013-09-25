@@ -174,7 +174,7 @@ class LightCurve:
             #Update the time and time error array
             if self.folded:
                 Time.append((self.phase[i]+self.phase[i+1])/2.)
-                TimeErr.append((self.phase[i]-self.phase[i+1])/2.)
+                TimeErr.append((self.phase[i+1]-self.phase[i])/2.)
             else:
                 Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
                 TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
@@ -204,12 +204,12 @@ class LightCurve:
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
-        fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
 
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
+            fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
             gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()

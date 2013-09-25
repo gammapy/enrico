@@ -264,7 +264,7 @@ def PlotLC(Time, TimeErr, Flux, FluxErr,folded=False):
 
     if max(FluxErr) == 0.0:
         # LCs with ULs in *all* bins
-        ymin = min(Flux)*0.8
+        ymin = 0.
         ymax = max(Flux)*1.2
     else:
         ymin = min(Flux) - max(FluxErr) * 1.3
@@ -272,7 +272,7 @@ def PlotLC(Time, TimeErr, Flux, FluxErr,folded=False):
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     if folded:
-        gh.setXTitle("Orbital Phase")
+        gh.SetXTitle("Orbital Phase")
     else:
         gh.SetXTitle("Time")
     gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
