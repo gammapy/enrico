@@ -55,6 +55,10 @@ class LightCurve:
             times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
             self.Nbin = times.size/2
             self.time_array=np.reshape(times,times.size,'F')
+            if self.config['time']['type']=='MJD':
+                 self.time_array = utils.MJD_to_met(self.time_array)
+            elif config['time']['type']=='JD':
+                 self.time_array = utils.JD_to_met(self.time_array)
         else:
             self.Nbin = self.config['LightCurve']['NLCbin']
             self.time_array = np.zeros(self.Nbin*2)
