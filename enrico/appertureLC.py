@@ -3,7 +3,7 @@ import os
 import numpy as np
 import ROOT
 import pyfits
-from enrico.constants import met_ref, mdj_ref, DAY_IN_SECOND, AppLCPath
+from enrico.constants import  DAY_IN_SECOND, AppLCPath #met_ref, mdj_ref,
 from enrico.gtfunction import Observation
 from enrico.config import get_config
 from enrico import environ
@@ -80,7 +80,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
 
     spfile=pyfits.open(FITSfile)
 
-    Time = mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/DAY_IN_SECOND
+    Time =  utils.met_to_MJD(spfile[1].data.field(0)[:-1])#mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/DAY_IN_SECOND
     dTime = (spfile[1].data.field(1)[:-1])/DAY_IN_SECOND
     Counts = (spfile[1].data.field(2)[:-1])
     Exposure = (spfile[1].data.field(4)[:-1])

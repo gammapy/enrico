@@ -7,7 +7,7 @@ from enrico import root_style
 from enrico import plotting
 from enrico import environ
 from enrico.config import get_config
-from enrico.constants import LightcurvePath
+from enrico.constants import LightcurvePath,FoldedLCPath
 from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
 
@@ -23,8 +23,6 @@ class LightCurve:
         self.tmin = self.config['time']['tmin']
         self.tmax = self.config['time']['tmax']
 
-        self._MakeTimeBins()
-
         self.submit = self.config['Submit']
         # One point of the LC will be computed as a spectrum plot.
         # enrico_sed will be used
@@ -36,11 +34,6 @@ class LightCurve:
         self.config['UpperLimit']['TSlimit'] = self.config['LightCurve']['TSLightCurve']
 
         self.folder = self.config['out']
-        #All files will be stored in a subfolder name LightCurve + NLCbin
-        #Create a subfolder name LightCurve
-        self.LCfolder =  self.folder+"/"+LightcurvePath+"_"+str(self.Nbin)+"bins/"
-        os.system("mkdir -p "+self.LCfolder)
-        self.config['out'] = self.LCfolder
 
         #No plot, no bin in energy, Normal UL
         self.config['Spectrum']['ResultPlots'] = 'no'
@@ -48,30 +41,22 @@ class LightCurve:
         self.config['UpperLimit']['envelope'] = 'no'
         #No submition. Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
-        self.config['verbose'] ='no' #Be quiet
+#        self.config['verbose'] ='no' #Be quiet
 
         self.configfile = []#All the config file in the disk are stored in a list
 
     def _MakeTimeBins(self):
         self.time_array = np.zeros(0)
         self.Nbin = 0
-        self.gtifile = ""
+        self.gtifile = []
         if self.config['time']['file'] != '':
             print "use ",self.config['time']['file'] 
-            self.gtifile = self.config['time']['file'].split(",")
-            self.Nbin = len(self.gtifile)
-            if self.Nbin==1:
-                times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
-                self.Nbin = times.size/2
-                self.time_array=np.reshape(times,times.size,'F')          
-            else :
-                self.phase = np.arange(0,1.000000001,1./self.Nbin)
-                self.time_array = np.zeros(self.Nbin*2)
-                for i in xrange(self.Nbin):
-                    self.time_array[2*i] = self.tmin
-                    self.time_array[2*i+1] = self.tmax
+            self.gtifile.append(self.config['time']['file'])
+            times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
+            self.Nbin = times.size/2
+            self.time_array=np.reshape(times,times.size,'F')
         else:
-	    self.Nbin = self.config['LightCurve']['NLCbin']
+            self.Nbin = self.config['LightCurve']['NLCbin']
             self.time_array = np.zeros(self.Nbin*2)
 #            self.dt = (self.tmax - self.tmin) / self.Nbin
             t = np.arange(self.tmin,self.tmax+0.000001,(self.tmax - self.tmin) / self.Nbin)
@@ -89,6 +74,15 @@ class LightCurve:
         print "Job Number : ",i
         print "Please have a look at this job log file"
 
+
+    def _ManageFolder(self,path):
+        """   All files will be stored in a subfolder name path + NLCbin
+        Create a subfolder"""
+        self.LCfolder =  self.folder+"/"+path+"_"+str(self.Nbin)+"bins/"
+        os.system("mkdir -p "+self.LCfolder)
+        self.config['out'] = self.LCfolder
+
+
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
 
@@ -103,7 +97,7 @@ class LightCurve:
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
             elif len(self.gtifile)>1:
-                print self.gtifile[i]
+                print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
                 self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
@@ -111,7 +105,8 @@ class LightCurve:
 
             self.configfile.append(filename)
 
-    def MakeLC(self) :
+
+    def _MakeLC(self,Path=LightcurvePath) :
         '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
@@ -131,8 +126,71 @@ class LightCurve:
             else :
                 run(self.configfile[i])#run in command line
 
+
+    def _MakePhasebin(self):
+        """document me """
+        self.time_array = np.zeros(self.Nbin*2)
+        self.config['time']['type'] = 'MJD'
+        T0 = self.config['FoldedLC']['epoch']
+        Period = self.config['FoldedLC']['Period']
+        t1 = utils.met_to_MJD(self.config['time']['tmin'])
+        t2 = utils.met_to_MJD(self.config['time']['tmax'])
+
+        if T0==0:
+            T0=t1
+        elif t1 < T0:
+           T0 -= np.ceil((T0-t1)/Period)*Period
+           # find orbit numbers covered by range (t1,t2)
+        norbt1 = int(np.floor((t1-T0)/Period))
+        norbt2 = int(np.ceil((t2-T0)/Period))
+
+        phase = np.linspace(0,1,self.Nbin+1)
+
+        self.gtifile=[] #reset gtifiles
+        for i in range(self.Nbin):
+            self.time_array[2*i] = self.config['time']['tmin']
+            self.time_array[2*i+1] = self.config['time']['tmax']
+            gtifn = os.path.join(self.LCfolder,"TimeSelection_{0:02.0f}.dat".format(i))
+            ints=[]
+
+            for norb in range(norbt1,norbt2+1):
+                ints.append(((T0+(norb+phase[i])*Period),(T0+(norb+phase[i+1])*Period)))
+            tsel = np.array(ints)
+            np.savetxt(gtifn,tsel)
+            self.gtifile.append(gtifn)
+
+
+    def MakeLC(self) :
+        """Run a std lc """
+        self._MakeTimeBins()
+        self._ManageFolder(LightcurvePath)
+        self._MakeLC()
+
+    def MakeFoldedLC(self):
+        """run a folded lc """
+        self.Nbin = self.config['FoldedLC']['NLCbin']
+        self._ManageFolder(FoldedLCPath)
+        self._MakePhasebin()
+        self._MakeLC()
+
+
     def PlotLC(self):
         '''Plot a lightcurve which have been generated previously'''
+        self._MakeTimeBins()
+        self._ManageFolder(LightcurvePath)
+        self.PrepareLC()#Get the config file
+        self._PlotLC()
+
+    def PlotFoldedLC(self):
+        '''Plot a lightcurve which have been generated previously'''
+        self.Nbin = self.config['FoldedLC']['NLCbin']
+        self._ManageFolder(FoldedLCPath)
+        self._MakePhasebin()
+        self.PrepareLC()#Get the config file
+        self._PlotLC(True)
+
+
+    def _PlotLC(self,folded=False):
         root_style.RootStyle()#Nice plot style
 
         print "Reading files produced by enrico"
@@ -148,8 +206,6 @@ class LightCurve:
         Npred = []
         Npred_detected_indices = []
         TS = []
-
-        self.PrepareLC()#Get the config file
 
         for i in xrange(self.Nbin):
             CurConfig = get_config(self.configfile[i])
@@ -216,9 +272,16 @@ class LightCurve:
             CanvTS.Print(LcOutPath+'_TS.eps')
             CanvTS.Print(LcOutPath+'_TS.C')
 
+
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
-        gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+        if folded:
+            phase = np.linspace(0,1,self.Nbin+1)
+            Time = (phase[1:]+phase[:-1])/2.
+            TimeErr = (phase[1:]-phase[:-1])/2.
+            gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
+        else :
+            gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
         CanvLC = ROOT.TCanvas()
         gTHLC.Draw()
         TgrLC.Draw('zP')

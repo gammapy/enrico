@@ -2,7 +2,7 @@
 import os
 from math import log10
 import numpy as np
-from enrico.constants import mjd_ref, jd_ref, DAY_IN_SECOND
+from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
 def _log(text, line=True):
     if line:
@@ -239,9 +239,9 @@ def time_selection_string(config,numbin0):
     bins = np.loadtxt(config['time']['file'])
 
     if config['time']['type']=='MJD':
-        bins = (bins - mjd_ref)*DAY_IN_SECOND
+        bins = MJD_to_met(bins)
     elif config['time']['type']=='JD':
-        bins = (bins - jd_ref)*DAY_IN_SECOND
+        bins = JD_to_met(bins)
 
     selstr=''
     last=True
@@ -256,3 +256,12 @@ def time_selection_string(config,numbin0):
     selstr='('+selstr[:-2]+')'
     # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
     return selstr, numbin+1, last
+
+def met_to_MJD(met):
+  return mjd_ref + (met-met_ref)/DAY_IN_SECOND
+
+def MJD_to_met(mjd):
+  return met_ref + (mjd-mjd_ref)*DAY_IN_SECOND
+
+def JD_to_met(jd):
+  return MJD_to_met(mjd)+2400000.5

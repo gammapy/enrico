@@ -261,13 +261,25 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
     ymax = max(Flux) + max(FluxErr) * 1.3
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
-    gh.SetXTitle("Time ")
+    gh.SetXTitle("Time")
     gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
     tgraph = ROOT.TGraphErrors(len(Time), Time, Flux, TimeErr, FluxErr)
     tgraph.SetMarkerColor(1)
     tgraph.SetMarkerStyle(20)
     return gh, tgraph, arrows
 
+def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
+    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr)
+
+    xmin = 0
+    xmax = 1
+    ymin = min(Flux) - max(FluxErr) * 1.3
+    ymax = max(Flux) + max(FluxErr) * 1.3
+    gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
+    gh.SetStats(000)
+    gh.SetXTitle("Orbital Phase")
+    gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
+    return gh, tgraph, arrows
 
 def PlotDataPoints(config,pars):
     """Collect the data points/UL and generate a TGraph for the points
