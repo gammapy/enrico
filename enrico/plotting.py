@@ -273,8 +273,12 @@ def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
 
     xmin = 0
     xmax = 1
-    ymin = min(Flux) - max(FluxErr) * 1.3
-    ymax = max(Flux) + max(FluxErr) * 1.3
+    if max(FluxErr)==0:
+        ymin = 0.
+        ymax = max(Flux)*1.3
+    else:
+        ymin = np.min(min(Flux) - max(FluxErr) * 1.3, 0.)
+        ymax = (max(Flux) + max(FluxErr)) * 1.3
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     gh.SetXTitle("Orbital Phase")

@@ -249,12 +249,11 @@ class LightCurve:
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
-        fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
-
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
+            fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
             gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
