@@ -3,4 +3,7 @@
 /dist
 *.pyc
 *~
+.project
+.settings
+.pydevproject
 /Data
