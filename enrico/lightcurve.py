@@ -57,7 +57,7 @@ class LightCurve:
             self.time_array=np.reshape(times,times.size,'F')
             if self.config['time']['type']=='MJD':
                  self.time_array = utils.MJD_to_met(self.time_array)
-            elif config['time']['type']=='JD':
+            elif self.config['time']['type']=='JD':
                  self.time_array = utils.JD_to_met(self.time_array)
         else:
             self.Nbin = self.config['LightCurve']['NLCbin']

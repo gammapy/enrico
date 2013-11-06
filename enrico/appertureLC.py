@@ -7,7 +7,7 @@ from enrico.constants import  DAY_IN_SECOND, AppLCPath #met_ref, mdj_ref,
 from enrico.gtfunction import Observation
 from enrico.config import get_config
 from enrico import environ
-
+from enrico import utils
 def AppLC(infile):
     '''Main function of the apperture photometrie Lightcurve script. Read the config file and run the analysis'''
     ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode

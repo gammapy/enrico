@@ -38,11 +38,10 @@ DIRS = OrderedDict(FERMI_DATA_DIR=FERMI_DATA_DIR,
 CATALOG_VERSION = '08'
 TEMPLATE_VERSION = '07'
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
-DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
-DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
-DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
+DIFFUSE_GAL = 'gll_iem_v05.fits'
+DIFFUSE_ISO_SOURCE = 'iso_source_v05.txt'
+DIFFUSE_ISO_CLEAN = 'iso_clean_v05.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
-
 
 def check_command_line_tools():
     """Check command line tool availability"""
