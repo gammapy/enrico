@@ -19,6 +19,8 @@ enrico_testmodel : compute the log(likelihood) of the models `POWERLAW`, `LogPar
 
 enrico_lc: produce a light-curve by running gtlike in different time bins
 
+enrico_foldedlc: produce a folded light-curve by running gtlike in different time bins. see the specific section in the config file
+
 enrico_applc: produce a light-curve using the aperture photometry technique (see `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/scitools/aperture_photometry.html>`__)
 
 enrico_tsmap : produce a TS map with or without the source of interest.
@@ -28,5 +30,7 @@ enrico_plot_sed: plot the SED resulting from enrico_sed
 enrico_plot_lc: plot the LC resulting from enrico_lc
 
 enrico_plot_tsmap: plot the TS Map resulting from enrico_tsmap
+
+enrico_scan: make a profile likelihood for each free parameter of the target
 
 enrico_help: print help
