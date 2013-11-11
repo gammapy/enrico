@@ -1,7 +1,7 @@
 .. _configfile:
 
-Confiuration Files
-==================
+Configuration Files
+===================
 
 
 Generalities
@@ -12,12 +12,14 @@ The config file is there to defined the parameters of your analysis. A config fi
 
 This page will go through all the section, one by one. As for the :ref:`tutorial`, we will asume that the working directory is  `~/myanalysis`.
 
-The `out` option gives the main folder where enrico will put the produced files and the results. The `verbose` option (default is 'yes') allow enrico to print information on the main output like TS, fluxes, predicted numbers of gammas, etc... Such values need computation time which can be saved by turning the option to 'no'
+The `out` option gives the main folder where enrico will put the produced files and the results. The `verbose` option (default is 'yes') allow enrico to print information on the main output like TS, fluxes, predicted numbers of gammas, etc... Such values need computation time which can be saved by turning the option to 'no'. The `Submit` option, if turn to 'yes', will send the jobs to a cluster. `clobber` is a wrapper for the ST tool option and allow to overwrite existing output files is 'yes' (default)
 
 .. code-block:: ini
 
    out = ~/myanalysis
    verbose = yes
+   Submit = no
+   clobber = no
 
 Target
 ------
@@ -51,11 +53,6 @@ The center of the ROI is xref, yref and the size is rad (in degrees). By default
       xref = 238.92935
       yref = 11.190102
       rad = 10.0
-      srcpix = 120
-      nxpix = 200
-      nypix = 200
-      nlong = 120.0
-      nlat = 120.0
       binsz = 0.1
       coordsys = CEL
       proj = AIT
@@ -64,7 +61,6 @@ The center of the ROI is xref, yref and the size is rad (in degrees). By default
 .. note:: 
    if you used binned analysis or for the generation of a TS map, the ROI
    will be divided in nxpix and nypix pixel with a bin size of binsz.
-
 
 File
 ----
@@ -84,7 +80,7 @@ Here you defined where the FT2 and FT1 files are (this can be an ascii list). Th
 Time
 ----
 
-Start and stop time of your analysis in MET
+Start and stop time of your analysis in MET. The file option allow the analysis (Lc or SED) to be performed in disjoint time bins. This can be useful for e.g. MWL campaigns or non-constant time bins LC. The file must be an ascii file with 2 columns (start and stop) and each line is a time bin
 
 
 .. code-block:: ini
@@ -93,7 +89,8 @@ Start and stop time of your analysis in MET
    [time]
       tmin = 239557417.0
       tmax = 256970880.0
-
+      file = ""
+      type = 'MET'
 
 Energy
 ------
@@ -143,7 +140,7 @@ Convtype is use to select either the front (0), back (1) or both (-1) events. If
       zmax = 100.0
       roicut = no
       filter = DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52
-      irfs = P7SOURCE_V6
+      irfs = P7REP_SOURCE_V15
       # if convtype =0 or 1, an ::FRONT of ::BACK is happend at the end of the irfs string automatically
       convtype = -1
 
@@ -184,21 +181,6 @@ The 2FGL is used to find the source in the ROI. All the source with a significan
 
 
 
-tool
-----
-
-Not used at the moment
-
-.. code-block:: ini
-
-   [tool]
-      chatter = 2
-      clobber = no
-      debug = no
-      gui = no
-      mode = ql
-
-
 Spectrum
 ---------
 
@@ -225,8 +207,6 @@ Options for `enrico_sed` which run all the ST tool to make an pointlike analysis
       FrozenSpectralIndex = 0.0
       #Use the summed likelihood method
       SummedLike = no
-      #Submit the job to a cluster?
-      Submit = yes
 
 
 UpperLimit
@@ -278,12 +258,33 @@ Option for enrico_lc which run an entire analysis in time bins and produce all t
       #Number of points for the LC
       NLCbin = 20
       MakeConfFile = no
-      #Submit the job to a cluster?
-      Submit = yes
       #Compute an UL if the TS of the sources is <TSLightCurve
       TSLightCurve = 9.0
       #Generates control plots
       DiagnosticPlots = yes
+
+
+Folded LightCurve
+----------
+
+This section is devoted to the folded LC. This is designed for binary system analysis.
+
+  * NLCbin : number of time bins
+
+  * epoch: Epoch of phase=0 in MJD, equal to tmin is 0
+
+  * Period: Orbital period in days
+
+.. code-block:: ini
+
+   [FoldedLC]
+      #Number of bins for the orbitally folded LC
+      NLCbin = 10
+      #Epoch of phase=0 in MJD, equal to tmin is 0
+      epoch = 0
+      #Orbital period in days
+      Period = 10
+
 
 Ebin
 -----
@@ -304,8 +305,6 @@ Ebin
       NumEnergyBins = 7
       #Compute an UL if the TS of the sources is <TSEnergyBins
       TSEnergyBins = 9
-      #Submit the job to a cluster?
-      Submit = yes
 
 Option for enrico_tsmap
 
@@ -333,8 +332,6 @@ In order to speed up the process, parallel computation can be used. Either each 
       npix = 10
       #Remove or not the target from the model
       RemoveTarget = yes
-      #Submit the job to a cluster?
-      Submit = yes
       #Generate the TS map pixel by pixel or by grouping the pixels by row.
       #(reduce the numbers of jobs but each job are longer)
       method = row
@@ -351,4 +348,4 @@ For the entire row 49 :
 
 .. code-block:: ini
 
-   enrico_tsmap myanalysis.conf 49
+   enrico_tsmap myanalysis.conf 49a

@@ -5,7 +5,7 @@ from os.path import join
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-from extern.odict import OrderedDict as dict
+from enrico.extern.odict import OrderedDict
 
 
 #Submission farm name
@@ -24,25 +24,24 @@ WEEKLY_DIR = join(DOWNLOAD_DIR, 'photon') if DOWNLOAD_DIR else ''
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
 
-DIRS = dict(FERMI_DATA_DIR=FERMI_DATA_DIR,
-            FERMI_DIR=FERMI_DIR,
-            CATALOG_DIR=CATALOG_DIR,
-            DIFFUSE_DIR=DIFFUSE_DIR,
-            PREPROCESSED_DIR=PREPROCESSED_DIR,
-            DOWNLOAD_DIR=DOWNLOAD_DIR,
-            WEEKLY_DIR=WEEKLY_DIR,
-            CONFIG_DIR=CONFIG_DIR,
-            ENRICO_DIR=ENRICO_DIR)
+DIRS = OrderedDict(FERMI_DATA_DIR=FERMI_DATA_DIR,
+                   FERMI_DIR=FERMI_DIR,
+                   CATALOG_DIR=CATALOG_DIR,
+                   DIFFUSE_DIR=DIFFUSE_DIR,
+                   PREPROCESSED_DIR=PREPROCESSED_DIR,
+                   DOWNLOAD_DIR=DOWNLOAD_DIR,
+                   WEEKLY_DIR=WEEKLY_DIR,
+                   CONFIG_DIR=CONFIG_DIR,
+                   ENRICO_DIR=ENRICO_DIR)
 
 # File names
 CATALOG_VERSION = '08'
 TEMPLATE_VERSION = '07'
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
-DIFFUSE_GAL = 'gal_2yearp7v6_v0.fits'
-DIFFUSE_ISO_SOURCE = 'iso_p7v6source.txt'
-DIFFUSE_ISO_CLEAN = 'iso_p7v6clean.txt'
+DIFFUSE_GAL = 'gll_iem_v05.fits'
+DIFFUSE_ISO_SOURCE = 'iso_source_v05.txt'
+DIFFUSE_ISO_CLEAN = 'iso_clean_v05.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
-
 
 def check_command_line_tools():
     """Check command line tool availability"""

@@ -1,15 +1,15 @@
 import os
-from os.path import join
+from math import sqrt
 import numpy as np
 import ROOT
-import utils
-import root_style
-import plotting
-import environ
-from math import sqrt
+from enrico import utils
+from enrico import root_style
+from enrico import plotting
+from enrico import environ
 from enrico.config import get_config
-from submit import call
-from enrico.RunGTlike import run,GenAnalysisObjects
+from enrico.constants import LightcurvePath,FoldedLCPath
+from enrico.submit import call
+from enrico.RunGTlike import run, GenAnalysisObjects
 
 class LightCurve:
     """Class to calculate light curves and variability indexes."""
@@ -20,65 +20,105 @@ class LightCurve:
         #Read the config
         self.srcname = self.config['target']['name'] #src name
         self.Tag = self.config['file']['tag']
-        self.Nbin = self.config['LightCurve']['NLCbin']
         self.tmin = self.config['time']['tmin']
         self.tmax = self.config['time']['tmax']
-        self.dt = (self.tmax - self.tmin) / self.Nbin
+
+        self.submit = self.config['Submit']
         # One point of the LC will be computed as a spectrum plot.
         # enrico_sed will be used
         # Do fits files will be generated
         self.config['Spectrum']['FitsGeneration'] = self.config['LightCurve']['FitsGeneration']
-        #Froze the Spectral index at a value of self.config['LightCurve']['SpectralIndex']
+        #Froze the Spectral index at a value of self.config['LightCurve']['SpectralIndex'] (no effect if 0)
         self.config['Spectrum']['FrozenSpectralIndex'] = self.config['LightCurve']['SpectralIndex']
         #TS limit. Compute an UL if the TS is below TSLightCurve
         self.config['UpperLimit']['TSlimit'] = self.config['LightCurve']['TSLightCurve']
 
         self.folder = self.config['out']
-        #All files will be stored in a subfolder name LightCurve + NLCbin
-        #Create a subfolder name LightCurve
-        self.LCfolder =  self.folder+"/LightCurve_"+str(self.config['LightCurve']['NLCbin'])+"bins/"
-        os.system("mkdir -p "+self.LCfolder)
-        self.config['out'] = self.LCfolder
 
         #No plot, no bin in energy, Normal UL
         self.config['Spectrum']['ResultPlots'] = 'no'
         self.config['Ebin']['NumEnergyBins'] = 0
         self.config['UpperLimit']['envelope'] = 'no'
         #No submition. Submission will be directly handle by this soft
-        self.config['Spectrum']['Submit'] = 'no'
-        self.config['verbose'] ='no' #Be quiet
+        self.config['Submit'] = 'no'
+#        self.config['verbose'] ='no' #Be quiet
 
         self.configfile = []#All the config file in the disk are stored in a list
+
+    def _MakeTimeBins(self):
+        self.time_array = np.zeros(0)
+        self.Nbin = 0
+        self.gtifile = []
+        if self.config['time']['file'] != '':
+            print "use ",self.config['time']['file'] 
+            self.gtifile.append(self.config['time']['file'])
+            times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
+            self.Nbin = times.size/2
+            self.time_array=np.reshape(times,times.size,'F')
+            if self.config['time']['type']=='MJD':
+                 self.time_array = utils.MJD_to_met(self.time_array)
+            elif self.config['time']['type']=='JD':
+                 self.time_array = utils.JD_to_met(self.time_array)
+        else:
+            self.Nbin = self.config['LightCurve']['NLCbin']
+            self.time_array = np.zeros(self.Nbin*2)
+#            self.dt = (self.tmax - self.tmin) / self.Nbin
+            t = np.arange(self.tmin,self.tmax+0.000001,(self.tmax - self.tmin) / self.Nbin)
+            for i in xrange(self.Nbin):
+                self.time_array[2*i] = t[i]
+                self.time_array[2*i+1]= t[i+1]
+
+        print "Running LC with ",self.Nbin," bins"
+        for i in xrange(self.Nbin):
+            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
+        print 
 
     def _errorReading(self,message,i):
         print "WARNING : "+message+" : ",self.configfile[i]
         print "Job Number : ",i
         print "Please have a look at this job log file"
 
+
+    def _ManageFolder(self,path):
+        """   All files will be stored in a subfolder name path + NLCbin
+        Create a subfolder"""
+        self.LCfolder =  self.folder+"/"+path+"_"+str(self.Nbin)+"bins/"
+        os.system("mkdir -p "+self.LCfolder)
+        self.config['out'] = self.LCfolder
+
+
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
 
         for i in xrange(self.Nbin):
-            self.config['time']['tmin'] = self.tmin + i * self.dt
-            self.config['time']['tmax'] = self.tmin + (i + 1) * self.dt
+            self.config['time']['tmin'] = self.time_array[2*i]
+            self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
-            filename = (self.config['out'] + "Config_" +
+            filename = (self.config['out'] + "Config_" + str(i) + "_" +
                     str(self.config['time']['tmin']) + "_" +
                     str(self.config['time']['tmax']))#Name of the config file
+
+            if len(self.gtifile)==1:
+                self.config['time']['file']=self.gtifile[0]
+            elif len(self.gtifile)>1:
+                print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
+                self.config['time']['file']=self.gtifile[i]
+
             if write == 'yes':
                 self.config.write(open(filename, 'w'))
 
             self.configfile.append(filename)
 
-    def MakeLC(self) :
+
+    def _MakeLC(self,Path=LightcurvePath) :
         '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
 
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
 
-        for i in xrange(self.config['LightCurve']['NLCbin']):
-            if self.config['LightCurve']['Submit'] == 'yes':
+        for i in xrange(self.Nbin):
+            if self.submit == 'yes':
                 cmd = "enrico_sed "+self.configfile[i]
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"
                 JobLog = self.LCfolder+"LC_Job_"+str(i)+".log"
@@ -90,8 +130,71 @@ class LightCurve:
             else :
                 run(self.configfile[i])#run in command line
 
+
+    def _MakePhasebin(self):
+        """document me """
+        self.time_array = np.zeros(self.Nbin*2)
+        self.config['time']['type'] = 'MJD'
+        T0 = self.config['FoldedLC']['epoch']
+        Period = self.config['FoldedLC']['Period']
+        t1 = utils.met_to_MJD(self.config['time']['tmin'])
+        t2 = utils.met_to_MJD(self.config['time']['tmax'])
+
+        if T0==0:
+            T0=t1
+        elif t1 < T0:
+           T0 -= np.ceil((T0-t1)/Period)*Period
+           # find orbit numbers covered by range (t1,t2)
+        norbt1 = int(np.floor((t1-T0)/Period))
+        norbt2 = int(np.ceil((t2-T0)/Period))
+
+        phase = np.linspace(0,1,self.Nbin+1)
+
+        self.gtifile=[] #reset gtifiles
+        for i in range(self.Nbin):
+            self.time_array[2*i] = self.config['time']['tmin']
+            self.time_array[2*i+1] = self.config['time']['tmax']
+            gtifn = os.path.join(self.LCfolder,"TimeSelection_{0:02.0f}.dat".format(i))
+            ints=[]
+
+            for norb in range(norbt1,norbt2+1):
+                ints.append(((T0+(norb+phase[i])*Period),(T0+(norb+phase[i+1])*Period)))
+            tsel = np.array(ints)
+            np.savetxt(gtifn,tsel)
+            self.gtifile.append(gtifn)
+
+
+    def MakeLC(self) :
+        """Run a std lc """
+        self._MakeTimeBins()
+        self._ManageFolder(LightcurvePath)
+        self._MakeLC()
+
+    def MakeFoldedLC(self):
+        """run a folded lc """
+        self.Nbin = self.config['FoldedLC']['NLCbin']
+        self._ManageFolder(FoldedLCPath)
+        self._MakePhasebin()
+        self._MakeLC()
+
+
     def PlotLC(self):
         '''Plot a lightcurve which have been generated previously'''
+        self._MakeTimeBins()
+        self._ManageFolder(LightcurvePath)
+        self.PrepareLC()#Get the config file
+        self._PlotLC()
+
+    def PlotFoldedLC(self):
+        '''Plot a lightcurve which have been generated previously'''
+        self.Nbin = self.config['FoldedLC']['NLCbin']
+        self._ManageFolder(FoldedLCPath)
+        self._MakePhasebin()
+        self.PrepareLC()#Get the config file
+        self._PlotLC(True)
+
+
+    def _PlotLC(self,folded=False):
         root_style.RootStyle()#Nice plot style
 
         print "Reading files produced by enrico"
@@ -107,8 +210,6 @@ class LightCurve:
         Npred = []
         Npred_detected_indices = []
         TS = []
-
-        self.PrepareLC()#Get the config file
 
         for i in xrange(self.Nbin):
             CurConfig = get_config(self.configfile[i])
@@ -148,12 +249,11 @@ class LightCurve:
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
-        fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
-
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
+            fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
             gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
@@ -175,9 +275,16 @@ class LightCurve:
             CanvTS.Print(LcOutPath+'_TS.eps')
             CanvTS.Print(LcOutPath+'_TS.C')
 
+
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
-        gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+        if folded:
+            phase = np.linspace(0,1,self.Nbin+1)
+            Time = (phase[1:]+phase[:-1])/2.
+            TimeErr = (phase[1:]-phase[:-1])/2.
+            gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
+        else :
+            gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
         CanvLC = ROOT.TCanvas()
         gTHLC.Draw()
         TgrLC.Draw('zP')
@@ -281,7 +388,7 @@ class LightCurve:
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!
-            utils.FreezeParams(Fit, self.srcname, 'Index', -self.config['LightCurve']['SpectralIndex'])
+            utils.FreezeParams(Fit, self.srcname, 'Index', -2)
             LogL1.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
             Model_type = Fit.model.srcs[self.srcname].spectrum().genericName()
@@ -316,7 +423,7 @@ def _GetCanvas():
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
-    flc.write('Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+    flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
               'Delta_Flux TS Npred\n')
     for i in xrange(len(Time)):
         flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +

@@ -1,7 +1,8 @@
 """Random collection of usefull functions"""
 import os
-import numpy as np
 from math import log10
+import numpy as np
+from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
 def _log(text, line=True):
     if line:
@@ -92,14 +93,14 @@ def cube_to_image(cube, slicepos=None, mean=False):
     return PrimaryHDU(data, header)
 
 
-def SubstracFits(infile1, infile2, config):
+def SubtractFits(infile1, infile2, config):
     """Create (absolute and relative) difference images"""
     import pyfits
     data1 = pyfits.getdata(infile1)
     data2 = pyfits.getdata(infile2)
     head = pyfits.getheader(infile2)
     filebase = config['out'] + "/" + config['target']['name']
-    abs_diff_file = filebase + "_Substract_Model_cmap.fits"
+    abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
     rel_diff_file = filebase + "_Residual_Model_cmap.fits"
     os.system("rm " + abs_diff_file)
     os.system("rm " + rel_diff_file)
@@ -178,16 +179,17 @@ def ApproxGamma(Fit, ener,name):
     Gamma = np.zeros(len(ener)-1)
     for ibin in xrange(len(ener)-1):
       #Compute an approximation of an index
-      dnde1 = log10(dNde(ener[ibin],Fit,name))
-      dnde2 = log10(dNde(ener[ibin+1],Fit,name))
-      Gamma[ibin] = (dnde2-dnde1)/(log10(1.*ener[ibin+1])-log10(1.*ener[ibin]))
+      dnde1 = np.log10(dNde(ener[ibin],Fit,name))
+      dnde2 = np.log10(dNde(ener[ibin+1],Fit,name))
+      Gamma[ibin] = (dnde2-dnde1)/(np.log10(1.*ener[ibin+1])-np.log10(1.*ener[ibin]))
 
     return Gamma
 
 
 def _SpecFileName(config):
     """return a generic name for the file related to the spectrum (plot, results...)"""
-    return  config['out'] + '/Spectrum/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
+    from enrico.constants import SpectrumPath
+    return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
 
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
@@ -202,7 +204,8 @@ def _dump_filename(config):
             str(int(config['time']['tmin'])) + '_' +
             str(int(config['time']['tmax'])) + '_' +
             str(int(config['energy']['emin'])) + '_' +
-            str(int(config['energy']['emax'])) + ".results")
+            str(int(config['energy']['emax'])) + "_"+
+                  config['file']['tag'] +  ".results")
 
 
 def DumpResult(Result, config):
@@ -225,3 +228,40 @@ def ReadResult(config):
             pass
         results[key] = value
     return results
+
+def time_selection_string(config,numbin0):
+    """Convert file with start stop pairs to gtmktime filter string"""
+
+    if numbin0==None:
+        numbin0=0
+
+    # Read MET_TSTART, MET_TSTOP pairs from file
+    bins = np.loadtxt(config['time']['file'])
+
+    if config['time']['type']=='MJD':
+        bins = MJD_to_met(bins)
+    elif config['time']['type']=='JD':
+        bins = JD_to_met(bins)
+
+    selstr=''
+    last=True
+    for numbin in range(numbin0,len(bins)):
+        tbin=bins[numbin]
+        selstr+='((START>{0:.0f})&&(STOP<{1:.0f}))||'.format(tbin[0],tbin[1])
+        if len(selstr)>=800:
+            last=False
+            break
+
+    # remove last ||, and enclose in parens
+    selstr='('+selstr[:-2]+')'
+    # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
+    return selstr, numbin+1, last
+
+def met_to_MJD(met):
+  return mjd_ref + (met-met_ref)/DAY_IN_SECOND
+
+def MJD_to_met(mjd):
+  return met_ref + (mjd-mjd_ref)*DAY_IN_SECOND
+
+def JD_to_met(jd):
+  return MJD_to_met(mjd)+2400000.5

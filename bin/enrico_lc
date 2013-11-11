@@ -1,15 +1,35 @@
 #!/usr/bin/env python
 """Make a lightcurve"""
 import sys
-import enrico.lightcurve  as lc
+import logging
+import numpy as np
+import enrico.lightcurve  as lightcurve
 from enrico.config import get_config
 
 try:
     infile = sys.argv[1]
 except:
-    print('FATAL: Config file not found.')
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
     sys.exit(1)
 
-config = get_config(infile)
-lc = lc.LightCurve(config)
-lc.MakeLC()
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try : 
+    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      print "work on the config file ",inf
+      config = get_config(inf)
+      lc = lightcurve.LightCurve(config)
+      lc.MakeLC()
+  except :
+    config = get_config(infile)
+    lc = lightcurve.LightCurve(config)
+    lc.MakeLC()
+else:
+  for inf in sys.argv[1:]:
+    print "work on the config file ",inf
+    config = get_config(inf)
+    lc = lightcurve.LightCurve(config)
+    lc.MakeLC()
+

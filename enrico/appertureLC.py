@@ -1,23 +1,13 @@
 #!/usr/bin/env python
 import os
-import utils
-from submit import call
-from config import get_config
-import environ
 import numpy as np
 import ROOT
 import pyfits
-from gtfunction import Observation
-
-def _log(self, task='', description=''):
-    print
-    print('# ' + '*' * 60)
-    if task:
-        task = '%10s --- ' % task
-    print('# *** %s%s' %
-        ( task, description))
-    print '# ' + '*' * 60
-
+from enrico.constants import  DAY_IN_SECOND, AppLCPath #met_ref, mdj_ref,
+from enrico.gtfunction import Observation
+from enrico.config import get_config
+from enrico import environ
+from enrico import utils
 def AppLC(infile):
     '''Main function of the apperture photometrie Lightcurve script. Read the config file and run the analysis'''
     ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
@@ -28,7 +18,7 @@ def AppLC(infile):
 
     folder = config['out']
     #Create a subfolder name LightCurve
-    LCoutfolder = folder+"/AppertureLightCurve"
+    LCoutfolder = folder+"/"+AppLCPath
     os.system("mkdir -p "+LCoutfolder)
 
     #Change the ROI to 1 degree
@@ -87,14 +77,11 @@ def MakeTimebinFile(Obs,timefile):
 def PlotAppLC(Nbins,LCoutfolder,FITSfile):
 
     ROOT.gStyle.SetOptStat(0)
-    # time MET in MJD
-    met_ref = 240106987.-23*60.-6
-    mdj_ref= 54689.
 
     spfile=pyfits.open(FITSfile)
 
-    Time = mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/3600./24
-    dTime = (spfile[1].data.field(1)[:-1])/3600./24
+    Time =  utils.met_to_MJD(spfile[1].data.field(0)[:-1])#mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/DAY_IN_SECOND
+    dTime = (spfile[1].data.field(1)[:-1])/DAY_IN_SECOND
     Counts = (spfile[1].data.field(2)[:-1])
     Exposure = (spfile[1].data.field(4)[:-1])
 
@@ -165,4 +152,23 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
    #Save the canvas in the Apperture LightCurve subfolder
     CanvFlux.Print(LCoutfolder+'/AppLC.eps')
     CanvFlux.Print(LCoutfolder+'/AppLC.C')
+
+def _log(task='', description=''):
+    print
+    print('# ' + '*' * 60)
+    if task:
+        task = '%10s --- ' % task
+    print('# *** %s%s' %
+        ( task, description))
+    print '# ' + '*' * 60
+
+
+if __name__ == '__main__':
+    import sys
+    try:
+        infile = sys.argv[1]
+    except:
+        print('FATAL: Config file not found.')
+        sys.exit(1)
+    AppLC(infile)
 

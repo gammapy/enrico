@@ -1,18 +1,18 @@
-# fitmake.py written by David Sanchez : david.sanchez@mpi-hd.mpg.de
-# Collection of functions to run the fit (gtlike)
-# the class Makefit will call the function of the observation class (gtfunction.py) and prepare the fit
-# by computing the fits file.
-# it can distinguish between the binned and unbinnned analysis
-# begun September 2011
-
-import numpy as np
-from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
-from BinnedAnalysis import BinnedAnalysis, BinnedObs
-import utils
-import os
+"""
+fitmake.py written by David Sanchez : david.sanchez@mpi-hd.mpg.de
+Collection of functions to run the fit (gtlike)
+the class Makefit will call the function of the observation class (gtfunction.py) and prepare the fit
+by computing the fits file.
+it can distinguish between the binned and unbinnned analysis
+begun September 2011
+"""
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+import numpy as np
+from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
+from BinnedAnalysis import BinnedAnalysis, BinnedObs
+from enrico import utils
 
 class FitMaker(object):
     """Collection of functions to prepare/run the GTLIKE fit
@@ -42,9 +42,9 @@ class FitMaker(object):
         #Run the tools common to binned and unbinned chain
         self._log('gtselect', 'Select data from library')#run gtselect
         self.obs.FirstCut()
-        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
+        self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtmktime
         self.obs.MkTime()
-        if self.config["analysis"]["ComputeDiffrsp"] == "yes":
+        if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
             self._log('gtdiffrsp', 'Compute Diffuse response')
             self.obs.DiffResps()#run gtbin
         self._log('gtbin', 'Create a count map')
@@ -257,6 +257,7 @@ class FitMaker(object):
         This is usefull when the source index is not know or can not be constrain by theoritical argument
         The index range form 1.5 to 2.5"""
         import IntegralUpperLimit
+        import UpperLimits
         self._log('EnvelopeUL', 'Compute upper limit envelope')
         PhIndex = Fit.par_index(self.obs.srcname, 'Index')
         Nbp = 20 #Make Nbp computations
@@ -303,7 +304,8 @@ class FitMaker(object):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
         import plotting#plotting is the dedicated library
-        filename = self.config['out'] + '/Spectrum/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
+        from enrico.constants import SpectrumPath
+        filename = self.config['out'] + '/'+SpectrumPath+'/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)

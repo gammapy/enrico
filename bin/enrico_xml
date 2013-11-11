@@ -1,45 +1,34 @@
 #!/usr/bin/env python
 """Command line tool to make xml files from the 2FGL catalog
 including diffuse models."""
-import os
+import logging
 import sys
-from optparse import OptionParser
+import numpy as np
 from enrico.config import get_config
-import enrico.xml_model
-import enrico.environ
+from enrico.xml_model import XmlMaker
 
-# Parse command line options
-parser = OptionParser(usage="""usage: %prog configfile catalog""",
-                      description=__doc__)
-(options, args) = parser.parse_args()
-if len(args) < 1:
-    print('ERROR: You have to give a config file.')
-    parser.print_help()
-    sys.exit()
+try:
+    infile = sys.argv[1]
+except:
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    sys.exit(1)
 
-config = get_config(args[0])
 
-folder = config['out']
-os.system('mkdir -p ' + folder)
-
-# test if the user provide a catalog or not.
-#if not use the default one
-if config['environ']['FERMI_CATALOG_DIR'] == '':
-    catalogDir = enrico.environ.CATALOG_DIR
-    print "use the default location of the catalog"
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try : 
+    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      print "work on the config file ",inf
+      config = get_config(inf)
+      XmlMaker(config)
+  except :
+    config = get_config(infile)
+    XmlMaker(config)
 else:
-    catalogDir = config['environ']['FERMI_CATALOG_DIR']
+  for inf in sys.argv[1:]:
+    print "work on the config file ",inf
+    config = get_config(inf)
+    XmlMaker(config)
 
-if config['environ']['FERMI_CATALOG'] == '':
-    catalog = catalogDir + "/" + enrico.environ.CATALOG
-    print "use the default catalog"
-else:
-    catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
-
-print "Use the catalog : ", catalog
-
-lib, doc = enrico.xml_model.CreateLib()
-srclist = enrico.xml_model.GetlistFromFits(config, catalog)
-enrico.xml_model.WriteXml(lib, doc, srclist, config)
-enrico.xml_model.Xml_to_Reg(folder + "/Roi_model",
-                            srclist, Prog=sys.argv[0])

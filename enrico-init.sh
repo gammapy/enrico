@@ -21,7 +21,7 @@ export PYTHONPATH=$ENRICO_DIR:$PYTHONPATH
 
 echo "Setting environment variables for data file locations"
 if [ ! -d "${FERMI_DATA_DIR}" ]; then
-    export FERMI_DATA_DIR=$ENRICO_DIR/Data/
+    export FERMI_DATA_DIR=$ENRICO_DIR/Data
 fi
 
 if [ ! -d "${FERMI_CATALOG_DIR}" ]; then

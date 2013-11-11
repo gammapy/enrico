@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 import os
-import SummedLikelihood
-import utils
-import energybin
-from submit import call
-from config import get_config
-from gtfunction import Observation
-from fitmaker import FitMaker
-import environ
+from enrico import utils
+from enrico import energybin
+from enrico.config import get_config
+from enrico.gtfunction import Observation
+from enrico.fitmaker import FitMaker
 
 
 def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
@@ -35,6 +32,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             FitRunnerback.obs.xmlfile = xmlfile
         FitB = FitRunnerback.CreateLikeObject()
         FitF = FitRunnerfront.CreateLikeObject()
+        import SummedLikelihood
         Fit = SummedLikelihood.SummedLikelihood()
         Fit.addComponent(FitB)
         Fit.addComponent(FitF)
@@ -66,14 +64,12 @@ def run(infile):
 
     #plot the SED and model map if possible and asked
     if config['Spectrum']['ResultPlots'] == 'yes' :
-    	os.system("mkdir -p "+config['out'] + '/Spectrum/')
+        from enrico.constants import SpectrumPath
+    	os.system("mkdir -p "+config['out'] + '/'+SpectrumPath+'/')
         if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
             FitRunner.ComputeSED(Fit)
         outXml = utils._dump_xml(config)
-        if config['Spectrum']['SummedLike'] == 'yes': # the possiblity of making the model map is checked inside the function
-            FitRunnerback.ModelMap(outXml)
-            FitRunnerfront.ModelMap(outXml)
-        else:
+        if config['Spectrum']['SummedLike'] != 'yes': # the possiblity of making the model map is checked inside the function
             FitRunner.ModelMap(outXml)
 
     #  Make energy bins by running a *new* analysis
@@ -85,7 +81,7 @@ if __name__ == '__main__':
     import sys
     try:
         infile = sys.argv[1]
-        config = get_config(infile)
+#        config = get_config(infile)
     except:
         print('FATAL: Config file not found.')
         sys.exit(1)

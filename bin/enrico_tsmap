@@ -1,29 +1,53 @@
 #!/usr/bin/env python
 """Produce a TS map"""
+import logging
 import sys
+import numpy as np
 import enrico.tsmap as tsmap
 from enrico.config import get_config
 
 try:
     infile = sys.argv[1]
 except:
-    print('FATAL: Config file not found.')
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
     sys.exit(1)
 
 try:
-    row = int(sys.argv[2])
+    row = int(sys.argv[-2])
 except:
     row = -1
 
 try:
-    column = int(sys.argv[3])
+    column = int(sys.argv[-1])
 except:
     column = -1
 
+if row >0 or column>0 : #assume that there is only one config file provided
+  config = get_config(infile)
+  TSm = tsmap.TSMap(config,infile)
+  TSm.runTSMap(row,column)
 
-config = get_config(infile)
-TSm = tsmap.TSMap(infile)
-TSm.runTSMap(row,column)
+else: 
+  if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+    try : 
+      liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+      for inf in liste:
+        print "work on the config file ",inf
+        config = get_config(inf)
+        TSm = tsmap.TSMap(config,inf)
+        TSm.runTSMap(row,column)
+    except :
+      config = get_config(infile)
+      TSm = tsmap.TSMap(config,infile)
+      TSm.runTSMap(row,column)
+  else:
+    for inf in sys.argv[1:]:
+      print "work on the config file ",inf
+      config = get_config(inf)
+      TSm = tsmap.TSMap(config,inf)
+      TSm.runTSMap(row,column)
 
 
 

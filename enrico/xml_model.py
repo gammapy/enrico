@@ -1,16 +1,15 @@
 """Central place for the XML generation"""
 import os
-import xml.dom.minidom
-import numpy as np
-import pyfits
-import utils
-
-import enrico.environ as env
-from enrico.config import get_config
-
+import sys
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+import xml.dom.minidom
+import numpy as np
+import pyfits
+from enrico import utils
+import enrico.environ as env
+
 
 def addParameter(el, name, free, value, scale, min, max):
     """Add a parameter to a source"""
@@ -259,7 +258,7 @@ def AddSpatial(doc,ra,dec,extendedName=""):
       addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
       addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
     else : 
-      from environ import *
+      from environ import CATALOG_TEMPLATE_DIR
       from os.path import join
       filename = extendedName+'.fits'
       filename = filename.replace(' ','')
@@ -307,18 +306,17 @@ def GetlistFromFits(config, catalog):
       spectype = np.array(names.size*["PowerLaw"])
       pivot *= 1e3 ## energy in the 1FHL are in GeV
       flux *= 1e3
+    try :
+      extendedName = data.field('Extended_Source_Name')
+    except:
+      logging.warning("Cannot find th extended source list: please check the xml")
+      extendedName = np.array(names.size*[""])
 
-    extendedName = data.field('Extended_Source_Name')
     sigma = data.field('Signif_Avg')
 
-    #add the target to the list of sources
-    sources = [{'name':srcname, 'ra': ra_src, 'dec': dec_src,
-                   'flux': 1e-9, 'index':-2, 'scale': emin,
-                   'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
-                   'SpectrumType': model, 'ExtendedName': ''}]
-
+    sources = []
+    Nfree = 0
     Nextended = 0
-    Nfree = 1
     #loop over all the sources of the catalog
     for i in xrange(len(names)):
         #distance from the center of the maps
@@ -326,10 +324,18 @@ def GetlistFromFits(config, catalog):
         #distance for the target
         rsrc = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
 
-        # sources with angular separation less than 0.1 degree
-        # from the target are not added
-        # if the source is close to the target : add it as a free source
-        if  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
+        # if the source has a separation less than 0.1deg to the target and has
+        # the same model type as the one we want to use, insert as our target
+        # with our given coordinates
+        if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extendedName[i]=="":
+            Nfree += 1
+            sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
+                            'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
+                            'SpectrumType': spectype[i], 'ExtendedName': extendedName[i]})
+
+        elif  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
+            # if the source is close to the target : add it as a free source
             Nfree += 1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
@@ -348,10 +354,20 @@ def GetlistFromFits(config, catalog):
                 if not(extendedName[i]==""):
                   print "Adding extended source ",extendedName[i]," 2FGL name is ",names[i]
                   Nextended=+1
-    print "Add ", len(sources), " source(s) in the ROI of ", roi, " degrees"
-    print Nfree, " source(s) have free parameters inside ", max_radius, " degrees"
-    print Nextended, " source(s) is (are) extended"
 
+
+    # if the target has not been added from catalog, add it now
+    if sources[0]['name']!=srcname:
+        Nfree += 1
+        #add the target to the list of sources in first position
+        sources.insert(0,{'name':srcname, 'ra': ra_src, 'dec': dec_src,
+                       'flux': 1e-9, 'index':-2, 'scale': emin,
+                       'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
+                       'SpectrumType': model,'ExtendedName': ""})
+
+    print "Add ", len(sources), " sources in the ROI of ", roi, " degrees"
+    print Nfree, " sources have free parameters inside ", max_radius, " degrees"
+    print Nextended, " source(s) is (are) extended"
     return sources
 
 def IsIn(name, sources):
@@ -473,3 +489,29 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
                    color + " text={" + str(name) + "}\n")
     fds9.close()
 
+
+def XmlMaker(config):
+  folder = config['out']
+  os.system('mkdir -p ' + folder)
+
+# test if the user provide a catalog or not.
+#if not use the default one
+  if config['environ']['FERMI_CATALOG_DIR'] == '':
+    catalogDir = env.CATALOG_DIR
+    print "use the default location of the catalog"
+  else:
+    catalogDir = config['environ']['FERMI_CATALOG_DIR']
+
+  if config['environ']['FERMI_CATALOG'] == '':
+    catalog = catalogDir + "/" + env.CATALOG
+    print "use the default catalog"
+  else:
+    catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
+
+  print "Use the catalog : ", catalog
+
+  lib, doc = CreateLib()
+  srclist = GetlistFromFits(config, catalog)
+  WriteXml(lib, doc, srclist, config)
+  Xml_to_Reg(folder + "/Roi_model",
+                            srclist, Prog=sys.argv[0])

@@ -1,9 +1,9 @@
 """Central place for config file handling"""
 import sys
 from os.path import join
-from extern.configobj import ConfigObj, flatten_errors
-from extern.validate import Validator
-from environ import CONFIG_DIR,DOWNLOAD_DIR
+from enrico.extern.configobj import ConfigObj, flatten_errors
+from enrico.extern.validate import Validator
+from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR
 
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):

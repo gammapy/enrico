@@ -1,12 +1,13 @@
 import os
-import ROOT
+import array
 import numpy as np
+import ROOT
 import pyfits
-import root_style
 import pyLikelihood
-from config import get_config
-import utils
-import array as ar
+from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
+from enrico import root_style
+from enrico.config import get_config
+from enrico import utils
 
 class Params:
     """Collection of Plotting parameters like Energy bounds,
@@ -43,7 +44,7 @@ class Result:
         for i in xrange(par.N):
           if Err[i]/SED[i] == min(Err/SED):
             print "Decorrelation energy : %4.2e MeV"%E[i]
-            print "Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" %(SED[i]/E[i]**2*624152.206,Err[i]/E[i]**2*624152.206)
+            print "Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" %(SED[i]/E[i]**2*ERG_TO_MEV,Err[i]/E[i]**2*ERG_TO_MEV)
             print "SED value at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i])
         print
 
@@ -54,7 +55,7 @@ class Result:
         # Save all in ascii file
         # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
         save_file = open(par.PlotName + '.dat', 'w')
-        save_file.write("log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
+        save_file.write("# log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
         for i in xrange(par.N):
             save_file.write("%12.4e  %12.4e  %12.4e \n" % (E[i], SED[i], Err[i]))
         save_file.close()
@@ -74,7 +75,7 @@ class Result:
         E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
         nuFnu = np.zeros(pars.N)
         for i in xrange(pars.N):
-            nuFnu[i] = 1.602e-6 * E[i] ** 2 * self.dNde(E[i]) #Mev to Ergs
+            nuFnu[i] = MEV_TO_ERG  * E[i] ** 2 * self.dNde(E[i]) #Mev to Ergs
         return E, nuFnu
 
     def MakeSEDError(self, pars):
@@ -92,7 +93,7 @@ class Result:
             err[j] = np.sqrt(np.dot(partials, np.dot(self.covar, partials)))
             j += 1
 
-        return 1.602e-6 * energies ** 2 * err #Mev to Ergs
+        return MEV_TO_ERG  * energies ** 2 * err #Mev to Ergs
 
     def dNde(self, energy):
         arg = pyLikelihood.dArg(energy)
@@ -141,23 +142,23 @@ class Result:
         ghcount.SetYTitle("Counts / bin")
         ghcount.Draw()
 
-        tgrobs = ROOT.TGraphErrors(Nbin, ar.array('f',E), ar.array('f',obs), ar.array('f',err_E), ar.array('f',obs_err))
+        tgrobs = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',obs), array.array('f',err_E), array.array('f',obs_err))
         tgrobs.SetLineColor(2)
         tgrobs.SetMarkerColor(2)
         tgrobs.SetMarkerStyle(20)
         tgrobs.Draw("pz")
 
-        tgrother = ROOT.TGraph(Nbin, ar.array('f',E), ar.array('f',other))
+        tgrother = ROOT.TGraph(Nbin, array.array('f',E), array.array('f',other))
         tgrother.SetLineWidth(2)
         tgrother.SetLineStyle(2)
         tgrother.Draw("L")
 
-        tgr = ROOT.TGraph(Nbin, ar.array('f',E), ar.array('f',src) )
+        tgr = ROOT.TGraph(Nbin, array.array('f',E), array.array('f',src) )
         tgr.SetLineColor(1)
         tgr.SetLineWidth(2)
         tgr.Draw("L")
 
-        tgrsum = ROOT.TGraph(Nbin,  ar.array('f',E),  ar.array('f',total))
+        tgrsum = ROOT.TGraph(Nbin,  array.array('f',E),  array.array('f',total))
         tgrsum.SetLineStyle(3)
         tgrsum.SetLineWidth(2)
         tgrsum.Draw("L")
@@ -190,14 +191,14 @@ class Result:
         ghres.SetXTitle("E (MeV) ")
         ghres.SetYTitle("(counts -model)/model")
         ghres.Draw()
-        tgres = ROOT.TGraphErrors(Nbin, ar.array('f',E), ar.array('f',residual), ar.array('f',err_E), ar.array('f',Dres))
+        tgres = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',residual), array.array('f',err_E), array.array('f',Dres))
         tgres.SetLineColor(2)
         tgres.SetMarkerColor(2)
         tgres.Draw("p*z")
 
         zero = np.zeros(2)
         Ezero = np.array([0, 1e10])
-        tg0 = ROOT.TGraph(2, ar.array('f',Ezero), ar.array('f',zero))
+        tg0 = ROOT.TGraph(2, array.array('f',Ezero), array.array('f',zero))
         tg0.SetLineStyle(2)
         tg0.Draw("L")
 
@@ -260,19 +261,33 @@ def PlotLC(Time, TimeErr, Flux, FluxErr):
     ymax = max(Flux) + max(FluxErr) * 1.3
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
-    gh.SetXTitle("Time ")
+    gh.SetXTitle("Time")
     gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
     tgraph = ROOT.TGraphErrors(len(Time), Time, Flux, TimeErr, FluxErr)
     tgraph.SetMarkerColor(1)
     tgraph.SetMarkerStyle(20)
     return gh, tgraph, arrows
 
+def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
+    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr)
+
+    xmin = 0
+    xmax = 1
+    if max(FluxErr)==0:
+        ymin = 0.
+        ymax = max(Flux)*1.3
+    else:
+        ymin = np.min(min(Flux) - max(FluxErr) * 1.3, 0.)
+        ymax = (max(Flux) + max(FluxErr)) * 1.3
+    gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
+    gh.SetStats(000)
+    gh.SetXTitle("Orbital Phase")
+    gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
+    return gh, tgraph, arrows
 
 def PlotDataPoints(config,pars):
     """Collect the data points/UL and generate a TGraph for the points
     and a list of TArrow for the UL. All is SED format"""
-
-    ErgsToMeV = 1.6022e-6
 
     #Preparation + declaration of arrays
     arrows = []
@@ -289,11 +304,12 @@ def PlotDataPoints(config,pars):
 
     print "Save Ebin results in ",pars.PlotName+".Ebin.dat"
     dumpfile = open(pars.PlotName+".Ebin.dat",'w')
-    dumpfile.write("Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
+    dumpfile.write("# Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
 
+    from enrico.constants import EbinPath
     for i in xrange(NEbin):#Loop over the energy bins
         E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
-        filename = (config['out'] + '/Ebin'+str(NEbin)+'/' + config['target']['name'] +
+        filename = (config['out'] + '/'+EbinPath+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
         try:#read the config file of each data points
             CurConf = get_config(filename)
@@ -312,22 +328,22 @@ def PlotDataPoints(config,pars):
         if results.has_key('Ulvalue'):
             PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
                                     results.get("Emin"),results.get("Emax"),E)
-            Fluxpoint[i] = ErgsToMeV * PrefUl * Epoint[i] ** 2
+            Fluxpoint[i] = MEV_TO_ERG  * PrefUl * Epoint[i] ** 2
             arrows.append(ROOT.TArrow(Epoint[i], Fluxpoint[i], Epoint[i],
                                      Fluxpoint[i] * 0.5, 0.02, "|>"))
         else : #Not an UL : compute points + errors
-            Fluxpoint[i] = ErgsToMeV * results.get("Prefactor") * Epoint[i] ** 2
+            Fluxpoint[i] = MEV_TO_ERG  * results.get("Prefactor") * Epoint[i] ** 2
             dprefactor = results.get("dPrefactor")
             try:
                 down = abs(results.get("dPrefactor-"))
                 up = results.get("dPrefactor+")
                 if down==0 or  up ==0 :
                   raise RuntimeError("cannot get Error value")
-                FluxpointErrp[i] = ErgsToMeV * up * Epoint[i] ** 2
-                FluxpointErrm[i] = ErgsToMeV * down * Epoint[i] ** 2
+                FluxpointErrp[i] = MEV_TO_ERG  * up * Epoint[i] ** 2
+                FluxpointErrm[i] = MEV_TO_ERG  * down * Epoint[i] ** 2
             except:
                 try:
-                    err = ErgsToMeV * dprefactor * Epoint[i] ** 2
+                    err = MEV_TO_ERG  * dprefactor * Epoint[i] ** 2
                     FluxpointErrp[i] = err
                     FluxpointErrm[i] = err
                 except:
@@ -336,7 +352,7 @@ def PlotDataPoints(config,pars):
         print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
 
         #Save the data point in a ascii file
-        dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( ErgsToMeV * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
+        dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( MEV_TO_ERG  * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
     #create a TGraph for the points
     tgpoint = ROOT.TGraphAsymmErrors(NEbin, Epoint, Fluxpoint, EpointErrm,
                                      EpointErrp, FluxpointErrm, FluxpointErrp)
@@ -345,9 +361,8 @@ def PlotDataPoints(config,pars):
     return tgpoint, arrows
 
 
-def PlotSED(infile,pars):
+def PlotSED(config,pars):
     """plot a nice SED with a butterfly and points"""
-    config = get_config(infile)
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
     root_style.RootStyle()
 
@@ -431,7 +446,7 @@ def PlotUL(pars,config,ULFlux,Index):
 
     #Compute the SED
     E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
-    SED = 1.602e-6 * E ** 2 * (-Index+1)*ULFlux* np.power(E,-Index)/(np.power(pars.Emax,-Index+1)-np.power(pars.Emin,-Index+1))
+    SED = MEV_TO_ERG  * E ** 2 * (-Index+1)*ULFlux* np.power(E,-Index)/(np.power(pars.Emax,-Index+1)-np.power(pars.Emin,-Index+1))
 
     #Actually make the plot
     c_plot = ROOT.TCanvas(pars.PlotName)

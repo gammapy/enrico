@@ -33,6 +33,14 @@ First get the data as explain the the offical page. You should have this when ty
 Make an ascii will with the 'entire' path of the FT1 (PH) fits files. Let's assume this file is called  `data.list` .
 
 
+The analysis can be performed on disjoint time bins. An ascii file must be provided in the [Time]/file option. The file must be a 2 columns file with T_start and T_stop (in MJD, MET or JD). Each line is a time bin.
+
+.. code-block:: bash
+
+   239557418 239657418 
+   239667418 239757410
+   239957418 239967418
+
 Folder management
 ------------------
 
@@ -183,6 +191,14 @@ It will divide the time range in [LightCurve]/NLCbin bins and run a proper analy
    section
 
 
+It is also possible to make a folded LC using
+
+.. code-block:: bash
+
+   $ enrico_foldedlc myanalysis.conf 
+
+This is designed for binary or periodic system. The user provide the starting point a period and the period lentgh as well as number of LC bins
+
 Make a TS map
 -------------
 
@@ -246,7 +262,6 @@ Both implementations are provided by the ScienceTools and used by enrico.
 
 Plot results
 -------------
-
 
 
 Now, we want to plot the results of the analysis we performed. Some plots can be produced by enrico. Using the tools `enrico_plot_*` allow to plot the results of your analysis.
@@ -326,3 +341,15 @@ These maps are use to visualize the ROI and check and see any misfitted sources.
    :align:   center
 
    flux/dflux vs Npred/DNpred plot of PG 1553+113. Red points are time-bins with TS> TSlimit, black (if any) are point for which an upper-limits on the flux was calculated and the points can be safely ignored in this plot. The gray dashed line is the fit with a linear function. to guide the eyes.
+
+
+
+Make Profile likelihood
+-------------
+
+The tool `enrico_scan` allows to make profile likelihood of the free parameters of the target. Each plot is save under the `scan` folder. Fits files must have been generated before.
+
+Check different models
+-------------
+
+`enrico_testmodel` will run the gtlike analysis with different model and compute the loglikehihood value for each model. The user can then decide, base on a LRT which model best describe the data. Fits files must have been generated before.

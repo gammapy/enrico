@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """Query required options and write to a config file"""
 import sys
+import logging
 from enrico.config import query_config
 
 try:
     infile = sys.argv[1]
 except:
-    print('Usage: enrico_config <output config file name>')
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <output config file name>')
     sys.exit(1)
 
 config = query_config()
