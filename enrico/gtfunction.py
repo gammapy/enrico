@@ -165,6 +165,7 @@ class Observation:
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
+        expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
         expcube2.run()
 
