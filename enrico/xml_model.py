@@ -278,7 +278,7 @@ def GetlistFromFits(config, catalog):
     ra_space = config['space']['xref']
     dec_space = config['space']['yref']
     emin = config['energy']['emin']
-    roi = config['space']['rad']
+    roi = config['space']['rad']+10
     max_radius = config['model']['max_radius']
     min_significance = config['model']['min_significance']
     model = config['target']['spectrum']
@@ -365,7 +365,7 @@ def GetlistFromFits(config, catalog):
                        'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
                        'SpectrumType': model,'ExtendedName': ""})
 
-    print "Add ", len(sources), " sources in the ROI of ", roi, " degrees"
+    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 10 ) degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
     return sources
