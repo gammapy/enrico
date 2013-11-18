@@ -46,8 +46,10 @@ mkdir -p $FERMI_DOWNLOAD_DIR
 mkdir -p $FERMI_PREPROCESSED_DIR
 mkdir -p $FERMI_CATALOG_DIR
 
-export FARM=LAPP
-#Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
+if [ ! -d "${FARM}" ]; then
+    #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
+    export FARM=LAPP
+fi
 
 echo "Run enrico_setupcheck to check if you are set up correctly."
 echo "Check your PATH and PYTHONPATH if enrico_setup is not found or gives an error."
