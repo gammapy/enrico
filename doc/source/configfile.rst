@@ -348,4 +348,24 @@ For the entire row 49 :
 
 .. code-block:: ini
 
-   enrico_tsmap myanalysis.conf 49a
+   enrico_tsmap myanalysis.conf 49
+
+
+
+Finding the position of a source
+-----
+
+This section is used to configured `enrico_findsrc`. It run the tool gtfindsource and update the file Roi_model.reg with the fitted position in red.
+
+ * FitsGeneration, if yes, enrico will make all the steps before running gtfindsource and generated all the fits files needed. If the files have already been generated, change FitsGeneration to no and enrico will only run gtfindsource
+
+ * Refit :  re-run the optimizer before (use the option reopt)
+
+.. code-block:: ini
+
+   [findsrc]
+      #Generates fits files or not?
+      FitsGeneration = option('yes', 'no', default='yes')
+      #Reoptimize before
+      Refit = option('yes', 'no', default='yes')
+

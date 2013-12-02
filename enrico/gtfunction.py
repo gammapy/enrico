@@ -307,4 +307,21 @@ class Observation:
         #Compute the residual map
         utils.SubtractFits(self.cmapfile,self.ModelMap,self.Configuration)
 
+    def FindSource(self):
+        """Run the gtfindsrc tool"""
+        findsrc = GtApp('gtfindsrc', 'Likelihood')
+        findsrc['evfile'] = self.eventfile
+        findsrc['scfile'] = self.ft2
+        findsrc['irfs'] = self.irfs
+        findsrc['expcube'] = self.Cubename
+        findsrc['expmap'] = self.Mapname
+        findsrc['srcmdl'] = utils._dump_xml( self.Configuration)
+        findsrc['coordsys'] = self.Configuration['space']['coordsys']
+        findsrc['target'] = self.srcname
+        findsrc['optimizer'] = self.Configuration["fitting"]["optimizer"]
+        findsrc['ftol'] = self.Configuration["fitting"]["ftol"]
+        findsrc['clobber'] = self.clobber
+        findsrc['reopt'] = self.Configuration["findsrc"]["Refit"]
+        findsrc['outfile'] = utils._dump_findsrcout(self.Configuration)
+        findsrc.run()
 

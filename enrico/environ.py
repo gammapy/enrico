@@ -38,7 +38,7 @@ DIRS = OrderedDict(FERMI_DATA_DIR=FERMI_DATA_DIR,
 CATALOG_VERSION = '08'
 TEMPLATE_VERSION = '07'
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
-DIFFUSE_GAL = 'gll_iem_v05.fits'
+DIFFUSE_GAL = 'gll_iem_v05.fit'
 DIFFUSE_ISO_SOURCE = 'iso_source_v05.txt'
 DIFFUSE_ISO_CLEAN = 'iso_clean_v05.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
@@ -61,7 +61,7 @@ def check_python_modules():
     ASTRO_PACKAGES = ['pyfits', 'kapteyn']
     # @todo: Here it's enough to try one of the Fermi python modules
     # and to show where they are located.
-    FERMI_PACKAGES = ['gt_apps', 'UnbinnedAnalysis']
+    FERMI_PACKAGES = ['gt_apps', 'UnbinnedAnalysis','BinnedAnalysis']
     PACKAGES = ['enrico', 'IPython'] + ASTRO_PACKAGES + FERMI_PACKAGES
     print('*** PYTHON PACKAGES ***')
     for package in PACKAGES:

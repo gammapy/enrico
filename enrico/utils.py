@@ -197,6 +197,14 @@ def _dump_xml(config) :
                   + "_" + config['target']['spectrum'] + "_"+
                   config['file']['tag'] + "_out.xml")
 
+
+def _dump_reg(config):
+    return config['out'] + "/Roi_model.reg"
+
+def _dump_findsrcout(config):
+    return config['out'] + "/FindSource.out"
+
+
 def _dump_filename(config):
     """Give the name of the file where the results will be dumped"""
     return (config['out'] + '/' + config['target']['name'] + '_' +

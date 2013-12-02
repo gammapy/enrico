@@ -81,7 +81,6 @@ if __name__ == '__main__':
     import sys
     try:
         infile = sys.argv[1]
-#        config = get_config(infile)
     except:
         print('FATAL: Config file not found.')
         sys.exit(1)

@@ -33,4 +33,7 @@ enrico_plot_tsmap: plot the TS Map resulting from enrico_tsmap
 
 enrico_scan: make a profile likelihood for each free parameter of the target
 
+enrico_findsrc: run gtfindsource
+
+
 enrico_help: print help
