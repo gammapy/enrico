@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+import os
+import sys
+import numpy as np
+from enrico.config import get_config
+from enrico import environ
+from enrico.findsource import FindSrc
+from enrico.submit import call
+import logging
+
+def run(infile):
+  if config['Submit'] == 'no':
+    FindSrc(infile)
+  else :
+
+    os.system("mkdir -p " + config['out'] + "\n")
+
+    cmd = environ.DIRS.get('ENRICO_DIR')+"/enrico/findsource.py "+os.getcwd()+"/" + infile
+
+    GenericName = (config['target']['name'] + "_FindSrc" + config['file']['tag'])
+    prefix = config['out'] + "/" + GenericName
+    scriptname = prefix + "_Script.sh"
+    JobLog = prefix + "_Job.log"
+    JobName = GenericName
+    call(cmd, environ.DIRS.get('ENRICO_DIR'), environ.DIRS.get('FERMI_DIR'), scriptname, JobLog, JobName)
+
+try:
+    infile = sys.argv[1]
+except:
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    sys.exit(1)
+
+print len(sys.argv)
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try : 
+    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      print "work on the config file ",inf
+      run(inf)
+  except :
+    config = get_config(infile)
+    run(infile)
+else:
+  for inf in sys.argv[1:]:
+    print "work on the config file ",inf
+    run(inf)
+
