@@ -11,6 +11,9 @@ enrico_download: download data and auxiliary files (backgrounds, catalog, etc...
 
 enrico_config: produce a configuration file
 
+
+enrico_gui : run the GUI of enrico
+
 enrico_xml: produce an xml file that is use to model the ROI using the 2FGL catalog.
 
 enrico_sed: Run gtlike afer having produced all the need fits files is asked.

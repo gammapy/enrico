@@ -25,7 +25,7 @@ Features
 * The enrico command line tools are just frontends for functions and
   classes in the enrico python package, so if you know the Fermi tools
   and some python it is easy for you to modify things to your needs.
-
+* A :ref:`gui` has been developed to simply the use of the package.
 
 Enrico is based on a configuration file which contains all the setup for your
 analysis. For each enrico tool, you just have to type
@@ -116,6 +116,7 @@ Table of Contents
    setup
    tutorial
    configfile
+   gui
    tools
    script
    developer

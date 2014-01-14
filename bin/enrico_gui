@@ -1,0 +1,26 @@
+#!/usr/bin/python
+"""GUI"""
+import sys
+import logging
+import enrico.gui  as gui
+from enrico.config import get_config
+
+try:
+    infile = sys.argv[1]
+except:
+    logging.error('Config file not found.')
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    sys.exit(1)
+import gtk
+
+gui=gui.EnricoGui(infile)
+
+## Message
+win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+button = gtk.Button("The gui is in development. Use with caution")
+button.connect_object("clicked", gtk.Widget.destroy, win)
+win.add(button)
+button.show()
+win.show()
+
+gtk.main()

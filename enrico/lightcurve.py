@@ -82,7 +82,7 @@ class LightCurve:
     def _ManageFolder(self,path):
         """   All files will be stored in a subfolder name path + NLCbin
         Create a subfolder"""
-        self.LCfolder =  self.folder+"/"+path+"_"+str(self.Nbin)+"bins/"
+        self.LCfolder =  self.folder+"/LightCurve_"+str(self.Nbin)+"bins/"
         os.system("mkdir -p "+self.LCfolder)
         self.config['out'] = self.LCfolder
 
@@ -265,6 +265,7 @@ class LightCurve:
             TgrNpred_detected.Draw('zP')
             fittedFunc.Draw("SAME")
 
+            CanvNpred.Print(LcOutPath+"_Npred.png")
             CanvNpred.Print(LcOutPath+"_Npred.eps")
             CanvNpred.Print(LcOutPath+"_Npred.C")
 
@@ -272,6 +273,7 @@ class LightCurve:
             CanvTS = _GetCanvas()
             gTHTS.Draw()
             TgrTS.Draw('zP')
+            CanvTS.Print(LcOutPath+'_TS.png')
             CanvTS.Print(LcOutPath+'_TS.eps')
             CanvTS.Print(LcOutPath+'_TS.C')
 
@@ -298,6 +300,7 @@ class LightCurve:
         self.Fvar(Flux,FluxErr)
 
         #Save the canvas in the LightCurve subfolder
+        CanvLC.Print(LcOutPath+'_LC.png')
         CanvLC.Print(LcOutPath+'_LC.eps')
         CanvLC.Print(LcOutPath+'_LC.C')
 

@@ -5,7 +5,7 @@ from os.path import join
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-from enrico.extern.odict import OrderedDict
+#from enrico.extern.odict import OrderedDict
 
 
 #Submission farm name
@@ -17,14 +17,21 @@ ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
 FERMI_DIR = os.environ.get('FERMI_DIR', '')
 FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
-CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') if CATALOG_DIR else ''
+CATALOG_TEMPLATE_DIR = ''
+if CATALOG_DIR :
+  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') 
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
-WEEKLY_DIR = join(DOWNLOAD_DIR, 'photon') if DOWNLOAD_DIR else ''
+WEEKLY_DIR = ''
+if DOWNLOAD_DIR :
+  WEEKLY_DIR = join(DOWNLOAD_DIR, 'photon')
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
 
-DIRS = OrderedDict(FERMI_DATA_DIR=FERMI_DATA_DIR,
+
+try :
+    from enrico.extern.odict import OrderedDict
+    DIRS = OrderedDict(FERMI_DATA_DIR=FERMI_DATA_DIR,
                    FERMI_DIR=FERMI_DIR,
                    CATALOG_DIR=CATALOG_DIR,
                    DIFFUSE_DIR=DIFFUSE_DIR,
@@ -33,6 +40,8 @@ DIRS = OrderedDict(FERMI_DATA_DIR=FERMI_DATA_DIR,
                    WEEKLY_DIR=WEEKLY_DIR,
                    CONFIG_DIR=CONFIG_DIR,
                    ENRICO_DIR=ENRICO_DIR)
+except :
+    DIRS = {}
 
 # File names
 CATALOG_VERSION = '08'
