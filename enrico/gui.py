@@ -11,6 +11,11 @@ class EnricoGui:
        self.save(None,None)
        os.system(data+" "+self.infile)
 
+    def LaunchEbin(self,widget,data=None):
+       self.save(None,None)
+       if self.config["Ebin"]["NumEnergyBins"]>0 :
+           os.system("enrico_sed "+self.config["out"]+'/Ebin'+str(self.config["Ebin"]["NumEnergyBins"])+"/*conf" )
+
     def Sync(self, widget, data=None):
        self.x.set_value(self.ra.get_value())
        self.y.set_value(self.dec.get_value())
@@ -735,6 +740,14 @@ class EnricoGui:
         label.show()
         tableebin.attach(label,0, 2,2,3)
         tableebin.attach(self.tsebin,3,4,2,3)
+
+        label = gtk.Label("Re-run the Ebin calculation only")
+        label.show()
+        ebinbutton = gtk.Button("Re-run Ebin")  
+        ebinbutton.connect("clicked", self.LaunchEbin, '')
+        ebinbutton.show()
+        tableebin.attach(label,0, 2,3,4)
+        tableebin.attach(ebinbutton,3,4,3,4)
 
     def _addUL(self):
         BNPage = self.AddBlocNotePage("Upper Limits")
