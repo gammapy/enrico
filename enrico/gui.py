@@ -850,8 +850,8 @@ class EnricoGui:
 #        BNPage.attach(frame, 0, 8, 0, 4)
 
     def _addAppFoldedLC(self):
-        BNPage = self.AddBlocNotePage("Apperture/Folded LC")
-        frameapp,tableapp = self._addFrame("Apperture photometry options",2,4)
+        BNPage = self.AddBlocNotePage("Aperture/Folded LC")
+        frameapp,tableapp = self._addFrame("Aperture photometry options",2,4)
         BNPage.attach(frameapp, 0, 8, 0, 4)
 
         FitButton = gtk.CheckButton("")
@@ -1037,6 +1037,13 @@ class EnricoGui:
             config = ConfigObj(indent_type='\t')
             config['out'] = os.getcwd()
             self.config = get_config(config) 
+
+        try :
+            ftmp=open(self.config['file']['xml'],'r')
+            ftmp.close()
+        except :
+            os.system('touch '+self.config['file']['xml'])
+
 
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.connect("delete_event", self.delete)

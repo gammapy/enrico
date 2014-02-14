@@ -46,7 +46,6 @@ except:
     print('Usage: '+sys.argv[0]+' <config file name>')
     sys.exit(1)
 
-print len(sys.argv)
 if len(sys.argv)==2 :
 #read an config file alone. If not working, try to read an ascii file with different conf file
   try : 
