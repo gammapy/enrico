@@ -32,8 +32,10 @@ def FindSrc(infile):
     FitRunner._log('gtfindsrc', 'Optimize source position')
     os.system("rm "+utils._dump_findsrcout(config))
     Obs.FindSource()
-    update_reg(config)
-
+    try:
+      update_reg(config)
+    except:
+      pass
 
 if __name__ == '__main__':
     import sys
