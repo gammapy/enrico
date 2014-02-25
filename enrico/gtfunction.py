@@ -41,6 +41,7 @@ class Observation:
         self.scrMap    = folder+'/'+self.srcname+inttag+"_srcMap.fits"
         self.ModelMap  = folder+'/'+self.srcname+inttag+"_ModelMap.fits"
         self.BinDef  = folder+'/'+self.srcname+inttag+"_BinDef.fits"
+        self.Probfile  = folder+'/'+self.srcname+inttag+"_prob.fits"
 
         #Variables
         self.t1        = float(Configuration['time']['tmin'])
@@ -325,3 +326,14 @@ class Observation:
         findsrc['outfile'] = utils._dump_findsrcout(self.Configuration)
         findsrc.run()
 
+    def SrcProb(self):
+        """Run the gtsrcprob tool"""
+        srcprob = GtApp('gtsrcprob', 'Likelihood')
+        srcprob['evfile'] = self.eventfile
+        srcprob['scfile'] = self.ft2
+        srcprob['irfs'] = self.irfs
+        srcprob['srcmdl'] = self.xmlfile
+        srcprob['outfile'] = self.Probfile
+        srcprob['srclist'] = self.Configuration['srcprob']['srclist']
+        srcprob['clobber'] = self.clobber
+        srcprob.run()

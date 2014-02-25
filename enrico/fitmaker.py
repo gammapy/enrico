@@ -134,7 +134,7 @@ class FitMaker(object):
                     NoWeakSrcLeft = False
                     Fit.deleteSource(src)
             if not(NoWeakSrcLeft):
-                self._log('Re-optimize', False)
+                self._log('Re-optimize', '')
                 Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
             print
         return Fit

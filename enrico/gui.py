@@ -173,7 +173,6 @@ class EnricoGui:
         else: 
            self.config['time']['file'] = self.ftime.get_filename()
 
-
         self.config["time"]["type"] = self.listtime.entry.get_text()
 
         self.config["Ebin"]["NumEnergyBins"] = int(self.nebin.get_value())
@@ -201,6 +200,9 @@ class EnricoGui:
 
         self.config["fitting"]["optimizer"] = self.listopt.entry.get_text()
         self.config["fitting"]["ftol"] = pow(10,self.ftol.get_value())
+
+        self.config["srcprob"]["rad"] = self.radsrcprob.get_value()
+        self.config["srcprob"]["srclist"] = self.srclist.get_filename()
 
         self.config.write(open(self.infile, 'w'))
 
@@ -442,26 +444,31 @@ class EnricoGui:
         findsrcbutton.show()
         tablebut.attach(findsrcbutton, 4,6,3,4)
 
+        srcprobbutton = gtk.Button("run enrico_ srcprob")
+        srcprobbutton.connect("clicked", self.Launch, 'enrico_srcprob')
+        srcprobbutton.show()
+        tablebut.attach(srcprobbutton, 2,4,4,5)
+
         sep2 = gtk.HSeparator()
         sep2.show()
-        tablebut.attach(sep2, 0,6,4,5)
+        tablebut.attach(sep2, 0,6,5,6)
 
         applcbutton = gtk.Button("run enrico_ applc")
         applcbutton.connect("clicked", self.Launch, 'enrico_applc')
         applcbutton.show()
-        tablebut.attach(applcbutton,0, 2,5,6)
+        tablebut.attach(applcbutton,0, 2,6,7)
 
         foldedlcbutton = gtk.Button("run enrico_ foldedlc")
         foldedlcbutton.connect("clicked", self.Launch, 'enrico_foldedlc')
         foldedlcbutton.show()
-        tablebut.attach(foldedlcbutton, 2,4,5,6)
+        tablebut.attach(foldedlcbutton, 2,4,6,7)
  
         foldedlcplotbutton = gtk.Button("run enrico_ plot_ foldedlc")
         foldedlcplotbutton.connect("clicked", self.Launch, 'enrico_plot_foldedlc')
         foldedlcplotbutton.show()
-        tablebut.attach(foldedlcplotbutton, 4,6,5,6)
+        tablebut.attach(foldedlcplotbutton, 4,6,6,7)
 
-        BNPage.attach(framebut, 0, 8, 2,6)
+        BNPage.attach(framebut, 0, 8, 2,7)
  
     def _addAnalysis(self):
         BNPage = self.AddBlocNotePage("Analysis")
@@ -953,8 +960,8 @@ class EnricoGui:
         table.attach(label, 0, 2,3,4)
         table.attach(self.listtsmethod, 3,4,3,4)
 
-    def _addfindsrc(self):
-        BNPage = self.AddBlocNotePage("Findsrc")
+    def _addfindsrcsrcprob(self):
+        BNPage = self.AddBlocNotePage("Findsrc/Srcprob")
         frame,table = self._addFrame("Find source options",2,4)
         BNPage.attach(frame, 0, 8, 0, 2)
 
@@ -977,6 +984,25 @@ class EnricoGui:
         label.show()
         table.attach(label,0, 2,1,2)
         table.attach(reFitButton, 3,4,1,2)
+
+        frameprob,tableprob = self._addFrame("Srcprob options",2,4)
+        BNPage.attach(frameprob, 0, 8, 2, 4)
+        self.radsrcprob = self.AddSpinButton(self.config["srcprob"]["rad"],0, 360, .1, 1) 
+
+        labrad = gtk.Label("Radius of the search region")
+        labrad.show()
+        tableprob.attach(labrad,0, 2,0,1)
+        tableprob.attach(self.radsrcprob,3,4,0, 1)
+
+        self.srclist = gtk.FileChooserButton("srclist")
+        self.srclist.set_title("srclist")
+        self.srclist.set_filename(self.config['srcprob']['srclist'])
+        self.srclist.show()
+
+        labsrclist = gtk.Label("srclist filename")
+        labsrclist.show()
+        tableprob.attach(labsrclist,0, 2,1,2)
+        tableprob.attach(self.srclist,3,4,1,2)
 
     def _addPlot(self):
 
@@ -1068,7 +1094,7 @@ class EnricoGui:
         self._addAppFoldedLC()
 #        self._addEbin()
         self._addTSMap()
-        self._addfindsrc()
+        self._addfindsrcsrcprob()
         self._addPlot()
 
         self.notebloc.set_current_page(0)

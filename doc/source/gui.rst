@@ -105,11 +105,11 @@ TS Map parameters are managed here
    :align:   center
 
 
-Findsrc page
+Findsrc/srcprob page
 -------------
 
 
-The findsrc tool parameters are managed here
+The findsrc and the srcprob tools parameters are managed here
 
 .. figure::  _static/GuiFindSRC.png
    :align:   center
