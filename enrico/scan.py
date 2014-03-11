@@ -5,7 +5,7 @@ begun November 2013
 import enrico.constants as cst
 import RunGTlike
 import ROOT
-import numpy,os
+import numpy,os,string
 
 def MakeScan(Fit,spectrum,par,bmin,bmax,opt):
     N=30
@@ -52,6 +52,10 @@ def Scan(config):
           tgr.Draw('AL')
 
           os.system("mkdir -p "+config["out"]+"/"+cst.ScanPath)
+          savefile = open(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".txt","w")
+          for i in xrange(param.size):
+             savefile.write(str(param[i])+" "+str(loglike[i])+"\n")
+          savefile.close()
           cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".eps")
           cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".C")
           cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".png")
