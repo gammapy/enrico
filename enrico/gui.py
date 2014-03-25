@@ -14,7 +14,9 @@ class EnricoGui:
     def LaunchEbin(self,widget,data=None):
        self.save(None,None)
        if self.config["Ebin"]["NumEnergyBins"]>0 :
-           os.system("enrico_sed "+self.config["out"]+'/Ebin'+str(self.config["Ebin"]["NumEnergyBins"])+"/*conf" )
+#           os.system("enrico_sed "+self.config["out"]+'/Ebin'+str(self.config["Ebin"]["NumEnergyBins"])+"/*conf" )
+           os.system("enrico_sed Ebin"+str(self.config["Ebin"]["NumEnergyBins"])+"/*conf" )
+
 
     def Sync(self, widget, data=None):
        self.x.set_value(self.ra.get_value())
@@ -120,6 +122,12 @@ class EnricoGui:
     def fct_rappel(self, widget, data=None):
        print "Le %s a ete %s." % (data, ("desactive", "active")[widget.get_active()])
 
+    def reloadinfile(self, widget, event=None):
+        self.save(None,None)
+        self.window.destroy()
+        self.__init__(self.infile)
+#        return False
+
     def delete(self, widget, event=None):
         gtk.main_quit()
         return False
@@ -150,7 +158,7 @@ class EnricoGui:
         self.config["target"]["name"] = self.fname.get_text()
         self.config["target"]["ra"] = self.ra.get_value()
         self.config["target"]["dec"] = self.dec.get_value()
-        self.config["space"]["spectrum"] = self.listSpec.entry.get_text()
+        self.config["target"]["spectrum"] = self.listSpec.entry.get_text()
 
         self.config["space"]["xref"] = self.x.get_value()
         self.config["space"]["yref"] = self.y.get_value()
@@ -1071,12 +1079,13 @@ class EnricoGui:
             os.system('touch '+self.config['file']['xml'])
 
 
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.connect("delete_event", self.delete)
-        window.set_border_width(10)
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.connect("delete_event", self.delete)
+        self.window.set_border_width(10)
+
 
         table = gtk.Table(3,6,False)
-        window.add(table)
+        self.window.add(table)
 
         self.notebloc = gtk.Notebook()
         self.notebloc.set_tab_pos(gtk.POS_LEFT)
@@ -1099,18 +1108,23 @@ class EnricoGui:
 
         self.notebloc.set_current_page(0)
 
+        ReloadButton = gtk.Button("Reload file")
+        ReloadButton.connect("clicked", self.reloadinfile)
+        table.attach(ReloadButton, 1,2,1,2)
+        ReloadButton.show()
+
         SaveButton = gtk.Button("Save file")
         SaveButton.connect("clicked", self.save, "")
-        table.attach(SaveButton, 1,2,1,2)
+        table.attach(SaveButton, 3,4,1,2)
         SaveButton.show()
 
         CloseButton = gtk.Button("Close")
         CloseButton.connect("clicked", self.delete)
-        table.attach(CloseButton, 4,5,1,2)
+        table.attach(CloseButton, 5,6,1,2)
         CloseButton.show()
 
         table.show()
-        window.show()
+        self.window.show()
 
 
 if __name__ == "__main__":
