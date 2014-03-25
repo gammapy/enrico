@@ -6,7 +6,7 @@ from enrico.utils import calcAngSepDeg
 from enrico.config import get_config
 import pyfits
 
-def Print(indices):
+def Print(indices,config):
       print "Energy\tAngular Sep\tProba"
       for i in xrange(min(10,indices.size)):
           angSep = calcAngSepDeg(config['target']["ra"],config['target']["dec"],ra[indices[i]],dec[indices[i]])
@@ -29,10 +29,10 @@ def Runsrcprob(config):
       dec = probfile[1].data.field("DEC")
       indices = energy.argsort()
       print "Results sorted by decreasing energy"
-      Print(indices)
+      Print(indices,config)
       print 
       print "Results sorted by decreasing probability"
       indices = proba.argsort()
-      Print(indices)
+      Print(indices,config)
 
 
