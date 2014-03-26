@@ -6,19 +6,20 @@ from enrico.utils import calcAngSepDeg
 from enrico.config import get_config
 import pyfits
 
-def Print(indices,config):
+def Print(indices,config,ra,dec,proba,energy):
       print "Energy\tAngular Sep\tProba"
       for i in xrange(min(10,indices.size)):
-          angSep = calcAngSepDeg(config['target']["ra"],config['target']["dec"],ra[indices[i]],dec[indices[i]])
-          print "%2.1f\t%2.3f\t\t%2.5f"%(energy[indices[i]],angSep,proba[indices[i]])
+          angSep = calcAngSepDeg(config['target']["ra"],config['target']["dec"],ra[indices[indices.size-1-i]],dec[indices[indices.size-1-i]])
+          print "%2.1f\t%2.3f\t\t%2.5f"%(energy[indices[indices.size-1-i]],angSep,proba[indices[indices.size-1-i]])
 
 
 def Runsrcprob(config):
     config['space']['rad'] = config['srcprob']['rad']
     Obs = Observation(config['out'], config, config['analysis']['convtype'], tag="srcprob")
-    Obs.FirstCut()
-    if config['analysis']['ComputeDiffrsp'] == 'yes':
-        Obs.DiffResps()
+    if config['srcprob']['FitsGeneration'] =='yes':
+        Obs.FirstCut()
+        if config['analysis']['ComputeDiffrsp'] == 'yes':
+            Obs.DiffResps()
     Obs.SrcProb()
     probfile=pyfits.open(Obs.Probfile)
     srclist = open(config['srcprob']['srclist'],"r").readlines()
@@ -29,10 +30,10 @@ def Runsrcprob(config):
       dec = probfile[1].data.field("DEC")
       indices = energy.argsort()
       print "Results sorted by decreasing energy"
-      Print(indices,config)
+      Print(indices,config,ra,dec,proba,energy)
       print 
       print "Results sorted by decreasing probability"
       indices = proba.argsort()
-      Print(indices,config)
+      Print(indices,config,ra,dec,proba,energy)
 
 
