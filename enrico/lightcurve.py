@@ -211,13 +211,15 @@ class LightCurve:
         Npred_detected_indices = []
         TS = []
 
+        Nfail = 0
         for i in xrange(self.Nbin):
             CurConfig = get_config(self.configfile[i])
             #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
             try :
                 ResultDic = utils.ReadResult(CurConfig)
             except :
-                self._errorReading("fail reading config file",i)
+                self._errorReading("Fail reading config file",i)
+                Nfail+=1
                 continue
 
             #Update the time and time error array
@@ -236,8 +238,9 @@ class LightCurve:
             Npred.append(ResultDic.get("Npred"))
             TS.append(ResultDic.get("TS"))
             if (CurConfig['LightCurve']['TSLightCurve']<float(ResultDic.get("TS"))):
-                Npred_detected_indices.append(i)
+                Npred_detected_indices.append(i-Nfail)
 
+        print len(Npred_detected_indices)
         #change the list into np array
         TS = np.array(TS)
         Npred = np.array(Npred)

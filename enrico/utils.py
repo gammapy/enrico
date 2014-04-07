@@ -202,7 +202,9 @@ def _dump_reg(config):
     return config['out'] + "/Roi_model.reg"
 
 def _dump_findsrcout(config):
-    return config['out'] + "/FindSource.out"
+    res = config['out'] + "/FindSource.out"
+    os.system("touch "+res)
+    return res
 
 
 def _dump_filename(config):

@@ -29,11 +29,13 @@ def Runsrcprob(config):
       ra = probfile[1].data.field("RA")
       dec = probfile[1].data.field("DEC")
       indices = energy.argsort()
+      print indices[0:10]
       print "Results sorted by decreasing energy"
       Print(indices,config,ra,dec,proba,energy)
       print 
       print "Results sorted by decreasing probability"
       indices = proba.argsort()
+      print indices[0:10]
       Print(indices,config,ra,dec,proba,energy)
 
 
