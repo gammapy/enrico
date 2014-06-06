@@ -205,6 +205,8 @@ class LightCurve:
         TimeErr = []
         Flux = []
         FluxErr = []
+        Index = []
+        IndexErr = []
         FluxForNpred = []
         FluxErrForNpred = []
         Npred = []
@@ -229,9 +231,13 @@ class LightCurve:
             if ResultDic.has_key('Ulvalue') :
                 Flux.append(ResultDic.get("Ulvalue"))
                 FluxErr.append(0)
+                Index.append(ResultDic.get("Index"))
+                IndexErr.append(0)
             else :
                 Flux.append(ResultDic.get("Flux"))
                 FluxErr.append(ResultDic.get("dFlux"))
+                Index.append(ResultDic.get("Index"))
+                IndexErr.append(ResultDic.get("dIndex"))
             FluxErrForNpred.append(ResultDic.get("dFlux"))
             FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
@@ -249,6 +255,8 @@ class LightCurve:
         TimeErr = np.array(TimeErr)
         Flux = np.array(Flux)
         FluxErr = np.array(FluxErr)
+        Index = np.array(Index)
+        IndexErr = np.array(IndexErr)
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
@@ -290,6 +298,9 @@ class LightCurve:
             gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
         else :
             gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+            gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr)
+
+        ### plot and save the flux LC
         CanvLC = ROOT.TCanvas()
         gTHLC.Draw()
         TgrLC.Draw('zP')
@@ -299,6 +310,8 @@ class LightCurve:
             ArrowLC[i].Draw()
 
         # compute Fvar and probability of being cst
+
+        print "Flux vs Time: infos"
         self.FitWithCst(TgrLC)
         self.Fvar(Flux,FluxErr)
 
@@ -307,10 +320,28 @@ class LightCurve:
         CanvLC.Print(LcOutPath+'_LC.eps')
         CanvLC.Print(LcOutPath+'_LC.C')
 
+        ### plot and save the Index LC
+        CanvIndex = ROOT.TCanvas()
+        gTHIndex.Draw()
+        TgrIndex.Draw('zP')
+
+        #plot the ul as arrow
+        for i in xrange(len(ArrowIndex)):
+            ArrowIndex[i].Draw()
+
+        #Save the canvas in the LightCurve subfolder
+        if self.config["LightCurve"]["SpectralIndex"] == 0 :
+            print "Index vs Time: infos"
+            self.FitWithCst(TgrIndex)
+            CanvIndex.Print(LcOutPath+'_Index.png')
+            CanvIndex.Print(LcOutPath+'_Index.eps')
+            CanvIndex.Print(LcOutPath+'_Index.C')
+
+
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
         print "Write to Ascii file : ",lcfilename
-        WriteToAscii(Time,TimeErr,Flux,FluxErr,TS,Npred,lcfilename)
+        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,TS,Npred,lcfilename)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
@@ -337,13 +368,12 @@ class LightCurve:
         var=np.var(Flux)
         expvar=np.average((np.array(FluxErr))**2)
         intvar=var-expvar #Correct for errors
-        print 
         try :
             fvar=sqrt(intvar)/moy
             err_fvar = sqrt( ( 1./sqrt(2*len(Flux))*expvar/moy**2/fvar)**2 + (sqrt(expvar/len(Flux))*1./moy)**2)
-            print "\t Fvar = ",fvar," +/- ",err_fvar
+            print "\tFvar = ",fvar," +/- ",err_fvar
         except :
-            print  "\t Fvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
+            print  "\tFvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
         print 
 
     def FitWithCst(self,tgrFlux):
@@ -353,10 +383,10 @@ class LightCurve:
         func.SetLineColor(15)
         func.SetLineStyle(3)
         tgrFlux.Fit('func','Q')
-        print
         print '\tChi2 = ',func.GetChisquare()," NDF = ",func.GetNDF()
         print '\tprobability of being cst = ',func.GetProb()
         print
+        del func
 
     def VariabilityIndex(self):
         """Compute the variability index as in the 2FLG catalogue. (see Nolan et al, 2012)"""
@@ -426,14 +456,15 @@ def _GetCanvas():
     Canv.SetGridy()
     return Canv
 
-def WriteToAscii(Time, TimeErr, Flux, FluxErr, TS, Npred, filename):
+def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
     flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
-              'Delta_Flux TS Npred\n')
+              'Delta_Flux Index Delta_Index TS Npred\n')
     for i in xrange(len(Time)):
         flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
                   str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
+                  str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
                   str(TS[i]) + "\t" + str(Npred[i]) + "\n")
     flc.close()
 

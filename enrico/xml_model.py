@@ -403,9 +403,8 @@ def WriteXml(lib, doc, srclist, config):
     if config['model']['diffuse_iso'] == "":
         Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
 
-        if config['analysis']['irfs'] == "P7CLEAN_V6":# and config['analysis']['convtype'] == -1:
-            Iso = Iso_dir + "/" + env.DIFFUSE_ISO_CLEAN
-
+#        if config['analysis']['irfs'] == "P7CLEAN_V6":# and config['analysis']['convtype'] == -1:
+#            Iso = Iso_dir + "/" + env.DIFFUSE_ISO_CLEAN
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
 
@@ -439,7 +438,7 @@ def WriteXml(lib, doc, srclist, config):
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=free, alpha_value=abs(srclist[i].get('index')),
                               beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName)
-        if spectype == "PLExpCutoff":
+        if spectype == "PLExpCutoff" or spectype == "PLSuperExpCutoff":
             addPSPLSuperExpCutoff(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),

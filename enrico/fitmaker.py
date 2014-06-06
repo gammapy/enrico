@@ -99,7 +99,7 @@ class FitMaker(object):
               log.warning("The model is not a PowerLaw. Cannot freeze the index.")
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
-    def PerformFit(self, Fit):
+    def PerformFit(self, Fit, writeXml = True):
         """Run gtlile tool. First it run gtlike with the DRNMGB optimizer
         and the user optimizer after. A dictionnay is return with all
         the releveant results"""
@@ -117,8 +117,8 @@ class FitMaker(object):
         self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) #fit with the user optimizer and ask gtlike to compute the covariance matrix 
 
         self.RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
-
-        Fit.writeXml(utils._dump_xml(self.config))
+        if writeXml : 
+            Fit.writeXml(utils._dump_xml(self.config))
 
     def RemoveWeakSources(self,Fit):
         """Remove the weak source after a fit and reoptimized
@@ -201,8 +201,8 @@ class FitMaker(object):
                           (ParValue, ParError, Scale))
             else:
                 if self.config['verbose'] == 'yes' :
-                    print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
-                      (ParValue, ParError, Scale))
+                    print(par+" :  %2.2f   %2.0e" %
+                      (ParValue, Scale))
 
         try: # get covariance matrix
             if self.config['verbose'] == 'yes' :

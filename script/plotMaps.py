@@ -1,4 +1,4 @@
-
+import os,sys
 try:
   import matplotlib
 except:
@@ -13,7 +13,7 @@ except:
   sys.exit("Module astropy missing")
 
 from astropy.wcs import WCS
-import os,sys
+
 
 try:
   from aplpy import FITSFigure

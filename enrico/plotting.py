@@ -246,24 +246,24 @@ def PlotNpred(Npred, Flux, FluxErr):
     tgraph.SetMarkerStyle(5)
     return gh, tgraph
 
-def PlotLC(Time, TimeErr, Flux, FluxErr):
-    """Scatter plot Flux(Time)"""
-    ArrowSize = (max(Flux) + max(FluxErr) * 1.3 -
-                 (min(Flux) - max(FluxErr) * 1.3)) * 0.1
+def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
+    """Scatter plot X(Time)"""
+    ArrowSize = (max(x) + max(xErr) * 1.3 -
+                 (min(x) - max(xErr) * 1.3)) * 0.1
     arrows = []
     for i in xrange(len(Time)):
-        if FluxErr[i] == 0:
-            arrows.append(ROOT.TArrow(Time[i], Flux[i], Time[i],
-                                     Flux[i] - ArrowSize, 0.015, "|>"))
+        if xErr[i] == 0:
+            arrows.append(ROOT.TArrow(Time[i], x[i], Time[i],
+                                     x[i] - ArrowSize, 0.015, "|>"))
     xmin = min(Time) - max(TimeErr) * 10
     xmax = max(Time) + max(TimeErr) * 10
-    ymin = min(Flux) - max(FluxErr) * 1.3
-    ymax = max(Flux) + max(FluxErr) * 1.3
+    ymin = min(x) - max(xErr) * 1.3
+    ymax = max(x) + max(xErr) * 1.3
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     gh.SetXTitle("Time")
-    gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
-    tgraph = ROOT.TGraphErrors(len(Time), Time, Flux, TimeErr, FluxErr)
+    gh.SetYTitle(tag)
+    tgraph = ROOT.TGraphErrors(len(Time), Time, x, TimeErr, xErr)
     tgraph.SetMarkerColor(1)
     tgraph.SetMarkerStyle(20)
     return gh, tgraph, arrows

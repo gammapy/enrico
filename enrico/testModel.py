@@ -1,4 +1,5 @@
 import os
+import scipy.stats
 import SummedLikelihood
 from enrico.fitmaker import FitMaker
 from enrico.gtfunction import Observation
@@ -10,37 +11,56 @@ class ModelTester:
          self.config = config
          self.folder = self.config['out']
          os.system("mkdir -p "+self.folder+"/TestModel")
-         convtype = self.config['analysis']['convtype']
+         self.convtype = self.config['analysis']['convtype']
+         self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
+
+         self._GenFit()
+         self.FitRunner.PerformFit(self.Fit, False)
+         # Store the results in a dictionnary
+         self.Results = {}
+
+    def _GenFit(self):
+         try :
+             del self.Fit
+         except :
+             pass
 
          if self.config['Spectrum']['SummedLike'] == 'yes':
              Obs1 = Observation(self.folder, self.config, convtype=0, tag="FRONT")
              Obs2 = Observation(self.folder, self.config, convtype=1, tag="BACK")
-             FitRunnerfront = FitMaker(Obs1, self.config)
-             FitRunnerback = FitMaker(Obs2, self.config)
-             FitRunnerfront.CreateLikeObject()
-             FitRunnerback.CreateLikeObject()
+             self.FitRunnerfront = FitMaker(Obs1, self.config)
+             self.FitRunnerback = FitMaker(Obs2, self.config)
+             self.FitRunnerfront.CreateLikeObject()
+             self.FitRunnerback.CreateLikeObject()
              self.Fit = SummedLikelihood.SummedLikelihood()
          else:
-             Obs = Observation(self.folder, self.config, convtype, tag="")
-             FitRunner = FitMaker(Obs, self.config)##Class
-             self.Fit = FitRunner.CreateLikeObject()
+             Obs = Observation(self.folder, self.config, self.convtype, tag="")
+             self.FitRunner = FitMaker(Obs, self.config)##Class
+             self.Fit = self.FitRunner.CreateLikeObject()
 
-         # Store the results in a dictionnary
-         self.Results = {}
-         self.Results["PowerLaw"] = 0
-         self.Results["LogParabola"] = 0
-         self.Results["PLSuperExpCutoff"] = 0
+    def _printResults(self):
+        print 
+        for key in self.modellist:
+           if key == "PowerLaw":
+               print key," Log(Like) = ",self.Results[key]
+               llpl = self.Results[key]
+           else :
+               TS = 2*(self.Results[key]-llpl)
+               prob = 1 - scipy.stats.chi2.cdf(TS, 1)
+               print key," Log(Like) = ",self.Results[key]," TS = ",TS," Pvalue = ",prob
 
     def TestModel(self):
         """ actually test the models """
         Dumpfile = open(self.folder+"/TestModel/TestModel.results","w")
-        for key in self.Results.iterkeys():
+        for key in self.modellist:
             self.Results[key] = self.RunAFit(self.config["target"]["name"],key)
             Dumpfile.write(key + '\t' + str(self.Results[key]) + '\n')
         Dumpfile.close()
+        self._printResults()
 
     def RunAFit(self,srcname,model):
-        print "Computing loglike value for: ",model
+        print "Computing loglike value for ",model
+#        self._GenFit()
         self.Fit.logLike.getSource(srcname).setSpectrum(model)
         if model=="PowerLaw":
             self._setPowerLaw(srcname)
@@ -50,9 +70,13 @@ class ModelTester:
             self._setPLSuperExpCutoff(srcname)
 
         #change the fit tolerance to the one given by the user
-        self.Fit.ftol = float(self.config['fitting']['ftol'])
+#        self.Fit.ftol = float(self.config['fitting']['ftol'])
         try :
-          self.Fit.fit(0,covar=False,optimizer=self.config["fitting"]["optimizer"])
+          self.Fit.fit(0,covar=True,optimizer=self.config["fitting"]["optimizer"])
+          spectrum = self.Fit[self.config['target']['name']].funcs['Spectrum']
+          # Get the names of the parameters for the source of interest
+          print "Loglike Value for ",model,": ",self.Fit.logLike.value()
+          self.Fit.writeXml(self.folder+"/TestModel/TestModel"+model+".xml")
           return self.Fit.logLike.value()
         except :
           print "No convergence for model : ",model," ??"

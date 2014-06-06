@@ -80,7 +80,6 @@ def PrepareEbin(Fit, FitRunner):
         print "An upper limit has been computed. The fit need to be re-optmized"
         Fit.optimize(0)
 
-#    utils.RemoveWeakSources(Fit,srcname)#remove source with TS<1 to be sure that MINUIT will converge
 
     Pref = utils.ApproxPref(Fit, ener, srcname)
     Gamma = utils.ApproxGamma(Fit, ener, srcname)
