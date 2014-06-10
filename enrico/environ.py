@@ -47,7 +47,7 @@ except :
 CATALOG_VERSION = '08'
 TEMPLATE_VERSION = '07'
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
-DIFFUSE_GAL = 'gll_iem_v05.fit'
+DIFFUSE_GAL = 'gll_iem_v05_rev1.fit'
 DIFFUSE_ISO_SOURCE = 'iso_source_v05.txt'
 DIFFUSE_ISO_CLEAN = 'iso_clean_v05.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
