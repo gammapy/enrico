@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 #Submission farm name
-#Currently supported : LAPP-Annecy, MPIK-HD
+#Currently supported : LAPP-Annecy, MPIK-HD, CCIN2P3
 FARM = os.environ.get('FARM','MPIK')
 
 # Directory names

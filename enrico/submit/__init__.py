@@ -52,11 +52,11 @@ def wait_for_slot(max_jobs):
 
 ##Function to chose the Farm commands
 def GetSubCmd():
-  cmd = {'LAPP' : ['qsub -V','-l mem=4096mb'], 'MPIK' : ['qsub']}
+  cmd = {'LAPP' : ['qsub -V','-l mem=4096mb'], 'MPIK' : ['qsub'], 'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
 def GetSubOutput(qsub_log):
-  cmd = {'LAPP' :  ['-o', qsub_log, '-j', 'oe'], 'MPIK' : ['-o', qsub_log, '-j', 'y']}
+  cmd = {'LAPP' :  ['-o', qsub_log, '-j', 'oe'], 'MPIK' : ['-o', qsub_log, '-j', 'y'], 'CCIN2P3' :  ['-o', qsub_log, '-e', qsub_log, '-j', 'yes']}
   return cmd[environ.FARM]
 ###
 
@@ -96,6 +96,8 @@ def call(cmd,
     max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
+    elif environ.FARM=="CCIN2P3":
+        max_jobs = 3500
 
     # The following steps are different if you submit or not
     if submit:
@@ -124,6 +126,9 @@ def call(cmd,
         # Now reset cmd to be the qsub command
         cmd = GetSubCmd()
         if jobname:
+            if environ.FARM=="CCIN2P3":
+                if jobname[0].isdigit():
+                    jobname='_'+jobname
             cmd += ['-N', jobname]
 
         if scriptfile == None:

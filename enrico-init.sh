@@ -49,7 +49,7 @@ mkdir -p $FERMI_CATALOG_DIR
 # Only set this environment variable to the default if it isn't set already,
 # in order not to overwrite the user's setting.
 if [ -z "${FARM}" ]; then
-    #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK)
+    #Currently supported : LAPP-Annecy (LAPP), MPIK-Heidelberg (MPIK), CCIN2P3
     export FARM=LAPP
 fi
 
