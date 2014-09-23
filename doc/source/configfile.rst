@@ -182,7 +182,7 @@ The 2FGL is used to find the source in the ROI. All the source with a significan
 
 
 Spectrum
----------
+--------
 
 Options for `enrico_sed` which run all the ST tool to make an pointlike analysis.
 
@@ -265,7 +265,7 @@ Option for enrico_lc which run an entire analysis in time bins and produce all t
 
 
 Folded LightCurve
-----------
+-----------------
 
 This section is devoted to the folded LC. This is designed for binary system analysis.
 
@@ -287,7 +287,7 @@ This section is devoted to the folded LC. This is designed for binary system ana
 
 
 Ebin
------
+----
 
  * FitsGeneration, if yes, enrico will make all the steps before running gtlike and generated all the fits files needed. If the files have already been generated, change FitsGeneration to no and enrico will only run gtlike
 
@@ -309,7 +309,7 @@ Ebin
 Option for enrico_tsmap
 
 TSMap
---------
+-----
 
 This section is used to configured `enrico_tsmap` and `enrico_plot_tsmap` 
 
@@ -353,7 +353,7 @@ For the entire row 49 :
 
 
 Finding the position of a source
------
+--------------------------------
 
 This section is used to configured `enrico_findsrc`. It run the tool gtfindsource and update the file Roi_model.reg with the fitted position in red.
 
