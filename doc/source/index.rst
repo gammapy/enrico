@@ -17,6 +17,7 @@ Hi, I am Enrico, and I will help you run your
 * Mailing List: http://groups.google.com/group/gammapy_enrico
 * Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/
 
+
 Features
 --------
 
@@ -120,8 +121,7 @@ Table of Contents
    tools
    script
    developer
-   team
-
+   acknowledge
 
 Indices and tables
 ==================
