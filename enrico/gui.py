@@ -491,7 +491,7 @@ class EnricoGui:
         tableAna.attach(label,0,1,0,1)
         tableAna.attach(self.listchain,1,2,0,1)
 
-        self.evclass = self.AddSpinButton(self.config["analysis"]["evclass"], 1, 4, 1, 0)
+        self.evclass = self.AddSpinButton(self.config["analysis"]["evclass"], 1, 256, 1, 0)
         label = gtk.Label("Event Class")
         label.show()
         tableAna.attach(label, 2,3,0,1)

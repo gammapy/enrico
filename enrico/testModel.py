@@ -13,7 +13,6 @@ class ModelTester:
          os.system("mkdir -p "+self.folder+"/TestModel")
          self.convtype = self.config['analysis']['convtype']
          self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
-
          self._GenFit()
          self.FitRunner.PerformFit(self.Fit, False)
          # Store the results in a dictionnary
