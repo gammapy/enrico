@@ -12,10 +12,10 @@ Installation is described in the documentation (see link below).
 Please give us feedback by filing bug reports and feature
 requests on github or by asking questions on the mailing list.
 
-Code: https://github.com/gammapy/enrico
-Issues: https://github.com/gammapy/enrico/issues
-Documentation: http://enrico.readthedocs.org/
-Mailing List: http://groups.google.com/group/gammapy_enrico
-Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/
-License: BSD-3-Clause, see LICENSE.txt
+* Code: https://github.com/gammapy/enrico
+* Issues: https://github.com/gammapy/enrico/issues
+* Documentation: http://enrico.readthedocs.org/
+* Mailing List: http://groups.google.com/group/gammapy_enrico
+* Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/
+* License: BSD-3-Clause, see LICENSE.txt
 

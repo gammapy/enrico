@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 
 #Submission farm name
-#Currently supported : LAPP-Annecy, MPIK-HD
+#Currently supported : LAPP-Annecy, MPIK-HD, CCIN2P3
 FARM = os.environ.get('FARM','MPIK')
 
 # Directory names
@@ -24,7 +24,7 @@ DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
 WEEKLY_DIR = ''
 if DOWNLOAD_DIR :
-  WEEKLY_DIR = join(DOWNLOAD_DIR, 'photon')
+  WEEKLY_DIR = join(DOWNLOAD_DIR, 'weekly/photon')
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
 

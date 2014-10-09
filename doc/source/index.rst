@@ -17,6 +17,7 @@ Hi, I am Enrico, and I will help you run your
 * Mailing List: http://groups.google.com/group/gammapy_enrico
 * Fermi Science Tools: http://fermi.gsfc.nasa.gov/ssc/
 
+
 Features
 --------
 
@@ -120,8 +121,22 @@ Table of Contents
    tools
    script
    developer
-   team
+   acknowledge
 
+Other tools and tutorials
+-------------------------
+
+You can find further examples how to use Enrico in the `fermi-hero <https://fermi-hero.readthedocs.org/>`__
+tutorial given at the `IMPRS 2013 summer school on high-energy astrophysics <http://www.mpia.de/imprs-hd/SummerSchools/2013/>`__.
+
+Other tools to simplify the use of the Fermi ScienceTools have been collected on this page:
+`Fermi user-contributed tools <http://fermi.gsfc.nasa.gov/ssc/data/analysis/user/>`__
+
+Other packages useful for gamma-ray astronomy data analysis in general are
+`Astropy <http://www.astropy.org/>`__,
+`Gammapy <https://gammapy.readthedocs.org/>`__,
+`Gammafit <http://gammafit.readthedocs.org/>`__
+and `Gammalib <http://gammalib.sourceforge.net/>`__.  
 
 Indices and tables
 ==================

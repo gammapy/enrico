@@ -42,7 +42,7 @@ The analysis can be performed on disjoint time bins. An ascii file must be provi
    239957418 239967418
 
 Folder management
-------------------
+-----------------
 
 Once you have decided where the results will be placed (here `~/myanalysis`), enrico will create some subfolders to store results and files. 
 
@@ -239,7 +239,7 @@ To re-run a row, ie row number 49 :
 
 
 Upper Limits
--------------
+------------
 
 An upper limits is calculated if the Test Statistic (TS) of the source is below a certain limit set by the user. To set this limit for :
 
@@ -261,7 +261,7 @@ Both implementations are provided by the ScienceTools and used by enrico.
 
 
 Plot results
--------------
+------------
 
 
 Now, we want to plot the results of the analysis we performed. Some plots can be produced by enrico. Using the tools `enrico_plot_*` allow to plot the results of your analysis.
@@ -345,11 +345,11 @@ These maps are use to visualize the ROI and check and see any misfitted sources.
 
 
 Make Profile likelihood
--------------
+-----------------------
 
 The tool `enrico_scan` allows to make profile likelihood of the free parameters of the target. Each plot is save under the `scan` folder. Fits files must have been generated before.
 
 Check different models
--------------
+----------------------
 
 `enrico_testmodel` will run the gtlike analysis with different model and compute the loglikehihood value for each model. The user can then decide, base on a LRT which model best describe the data. Fits files must have been generated before.

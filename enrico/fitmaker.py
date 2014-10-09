@@ -292,7 +292,7 @@ class FitMaker(object):
                 elif model_name == 'PowerLaw':
                     IdEScale = utils.getParamIndx(Fit, self.obs.srcname, 'Scale')
                     Escale = Fit[IdEScale].value()
-                    newUl = ul_val * pow(ener[j] / Escale, indx + 2)
+                    newUl = ul_val * pow(ener[j] / Escale, indx + 2)*Escale**2*1.6022e-6
                 Ulenv[j] = max(Ulenv[j], newUl)
 
         print
