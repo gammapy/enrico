@@ -207,11 +207,23 @@ class LightCurve:
         FluxErr = []
         Index = []
         IndexErr = []
+        Cutoff = []
+        CutoffErr = []
         FluxForNpred = []
         FluxErrForNpred = []
         Npred = []
         Npred_detected_indices = []
         TS = []
+
+        # Find name used for index parameter
+        if self.config['target']['spectrum'] == 'PowerLaw':
+            IndexName = 'Index'
+            CutoffName = None
+        elif self.config['target']['spectrum'] == 'PLExpCutoff':
+            IndexName = 'Index1'
+            CutoffName = 'Cutoff'
+            CutoffErrName = 'dCutoff'
+        IndexErrName = 'd' + IndexName
 
         Nfail = 0
         for i in xrange(self.Nbin):
@@ -231,13 +243,13 @@ class LightCurve:
             if ResultDic.has_key('Ulvalue') :
                 Flux.append(ResultDic.get("Ulvalue"))
                 FluxErr.append(0)
-                Index.append(ResultDic.get("Index"))
+                Index.append(ResultDic.get(IndexName))
                 IndexErr.append(0)
             else :
                 Flux.append(ResultDic.get("Flux"))
                 FluxErr.append(ResultDic.get("dFlux"))
-                Index.append(ResultDic.get("Index"))
-                IndexErr.append(ResultDic.get("dIndex"))
+                Index.append(ResultDic.get(IndexName))
+                IndexErr.append(ResultDic.get(IndexErrName))
             FluxErrForNpred.append(ResultDic.get("dFlux"))
             FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
@@ -296,6 +308,8 @@ class LightCurve:
             Time = (phase[1:]+phase[:-1])/2.
             TimeErr = (phase[1:]-phase[:-1])/2.
             gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
+            print Index, IndexErr
+            gTHIndex,TgrIndex,ArrowIndex = plotting.PlotFoldedLC(Time,TimeErr,Index,IndexErr)
         else :
             gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
             gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr)
