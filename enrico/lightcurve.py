@@ -219,7 +219,8 @@ class LightCurve:
         if self.config['target']['spectrum'] == 'PowerLaw':
             IndexName = 'Index'
             CutoffName = None
-        elif self.config['target']['spectrum'] == 'PLExpCutoff':
+        elif self.config['target']['spectrum'] == 'PLExpCutoff' or
+             self.config['target']['spectrum'] == 'PLSuperExpCutoff':
             IndexName = 'Index1'
             CutoffName = 'Cutoff'
             CutoffErrName = 'dCutoff'
@@ -250,6 +251,9 @@ class LightCurve:
                 FluxErr.append(ResultDic.get("dFlux"))
                 Index.append(ResultDic.get(IndexName))
                 IndexErr.append(ResultDic.get(IndexErrName))
+                if CutoffName is not None:
+                    Cutoff.append(ResultDic.get(CutoffName))
+                    CutoffErr.append(ResultDic.get(CutoffErrName))
             FluxErrForNpred.append(ResultDic.get("dFlux"))
             FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
@@ -269,6 +273,8 @@ class LightCurve:
         FluxErr = np.array(FluxErr)
         Index = np.array(Index)
         IndexErr = np.array(IndexErr)
+        Cutoff = np.array(Cutoff)
+        CutoffErr = np.array(CutoffErr)
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
@@ -308,11 +314,14 @@ class LightCurve:
             Time = (phase[1:]+phase[:-1])/2.
             TimeErr = (phase[1:]-phase[:-1])/2.
             gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
-            print Index, IndexErr
             gTHIndex,TgrIndex,ArrowIndex = plotting.PlotFoldedLC(Time,TimeErr,Index,IndexErr)
+            if CutoffName is not None:
+                gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
         else :
             gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
             gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr)
+            if CutoffName is not None:
+                gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
 
         ### plot and save the flux LC
         CanvLC = ROOT.TCanvas()
@@ -351,11 +360,26 @@ class LightCurve:
             CanvIndex.Print(LcOutPath+'_Index.eps')
             CanvIndex.Print(LcOutPath+'_Index.C')
 
+        ### plot and save the Cutoff LC
+        CanvCutoff = ROOT.TCanvas()
+        gTHCutoff.Draw()
+        TgrCutoff.Draw('zP')
+
+        #plot the ul as arrow
+        for i in xrange(len(ArrowCutoff)):
+            ArrowCutoff[i].Draw()
+
+        if CutoffName is not None:
+            print "Cutoff vs Time: infos"
+            self.FitWithCst(TgrCutoff)
+            CanvCutoff.Print(LcOutPath+'_Index.png')
+            CanvCutoff.Print(LcOutPath+'_Index.eps')
+            CanvCutoff.Print(LcOutPath+'_Index.C')
 
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
         print "Write to Ascii file : ",lcfilename
-        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,TS,Npred,lcfilename)
+        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,Cutoff,CutoffErr,TS,Npred,lcfilename)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
@@ -470,15 +494,25 @@ def _GetCanvas():
     Canv.SetGridy()
     return Canv
 
-def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, TS, Npred, filename):
+def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
-    flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
-              'Delta_Flux Index Delta_Index TS Npred\n')
-    for i in xrange(len(Time)):
-        flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
-                  str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
-                  str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
-                  str(TS[i]) + "\t" + str(Npred[i]) + "\n")
+    if len(Cutoff) == 0:
+        flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+                  'Delta_Flux Index Delta_Index TS Npred\n')
+        for i in xrange(len(Time)):
+            flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
+                      str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
+                      str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
+                      str(TS[i]) + "\t" + str(Npred[i]) + "\n")
+    else:
+        flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+                  'Delta_Flux Index Delta_Index Cutoff Delta_Cutoff TS Npred\n')
+        for i in xrange(len(Time)):
+            flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
+                      str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
+                      str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
+                      str(Cutoff[i]) + "\t" + str(CutoffErr[i]) + "\t" +
+                      str(TS[i]) + "\t" + str(Npred[i]) + "\n")
     flc.close()
 
