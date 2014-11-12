@@ -216,11 +216,12 @@ class LightCurve:
         TS = []
 
         # Find name used for index parameter
-        if self.config['target']['spectrum'] == 'PowerLaw':
+        if (self.config['target']['spectrum'] == 'PowerLaw' or
+                self.config['target']['spectrum'] == 'PowerLaw2'):
             IndexName = 'Index'
             CutoffName = None
         elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
-             self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
+                self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
             IndexName = 'Index1'
             CutoffName = 'Cutoff'
             CutoffErrName = 'dCutoff'
