@@ -219,8 +219,8 @@ class LightCurve:
         if self.config['target']['spectrum'] == 'PowerLaw':
             IndexName = 'Index'
             CutoffName = None
-        elif self.config['target']['spectrum'] == 'PLExpCutoff' or
-             self.config['target']['spectrum'] == 'PLSuperExpCutoff':
+        elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
+             self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
             IndexName = 'Index1'
             CutoffName = 'Cutoff'
             CutoffErrName = 'dCutoff'
@@ -360,21 +360,21 @@ class LightCurve:
             CanvIndex.Print(LcOutPath+'_Index.eps')
             CanvIndex.Print(LcOutPath+'_Index.C')
 
-        ### plot and save the Cutoff LC
-        CanvCutoff = ROOT.TCanvas()
-        gTHCutoff.Draw()
-        TgrCutoff.Draw('zP')
+        if len(Cutoff) > 0:
+            ### plot and save the Cutoff LC
+            CanvCutoff = ROOT.TCanvas()
+            gTHCutoff.Draw()
+            TgrCutoff.Draw('zP')
 
-        #plot the ul as arrow
-        for i in xrange(len(ArrowCutoff)):
-            ArrowCutoff[i].Draw()
+            #plot the ul as arrow
+            for i in xrange(len(ArrowCutoff)):
+                ArrowCutoff[i].Draw()
 
-        if CutoffName is not None:
             print "Cutoff vs Time: infos"
             self.FitWithCst(TgrCutoff)
-            CanvCutoff.Print(LcOutPath+'_Index.png')
-            CanvCutoff.Print(LcOutPath+'_Index.eps')
-            CanvCutoff.Print(LcOutPath+'_Index.C')
+            CanvCutoff.Print(LcOutPath+'_Cutoff.png')
+            CanvCutoff.Print(LcOutPath+'_Cutoff.eps')
+            CanvCutoff.Print(LcOutPath+'_Cutoff.C')
 
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
