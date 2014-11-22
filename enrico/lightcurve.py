@@ -380,7 +380,7 @@ class LightCurve(Loggin.Message):
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
         self.info("Write to Ascii file : "+lcfilename)
-        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,TS,Npred,lcfilename)
+        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,Cutoff,CutoffErr,TS,Npred,lcfilename)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()

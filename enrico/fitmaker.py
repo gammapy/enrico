@@ -98,8 +98,12 @@ class FitMaker(Loggin.Message):
                 PhIndex = Fit.par_index(self.obs.srcname, 'Index')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
+            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
+                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
+                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+                Fit.freeze(PhIndex)
                 self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
-elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
+            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
                 PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
