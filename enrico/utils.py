@@ -6,10 +6,10 @@ from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
 def _log(text, line=True):
     if line:
-        print('# ' + '*' * 60)
-    print("# *** %s ***" % text)
+        print("\033[34m"+'# ' + '*' * 60)
+    print("\033[34m"+"# *** %s ***" % text)
     if line:
-        print('# ' + '*' * 60)
+        print "\033[34m"+'# ' + '*' * 60+"\033[0m"
 
 def fluxScale(flux_value):
     """Get the scale of the flux value

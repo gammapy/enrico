@@ -1,9 +1,6 @@
 """Central place for the XML generation"""
 import os
 import sys
-import logging
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
 import xml.dom.minidom
 import numpy as np
 import pyfits
@@ -218,7 +215,7 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    index1_free=1, index1_value=-2.0,
                    index1_min=-5.0, index1_max=-0.,
                    cutoff_free=1, cutoff_value=1e4,
-                   cutoff_min=200, cutoff_max=3e5,
+                   cutoff_min=200, cutoff_max=1e8,
                    index2_free=0, index2_value=1.0,
                    index2_min=0.0, index2_max=5.0,extendedName=""):
     """Add a source with a SUPEREXPCUTOFF model"""
@@ -270,6 +267,8 @@ def AddSpatial(doc,ra,dec,extendedName=""):
     return spatial
 
 def GetlistFromFits(config, catalog):
+    from enrico import Loggin
+    mes = Loggin.Message()
     """Read the config and catalog file and generate the list of sources to include"""
     #Get the informations for the config file
     srcname = config['target']['name']
@@ -284,7 +283,7 @@ def GetlistFromFits(config, catalog):
     model = config['target']['spectrum']
 
     if model == "Generic":
-        log.warning("Generic model found. Will turn it to PowerLaw")
+        mes.warning("Generic model found. Will turn it to PowerLaw")
         model = "PowerLaw"
 
     #read the catalog file
@@ -309,7 +308,7 @@ def GetlistFromFits(config, catalog):
     try :
       extendedName = data.field('Extended_Source_Name')
     except:
-      logging.warning("Cannot find th extended source list: please check the xml")
+      mes.warning("Cannot find th extended source list: please check the xml")
       extendedName = np.array(names.size*[""])
 
     sigma = data.field('Signif_Avg')
@@ -342,7 +341,7 @@ def GetlistFromFits(config, catalog):
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extendedName[i]})
             if not(extendedName[i]==""):
-                print "Adding extended source ",extendedName[i]," 2FGL name is ",names[i]
+                mes.info("Adding extended source "+extendedName[i]+" 2FGL name is "+names[i])
                 Nextended=+1
         else:
             # if the source is inside the ROI: add it as a frozen source
@@ -352,8 +351,8 @@ def GetlistFromFits(config, catalog):
                                 'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
                                 'SpectrumType': spectype[i],'ExtendedName': extendedName[i]})
                 if not(extendedName[i]==""):
-                  print "Adding extended source ",extendedName[i]," 2FGL name is ",names[i]
-                  Nextended=+1
+                   "Adding extended source ",extendedName[i]," 2FGL name is ",names[i]
+                   Nextended=+1
 
 
     # if the target has not been added from catalog, add it now
@@ -365,6 +364,7 @@ def GetlistFromFits(config, catalog):
                        'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
                        'SpectrumType': model,'ExtendedName': ""})
 
+    mes.info("Summary of the XML model generation")
     print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
@@ -449,7 +449,9 @@ def WriteXml(lib, doc, srclist, config):
     os.system('mkdir -p ' + folder)
 
     output = config['file']['xml']
-    print "write the Xml file in ", output
+    from enrico import Loggin
+    mes = Loggin.Message()
+    mes.info("write the Xml file in "+output)
     open(output, 'w').write(doc.toprettyxml('  '))#save it
 
 

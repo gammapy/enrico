@@ -8,6 +8,7 @@ from enrico.gtfunction import Observation
 from enrico.config import get_config
 from enrico import environ
 from enrico import utils
+
 def AppLC(infile):
     '''Main function of the apperture photometrie Lightcurve script. Read the config file and run the analysis'''
     ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
@@ -155,12 +156,12 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
 
 def _log(task='', description=''):
     print
-    print('# ' + '*' * 60)
+    print("\033[34m"+'# ' + '*' * 60)
     if task:
         task = '%10s --- ' % task
-    print('# *** %s%s' %
+    print("\033[34m"+'# *** %s%s' %
         ( task, description))
-    print '# ' + '*' * 60
+    print "\033[34m"+'# ' + '*' * 60+"\033[0m"
 
 
 if __name__ == '__main__':
@@ -168,7 +169,8 @@ if __name__ == '__main__':
     try:
         infile = sys.argv[1]
     except:
-        print('FATAL: Config file not found.')
-        sys.exit(1)
+        from enrico import Loggin
+        mes = Loggin.Message()
+        mes.error('Config file not found.')
     AppLC(infile)
 

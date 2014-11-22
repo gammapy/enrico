@@ -1,11 +1,10 @@
 import os
 import numpy as np
-from enrico import utils
 from enrico import environ
 from enrico.constants import EbinPath
 from enrico.submit import call
 from enrico.config import get_config
-
+from enrico import utils
 
 def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     """Change the spectral model of a source called name
@@ -91,7 +90,9 @@ def PrepareEbin(Fit, FitRunner):
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
-        print "Submition # ", ibin, " at energy ", E
+        from enrico import Loggin
+        mes = Loggin.Message()
+        mes.info("Submition # "+str(ibin)+" at energy "+str(E))
         #Update the model for the bin
         NewFitObject = ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
         Xmlname = (config['out'] + "/" + srcname +

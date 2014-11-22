@@ -1,23 +1,27 @@
 """
-fitmake.py written by David Sanchez : david.sanchez@mpi-hd.mpg.de
+fitmaker.py written by David Sanchez : david.sanchez@lapp.in2p3.fr
 Collection of functions to run the fit (gtlike)
-the class Makefit will call the function of the observation class (gtfunction.py) and prepare the fit
+the class FitMaker will call the function of the observation class (gtfunction.py) and prepare the fit
 by computing the fits file.
 it can distinguish between the binned and unbinnned analysis
 begun September 2011
 """
-import logging
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
+#import logging
+#logging.basicConfig(level=logging.INFO)
+#log = logging.getLogger(__name__)
 import numpy as np
+import string
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 from enrico import utils
+from enrico import Loggin
 
-class FitMaker(object):
+class FitMaker(Loggin.Message):
     """Collection of functions to prepare/run the GTLIKE fit
      and compute an upper limit is needed"""
     def __init__(self, obs, config):
+        super(FitMaker,self).__init__()
+        Loggin.Message.__init__(self)
         self.obs = obs
         self.config = config
         self.task_number = 1
@@ -25,12 +29,12 @@ class FitMaker(object):
 
     def _log(self, task='', description=''):
         print
-        print('# ' + '*' * 60)
+        print("\033[34m"+'# ' + '*' * 60)
         if task:
             task = '%10s --- ' % task
-        print('# *** %3d %s%s' %
+        print("\033[34m"+'# *** %3d %s%s' %
               (self.task_number, task, description))
-        print '# ' + '*' * 60
+        print "\033[34m"+'# ' + '*' * 60+"\033[0m"
         self.task_number += 1
 
     def GenerateFits(self):
@@ -94,9 +98,14 @@ class FitMaker(object):
                 PhIndex = Fit.par_index(self.obs.srcname, 'Index')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
-                print "Freezing spectral index at ",-float(self.config['Spectrum']['FrozenSpectralIndex'])
+                self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
+elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
+                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
+                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+                Fit.freeze(PhIndex)
+                self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
             else:
-              log.warning("The model is not a PowerLaw. Cannot freeze the index.")
+              self.warning("The model is not a PowerLaw. Cannot freeze the index.")
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
     def PerformFit(self, Fit, writeXml = True):
@@ -119,6 +128,7 @@ class FitMaker(object):
         self.RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
         if writeXml : 
             Fit.writeXml(utils._dump_xml(self.config))
+        self.success("Fit with gtlike preformed")
 
     def RemoveWeakSources(self,Fit):
         """Remove the weak source after a fit and reoptimized
@@ -130,7 +140,7 @@ class FitMaker(object):
             for src in Fit.model.srcNames:
                 ts = Fit.Ts(src)
                 if  ts< 1 and not(src == self.obs.srcname) and Fit.logLike.getSource(src).getType() == 'Point':
-                    print "delete source : ", src," with TS = ",ts
+                    self.warning("deleting source : "+src+" with TS = "+str(ts)+" from the model")
                     NoWeakSrcLeft = False
                     Fit.deleteSource(src)
             if not(NoWeakSrcLeft):
@@ -146,14 +156,13 @@ class FitMaker(object):
         Result = {}
 
         if self.config['verbose'] == 'yes' :
-            print Fit.model
-            print
+            print Fit.model,"\n"
+            self.info("Results for the Fit")
             # Print src name, Npred and TS for source with TS > 5
             print "Source Name\tNpred\tTS"
             for src in Fit.model.srcNames:
                 if Fit.Ts(src) > 5:
                     print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
-            print '\n# ' + '*' * 60 +'\n'
 
         # fill the dictonnary with some values
         Result['Optimizer'] = self.config['fitting']['optimizer']
@@ -226,7 +235,7 @@ class FitMaker(object):
 
         self._log('UpperLimit', 'Compute upper Limit')
         #Index given by the user  
-        print "Assumed index is ", self.config['UpperLimit']['SpectralIndex']
+        self.info("Assumed index is ", self.config['UpperLimit']['SpectralIndex'])
 
         IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
         Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
@@ -243,7 +252,7 @@ class FitMaker(object):
             ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
                                       emax=self.obs.Emax,delta=delta)
                                       #delta=2.71 / 2)
-            print "Upper limit using Profile method: "
+            self.info("Upper limit using Profile method: ")
             print ulobject[self.obs.srcname].results
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             import IntegralUpperLimit
@@ -271,6 +280,7 @@ class FitMaker(object):
             Fit[PhIndex] = indx
             Fit.freeze(PhIndex)#Freeze the index
             #Use either the profile or the integral method
+            self.info("Methode used: "+self.config['UpperLimit']['Method'])
             if self.config['UpperLimit']['Method'] == "Profile":
                 ul = UpperLimits.UpperLimits(Fit)
                 source_ul = ul[self.obs.srcname]
@@ -280,6 +290,7 @@ class FitMaker(object):
             if self.config['UpperLimit']['Method'] == "Integral":
                 ul_val, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                         verbosity=0)
+            self.success("Upper Limits calculated")
             print "Index = ", indx, " UL = ", ul_val  #small print
             for j in xrange(Npgraph):
                 model_name = Fit.model.srcs[self.obs.srcname].spectrum().genericName()
@@ -296,7 +307,7 @@ class FitMaker(object):
                 Ulenv[j] = max(Ulenv[j], newUl)
 
         print
-        print "Result of the UL envelope"
+        self.info("Result of the UL envelope")
         for j in xrange(Npgraph):
             print ener[j], " ", Ulenv[j]
 

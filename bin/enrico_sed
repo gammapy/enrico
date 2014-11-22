@@ -37,21 +37,20 @@ def sed(config,infile):
 
     call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)
 
-import logging
-
+from enrico import Loggin
+mes = Loggin.Message()
 try:
     infile = sys.argv[1]
 except:
-    logging.error('Config file not found.')
     print('Usage: '+sys.argv[0]+' <config file name>')
-    sys.exit(1)
+    mes.error('Config file not found.')
 
 if len(sys.argv)==2 :
 #read an config file alone. If not working, try to read an ascii file with different conf file
   try : 
     liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
     for inf in liste:
-      print "work on the config file ",inf
+      mes.info("work on the config file "+inf)
       config = get_config(inf)
       sed(config,inf)
   except :
@@ -59,7 +58,7 @@ if len(sys.argv)==2 :
     sed(config,infile)
 else:
   for inf in sys.argv[1:]:
-    print "work on the config file ",inf
+    mes.info("work on the config file "+inf)
     config = get_config(inf)
     sed(config,inf)
 

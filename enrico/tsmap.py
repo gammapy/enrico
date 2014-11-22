@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import sys
-import logging
 import pyfits
 from enrico.constants import TSMapPath
 from enrico import utils
@@ -9,9 +8,9 @@ from enrico.submit import call
 from enrico import environ
 from enrico.RunGTlike import GenAnalysisObjects
 from enrico.gtfunction import Observation
+from enrico import Loggin
 
-
-class TSMap:
+class TSMap(Loggin.Message):
     # This class groups all the needed functions and 
     # variables to compute a TS map
     # Variables : RAref, DECref and binsz are related to the cmap used
@@ -25,6 +24,8 @@ class TSMap:
     # There is two way to compute a TS map : Each job
     # computes the TS in one pixel or in one row
     def __init__(self,config,infile):
+        super(TSMap,self).__init__()
+        Loggin.Message.__init__(self)
         self.config = config
         self.config['Spectrum']['FitsGeneration'] = 'no'
         self.tsfolder = self.config['out']+"/"+TSMapPath
@@ -36,8 +37,7 @@ class TSMap:
         try :
              cmap = pyfits.open(FitRunner.cmapfile)
         except :
-             logging.error('Count map not found.')
-             sys.exit(1)
+             self.error('Count map not found.')
         
         npix_im = min(cmap[0].header['NAXIS1'],cmap[0].header['NAXIS2'])
         self.npix = min(self.npix,npix_im)
@@ -105,7 +105,7 @@ class TSMap:
         using a loop and calling the fit for 1 pixel"""
         for j in xrange(self.npix):
             dec = self.DECref + self.binsz*(j-self.npix/2.)
-            print 'FitOneRow ',dec
+            self.info('FitOneRow '+str(dec))
             self.FitOnePixel(ra,dec,i,j)
 
     def runTSMap(self,row=-1,column=-1) :
@@ -118,10 +118,10 @@ class TSMap:
             ra = self.RAref + self.binsz*(row-self.npix/2.)
             if column>0: #rerun only 1 pixel
                 dec = self.DECref + self.binsz*(column-self.npix/2.)
-                print 'Run Pixel evaluation at ',ra,' ',dec
+                self.info('Run Pixel evaluation at '+str(ra)+' '+str(dec))
                 self._launch(ra,dec,row,column) 
             else :
-                print 'Run Row evaluation at ',ra
+                self.info('Run Row evaluation at '+str(ra))
                 self._launch(ra,0,row,0)
             return 
 
@@ -130,13 +130,13 @@ class TSMap:
             ra = self.RAref + self.binsz*(i-self.npix/2.)
             if self.config['TSMap']['method'] == 'row' : # a row is evaluated in one job
 #                if row<0 or i==row:
-                 print 'Run Row evaluation at ',ra
+                 self.info('Run Row evaluation at '+str(ra))
                  self._launch(ra,0,i,0)
             else : # each pixel is evaluated by one job
                 for j in xrange(self.npix): #loop over the Y axis
 #                    if (row<0 and column<0) or (i==row and column<0) or (i==row and j==column):
                      dec = self.DECref + self.binsz*(j-self.npix/2.)
-                     print 'Run Pixel evaluation at ',ra,' ',dec
+                     self.info('Run Pixel evaluation at '+str(ra)+' '+str(dec))
                      self._launch(ra,dec,i,j) 
 
     def PlotTSmap(self) :
@@ -149,8 +149,7 @@ class TSMap:
         try :
              header = pyfits.getheader(FitRunner.cmapfile)
         except :
-             logging.error('Count map not found.')
-             sys.exit(1)
+             self.error('Count map not found.')
         data = pyfits.getdata(FitRunner.cmapfile)*0.
         npix_im = min(header['NAXIS1'],header['NAXIS2'])
         npix = min(self.config['TSMap']['npix'],npix_im)
@@ -165,13 +164,13 @@ class TSMap:
                     lines = open(self._PixelFile(i,j),"r").readlines()
                     Value = float(string.split(lines[0])[2])
                 except :
-                    print "Cannot find, open or read ",self._PixelFile(i,j)
+                    self.warning("Cannot find, open or read "+self._PixelFile(i,j))
                     Value = 0.
                 data[Xref+ (i-npix/2.)][Yref+ (j-npix/2.)] = Value
 
         # save in a fits files
         pyfits.writeto(folder+"/"+self.TSfits,data,header)
-        print "TS Map saved in "+folder+"/"+self.TSfits
+        self.info("TS Map saved in "+folder+"/"+self.TSfits)
 
 
 def GetSrc(Fit,ra,dec):
@@ -203,8 +202,10 @@ if __name__ == '__main__':
     try:
         infile = sys.argv[1]
     except:
-        print('FATAL: Config file not found.')
-        sys.exit(1)
+        from enrico import Loggin
+        mes = Loggin.Message()
+        mes.error('Config file not found.')
+
 
     from enrico.config import get_config
     config = get_config(infile)
@@ -216,5 +217,7 @@ if __name__ == '__main__':
         else :
             TSmap.FitOnePixel(float(sys.argv[2]),float(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5]))
     else :
-        print "Wrong number of arguments"
-        sys.exit(1)
+        from enrico import Loggin
+        mes = Loggin.Message()
+        mes.error("Wrong number of arguments")
+

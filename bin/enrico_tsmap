@@ -5,13 +5,13 @@ import sys
 import numpy as np
 import enrico.tsmap as tsmap
 from enrico.config import get_config
-
+from enrico import Loggin
+mes = Loggin.Message()
 try:
     infile = sys.argv[1]
 except:
-    logging.error('Config file not found.')
     print('Usage: '+sys.argv[0]+' <config file name>')
-    sys.exit(1)
+    mes.error('Config file not found.')
 
 try:
     row = int(sys.argv[-2])
@@ -34,7 +34,7 @@ else:
     try : 
       liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
       for inf in liste:
-        print "work on the config file ",inf
+        mes.info("work on the config file "+inf)
         config = get_config(inf)
         TSm = tsmap.TSMap(config,inf)
         TSm.runTSMap(row,column)
@@ -44,7 +44,7 @@ else:
       TSm.runTSMap(row,column)
   else:
     for inf in sys.argv[1:]:
-      print "work on the config file ",inf
+      mes.info("work on the config file "+inf)
       config = get_config(inf)
       TSm = tsmap.TSMap(config,inf)
       TSm.runTSMap(row,column)

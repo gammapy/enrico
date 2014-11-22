@@ -94,7 +94,11 @@ for ii, image in enumerate(images):
     f = FITSFigure(image['filename'], figure=figure, subplot=subplot)
     f.recenter(x_center, y_center, 0.95 * radius)
     set_hgps_style(f)
-    f.show_colorscale(vmin=-1, vmax=vmax, stretch='power', exponent=1, cmap='jet') #vmid=-3, stretch='log', )
+    print image['filename']
+    try : 
+      f.show_colorscale(vmin=-1, vmax=vmax, stretch='power', exponent=1, cmap='jet',smooth=3,kernel ='gauss') #vmid=-3, stretch='log', )
+    except:
+      f.show_colorscale(vmin=-1, vmax=vmax, stretch='power', exponent=1, cmap='jet') #vmid=-3, stretch='log', )
     # TODO: overplot sources  
 #    f.show_regions("sources.reg")
 

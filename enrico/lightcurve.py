@@ -10,10 +10,13 @@ from enrico.config import get_config
 from enrico.constants import LightcurvePath,FoldedLCPath
 from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
+from enrico import Loggin
 
-class LightCurve:
+class LightCurve(Loggin.Message):
     """Class to calculate light curves and variability indexes."""
     def __init__(self, config):
+        super(LightCurve,self).__init__()
+        Loggin.Message.__init__(self)
         ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
         self.config = config
 
@@ -68,15 +71,15 @@ class LightCurve:
                 self.time_array[2*i] = t[i]
                 self.time_array[2*i+1]= t[i+1]
 
-        print "Running LC with ",self.Nbin," bins"
+        self.info("Running LC with "+str(self.Nbin)+" bins")
         for i in xrange(self.Nbin):
             print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
         print 
 
     def _errorReading(self,message,i):
-        print "WARNING : "+message+" : ",self.configfile[i]
+        self.warning(message+" : "+self.configfile[i])
         print "Job Number : ",i
-        print "Please have a look at this job log file"
+        self.warning("Please have a look at this job log file")
 
 
     def _ManageFolder(self,path):
@@ -177,7 +180,6 @@ class LightCurve:
         self._MakePhasebin()
         self._MakeLC()
 
-
     def PlotLC(self):
         '''Plot a lightcurve which have been generated previously'''
         self._MakeTimeBins()
@@ -193,11 +195,10 @@ class LightCurve:
         self.PrepareLC()#Get the config file
         self._PlotLC(True)
 
-
     def _PlotLC(self,folded=False):
         root_style.RootStyle()#Nice plot style
 
-        print "Reading files produced by enrico"
+        self.info("Reading files produced by enrico")
         LcOutPath = self.LCfolder + self.config['target']['name']
 
         #Result are stored into list. This allow to get rid of the bin which failled
@@ -207,11 +208,25 @@ class LightCurve:
         FluxErr = []
         Index = []
         IndexErr = []
+        Cutoff = []
+        CutoffErr = []
         FluxForNpred = []
         FluxErrForNpred = []
         Npred = []
         Npred_detected_indices = []
         TS = []
+
+        # Find name used for index parameter
+        if (self.config['target']['spectrum'] == 'PowerLaw' or
+                self.config['target']['spectrum'] == 'PowerLaw2'):
+            IndexName = 'Index'
+            CutoffName = None
+        elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
+                self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
+            IndexName = 'Index1'
+            CutoffName = 'Cutoff'
+            CutoffErrName = 'dCutoff'
+        IndexErrName = 'd' + IndexName
 
         Nfail = 0
         for i in xrange(self.Nbin):
@@ -231,13 +246,16 @@ class LightCurve:
             if ResultDic.has_key('Ulvalue') :
                 Flux.append(ResultDic.get("Ulvalue"))
                 FluxErr.append(0)
-                Index.append(ResultDic.get("Index"))
+                Index.append(ResultDic.get(IndexName))
                 IndexErr.append(0)
             else :
                 Flux.append(ResultDic.get("Flux"))
                 FluxErr.append(ResultDic.get("dFlux"))
-                Index.append(ResultDic.get("Index"))
-                IndexErr.append(ResultDic.get("dIndex"))
+                Index.append(ResultDic.get(IndexName))
+                IndexErr.append(ResultDic.get(IndexErrName))
+                if CutoffName is not None:
+                    Cutoff.append(ResultDic.get(CutoffName))
+                    CutoffErr.append(ResultDic.get(CutoffErrName))
             FluxErrForNpred.append(ResultDic.get("dFlux"))
             FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
@@ -246,7 +264,6 @@ class LightCurve:
             if (CurConfig['LightCurve']['TSLightCurve']<float(ResultDic.get("TS"))):
                 Npred_detected_indices.append(i-Nfail)
 
-        print len(Npred_detected_indices)
         #change the list into np array
         TS = np.array(TS)
         Npred = np.array(Npred)
@@ -257,6 +274,8 @@ class LightCurve:
         FluxErr = np.array(FluxErr)
         Index = np.array(Index)
         IndexErr = np.array(IndexErr)
+        Cutoff = np.array(Cutoff)
+        CutoffErr = np.array(CutoffErr)
         FluxForNpred = np.array(FluxForNpred)
         FluxErrForNpred = np.array(FluxErrForNpred)
 
@@ -296,9 +315,14 @@ class LightCurve:
             Time = (phase[1:]+phase[:-1])/2.
             TimeErr = (phase[1:]-phase[:-1])/2.
             gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
+            gTHIndex,TgrIndex,ArrowIndex = plotting.PlotFoldedLC(Time,TimeErr,Index,IndexErr)
+            if CutoffName is not None:
+                gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
         else :
             gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
             gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr)
+            if CutoffName is not None:
+                gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
 
         ### plot and save the flux LC
         CanvLC = ROOT.TCanvas()
@@ -311,7 +335,7 @@ class LightCurve:
 
         # compute Fvar and probability of being cst
 
-        print "Flux vs Time: infos"
+        self.info("Flux vs Time: infos")
         self.FitWithCst(TgrLC)
         self.Fvar(Flux,FluxErr)
 
@@ -331,16 +355,31 @@ class LightCurve:
 
         #Save the canvas in the LightCurve subfolder
         if self.config["LightCurve"]["SpectralIndex"] == 0 :
-            print "Index vs Time: infos"
+            self.info("Index vs Time")
             self.FitWithCst(TgrIndex)
             CanvIndex.Print(LcOutPath+'_Index.png')
             CanvIndex.Print(LcOutPath+'_Index.eps')
             CanvIndex.Print(LcOutPath+'_Index.C')
 
+        if len(Cutoff) > 0:
+            ### plot and save the Cutoff LC
+            CanvCutoff = ROOT.TCanvas()
+            gTHCutoff.Draw()
+            TgrCutoff.Draw('zP')
+
+            #plot the ul as arrow
+            for i in xrange(len(ArrowCutoff)):
+                ArrowCutoff[i].Draw()
+
+            print "Cutoff vs Time: infos"
+            self.FitWithCst(TgrCutoff)
+            CanvCutoff.Print(LcOutPath+'_Cutoff.png')
+            CanvCutoff.Print(LcOutPath+'_Cutoff.eps')
+            CanvCutoff.Print(LcOutPath+'_Cutoff.C')
 
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
-        print "Write to Ascii file : ",lcfilename
+        self.info("Write to Ascii file : "+lcfilename)
         WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,TS,Npred,lcfilename)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
@@ -371,6 +410,7 @@ class LightCurve:
         try :
             fvar=sqrt(intvar)/moy
             err_fvar = sqrt( ( 1./sqrt(2*len(Flux))*expvar/moy**2/fvar)**2 + (sqrt(expvar/len(Flux))*1./moy)**2)
+            self.info("Calculation of Fvar (Vaughan et al. 2003)")
             print "\tFvar = ",fvar," +/- ",err_fvar
         except :
             print  "\tFvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
@@ -383,6 +423,7 @@ class LightCurve:
         func.SetLineColor(15)
         func.SetLineStyle(3)
         tgrFlux.Fit('func','Q')
+        self.info("Fit with a constant function")
         print '\tChi2 = ',func.GetChisquare()," NDF = ",func.GetNDF()
         print '\tprobability of being cst = ',func.GetProb()
         print
@@ -406,9 +447,10 @@ class LightCurve:
             try :
                 ResultDic = utils.ReadResult(CurConfig)
             except :
-                print "WARNING : fail reading the config file : ",CurConfig
-                print "Job Number : ",i
-                print "Please have a look at this job log file"
+                self._errorReading("fail reading the config file ",i)
+#                print "WARNING : fail reading the config file : ",CurConfig
+#                print "Job Number : ",i
+#                print "Please have a look at this job log file"
                 continue
 
 #            LogL1.append(ResultDic.get("log_like"))
@@ -424,6 +466,7 @@ class LightCurve:
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!
+            self.info("Spectral index frozen to a value of 2")
             utils.FreezeParams(Fit, self.srcname, 'Index', -2)
             LogL1.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
@@ -445,7 +488,7 @@ class LightCurve:
         #Save the canvas in the LightCurve subfolder
         Can.Print(LcOutPath+'_VarIndex.eps')
         Can.Print(LcOutPath+'_VarIndex.C')
-        print 
+        self.info("Variability index calculation") 
         print "\t TSvar = ",2*(sum(LogL1)-sum(LogL0))
         print "\t NDF = ",len(LogL0)-1
         print "\t Chi2 prob = ",ROOT.TMath.Prob(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
@@ -456,15 +499,25 @@ def _GetCanvas():
     Canv.SetGridy()
     return Canv
 
-def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, TS, Npred, filename):
+def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
     flc = open(filename, 'w')
-    flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
-              'Delta_Flux Index Delta_Index TS Npred\n')
-    for i in xrange(len(Time)):
-        flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
-                  str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
-                  str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
-                  str(TS[i]) + "\t" + str(Npred[i]) + "\n")
+    if len(Cutoff) == 0:
+        flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+                  'Delta_Flux Index Delta_Index TS Npred\n')
+        for i in xrange(len(Time)):
+            flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
+                      str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
+                      str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
+                      str(TS[i]) + "\t" + str(Npred[i]) + "\n")
+    else:
+        flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
+                  'Delta_Flux Index Delta_Index Cutoff Delta_Cutoff TS Npred\n')
+        for i in xrange(len(Time)):
+            flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
+                      str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
+                      str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
+                      str(Cutoff[i]) + "\t" + str(CutoffErr[i]) + "\t" +
+                      str(TS[i]) + "\t" + str(Npred[i]) + "\n")
     flc.close()
 

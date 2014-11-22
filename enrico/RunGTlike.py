@@ -79,9 +79,12 @@ def run(infile):
 # @todo: Should this be a command line utility in bin?
 if __name__ == '__main__':
     import sys
+    from enrico import Loggin
+    mes = Loggin.Message()
     try:
         infile = sys.argv[1]
     except:
-        print('FATAL: Config file not found.')
-        sys.exit(1)
+        print('Usage: '+sys.argv[0]+' <config file name>')
+        mes.error('Config file not found.')
+
     run(infile)

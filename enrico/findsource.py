@@ -42,8 +42,9 @@ if __name__ == '__main__':
     try:
         infile = sys.argv[1]
     except:
-        print('FATAL: Config file not found.')
-        sys.exit(1)
+        from enrico import Loggin
+        mes = Loggin.Message()
+        mes.error('Config file not found.')
 
     FindSrc(infile)
 

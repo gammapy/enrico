@@ -8,6 +8,7 @@ from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
 from enrico import root_style
 from enrico.config import get_config
 from enrico import utils
+from enrico import Loggin
 
 class Params:
     """Collection of Plotting parameters like Energy bounds,
@@ -24,10 +25,15 @@ class Params:
         self.LineColor = LineColor
         self.PointColor = PointColor
 
-class Result:
+
+
+class Result(Loggin.Message):
     """Helper class to get the results from a (Un)BinnedAnalysis object
     and compute the SED and errors"""
     def __init__(self, Fit, pars):
+        super(Result,self).__init__()
+        Loggin.Message.__init__(self)
+
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
@@ -43,9 +49,9 @@ class Result:
         print
         for i in xrange(par.N):
           if Err[i]/SED[i] == min(Err/SED):
-            print "Decorrelation energy : %4.2e MeV"%E[i]
-            print "Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" %(SED[i]/E[i]**2*ERG_TO_MEV,Err[i]/E[i]**2*ERG_TO_MEV)
-            print "SED value at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i])
+            self.info("Decorrelation energy : %4.2e MeV"%E[i])
+            self.info("Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" %(SED[i]/E[i]**2*ERG_TO_MEV,Err[i]/E[i]**2*ERG_TO_MEV))
+            self.info("SED value at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i]))
         print
 
         try:
@@ -189,7 +195,7 @@ class Result:
         ghres = ROOT.TH2F("ghres", "", 80, min(E)*0.3,max(E)*2, 100, ymin, ymax)
         ghres.SetStats(000)
         ghres.SetXTitle("E (MeV) ")
-        ghres.SetYTitle("(counts -model)/model")
+        ghres.SetYTitle("(counts-model)/model")
         ghres.Draw()
         tgres = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',residual), array.array('f',err_E), array.array('f',Dres))
         tgres.SetLineColor(2)
@@ -302,7 +308,8 @@ def PlotDataPoints(config,pars):
     FluxpointErrm = np.zeros(NEbin)
     ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
-    print "Save Ebin results in ",pars.PlotName+".Ebin.dat"
+    mes = Loggin.Message()
+    mes.info("Save Ebin results in ",pars.PlotName+".Ebin.dat")
     dumpfile = open(pars.PlotName+".Ebin.dat",'w')
     dumpfile.write("# Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
 
@@ -313,10 +320,10 @@ def PlotDataPoints(config,pars):
                     "_" + str(i) + ".conf")
         try:#read the config file of each data points
             CurConf = get_config(filename)
-            print "Reading ",filename
+            mes.info("Reading "+filename)
             results = utils.ReadResult(CurConf)
         except:
-            print "cannot read the Results of energy ", E
+            mes.warning("cannot read the Results of energy "+ str(E))
             continue
         #fill the energy arrays
         Epoint[i] = E
@@ -338,7 +345,7 @@ def PlotDataPoints(config,pars):
                 down = abs(results.get("dPrefactor-"))
                 up = results.get("dPrefactor+")
                 if down==0 or  up ==0 :
-                  raise RuntimeError("cannot get Error value")
+                  mes.error("cannot get Error value")
                 FluxpointErrp[i] = MEV_TO_ERG  * up * Epoint[i] ** 2
                 FluxpointErrm[i] = MEV_TO_ERG  * down * Epoint[i] ** 2
             except:
@@ -348,6 +355,7 @@ def PlotDataPoints(config,pars):
                     FluxpointErrm[i] = err
                 except:
                     pass
+        mes.info("Energy bins results")
         print "Energy = ",Epoint[i]
         print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
 

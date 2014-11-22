@@ -3,20 +3,23 @@ import scipy.stats
 import SummedLikelihood
 from enrico.fitmaker import FitMaker
 from enrico.gtfunction import Observation
+from enrico import Loggin
 
-class ModelTester:
+class ModelTester(Loggin.Message):
     """Class to est several models to check
         which is statistically prefered."""
     def __init__(self, config):
-         self.config = config
-         self.folder = self.config['out']
-         os.system("mkdir -p "+self.folder+"/TestModel")
-         self.convtype = self.config['analysis']['convtype']
-         self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
-         self._GenFit()
-         self.FitRunner.PerformFit(self.Fit, False)
-         # Store the results in a dictionnary
-         self.Results = {}
+        super(ModelTester,self).__init__()
+        Loggin.Message.__init__(self)
+        self.config = config
+        self.folder = self.config['out']
+        os.system("mkdir -p "+self.folder+"/TestModel")
+        self.convtype = self.config['analysis']['convtype']
+        self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
+        self._GenFit()
+        self.FitRunner.PerformFit(self.Fit, False)
+        # Store the results in a dictionnary
+        self.Results = {}
 
     def _GenFit(self):
          try :
@@ -39,6 +42,7 @@ class ModelTester:
 
     def _printResults(self):
         print 
+        self.info("Summary of the results")
         for key in self.modellist:
            if key == "PowerLaw":
                print key," Log(Like) = ",self.Results[key]
@@ -58,7 +62,7 @@ class ModelTester:
         self._printResults()
 
     def RunAFit(self,srcname,model):
-        print "Computing loglike value for ",model
+        self.info("Computing loglike value for "+model)
 #        self._GenFit()
         self.Fit.logLike.getSource(srcname).setSpectrum(model)
         if model=="PowerLaw":
@@ -78,7 +82,7 @@ class ModelTester:
           self.Fit.writeXml(self.folder+"/TestModel/TestModel"+model+".xml")
           return self.Fit.logLike.value()
         except :
-          print "No convergence for model : ",model," ??"
+          self.warning("No convergence for model : "+model+" ??")
           return 0
 
     def _setPowerLaw(self,name):

@@ -24,14 +24,13 @@ def plot(config):
     except :
         print "Not able to plot an upper limit in a SED diagram. UL computed?"
 
-import logging
-
+from enrico import Loggin
+mes = Loggin.Message()
 try:
     infile = sys.argv[1]
 except:
-    logging.error('Config file not found.')
     print('Usage: '+sys.argv[0]+' <config file name>')
-    sys.exit(1)
+    mes.error('Config file not found.')
 
 
 if len(sys.argv)==2 :
@@ -39,7 +38,7 @@ if len(sys.argv)==2 :
   try : 
     liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
     for inf in liste:
-      print "work on the config file ",inf
+      mes.info("work on the config file "+inf)
       config = get_config(inf)
       plot(config)
   except :
@@ -47,6 +46,6 @@ if len(sys.argv)==2 :
     plot(config)
 else:
   for inf in sys.argv[1:]:
-    print "work on the config file ",inf
+    mes.info("work on the config file "+inf)
     config = get_config(inf)
     plot(config)

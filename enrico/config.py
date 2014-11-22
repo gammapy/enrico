@@ -4,6 +4,7 @@ from os.path import join
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.extern.validate import Validator
 from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR
+from enrico import Loggin
 
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
@@ -15,18 +16,18 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     validator = Validator()
     # @todo: I'm not sure we always want to copy all default options here
     results = config.validate(validator, copy=True)
+    mes = Loggin.Message()
     if results != True:
         for (section_list, key, _) in flatten_errors(config, results):
             if key is not None:
-                print('The "%s" key in the section "%s" failed validation' %
+                mes.warning('The "%s" key in the section "%s" failed validation' %
                       (key, ', '.join(section_list)))
             else:
-                print('The following section was missing:%s ' %
+                mes.warning('The following section was missing:%s ' %
                       ', '.join(section_list))
-        print('   Please check your config file for missing '
+        mes.warning('   Please check your config file for missing '
               'and wrong options!')
-        print('FATAL: Config file is not valid.')
-        sys.exit(1)
+        mes.error('Config file is not valid.')
     return config
 
 
@@ -40,7 +41,8 @@ def query_config():
     import os
     """Make a new config object, asking the user for required options"""
     config = ConfigObj(indent_type='\t')
-    print('Please provide the following required options [default] :')
+    mes = Loggin.Message()
+    mes.info('Please provide the following required options [default] :')
     config['out'] = os.getcwd()
     out = raw_input('Output directory ['+config['out']+'] : ')
     if not(out=='') :
