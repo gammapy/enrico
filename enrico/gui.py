@@ -17,7 +17,6 @@ class EnricoGui:
 #           os.system("enrico_sed "+self.config["out"]+'/Ebin'+str(self.config["Ebin"]["NumEnergyBins"])+"/*conf" )
            os.system("enrico_sed Ebin"+str(self.config["Ebin"]["NumEnergyBins"])+"/*conf" )
 
-
     def Sync(self, widget, data=None):
        self.x.set_value(self.ra.get_value())
        self.y.set_value(self.dec.get_value())
@@ -124,6 +123,12 @@ class EnricoGui:
 
     def delete(self, widget, event=None):
         gtk.main_quit()
+        return False
+
+
+    def reload(self, widget, event=None):
+        gtk.Widget.destroy(self.window)
+        EnricoGui(self.infile)
         return False
 
     def change(self,widget,data=None):
@@ -1073,12 +1078,12 @@ class EnricoGui:
             os.system('touch '+self.config['file']['xml'])
 
 
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.connect("delete_event", self.delete)
-        window.set_border_width(10)
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.connect("delete_event", self.delete)
+        self.window.set_border_width(10)
 
         table = gtk.Table(3,6,False)
-        window.add(table)
+        self.window.add(table)
 
         self.notebloc = gtk.Notebook()
         self.notebloc.set_tab_pos(gtk.POS_LEFT)
@@ -1101,9 +1106,14 @@ class EnricoGui:
 
         self.notebloc.set_current_page(0)
 
+        ReloadButton = gtk.Button("Reload conf file")
+        ReloadButton.connect("clicked", self.reload, "")
+        table.attach(ReloadButton, 1,2,1,2)
+        ReloadButton.show()
+
         SaveButton = gtk.Button("Save file")
         SaveButton.connect("clicked", self.save, "")
-        table.attach(SaveButton, 1,2,1,2)
+        table.attach(SaveButton, 3,4,1,2)
         SaveButton.show()
 
         CloseButton = gtk.Button("Close")
@@ -1112,7 +1122,7 @@ class EnricoGui:
         CloseButton.show()
 
         table.show()
-        window.show()
+        self.window.show()
 
 
 if __name__ == "__main__":
@@ -1124,6 +1134,6 @@ if __name__ == "__main__":
         print('Usage: '+sys.argv[0]+' <output config file name>')
         sys.exit(1)
 
-    g=EnricoGui(infile)
+    EnricoGui(infile)
     gtk.main()
 
