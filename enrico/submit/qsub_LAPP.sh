@@ -21,7 +21,7 @@
 #####################################################################
 
 export HOME=$LAPP_APP_SHARED
-#export PATH=/lapp_data/hess/Softwares/Fermi/ScienceTools-v9r27p1_withEnrico/ScienceTools-v9r27p1-fssc-20120410/external/x86_64-unknown-linux-gnu-libc2.5/bin:$PATH
+export PATH=$FERMI_DIR/bin:$PATH
 
 
 if [ ! -d "${PFILES}" ]; then
@@ -37,3 +37,4 @@ export HEADASNOQUERY=1
 #setenv HEADASNOQUERY 1
 echo HEADASNOQUERY: $HEADASNOQUERY
 echo PYTHONPATH: $PYTHONPATH 
+echo PATH: $PATH
