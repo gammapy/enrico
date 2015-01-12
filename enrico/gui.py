@@ -117,6 +117,10 @@ class EnricoGui:
          if widget.get_active():
            self.config["analysis"]["roicut"] = "yes"
 
+       elif data=="fittau":
+         self.config["target"]["fit_tau"] = "no"
+         if widget.get_active():
+           self.config["target"]["fit_tau"] = "yes"
 
     def fct_rappel(self, widget, data=None):
        print "Le %s a ete %s." % (data, ("desactive", "active")[widget.get_active()])
@@ -158,6 +162,8 @@ class EnricoGui:
         self.config["target"]["ra"] = self.ra.get_value()
         self.config["target"]["dec"] = self.dec.get_value()
         self.config["target"]["spectrum"] = self.listSpec.entry.get_text()
+        self.config["target"]["ebl_model"] = int(self.eblmodel.get_value())
+        self.config["target"]["redshift"] = self.redshift.get_value()
 
         self.config["space"]["xref"] = self.x.get_value()
         self.config["space"]["yref"] = self.y.get_value()
@@ -269,17 +275,17 @@ class EnricoGui:
         label = gtk.Label("Target name")
         label.show()
         tableTarget.attach(label, 0,1,0,1)
-        tableTarget.attach(self.fname, 1,2,0,1)
+        tableTarget.attach(self.fname, 1,3,0,1)
 
         label = gtk.Label("RA")
         label.show()
-        tableTarget.attach(label, 0,1,1, 2)
-        tableTarget.attach(self.ra,1,2,1, 2)
+        tableTarget.attach(label, 4, 5,0,1)
+        tableTarget.attach(self.ra,5,6,0,1)
 
         label = gtk.Label("Dec")
         label.show()
-        tableTarget.attach(label,2, 3,1, 2)
-        tableTarget.attach(self.dec,3,4,1, 2)
+        tableTarget.attach(label,4, 5,1, 2)
+        tableTarget.attach(self.dec,5,6,1, 2)
 
 
         self.listSpec = gtk.Combo()
@@ -292,8 +298,31 @@ class EnricoGui:
 
         label = gtk.Label("Model")
         label.show()
-        tableTarget.attach(label, 0,1,2,3)
-        tableTarget.attach(self.listSpec, 1,2,2,3)
+        tableTarget.attach(label, 0,1,1, 2)
+        tableTarget.attach(self.listSpec, 1,3,1, 2)
+
+        self.redshift = self.AddSpinButton(self.config["target"]["redshift"], 0, 7, 0.001, 3)
+        label = gtk.Label("redshift")
+        label.show()
+        tableTarget.attach(label,0,1,2,3)
+        tableTarget.attach(self.redshift,1,2,2,3)
+
+
+        self.eblmodel = self.AddSpinButton(self.config["target"]["ebl_model"], 1, 7, 1, 0)
+        label = gtk.Label("EBL model")
+        label.show()
+        tableTarget.attach(label, 2,3,2,3)
+        tableTarget.attach(self.eblmodel,3,4,2,3)
+
+        MethodButton = gtk.CheckButton("")
+        MethodButton.connect("toggled", self.fct_yesno, "fittau")
+        self.set_active(MethodButton,self.config["target"]["fit_tau"])
+        MethodButton.show()
+        
+        labts = gtk.Label("fit tau")
+        labts.show()
+        tableTarget.attach(labts,4,5,2,3)
+        tableTarget.attach(MethodButton, 5,6,2,3)
 
         frameSpace,tableSpace = self._addFrame("Space",2,3)
         BNPage.attach(frameSpace, 0, 8, 2, 6)

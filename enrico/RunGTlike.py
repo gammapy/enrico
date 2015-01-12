@@ -75,6 +75,7 @@ def run(infile):
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
     energybin.RunEbin(folder,Nbin,Fit,FitRunner)
+    del FitRunner
 
 # @todo: Should this be a command line utility in bin?
 if __name__ == '__main__':

@@ -6,7 +6,13 @@ import numpy as np
 import pyfits
 from enrico import utils
 import enrico.environ as env
+import Loggin
 
+def addEBL(spec, tau_free, redshift, ebl_model=4):
+    addParameter(spec, 'tau_norm', tau_free, 1, 1.0,0, 10)
+    addParameter(spec, 'redshift', 0, redshift, 1.0,0, 10)
+    addParameter(spec, 'ebl_model', 0, ebl_model, 0,0, 8)
+# 0=Kneiske, 1=Primack05, 2=Kneiske_HighUV, 3=Stecker05, 4=Franceschini, 5=Finke, 6=Gilmore
 
 def addParameter(el, name, free, value, scale, min, max):
     """Add a parameter to a source"""
@@ -60,7 +66,8 @@ def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
-                   index_min=-5.0, index_max=-0.5,extendedName=""):
+                   index_min=-5.0, index_max=-0.5,extendedName="",
+                   addEBLabsorption=False,tau_free=0, redshift=0, ebl_model=4):
     """Add a source with a POWERLAW1 model"""
     elim_min = 30
     elim_max = 300000
@@ -85,13 +92,17 @@ def addPSPowerLaw1(lib, name, ra, dec, eflux=0,
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
+    if addEBLabsorption:
+        mes = Loggin.Message()
+        mes.warning("Cannot create PowerLaw1 model with EBL")
 
 
 def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
                    flux_free=1, flux_value=1.6e-8, flux_scale=0,
                    flux_max=1000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
-                   index_min=-5.0, index_max=-0.5,extendedName=""):
+                   index_min=-5.0, index_max=-0.5,extendedName="",
+                   addEBLabsorption=False,tau_free=0, redshift=0, ebl_model=4):
     """Add a source with a POWERLAW2 model"""
     elim_min = 30
     elim_max = 300000
@@ -110,7 +121,10 @@ def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    spec.setAttribute('type', 'PowerLaw2')
+    if addEBLabsorption:
+        spec.setAttribute('type', 'EblAtten::PowerLaw2')
+    else:
+        spec.setAttribute('type', 'PowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index', index_free, index_value, 1.0,
@@ -121,7 +135,8 @@ def addPSPowerLaw2(lib, name, ra, dec, emin=200, emax=3e5,
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
-
+    if addEBLabsorption:
+        addEBL(spec, tau_free, redshift, ebl_model)
 
 def addPSLogparabola(lib, name, ra, dec, enorm=300,
                    norm_free=1, norm_value=1e-9, norm_scale=0,
@@ -129,7 +144,8 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0.0005, beta_max=5.0,extendedName=""):
+                   beta_min=0.0005, beta_max=5.0,extendedName="",
+                   addEBLabsorption=False,tau_free=0, redshift=0, ebl_model=4):
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
@@ -148,7 +164,10 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    spec.setAttribute('type', 'LogParabola')
+    if addEBLabsorption:
+        spec.setAttribute('type', 'EblAtten::LogParabola')
+    else:
+        spec.setAttribute('type', 'LogParabola')
     addParameter(spec, 'norm',
                  norm_free, norm_value, norm_scale, norm_min, norm_max)
     addParameter(spec, 'alpha', alpha_free, alpha_value, 1.0,
@@ -159,7 +178,8 @@ def addPSLogparabola(lib, name, ra, dec, enorm=300,
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
-
+    if addEBLabsorption:
+        addEBL(spec, tau_free, redshift, ebl_model)
 
 def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
                          ebreak_free=0, ebreak=0, ebreak_min=0, ebreak_max=0,
@@ -168,7 +188,8 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
                          index_lo_free=1, index_lo_value=-2.0,
                          index_lo_min=-5.0, index_lo_max=-1.0,
                          index_hi_free=1, index_hi_value=-2.0,
-                         index_hi_min=-5.0, index_hi_max=-1.0,extendedName=""):
+                         index_hi_min=-5.0, index_hi_max=-1.0,extendedName="",
+                         addEBLabsorption=False,tau_free=0, redshift=0, ebl_model=4):
     """Add a source with a BROKENPOWERLAW2 model"""
     elim_min = 30
     elim_max = 300000
@@ -190,7 +211,10 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    spec.setAttribute('type', 'BrokenPowerLaw2')
+    if addEBLabsorption:
+        spec.setAttribute('type', 'EblAtten::BrokenPowerLaw2')
+    else:
+        spec.setAttribute('type', 'BrokenPowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index1',
@@ -207,7 +231,8 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, emin=200, emax=100000,
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
-
+    if addEBLabsorption:
+        addEBL(spec, tau_free, redshift, ebl_model)
 
 def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
@@ -217,7 +242,8 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
                    cutoff_free=1, cutoff_value=1e4,
                    cutoff_min=200, cutoff_max=1e8,
                    index2_free=0, index2_value=1.0,
-                   index2_min=0.0, index2_max=5.0,extendedName=""):
+                   index2_min=0.0, index2_max=5.0,extendedName="",
+                   addEBLabsorption=False,tau_free=0, redshift=0, ebl_model=4):
     """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000
@@ -232,7 +258,10 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    spec.setAttribute('type', 'PLSuperExpCutoff')
+    if addEBLabsorption:
+        spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff')
+    else:
+        spec.setAttribute('type', 'PLSuperExpCutoff')
     addParameter(spec, 'Prefactor',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index1', index1_free, index1_value, 1.0,
@@ -247,6 +276,8 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, eflux=0,
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
     lib.appendChild(src)
+    if addEBLabsorption:
+        addEBL(spec, tau_free, redshift, ebl_model)
 
 def AddSpatial(doc,ra,dec,extendedName=""):
     spatial = doc.createElement('spatialModel')
@@ -422,28 +453,44 @@ def WriteXml(lib, doc, srclist, config):
         free = srclist[i].get('IsFree')
         spectype = srclist[i].get('SpectrumType')
         extendedName = srclist[i].get('ExtendedName')
+
+        fit_tau = False
+        if config['target']['fit_tau'] == 'yes' and name == config['target']['name']:
+            fit_tau = True
+        addEBLabsorption = False
+        if config['target']['redshift']>0.  and name == config['target']['name']:
+            addEBLabsorption = True
+        
         # Check the spectrum model
         if spectype == "PowerLaw":
             addPSPowerLaw1(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
-                              index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
+                              index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName,
+                              addEBLabsorption=addEBLabsorption,tau_free=fit_tau, 
+                              redshift=config['target']['redshift'], ebl_model=config['target']['ebl_model'])
         if spectype == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec,
                             emin=emin, emax=emax,
                             flux_free=free, flux_value=srclist[i].get('flux'),
-                            index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
+                            index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName,
+                              addEBLabsorption=addEBLabsorption,tau_free=fit_tau, 
+                              redshift=config['target']['redshift'], ebl_model=config['target']['ebl_model'])
         if spectype == "LogParabola":
             addPSLogparabola(lib, name, ra, dec, enorm=srclist[i].get('scale'),
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=free, alpha_value=abs(srclist[i].get('index')),
-                              beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName)
+                              beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName,
+                              addEBLabsorption=addEBLabsorption,tau_free=fit_tau, 
+                              redshift=config['target']['redshift'], ebl_model=config['target']['ebl_model'])
         if spectype == "PLExpCutoff" or spectype == "PLSuperExpCutoff":
             addPSPLSuperExpCutoff(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=free, index1_value=srclist[i].get('index'),
-                              cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
+                              cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName,
+                              addEBLabsorption=addEBLabsorption,tau_free=fit_tau, 
+                              redshift=config['target']['redshift'], ebl_model=config['target']['ebl_model'])
 
     folder = config['out']
     os.system('mkdir -p ' + folder)

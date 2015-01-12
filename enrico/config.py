@@ -53,8 +53,18 @@ def query_config():
     config['target']['name'] = raw_input('Target Name : ')
     config['target']['ra'] = raw_input('Right Ascension: ')
     config['target']['dec'] = raw_input('Declination: ')
+
+    config['target']['redshift'] = '0'
+    redshift = raw_input('redshift, no effect if null [0] : ')
+    if not(redshift=='') :
+        config['target']['redshift'] = redshift
+        config['target']['ebl_model'] = raw_input('ebl model to used\n'
+                                                   '0=Kneiske, 1=Primack05, 2=Kneiske_HighUV, 3=Stecker05, ' 
+                                                   '4=Franceschini, 5=Finke, 6=Gilmore : ')
+        
     message = ('Options are : PowerLaw, PowerLaw2, LogParabola, '
                'PLExpCutoff, Generic\nGeneric is design to allow the user to fit with non-supported models\n'
+                'EBL absorption can be added for PowerLaw2, LogParabola, PLExpCutoff\n'
                 'Spectral Model [PowerLaw] : ')
     config['target']['spectrum'] = 'PowerLaw'
     model = raw_input(message)
