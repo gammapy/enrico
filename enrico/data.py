@@ -16,7 +16,7 @@ default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
 # Download URLs
 FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
 FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
-CATALOG_URL = join(FSSC_URL, 'data/access/lat/2yr_catalog')
+CATALOG_URL = join(FSSC_URL, 'data/access/lat/4yr_catalog')
 DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
 WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
 SPACECRAFT_URL = join(FSSC_FTP_URL, 'mission/spacecraft',
@@ -125,7 +125,7 @@ class Data(object):
             filename = join(CATALOG_TEMPLATE_DIR, 'CenALobes.fits')
             if not os.path.isfile(filename):
                 # Now we know that we want to download
-                filename = 'gll_psc_v%s_templates.tgz' % TEMPLATE_VERSION
+                filename = 'LAT_extended_sources_v%s.tgz' % TEMPLATE_VERSION
                 url = join(CATALOG_URL, filename)
                 path = join(CATALOG_DIR, filename)
                 print('Downloading %s' % path)

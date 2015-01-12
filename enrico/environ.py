@@ -18,8 +18,7 @@ FERMI_DIR = os.environ.get('FERMI_DIR', '')
 FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = ''
-if CATALOG_DIR :
-  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Templates') 
+
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
 WEEKLY_DIR = ''
@@ -44,8 +43,11 @@ except :
     DIRS = {}
 
 # File names
-CATALOG_VERSION = '08'
-TEMPLATE_VERSION = '07'
+CATALOG_VERSION = '14'
+TEMPLATE_VERSION = '15'
+if CATALOG_DIR :
+  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_v%s/Templates'% TEMPLATE_VERSION)
+
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 DIFFUSE_GAL = 'gll_iem_v05_rev1.fit'
 DIFFUSE_ISO_SOURCE = 'iso_source_v05.txt'
