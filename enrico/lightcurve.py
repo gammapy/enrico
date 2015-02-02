@@ -83,9 +83,9 @@ class LightCurve(Loggin.Message):
 
 
     def _ManageFolder(self,path):
-        """   All files will be stored in a subfolder name path + NLCbin
+        """   All files will be stored in a subfolder name path + tag + NLCbin
         Create a subfolder"""
-        self.LCfolder =  self.folder+"/LightCurve_"+str(self.Nbin)+"bins/"
+        self.LCfolder =  self.folder+"/"+path+"_"+self.config['file']['tag']+"_"+str(self.Nbin)+"bins/"
         os.system("mkdir -p "+self.LCfolder)
         self.config['out'] = self.LCfolder
 
@@ -113,7 +113,7 @@ class LightCurve(Loggin.Message):
             self.configfile.append(filename)
 
 
-    def _MakeLC(self,Path=LightcurvePath) :
+    def _MakeLC(self) :
         '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')

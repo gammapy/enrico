@@ -51,12 +51,13 @@ def Scan(config):
           tgr.SetLineColor(2)
           tgr.Draw('AL')
 
-          os.system("mkdir -p "+config["out"]+"/"+cst.ScanPath)
-          savefile = open(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".txt","w")
+          Path = config["out"]+"/"+cst.ScanPath+"_"+config['file']['tag']
+          os.system("mkdir -p "+Path)
+          savefile = open(Path+ "/Scan_"+par+".txt","w")
           for i in xrange(param.size):
              savefile.write(str(param[i])+" "+str(loglike[i])+"\n")
           savefile.close()
-          cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".eps")
-          cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".C")
-          cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".png")
+          cres.Print(Path+ "/Scan_"+par+".eps")
+          cres.Print(Path+ "/Scan_"+par+".C")
+          cres.Print(Path+ "/Scan_"+par+".png")
 

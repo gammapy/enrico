@@ -28,7 +28,7 @@ class TSMap(Loggin.Message):
         Loggin.Message.__init__(self)
         self.config = config
         self.config['Spectrum']['FitsGeneration'] = 'no'
-        self.tsfolder = self.config['out']+"/"+TSMapPath
+        self.tsfolder = self.config['out']+"/"+TSMapPath+"_"+self.config['file']['tag']
         self.TSfits = self.config['target']['name']+'_'+self.config['file']['tag']+"_TSMap.fits"
         self.infile = infile
         self.npix = self.config['TSMap']['npix']
