@@ -13,7 +13,7 @@ You need to:
 * Install Enrico
 * Install additional (optional) python packages
 * Download Fermi data (photon and spacecraft files)
-* Download the diffuse model and 2FGL catalog files
+* Download the diffuse model and 3FGL catalog files
 
 
 Here we give some instructions on how to do these steps,
@@ -192,10 +192,10 @@ to combine weekly spacecraft files.
 Obviously you should share one software and data installation per institute and
 not hit the FSSC servers without need.
 
-Download the diffuse model and 2FGL catalog files
+Download the diffuse model and 3FGL catalog files
 -------------------------------------------------
 
-The diffuse model and 2FGL catalog files can be downloaded from the `FSSC <http://fermi.gsfc.nasa.gov/ssc/data/access/lat/BackgroundModels.html>`__
+The diffuse model and 3FGL catalog files can be downloaded from the `FSSC <http://fermi.gsfc.nasa.gov/ssc/data/access/lat/BackgroundModels.html>`__
 
 Enrico uses the following environment variables to find
 the catalog and diffuse model files

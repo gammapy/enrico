@@ -162,7 +162,9 @@ model
 
 This section is about the sky model generation. If you have set correctly you environment variables, then enrico is able to find the galactic and extragalactic model. If you want to use other model, you can specify here, their names and locations.
 
-The 2FGL is used to find the source in the ROI. All the source with a significance greater than `min_significance` will be added. All sources within `max_radius` (in degrees) have their parameters free to vary in the fitting procedure. The other sources have their parameters frozen to the 2FGL value.
+The 3FGL is used by default to find the source in the ROI. All the source with a significance greater than `min_significance` will be added. All sources within `max_radius` (in degrees) have their parameters free to vary in the fitting procedure. The other sources have their parameters frozen to the 3FGL value. 
+
+You can use also the 2FGL or the 1FHL by specifying their name and location.
 
 .. code-block:: ini
 

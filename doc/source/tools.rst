@@ -11,7 +11,7 @@ ScienceTools are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/s
 * ``enrico_config`` : produce a configuration file
 * ``enrico_gui`` : run the GUI of enrico
 
-* ``enrico_xml`` : produce an xml file that is use to model the ROI using the 2FGL catalog.
+* ``enrico_xml`` : produce an xml file that is use to model the ROI using the 3FGL (default) catalog. it can use the 2FGL and the 1FHL.
 * ``enrico_sed`` : Run gtlike afer having produced all the need fits files is asked.
 * ``enrico_testmodel`` : compute the log(likelihood) of the models `POWERLAW`, `LogParabola` and `PLExpCutoff`.
    An ascii file is then produced in the Spectrum folder with the value of the log(likelihood) for each model.
