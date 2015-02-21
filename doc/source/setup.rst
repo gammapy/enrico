@@ -91,19 +91,17 @@ Install additional (optional)  python packages
    You'll get an `ImportError` with the name of the missing package
    once you try to use part of the code that relies on that package.
 
-First of all you should install `distribute <http://packages.python.org/distribute/>`__ 
-and `pip <http://www.pip-installer.org>`__ as discribed
-`here <http://www.pip-installer.org/en/latest/installing.html>`__, because
-pip makes it easy to install additional packages:
+First of all you should install `setuptools <http://pythonhosted.org//setuptools/>`__ 
+and `pip <https://pip.pypa.io/en/latest/>`__ as described
+`here <https://pip.pypa.io/en/latest/installing.html#install-pip>`__, because
+pip makes it easy to install additional packages. To install both just run:
 
 .. code-block:: bash
 
-   curl -O http://python-distribute.org/distribute_setup.py
-   python distribute_setup.py
-   curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+   curl -O https://bootstrap.pypa.io/get-pip.py
    python get-pip.py
-   which pip (should be located in the Fermi software)
-   pip (should print a help message)
+   which pip # should be located in the Fermi software
+   pip # should print a help message
 
 Next install `ipython <http://ipython.org/>`__, which is a much nicer interactive 
 python shell than the default python shell and 
