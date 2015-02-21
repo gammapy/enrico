@@ -47,6 +47,10 @@ CATALOG_VERSION = '14'
 TEMPLATE_VERSION = '15'
 if CATALOG_DIR :
   CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_v%s/Templates'% TEMPLATE_VERSION)
+  try :
+    os.mkdir(join(CATALOG_DIR, 'Extended_archive_v%s'% TEMPLATE_VERSION))
+  except:
+    pass
 
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 DIFFUSE_GAL = 'gll_iem_v05_rev1.fit'
