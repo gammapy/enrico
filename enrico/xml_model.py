@@ -308,10 +308,10 @@ def GetlistFromFits(config, catalog):
       extendedfits    = cfile[5].data.field('Spatial_Filename')
       extendedsrcname = cfile[5].data.field('Source_Name')
     except:
-      mes.warning("Cannot find th extended source list: please check the xml")
+      mes.warning("Cannot find the extended source list: please check the xml")
       extendedName = np.array(names.size*[""])
+      extendedsrcname = []
 
-    
 
     sigma = data.field('Signif_Avg')
 
