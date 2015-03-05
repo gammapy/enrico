@@ -103,11 +103,6 @@ class FitMaker(Loggin.Message):
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
                 self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
-            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
-                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
-                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-                Fit.freeze(PhIndex)
-                self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
             else:
               self.warning("The model is not a PowerLaw. Cannot freeze the index.")
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
