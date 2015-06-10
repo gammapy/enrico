@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-import os
-from enrico import utils
-from enrico import energybin
-from enrico.config import get_config
-from enrico.gtfunction import Observation
-from enrico.fitmaker import FitMaker
 
 
 def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
+    from enrico import utils
+    from enrico.gtfunction import Observation
+    from enrico.fitmaker import FitMaker
+    
     """ run an analysis"""
     Obs = Observation(folder, config, convtyp, tag=tag)
     if verbose:
@@ -47,10 +45,15 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     return FitRunner,Fit
 
 def run(infile):
+    from enrico import utils
+    from enrico import energybin
+    from enrico.config import get_config
+    import os
+    
     """Run an entire Fermi analysis (spectrum) by reading a config file"""
     config = get_config(infile)
     folder = config['out']
-    os.system('mkdir -p ' + folder)
+    os.makedirs(folder)
 
     FitRunner,Fit = GenAnalysisObjects(config)
     # create all the fit files and run gtlike
@@ -65,7 +68,7 @@ def run(infile):
     #plot the SED and model map if possible and asked
     if config['Spectrum']['ResultPlots'] == 'yes' :
         from enrico.constants import SpectrumPath
-    	os.system("mkdir -p "+config['out'] + '/'+SpectrumPath+'/')
+        os.makedirs("%s/%s/" %(config['out'],SpectrumPath))
         if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
             FitRunner.ComputeSED(Fit)
         outXml = utils._dump_xml(config)
@@ -75,7 +78,9 @@ def run(infile):
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
     energybin.RunEbin(folder,Nbin,Fit,FitRunner)
-    del FitRunner
+   
+    del(Result)
+    del(FitRunner)
 
 # @todo: Should this be a command line utility in bin?
 if __name__ == '__main__':

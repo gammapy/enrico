@@ -114,6 +114,7 @@ class LightCurve(Loggin.Message):
 
 
     def _MakeLC(self,Path=LightcurvePath) :
+        import gc
         '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
@@ -132,6 +133,10 @@ class LightCurve(Loggin.Message):
                 call(cmd,enricodir,fermidir,scriptname,JobLog,JobName)#Submit the job
             else :
                 run(self.configfile[i])#run in command line
+
+            gc.enable()
+            gc.collect()
+
 
 
     def _MakePhasebin(self):
