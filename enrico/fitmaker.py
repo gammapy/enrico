@@ -10,11 +10,12 @@ begun September 2011
 #logging.basicConfig(level=logging.INFO)
 #log = logging.getLogger(__name__)
 import numpy as np
-import string
+import string,pyfits
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 from enrico import utils
 from enrico import Loggin
+from enrico import environ
 
 class FitMaker(Loggin.Message):
     """Collection of functions to prepare/run the GTLIKE fit
@@ -50,7 +51,7 @@ class FitMaker(Loggin.Message):
         self.obs.MkTime()
         if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
             self._log('gtdiffrsp', 'Compute Diffuse response')
-            self.obs.DiffResps()#run gtbin
+            self.obs.DiffResps()#run gtdiffresp
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
         self._log('gtltcube', 'Make live time cube')#run gtexpcube
@@ -71,8 +72,7 @@ class FitMaker(Loggin.Message):
     #the function ends here. It does not run gtlike
 
     def CreateLikeObject(self):
-        """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it.
-        By default, the optimizer is DRMNGB """
+        """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it."""
 
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
@@ -81,7 +81,7 @@ class FitMaker(Loggin.Message):
                             binnedExpMap=self.obs.BinnedMapfile,
                             irfs=self.obs.irfs)
             Fit = BinnedAnalysis(Obs, self.obs.xmlfile,
-                                 optimizer='DRMNGB')
+                                 optimizer=self.config['fitting']['optimizer'])
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
@@ -91,13 +91,18 @@ class FitMaker(Loggin.Message):
                               expCube=self.obs.Cubename,
                               irfs=self.obs.irfs)
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
-                                   optimizer='DRMNGB')
+                                   optimizer=self.config['fitting']['optimizer'])
 
         if float(self.config['Spectrum']['FrozenSpectralIndex']) > 0:
             if Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw" or Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw2":
                 PhIndex = Fit.par_index(self.obs.srcname, 'Index')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
+            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
+                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
+                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+                Fit.freeze(PhIndex)
+                self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
             elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
                 PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
@@ -114,7 +119,7 @@ class FitMaker(Loggin.Message):
 
         self._log('gtlike', 'Run likelihood analysis')
         try:
-            Fit.fit(0) #first try to run gtlike to approche the minimum
+            Fit.fit(0,optimizer="DRMNGB") #first try to run gtlike to approche the minimum
         except:
             pass
 
@@ -124,9 +129,12 @@ class FitMaker(Loggin.Message):
         #fit with the user optimizer and ask gtlike to compute the covariance matrix 
         self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) #fit with the user optimizer and ask gtlike to compute the covariance matrix 
 
+        print Fit
+
         self.RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
         if writeXml : 
             Fit.writeXml(utils._dump_xml(self.config))
+
         self.success("Fit with gtlike preformed")
 
     def RemoveWeakSources(self,Fit):
@@ -139,7 +147,7 @@ class FitMaker(Loggin.Message):
             for src in Fit.model.srcNames:
                 ts = Fit.Ts(src)
                 if  ts< 1 and not(src == self.obs.srcname) and Fit.logLike.getSource(src).getType() == 'Point':
-                    self.warning("deleting source : "+src+" with TS = "+str(ts)+" from the model")
+                    self.warning("deleting source "+src+" with TS = "+str(ts)+" from the model")
                     NoWeakSrcLeft = False
                     Fit.deleteSource(src)
             if not(NoWeakSrcLeft):
@@ -159,9 +167,10 @@ class FitMaker(Loggin.Message):
             self.info("Results for the Fit")
             # Print src name, Npred and TS for source with TS > 5
             print "Source Name\tNpred\tTS"
-            for src in Fit.model.srcNames:
-                if Fit.Ts(src) > 5:
-                    print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
+            #TODO
+#            for src in Fit.model.srcNames:
+#                if Fit.Ts(src) > 5:
+#                    print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
 
         # fill the dictonnary with some values
         Result['Optimizer'] = self.config['fitting']['optimizer']
@@ -218,6 +227,9 @@ class FitMaker(Loggin.Message):
         except:
             pass #if the covariance matrix has not been computed
 
+        if self.config['verbose'] == 'yes' :
+            utils.GetFluxes(Fit,self.obs.Emin,self.obs.Emax) #print the flux of all the sources
+
         #Compute an UL if the source is too faint
         if float(self.config['UpperLimit']['TSlimit']) > Fit.Ts(self.obs.srcname):
             if self.config['UpperLimit']['envelope'] == 'yes':
@@ -228,13 +240,76 @@ class FitMaker(Loggin.Message):
 
         return Result   #Return the dictionnary
 
+
+    def PoissonUL(self,Fit):
+        """ Compute UL using Feldman-cousin poisson stat"""
+        self.info('Compute the exposure')#run gtexposure
+
+        try : 
+            spfile = pyfits.open(self.obs.lcfile)
+        except:
+            self.obs.GtLCbin(dt = self.config['time']['tmax']-self.config['time']['tmin'])
+#            spfile = pyfits.open(self.obs.lcfile)
+
+        self.obs.Configuration['AppLC']['index'] = self.config['UpperLimit']['SpectralIndex']
+        self.obs.GtExposure()
+        Exposure = np.sum(spfile[1].data.field("EXPOSURE"))
+ 
+        ###
+        self.info('Compute the psf')#run gtexposure
+        self.obs.GtPSF()
+
+        ccube = pyfits.open(self.obs.ccube)
+        psfres = pyfits.open(self.obs.psf)
+
+        #read psf and get the 68% containement radius
+        theta = (psfres[2].data["Theta"])
+        theta68 = np.zeros(len(psfres[1].data["psf"]))
+        for i in xrange(len(psfres[1].data["psf"])):
+            integral = np.trapz(psfres[1].data["psf"][i],theta)
+            for j in xrange(psfres[1].data["psf"][i].size):
+               if np.trapz(psfres[1].data["psf"][i][:j],theta[:j])/integral>0.68:
+                   theta68[i] = theta[j]
+                   break
+
+        #read the CCUBE
+        x = np.arange(-abs(int(ccube[0].header["CRPIX1"])*ccube[0].header["CDELT1"]),abs(ccube[0].header["CRPIX1"]*ccube[0].header["CDELT1"]),abs(ccube[0].header["CDELT1"]))
+        y = np.arange(-abs(ccube[0].header["CRPIX2"]*ccube[0].header["CDELT2"]),abs(int(ccube[0].header["CRPIX2"])*ccube[0].header["CDELT2"]),abs(ccube[0].header["CDELT2"]))
+
+        xx, yy = np.meshgrid(x, y)
+        dist = np.sqrt(xx**2 + yy**2)
+        Obsevt = 0 #compute the number of events within the PSF radius
+        for i in xrange(len(psfres[1].data["psf"])):
+            maps = ccube[0].data[i]
+            Obsevt += sum(maps[dist<theta68[i]])/0.68
+
+        nbg = max(0,int(Obsevt-Fit.NpredValue(self.obs.srcname)))
+        Obsevt = int(Fit.NpredValue(self.obs.srcname)+nbg)
+        if Obsevt> 20:
+            self.warning("Observed Numbers of event too high (>20)\n abort and return -1")
+            return -1
+
+        cl = str(int(float(self.config['UpperLimit']['cl'])*100))
+        try : 
+            ullookup = np.genfromtxt(environ.ENRICO_DIR+'/enrico/extern/UL_poisson_'+cl+'.dat',unpack=True)
+        except:
+            self.warning("cannot find the file "+environ.ENRICO_DIR+'/enrico/extern/UL_poisson_'+cl+'.dat')
+        bkglookup = np.array([0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0])
+        measurement = ullookup[0] #the first row is the measurement 
+
+        uls = ullookup[2:-1:2] #keep only 1 row over 2 since we don't care about LL
+
+        self.info("Found "+str(Obsevt)+" events for "+str(nbg)+" background event ")
+#        print uls[bkglookup.searchsorted(nbg)][measurement.searchsorted(Obsevt)]," ",Exposure
+        return uls[bkglookup.searchsorted(nbg)][measurement.searchsorted(Obsevt)]/Exposure
+
     def ComputeUL(self, Fit):
         """Compute an Upper Limit using either the profil or integral method
         See the ST cicerone for more information on the 2 method"""
 
         self._log('UpperLimit', 'Compute upper Limit')
         #Index given by the user  
-        self.info("Assumed index is ", self.config['UpperLimit']['SpectralIndex'])
+        self.info("Assumed index is "+str(self.config['UpperLimit']['SpectralIndex']))
 
         IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
         Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
@@ -243,9 +318,11 @@ class FitMaker(Loggin.Message):
         import scipy.stats
         cl = float(self.config['UpperLimit']['cl'])
         delta = 0.5*scipy.stats.chi2.isf(1-2*(cl-0.5), 1)
-        print cl,' ',delta
+
 
         if self.config['UpperLimit']['Method'] == "Profile": #The method is Profile
+            if Fit.Ts(self.obs.srcname)<2 :
+                self.warning("TS of the source is very low, better to use Integral method")
             import UpperLimits
             ulobject = UpperLimits.UpperLimits(Fit)
             ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
@@ -253,11 +330,20 @@ class FitMaker(Loggin.Message):
                                       #delta=2.71 / 2)
             self.info("Upper limit using Profile method: ")
             print ulobject[self.obs.srcname].results
+            self.warning("Be sure to have enough photons to validate the gaussian assumption")
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             import IntegralUpperLimit
             ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname, cl=cl,
-                                                verbosity=0)
+                                                verbosity=0,emin=self.obs.Emin,
+                                                emax=self.obs.Emax)
             print "Upper limit using Integral method: ", ul
+            self.warning("Be sure to have enough photons to validate the gaussian assumption")
+
+        if self.config['UpperLimit']['Method'] == "Poisson": #The method is Poisson
+            ul = self.PoissonUL(Fit)
+            print "Upper limit using Poisson statistic: ", ul
+
+        print "This is an ul on the integral flux in ph/cm2/s"
         return ul #Return the result. This is an ul on the integral flux in ph/cm2/s 
 
     def EnvelopeUL(self, Fit):

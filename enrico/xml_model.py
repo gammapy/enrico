@@ -379,6 +379,16 @@ def GetlistFromFits(config, catalog):
     print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
+
+    #save log of the genration of the xml
+    save = "catalog: "+catalog+"\n"
+    save += "Add "+str(len(sources))+" sources in the ROI of "+str(roi)+ "("+str(config['space']['rad'])+"+ 2 ) degrees\n"
+    save += " sources have free parameters inside "+str(max_radius)+" degrees\n"
+    save += str(Nextended)+" source(s) is (are) extended\n"
+    savexml = open(config['out']+'/'+ config['target']['name']+"_"+config['target']['spectrum']+"_generation.log","w")
+    savexml.write(save)
+    savexml.close()
+
     return sources
 
 def IsIn(name, sources):
@@ -388,6 +398,8 @@ def IsIn(name, sources):
     return False
 
 def WriteXml(lib, doc, srclist, config):
+    from enrico import Loggin
+    mes = Loggin.Message()
     """Fill and write the library of sources into an XML file"""
     emin = config['energy']['emin']
     emax = config['energy']['emax']
@@ -412,10 +424,15 @@ def WriteXml(lib, doc, srclist, config):
         Gal = Gal_dir + "/" + config['model']['diffuse_gal']
 
     if config['model']['diffuse_iso'] == "":
-        Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
+        try : 
+            Iso = utils.GetIso(config["event"]["evclass"],config["event"]["evtype"])
 
-#        if config['analysis']['irfs'] == "P7CLEAN_V6":# and config['analysis']['convtype'] == -1:
-#            Iso = Iso_dir + "/" + env.DIFFUSE_ISO_CLEAN
+            if not(os.path.isfile(Iso)):
+                raise RuntimeError
+        except:
+            mes.warning("Cannot guess Iso file, please have a look")
+            Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
+
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
 
@@ -424,6 +441,9 @@ def WriteXml(lib, doc, srclist, config):
                  max=10.0, min=1.0, name=Isoname)
     addGalprop(lib, Gal, free=1, value=1.0, scale=1.0,
                max=10.0, min=.010, name=Galname)
+
+    print "Iso model file ",Iso
+    print "Galactic model file ",Gal
 
     # loop over the list of sources and add it to the library
     for i in xrange(len(srclist)):
@@ -460,8 +480,7 @@ def WriteXml(lib, doc, srclist, config):
     os.system('mkdir -p ' + folder)
 
     output = config['file']['xml']
-    from enrico import Loggin
-    mes = Loggin.Message()
+
     mes.info("write the Xml file in "+output)
     open(output, 'w').write(doc.toprettyxml('  '))#save it
 
@@ -505,6 +524,7 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
 def XmlMaker(config):
   folder = config['out']
   os.system('mkdir -p ' + folder)
+
 
 # test if the user provide a catalog or not.
 #if not use the default one
