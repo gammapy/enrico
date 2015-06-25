@@ -48,12 +48,11 @@ def run(infile):
     from enrico import utils
     from enrico import energybin
     from enrico.config import get_config
-    import os
     
     """Run an entire Fermi analysis (spectrum) by reading a config file"""
     config = get_config(infile)
     folder = config['out']
-    os.makedirs(folder)
+    utils.create_dir(folder)
 
     FitRunner,Fit = GenAnalysisObjects(config)
     # create all the fit files and run gtlike
@@ -68,7 +67,7 @@ def run(infile):
     #plot the SED and model map if possible and asked
     if config['Spectrum']['ResultPlots'] == 'yes' :
         from enrico.constants import SpectrumPath
-        os.makedirs("%s/%s/" %(config['out'],SpectrumPath))
+        utils.create_dir("%s/%s/" %(config['out'],SpectrumPath))
         if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
             FitRunner.ComputeSED(Fit)
         outXml = utils._dump_xml(config)

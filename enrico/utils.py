@@ -275,3 +275,10 @@ def MJD_to_met(mjd):
 
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
+
+def create_dir(path):
+    import os
+    import os.path
+
+    if (not os.path.exists(path)):
+        os.makedirs(path)

@@ -115,6 +115,8 @@ class LightCurve(Loggin.Message):
 
     def _MakeLC(self,Path=LightcurvePath) :
         import gc
+        import os
+        gc.enable()
         '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
@@ -122,6 +124,7 @@ class LightCurve(Loggin.Message):
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
 
         for i in xrange(self.Nbin):
+            gc.collect()
             if self.submit == 'yes':
                 cmd = "enrico_sed "+self.configfile[i]
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"
@@ -132,10 +135,11 @@ class LightCurve(Loggin.Message):
 
                 call(cmd,enricodir,fermidir,scriptname,JobLog,JobName)#Submit the job
             else :
-                run(self.configfile[i])#run in command line
+                cmd = "enrico_sed "+self.configfile[i]
+                os.system(cmd)
 
-            gc.enable()
-            gc.collect()
+                #run(self.configfile[i])#run in command line
+
 
 
 
