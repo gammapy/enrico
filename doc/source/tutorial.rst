@@ -118,12 +118,18 @@ and store it into a xml file which will be used for the analysis.
    Use the catalog :  /CATALOG_PATH/gll_psc_v06.fit
    Add  12  sources in the ROI of  10.0  degrees
    3  sources have free parameters inside  3.0  degrees
+   Iso model file  /gpfs/LAPP-DATA/hess/sanchez/Fermi/Soft/ScienceTools//IExternal/diffuseModels/v5r0/iso_P8R2_SOURCE_V6_v06.txt
+   Galactic model file  /gpfs/LAPP-DATA/hess/sanchez/Fermi/Soft/ScienceTools//IExternal/diffuseModels/v5r0/gll_iem_v06.fits
+
    write the Xml file in  ~/myanalysis/PG155+113_PowerLaw2_model.xml
 
 .. note:: 
    Note that you give options for this step simply by mentioning
    the config file. For the `enrico_xml` tool, the relevant options
    are in the [space], [target] section.  The out file is given by [file]/xml.
+ 
+   The Iso model can be guess using the evclass and evtype given in the config file. 
+   If the file does not excist the default one is used
 
 Get data
 --------
@@ -247,18 +253,47 @@ An upper limits is calculated if the Test Statistic (TS) of the source is below 
  * bins in energy, use the option [Ebin]/TSEnergyBins. 
  * `enrico_lc`, use the option [LightCurve]/TSLightCurve. 
 
-Two methods are available :
+3 methods are available :
 
  * The profile method, which look for a decrease of a certain amount of the likelihood function
  * The integral method which compute the integral of the  likelihood function as a function of a parameter to set the UL
+ * The Poisson method based on Feldman-Cousins method for low signal
 
-Both implementations are provided by the ScienceTools and used by enrico.
+The first 2 implementations are provided by the ScienceTools and used by enrico.
 
 
 .. note:: 
    For upper limits, most of the relevant options are in the [UpperLimits]
    section
 
+
+
+Results
+------------
+
+At the end of `enrico_sed`, a file with the extension `.results`  is created. After is an example for a POWERLAW model:
+
+
+ * Index : Value of the spectral index (for POWERLAW)
+ * Scale : Value of the scale parameter (MeV, for POWERLAW)
+ * Optimizer : optimizer used in the fit
+ * Emin : Value of the energy min (MeV)
+ * Emax : Value of the energy max (MeV)
+ * tmax : Value of the time max (MET)
+ * dScale : Error of the scale parameter (MeV, for POWERLAW)
+ * TS : Value of the Test statistic 
+ * ModelType : Spectral model fitted
+ * SrcName : Name of the target
+ * Flux : fitted integral flux (ph/cm2/s)
+ * Npred : Number of predicted photons
+ * log_like : Value of the loglikehihood
+ * dIndex : Error of the spectral index (for POWERLAW)
+ * dFlux : Error fitted integral flux (ph/cm2/s)
+ * dPrefactor : Error Prefactor parameter (ph/MeV/cm2/s)
+ * tmin : Value of the time min (MET)
+ * Prefactor : Value Prefactor parameter (ph/MeV/cm2/s)
+
+Summaries of the LC and Ebin computations are also given in a ascii file at the end of `enrico_plot_sed` and `enrico_plot_lc`
 
 Plot results
 ------------
@@ -347,7 +382,22 @@ These maps are use to visualize the ROI and check and see any misfitted sources.
 Make Profile likelihood
 -----------------------
 
-The tool `enrico_scan` allows to make profile likelihood of the free parameters of the target. Each plot is save under the `scan` folder. Fits files must have been generated before.
+The tool `enrico_scan` allows to make a profile likelihood of the free parameters of the target. Each plot is save under the `scan` folder. Fits files must have been generated before.
+
+Make Confidence contour
+-----------------------
+
+The tool `enrico_contour` allows to make a contour of 2  free parameters of the target. Each plot is save under the `contour` folder. Fits files must have been generated before.
+
+Get the highest energy events
+-----------------------
+
+The tool `enrico_srcprob' compute the highest energy photons that can be associated to a list of sources (provided in an ascii file). The probability of the photons to be associated to the sources is also computed
+
+Refine source position
+-----------------------
+
+The tool `enrico_findsrc' is based on gtfindsource and find the best position of a source
 
 Check different models
 ----------------------

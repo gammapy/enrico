@@ -4,8 +4,24 @@ import logging
 from math import log10,pow
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.config import get_config
-
+from enrico.utils import GetIRFS,Checkevtclass
 class EnricoGui:
+
+    def getirfs(self,widget,data=None):
+       win = gtk.Window(gtk.WINDOW_TOPLEVEL)
+       try :
+           Checkevtclass(self.evclass.get_value())
+           print "selection : event class "+ str(self.evclass.get_value())+" and event type "+str(self.evtype.get_value())
+           print "Corresponding IRFs\t=\t",GetIRFS(self.evclass.get_value(),self.evtype.get_value())
+           button = gtk.Button("Corresponding IRFs:"+str(GetIRFS(self.evclass.get_value(),self.evtype.get_value())))
+
+
+       except:
+           button = gtk.Button("evclass value in config file not valid")
+       button.connect_object("clicked", gtk.Widget.destroy, win)
+       win.add(button)
+       button.show()
+       win.show()
 
     def Launch(self,widget,data=None):
        self.save(None,None)
@@ -122,8 +138,9 @@ class EnricoGui:
          if widget.get_active():
            self.config["target"]["fit_tau"] = "yes"
 
-    def fct_rappel(self, widget, data=None):
-       print "Le %s a ete %s." % (data, ("desactive", "active")[widget.get_active()])
+
+#    def fct_rappel(self, widget, data=None):
+#       print "Le %s a ete %s." % (data, ("desactive", "active")[widget.get_active()])
 
     def delete(self, widget, event=None):
         gtk.main_quit()
@@ -205,11 +222,13 @@ class EnricoGui:
         self.config["TSMap"]["method"] = self.listtsmethod.entry.get_text()
 
         self.config["analysis"]["likelihood"] = self.listchain.entry.get_text()
-        self.config["analysis"]["evclass"] = int(self.evclass.get_value())
+
         self.config["analysis"]["zmax"] = self.zmax.get_value()
         self.config["analysis"]["filter"] = self.filter.get_text()
-        self.config["analysis"]["irfs"] = self.irfs.get_text()
-        self.config["analysis"]["convtype"] = self.convtype.get_text()
+
+        self.config["event"]["evclass"] = int(self.evclass.get_value())
+        self.config["event"]["evtype"] = int(self.evtype.get_value())
+        self.config["event"]["irfs"] = self.irfs.get_text()
 
         self.config["fitting"]["optimizer"] = self.listopt.entry.get_text()
         self.config["fitting"]["ftol"] = pow(10,self.ftol.get_value())
@@ -509,6 +528,7 @@ class EnricoGui:
     def _addAnalysis(self):
         BNPage = self.AddBlocNotePage("Analysis")
         frameAna,tableAna = self._addFrame("Analysis options",2,4)
+        frameevt,tableevt = self._addFrame("events selection",2,4)
         frameFit,tableFit = self._addFrame("Fitting options",2,4)
 
         BNPage.attach(frameAna, 0, 8, 0, 4)
@@ -525,11 +545,6 @@ class EnricoGui:
         tableAna.attach(label,0,1,0,1)
         tableAna.attach(self.listchain,1,2,0,1)
 
-        self.evclass = self.AddSpinButton(self.config["analysis"]["evclass"], 1, 256, 1, 0)
-        label = gtk.Label("Event Class")
-        label.show()
-        tableAna.attach(label, 2,3,0,1)
-        tableAna.attach(self.evclass,3,4,0,1)
 
         FitButton = gtk.CheckButton("")
         FitButton.connect("toggled", self.fct_yesno, "Diffresp")
@@ -557,6 +572,7 @@ class EnricoGui:
         tableAna.attach(label,2, 3,2,3)
         tableAna.attach(FitButton,3,4,2,3)
 
+
         self.filter = gtk.Entry()
         self.filter.set_text(self.config['analysis']['filter'])
         self.filter.show()
@@ -566,22 +582,45 @@ class EnricoGui:
         tableAna.attach(label, 0,1,3,4)
         tableAna.attach(self.filter, 1,4,3,4)
 
+
+
+#        self.convtype = self.AddSpinButton(self.config["analysis"]["convtype"], -1,1, 1, 0)
+#        label = gtk.Label("convtype")
+#        label.show()
+#        tableAna.attach(label, 2,3,4,5)
+#        tableAna.attach(self.convtype,3,4,4,5)
+
+        BNPage.attach(frameevt, 0, 8, 4, 6)
+
         self.irfs = gtk.Entry()
-        self.irfs.set_text(self.config['analysis']['irfs'])
+        self.irfs.set_text(self.config['event']['irfs'])
         self.irfs.show()
 
-        label = gtk.Label("irfs")
+        label = gtk.Label("IRFs")
         label.show()
-        tableAna.attach(label, 0,1,4,5)
-        tableAna.attach(self.irfs, 1,2,4,5)
+        tableevt.attach(label, 1,2,0,1)
+        tableevt.attach(self.irfs, 3,5,0,1)
 
-        self.convtype = self.AddSpinButton(self.config["analysis"]["convtype"], -1,1, 1, 0)
-        label = gtk.Label("convtype")
+        self.evclass = self.AddSpinButton(self.config["event"]["evclass"], 1, 16777216, 1, 0)
+        label = gtk.Label("Event Class")
         label.show()
-        tableAna.attach(label, 2,3,4,5)
-        tableAna.attach(self.convtype,3,4,4,5)
+        tableevt.attach(label, 0,1,1,2)
+        tableevt.attach(self.evclass,1,2,1,2)
 
-        BNPage.attach(frameFit, 0, 8, 4, 6)
+
+        self.evtype = self.AddSpinButton(self.config["event"]["evtype"], 1, 512, 1, 0)
+        label = gtk.Label("Event Type")
+        label.show()
+        tableevt.attach(label, 2,3,1,2)
+        tableevt.attach(self.evtype,3,4,1,2)
+
+
+        irfsbutton = gtk.Button("Check IRFS")
+        irfsbutton.connect("clicked", self.getirfs, "")
+        irfsbutton.show()
+        tableevt.attach(irfsbutton,5,6,1,2)
+
+        BNPage.attach(frameFit, 0, 8, 6, 8)
 
         self.listopt = gtk.Combo()
         self.listopt.entry.set_text("Optimizer")
@@ -1099,13 +1138,12 @@ class EnricoGui:
             config = ConfigObj(indent_type='\t')
             config['out'] = os.getcwd()
             self.config = get_config(config) 
-
+            
         try :
             ftmp=open(self.config['file']['xml'],'r')
             ftmp.close()
         except :
             os.system('touch '+self.config['file']['xml'])
-
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.connect("delete_event", self.delete)

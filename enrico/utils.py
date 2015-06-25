@@ -110,7 +110,7 @@ def SubtractFits(infile1, infile2, config):
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):
     """Print the integral flux and error for all the sources"""
-    print "Source Flux  [%2.2e MeV, %2.2e MeV] : " %(Emin,Emax)
+    print "\nSource Flux  [%2.2e MeV, %2.2e MeV] : " %(Emin,Emax)
     for src in Fit.model.srcNames:
         try:
             print(src + "   Integral Flux : %2.2e +/-  %2.2e ph/cm2/s" %
@@ -276,9 +276,92 @@ def MJD_to_met(mjd):
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
 
+<<<<<<< HEAD
 def create_dir(path):
     import os
     import os.path
 
     if (not os.path.exists(path)):
         os.makedirs(path)
+=======
+
+def Checkevtclass(evclass):
+    classirfs = {1:"P8R2_TRANSIENT100A",2:"P8R2_TRANSIENT100E",4:"P8R2_TRANSIENT100",8:"P8R2_TRANSIENT020E",
+			16:"P8R2_TRANSIENT020",32:"P8R2_TRANSIENT010E",64:"P8R2_TRANSIENT010",128:"P8R2_SOURCE",
+			256:"P8R2_CLEAN",521:"P8R2_ULTRACLEAN",1024:"P8R2_ULTRACLEANVETO",32768:"P8R2_TRANSIENT100S",
+			65536:"P8R2_TRANSIENT015S",16777216:"P8R2_LLE"}
+    try :
+        tmp = classirfs[evclass]
+    except:
+        from enrico import Loggin
+        mes = Loggin.Message()
+        mes.error("evclass value in config file not valid")
+
+def GetSDC(val):
+    deno = 0
+    while val>=2:
+        val = val/2
+        deno += 1
+    return deno
+
+def GetIRFS(evtclass,evttype):
+    classirfs = {1:"P8R2_TRANSIENT100A",2:"P8R2_TRANSIENT100E",4:"P8R2_TRANSIENT100",8:"P8R2_TRANSIENT020E",
+			16:"P8R2_TRANSIENT020",32:"P8R2_TRANSIENT010E",64:"P8R2_TRANSIENT010",128:"P8R2_SOURCE",
+			256:"P8R2_CLEAN",521:"P8R2_ULTRACLEAN",1024:"P8R2_ULTRACLEANVETO",32768:"P8R2_TRANSIENT100S",
+			65536:"P8R2_TRANSIENT015S",16777216:"P8R2_LLE"}
+
+    typeirfs={1:"FRONT",2:"BACK",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
+		128:"EDISP1",256:"EDISP2",512:"EDISP3"}
+
+    result = []
+    val = evttype
+    while val>0 :
+       deno = GetSDC(val)
+       result.append(2**deno)
+       val = val - result[-1]
+
+    typ = []
+    for t in result:
+        typ.append(typeirfs[t])
+    return classirfs[evtclass]+"_V6",typ
+
+
+def GetIso(evtclass,evttype):
+    irfs = GetIRFS(evtclass,evttype)
+    import enrico.environ as e
+    if len(irfs[1])> 1:
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_v06.txt')
+    else:
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+irfs[0]+'_'+str(irfs[1])+'_v06.txt')
+    return res
+
+
+def GetZenithCut(evtclass,evttype,emin):
+    irfs = GetIRFS(evtclass,evttype)
+    ener = np.array([50,100,200,300,500])
+    emin_ind = sum(ener-0.1<emin)-1
+    All = [80,90 ,95 ,100 ,100 ]
+#FRONT+BACK, EDISP0-EDISP3	80	90 	95 	100 	100 
+    FRONT = [85 ,95 ,100 ,100 ,100]
+    BACK = [75,85 ,90 ,95 ,100]
+    PSF0 = [70,80 ,85 ,90 ,95]
+    PSF1 = [75,85 ,95 ,100 ,100]
+    PSF2 = [85,95,100,100,100]
+    PSF3 = [90,100,100,100,100]
+    print irfs[1]
+    if len(irfs[1])>1 :
+       print emin_ind
+       return All[emin_ind]
+    elif irfs[1][0] == "FRONT":
+       return FRONT[emin_ind]
+    elif irfs[1][0] == "BACK":
+       return BACK[emin_ind]
+    elif irfs[1][0] == "PSF0":
+       return PSF0[emin_ind]
+    elif irfs[1][0] == "PSF1":
+       return PSF1[emin_ind]
+    elif irfs[1][0] == "PSF2":
+       return PSF2[emin_ind]
+    elif irfs[1][0] == "PSF3":
+       return PSF3[emin_ind]
+>>>>>>> 966237fa01b5c7f08e92ff58eb03bc8eb3fcf120

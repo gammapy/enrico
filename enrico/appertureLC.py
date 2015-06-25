@@ -29,7 +29,7 @@ def AppLC(infile):
     #Get The time bin
     dt = (config['time']['tmax']-config['time']['tmin'])/Nbins #sec
 
-    Obs = Observation(LCoutfolder, config, config['analysis']['convtype'], tag="")
+    Obs = Observation(LCoutfolder, config, tag="")
     if config['AppLC']["FitsGeneration"] == "yes":
         _log('gtselect', 'Select data from library')#run gtselect
         Obs.FirstCut()

@@ -157,4 +157,4 @@ def Contour(config):
 
 
 
-    mes.success("Scan ")
+    mes.success("Scan Performed")
