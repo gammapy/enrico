@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 
 
-<<<<<<< HEAD
 def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     from enrico import utils
     from enrico.gtfunction import Observation
     from enrico.fitmaker import FitMaker
     
-=======
-def Analysis(folder, config, tag="" ,verbose = 1):
->>>>>>> 966237fa01b5c7f08e92ff58eb03bc8eb3fcf120
     """ run an analysis"""
     Obs = Observation(folder, config, tag=tag)
     if verbose:

@@ -276,14 +276,12 @@ def MJD_to_met(mjd):
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
 
-<<<<<<< HEAD
 def create_dir(path):
     import os
     import os.path
 
     if (not os.path.exists(path)):
         os.makedirs(path)
-=======
 
 def Checkevtclass(evclass):
     classirfs = {1:"P8R2_TRANSIENT100A",2:"P8R2_TRANSIENT100E",4:"P8R2_TRANSIENT100",8:"P8R2_TRANSIENT020E",
@@ -364,4 +362,3 @@ def GetZenithCut(evtclass,evttype,emin):
        return PSF2[emin_ind]
     elif irfs[1][0] == "PSF3":
        return PSF3[emin_ind]
->>>>>>> 966237fa01b5c7f08e92ff58eb03bc8eb3fcf120
