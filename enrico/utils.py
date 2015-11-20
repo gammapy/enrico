@@ -346,9 +346,7 @@ def GetZenithCut(evtclass,evttype,emin):
     PSF1 = [75,85 ,95 ,100 ,100]
     PSF2 = [85,95,100,100,100]
     PSF3 = [90,100,100,100,100]
-    print irfs[1]
     if len(irfs[1])>1 :
-       print emin_ind
        return All[emin_ind]
     elif irfs[1][0] == "FRONT":
        return FRONT[emin_ind]

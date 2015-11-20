@@ -58,7 +58,7 @@ except:
 
 print 
 config = get_config(infile)
-obs = Observation(config["out"], config, convtyp=config['analysis']['convtype'])
+obs = Observation(config["out"], config)
 
 counts = dict(label='Counts', filename=obs.cmapfile)
 model = dict(label='Model', filename=obs.ModelMap)

@@ -43,7 +43,7 @@ except :
     DIRS = {}
 
 # File names
-CATALOG_VERSION = '14'
+CATALOG_VERSION = '16'
 TEMPLATE_VERSION = '15'
 if CATALOG_DIR :
   CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_v%s/Templates'% TEMPLATE_VERSION)
