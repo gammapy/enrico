@@ -25,3 +25,4 @@ ScienceTools are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/s
 * ``enrico_plot_tsmap`` : plot the TS Map resulting from enrico_tsmap
 * ``enrico_scan`` : make a profile likelihood for each free parameter of the target
 * ``enrico_findsrc`` : run gtfindsource
+* ``enrico_contour`` : make a confidence contour of 2 parameters

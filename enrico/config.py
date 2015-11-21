@@ -4,8 +4,7 @@ from os.path import join
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.extern.validate import Validator
 from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR
-from enrico import Loggin
-
+from enrico import Loggin, utils
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     """Parse config file, and in addition:
@@ -13,10 +12,15 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     - exit with an error if a required option is missing"""
     config = ConfigObj(infile, configspec=configspec,
                        file_error=True)
+
     validator = Validator()
     # @todo: I'm not sure we always want to copy all default options here
     results = config.validate(validator, copy=True)
     mes = Loggin.Message()
+
+
+    utils.Checkevtclass(config['event']['evclass'])
+
     if results != True:
         for (section_list, key, _) in flatten_errors(config, results):
             if key is not None:
@@ -28,6 +32,7 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
         mes.warning('   Please check your config file for missing '
               'and wrong options!')
         mes.error('Config file is not valid.')
+
     return config
 
 
@@ -122,5 +127,38 @@ def query_config():
       config['energy']['emax'] = emax
     else :
       config['energy']['emax'] = '300000'
+
+#    informations about the event class
+    config['event'] = {}
+    irfs = raw_input('IRFs [CALDB] : ')
+    if not(irfs=='') :
+      config['event']['irfs'] = irfs
+    else :
+      config['event']['irfs'] = 'CALDB'
+
+    if irfs=='' :
+      ok = False
+      while not(ok):
+        evclass = raw_input('evclass [128] : ')
+        if not(evclass=='') :
+          config['event']['evclass'] = evclass
+        else :
+          config['event']['evclass'] = '128'
+
+        evtype = raw_input('evtype [3] : ')
+        if not(evtype=='') :
+          config['event']['evtype'] = evtype
+        else :
+          config['event']['evtype'] = '3'
+        print "Corresponding IRFs\t=\t",utils.GetIRFS(float(config['event']['evclass']),float(config['event']['evtype']))
+        ans = raw_input('Is this ok? [y] : ')
+        if ans == "y" or ans == '':
+           ok = True
+
+    config['analysis'] = {}
+    zmax = utils.GetZenithCut(float(config['event']['evclass']),float(config['event']['evtype']),float(config['energy']['emin']))
+    print "Corresponding zmax = ",zmax
+    config["analysis"]["zmax"] = zmax
+
 
     return get_config(config)

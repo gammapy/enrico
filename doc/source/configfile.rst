@@ -31,7 +31,12 @@ Note :
  * Coordinate are in degrees.
  * Available models are 'PowerLaw', 'PowerLaw2', 'LogParabola', 'PLExpCutoff'
 
-The parameter `spectrum` is used for the generation of the sky model. Of course, you can change the model describing the spectrum of any sources (by hand...). All the models supported by the ST are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/documentation/Cicerone/Cicerone_Likelihood/Model_Selection.html>`_. For now, the supported models by `enrico` are PowerLaw, PowerLaw2, LogParabola, PLExpCutoff, Generic. `Generic` is for the non-supported models. By supported, we mean that enrico can produce a xml file with such model and has some optional features. It is completely possible to run an analyze with enrico and a non-supported model.
+The parameter `spectrum` is used for the generation of the sky model. Of course, you can change the model describing the spectrum of any sources (by hand...). All the models supported by the ST are described `here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/documentation/Cicerone/Cicerone_Likelihood/Model_Selection.html>`_. For now, the supported models by `enrico` are PowerLaw, PowerLaw2, LogParabola, PLExpCutoff, Generic. `Generic` is for the non-supported models. By supported, we mean that enrico can produce a xml file with such model and has some optional features. It is completely possible to run an analyse with enrico and a non-supported model. For extragalactic sources, absorption by the extragalactic background light can be taken into account. This feature is disable if z=0:
+
+ * redshift has to be provided
+ * ebl_model is a id of a model - the number is defined in the ST. 0=Kneiske, 1=Primack05, 2=Kneiske_HighUV, 3=Stecker05, 4=Franceschini, 5=Finke, 6=Gilmore
+ * the EBL absorption can be scaled by a parameter which can be fitted if fit_tau = yes
+
 
 .. code-block:: ini
 
@@ -40,6 +45,9 @@ The parameter `spectrum` is used for the generation of the sky model. Of course,
       ra = 238.92935
       dec = 11.190102
       spectrum = PowerLaw2
+      redshift = 0.5
+      ebl_model = 4
+      fit_tau = no
 
 Space
 -----
@@ -136,16 +144,29 @@ Convtype is use to select either the front (0), back (1) or both (-1) events. If
    [analysis]
       # General analysis options
       likelihood = binned
-      evclass = 2
       zmax = 100.0
       roicut = no
       filter = DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52
-      irfs = P7REP_SOURCE_V15
-      # if convtype =0 or 1, an ::FRONT of ::BACK is happend at the end of the irfs string automatically
-      convtype = -1
 
 
-fitting
+Events and IRFs
+--------
+
+This part is used to defined how enrico should select the event and which IRFs to use. You can defined the event class and evtype. By default IRFS are automatically selected using the  evclass and evtype (see ST documentation), irfs default value is then CALDB.
+
+event class (PSF, edisp, etc..) can be selected through this skim. For more information, please see XXX
+
+Currently supported irfs with this system are the PASS8_R2 irfs.
+
+.. code-block:: ini
+
+   [event]
+      irfs = CALDB
+      evclass = 128
+      evtype = 3
+
+
+Fitting
 -------
 
 Option for the minimizer. You can use MINUIT, NEWMINUIT, DRMGB, etc. ftol is the tolerance that the minimizer should reach.
@@ -157,7 +178,7 @@ Option for the minimizer. You can use MINUIT, NEWMINUIT, DRMGB, etc. ftol is the
       ftol = 1e-06
 
 
-model
+Model
 -----
 
 This section is about the sky model generation. If you have set correctly you environment variables, then enrico is able to find the galactic and extragalactic model. If you want to use other model, you can specify here, their names and locations.
@@ -216,8 +237,8 @@ UpperLimit
 
 This section allows to set up the upper limit computation. During the
 computation, the spectral index of the source (it is assumed that a POWERLAW or
-POWERLAW2 model is used) is frozen to `SpectralIndex`. Two methods can be used,
-Profile of Integral, see the Fermi web site for more informations.
+POWERLAW2 model is used) is frozen to `SpectralIndex`. 3 methods can be used,
+Profile or Integral (see the Fermi web site for more informations) and Poisson .base on the Feldman-Cousins method for low signal (Only 95 % yet available)
 
 An upper limit, at the confidence level `cl`, is computed if the TS is below TSlimit. This hold only for `enrico_sed`
 
@@ -235,8 +256,9 @@ An upper limit, at the confidence level `cl`, is computed if the TS is below TSl
       # Confidence level for the Ul computation
       cl = 0.95
 
-LightCurve
-----------
+LightCurve : running the analyse in time bins
+----------------------------------------
+
 
 Option for enrico_lc which run an entire analysis in time bins and produce all the fits files needed to use gtlike.
 
@@ -288,8 +310,8 @@ This section is devoted to the folded LC. This is designed for binary system ana
       Period = 10
 
 
-Ebin
-----
+Ebin : running the analyse in energy bins
+--------------------------------
 
  * FitsGeneration, if yes, enrico will make all the steps before running gtlike and generated all the fits files needed. If the files have already been generated, change FitsGeneration to no and enrico will only run gtlike
 
@@ -310,8 +332,8 @@ Ebin
 
 Option for enrico_tsmap
 
-TSMap
------
+TSMap : creating a TS map
+--------------------------------
 
 This section is used to configured `enrico_tsmap` and `enrico_plot_tsmap` 
 
@@ -354,7 +376,7 @@ For the entire row 49 :
 
 
 
-Finding the position of a source
+Findsrc : Finding the position of a source
 --------------------------------
 
 This section is used to configured `enrico_findsrc`. It run the tool gtfindsource and update the file Roi_model.reg with the fitted position in red.
@@ -370,4 +392,32 @@ This section is used to configured `enrico_findsrc`. It run the tool gtfindsourc
       FitsGeneration = option('yes', 'no', default='yes')
       #Reoptimize before
       Refit = option('yes', 'no', default='yes')
+
+srcprob : Get the highest energy event
+--------------------------------
+
+This section is used to configured `enrico_srcprob`.
+
+This part get the highest energy events that can bee associated to the sources in the lit. The probability to be a source event is also computed (using unbinned analyse). The source list has to be an ascii text.
+
+.. code-block:: ini
+   [srcprob]
+      #Generates fits files or not?
+      FitsGeneration = option('yes', 'no', default='yes')
+      #radius for the computation
+      rad = float(default=1)
+      # list of sources 
+      srclist = string(default="")
+      # number of photons to print
+      numberPhoton = integer(default=10)
+
+Contours : Compute confidence contour
+--------------------------------
+
+This section is used to configured `enrico_contour`. It is possible to compute the 1, 2 and 3 sigma contour of the 2 parameters given here.
+
+.. code-block:: ini
+   [Contours]
+      parname1 = string(default="Prefactor")
+      parname2 = string(default="Index")
 

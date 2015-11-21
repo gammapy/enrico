@@ -19,12 +19,4 @@ except:
 
 gui=gui.EnricoGui(infile)
 
-## Message
-win = gtk.Window(gtk.WINDOW_TOPLEVEL)
-button = gtk.Button("The gui is in development. Use with caution")
-button.connect_object("clicked", gtk.Widget.destroy, win)
-win.add(button)
-button.show()
-win.show()
-
 gtk.main()

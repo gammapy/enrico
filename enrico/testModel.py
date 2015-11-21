@@ -14,7 +14,6 @@ class ModelTester(Loggin.Message):
         self.config = config
         self.folder = self.config['out']
         os.system("mkdir -p "+self.folder+"/TestModel")
-        self.convtype = self.config['analysis']['convtype']
         self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
         self._GenFit()
         self.FitRunner.PerformFit(self.Fit, False)
@@ -28,15 +27,15 @@ class ModelTester(Loggin.Message):
              pass
 
          if self.config['Spectrum']['SummedLike'] == 'yes':
-             Obs1 = Observation(self.folder, self.config, convtype=0, tag="FRONT")
-             Obs2 = Observation(self.folder, self.config, convtype=1, tag="BACK")
+             Obs1 = Observation(self.folder, self.config, tag="FRONT")
+             Obs2 = Observation(self.folder, self.config, tag="BACK")
              self.FitRunnerfront = FitMaker(Obs1, self.config)
              self.FitRunnerback = FitMaker(Obs2, self.config)
              self.FitRunnerfront.CreateLikeObject()
              self.FitRunnerback.CreateLikeObject()
              self.Fit = SummedLikelihood.SummedLikelihood()
          else:
-             Obs = Observation(self.folder, self.config, self.convtype, tag="")
+             Obs = Observation(self.folder, self.config, tag="")
              self.FitRunner = FitMaker(Obs, self.config)##Class
              self.Fit = self.FitRunner.CreateLikeObject()
 

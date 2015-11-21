@@ -43,7 +43,7 @@ except :
     DIRS = {}
 
 # File names
-CATALOG_VERSION = '14'
+CATALOG_VERSION = '16'
 TEMPLATE_VERSION = '15'
 if CATALOG_DIR :
   CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_v%s/Templates'% TEMPLATE_VERSION)
@@ -53,9 +53,9 @@ if CATALOG_DIR :
     pass
 
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
-DIFFUSE_GAL = 'gll_iem_v05_rev1.fit'
-DIFFUSE_ISO_SOURCE = 'iso_source_v05.txt'
-DIFFUSE_ISO_CLEAN = 'iso_clean_v05.txt'
+DIFFUSE_GAL = 'gll_iem_v06.fits'
+DIFFUSE_ISO_SOURCE = 'iso_P8R2_SOURCE_V6_v06.txt'
+DIFFUSE_ISO_CLEAN = 'iso_P8R2_CLEAN_V6_v06.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
 
 def check_command_line_tools():
