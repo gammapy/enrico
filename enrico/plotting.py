@@ -255,7 +255,8 @@ def PlotNpred(Npred, Flux, FluxErr):
 def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
     """Scatter plot X(Time)"""
     ArrowSize = (max(x) + max(xErr) * 1.3 -
-                 (min(x) - max(xErr) * 1.3)) * 0.1
+        (min(x) - max(xErr) * 1.3)) * 0.1
+    
     arrows = []
     for i in xrange(len(Time)):
         if xErr[i] == 0:

@@ -95,8 +95,7 @@ def PrepareEbin(Fit, FitRunner):
         mes.info("Submition # "+str(ibin)+" at energy "+str(E))
         #Update the model for the bin
         NewFitObject = ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
-        Xmlname = (config['out'] + "/" + srcname +
-                    "_" + str(ibin) + ".xml")
+        Xmlname = (config['out'] + "/" + srcname + "_" + str(ibin) + ".xml")
         NewFitObject.writeXml(Xmlname)# dump the corresponding xml file
         config['file']['xml'] = Xmlname
         #update the energy bounds
