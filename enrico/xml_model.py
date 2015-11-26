@@ -454,22 +454,22 @@ def WriteXml(lib, doc, srclist, config):
         spectype = srclist[i].get('SpectrumType')
         extendedName = srclist[i].get('ExtendedName')
         # Check the spectrum model
-        if spectype == "PowerLaw":
+        if spectype.strip() == "PowerLaw":
             addPSPowerLaw1(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
-        if spectype == "PowerLaw2":
+        if spectype.strip() == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec,
                             emin=emin, emax=emax,
                             flux_free=free, flux_value=srclist[i].get('flux'),
                             index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
-        if spectype == "LogParabola":
+        if spectype.strip() == "LogParabola":
             addPSLogparabola(lib, name, ra, dec, enorm=srclist[i].get('scale'),
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=free, alpha_value=abs(srclist[i].get('index')),
                               beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName)
-        if spectype == "PLExpCutoff" or spectype == "PLSuperExpCutoff":
+        if spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff":
             addPSPLSuperExpCutoff(lib, name, ra, dec,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
