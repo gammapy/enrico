@@ -15,11 +15,11 @@ from enrico import utils
 class Observation:
     # init function of the Observation class. 
     # folder : folder where the produced fits files will be stored.
-    # configuration is the confi of enrico (contains the variable)
+    # configuration is the config of enrico (contains the variables)
     
     def __init__(self,folder,Configuration,tag=""):
         
-        #Read the configuration object and init all the variable
+        #Read the configuration object and init all variables
         self.Configuration = Configuration
         inttag = "_"+Configuration['file']['tag']
         if not(tag==""):
