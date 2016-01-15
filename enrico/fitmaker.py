@@ -19,7 +19,7 @@ from enrico import environ
 
 class FitMaker(Loggin.Message):
     """Collection of functions to prepare/run the GTLIKE fit
-     and compute an upper limit is needed"""
+     and compute an upper limit if needed"""
     def __init__(self, obs, config):
         super(FitMaker,self).__init__()
         Loggin.Message.__init__(self)
@@ -42,7 +42,7 @@ class FitMaker(Loggin.Message):
         """Run the different ST tools and compute the fits files
            First it runs the tools that are common to the binned 
            and unbinned analysis chain then it run the specific
-           tools following the choise of the user"""
+           tools following the choice of the user"""
 
         #Run the tools common to binned and unbinned chain
         self._log('gtselect', 'Select data from library')#run gtselect
