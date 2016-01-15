@@ -279,7 +279,7 @@ class Observation:
         expCube['zmax']=self.Configuration['analysis']['zmax'] 
         expCube['phibins']=self.Configuration['space']['phibins']
         expCube['clobber'] = self.clobber
-        expCube.run()
+       	expCube.run()
 
     def ExpMap(self):
         "Run gtexpmap for unbinned analysis"

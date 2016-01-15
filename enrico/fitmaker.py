@@ -54,8 +54,16 @@ class FitMaker(Loggin.Message):
             self.obs.DiffResps()#run gtdiffresp
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
-        self._log('gtltcube', 'Make live time cube')#run gtexpcube
-        self.obs.ExpCube()
+        # Produces ltcube depending on whether the variable below is empty
+        # otherwise uses the one provided in the string (i.e. gtltcube
+        # will not even be called)
+        if self.config['file']['ltcube'] == "": 
+        	self._log('gtltcube', 'Make live time cube')#run gtexpcube
+        	self.obs.ExpCube()
+        else:
+        	self._log('gtltcube', 'Make live time cube')
+        	print "Skipping creation of live time cube: it was generated before"
+        	
 
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
