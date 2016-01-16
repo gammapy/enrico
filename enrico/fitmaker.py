@@ -63,6 +63,15 @@ class FitMaker(Loggin.Message):
         else:
         	self._log('gtltcube', 'Make live time cube')
         	print "Skipping creation of live time cube: it was generated before"
+        	# if ltcube file is given, copies to file self.obs.Cubename
+			import os, shutil, sys
+			if os.path.exists(self.config['file']['ltcube']): # beware: if ltcube filename is exactly the same as self.obs.Cubename, we get an error
+				shutil.copy(self.config['file']['ltcube'],self.obs.Cubename)
+			else:
+				print('Error: I do not see '+self.config['file']['ltcube'])
+				sys.exit(0)
+
+
         	
 
         #Choose between the binned of the unbinned analysis
