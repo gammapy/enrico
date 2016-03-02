@@ -61,7 +61,7 @@ class ModelTester(Loggin.Message):
         self._printResults()
 
     def TestModelFromFile(self,inputfile):
-        """ Set model and pars from file """
+        """ Set model and pars from file (test only a custom model) """
         with open(inputfile,'r') as r:
             content = r.read().rstrip().split(",")
             model = content[0]
@@ -78,11 +78,15 @@ class ModelTester(Loggin.Message):
                     try: pars[k] = float(pars[k])
                     except: pars[k]=None
                 
+                # Reduce the list of possible models to the current one
+                self.modellist = [model]
+                
                 print("Using model %s with parameters %s" %(str(model), str(pars)))
                 self.Results[model] = self.RunAFit(self.config["target"]["name"],model,pars)
                 Dumpfile.write(model + '\t' + str(self.Results[model]) + '\n')
                 Dumpfile.close()
-                self._printResults()
+                print("%s Log(Like) = %s" %(model,self.Results[model]))
+                #self._printResults()
 
     def RunAFit(self,srcname,model,pars=None):
         self.info("Computing loglike value for "+model)
@@ -189,9 +193,9 @@ class ModelTester(Loggin.Message):
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[1])
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(0)
             if pars[2]!=None:
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[1])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[2])
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(0)
             if pars[3]!=None:
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setScale(pars[2])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setScale(pars[3])
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setFree(0)
 
