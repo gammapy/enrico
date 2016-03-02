@@ -60,16 +60,41 @@ class ModelTester(Loggin.Message):
         Dumpfile.close()
         self._printResults()
 
-    def RunAFit(self,srcname,model):
+    def TestModelFromFile(self,inputfile):
+        """ Set model and pars from file """
+        with open(inputfile,'r') as r:
+            content = r.read().rstrip().split(",")
+            model = content[0]
+            pars = content[1:]
+               
+            Dumpfile = open(self.folder+"/TestModel/TestModel.results","w")
+            if model not in self.modellist:
+                print("WARNING: given model %s not in the valid range %s" %(str(model), str(self.modellist)))
+                for key in self.modellist:
+                    self.Results[key] = self.RunAFit(self.config["target"]["name"],key)
+                    Dumpfile.write(key + '\t' + str(self.Results[key]) + '\n')
+            else:
+                for k in xrange(len(pars)):
+                    try: pars[k] = float(pars[k])
+                    except: pars[k]=None
+                
+                print("Using model %s with parameters %s" %(str(model), str(pars)))
+                self.Results[model] = self.RunAFit(self.config["target"]["name"],model,pars)
+                Dumpfile.write(model + '\t' + str(self.Results[model]) + '\n')
+                Dumpfile.close()
+                self._printResults()
+
+    def RunAFit(self,srcname,model,pars=None):
         self.info("Computing loglike value for "+model)
 #        self._GenFit()
         self.Fit.logLike.getSource(srcname).setSpectrum(model)
+        
         if model=="PowerLaw":
-            self._setPowerLaw(srcname)
+            self._setPowerLaw(srcname,pars)
         if model=="LogParabola":
-            self._setLogParabola(srcname)
+            self._setLogParabola(srcname,pars)
         if model=="PLSuperExpCutoff":
-            self._setPLSuperExpCutoff(srcname)
+            self._setPLSuperExpCutoff(srcname,pars)
 
         #change the fit tolerance to the one given by the user
 #        self.Fit.ftol = float(self.config['fitting']['ftol'])
@@ -84,7 +109,8 @@ class ModelTester(Loggin.Message):
           self.warning("No convergence for model : "+model+" ??")
           return 0
 
-    def _setPowerLaw(self,name):
+    def _setPowerLaw(self,name,pars=None):
+
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-11)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(1.)
@@ -95,8 +121,17 @@ class ModelTester(Loggin.Message):
 
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(self.config['energy']['emin'])
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
+        
+        if pars!=None:
+            if pars[0]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-11)
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(pars[0]/1e-11)
+            if pars[1]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setScale(pars[1])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
 
-    def _setLogParabola(self,name):
+
+    def _setLogParabola(self,name,pars=None):
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setBounds(1e-7,1e7)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setScale(1e-11)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setValue(1.)
@@ -112,8 +147,21 @@ class ModelTester(Loggin.Message):
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setValue(self.config['energy']['emin'])
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setFree(0)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setBounds(20,3e6)
+        
+        if pars!=None:
+            if pars[0]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setScale(1e-11)
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setValue(pars[0]/1e-11)
+            if pars[1]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setScale(pars[1])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setFree(0)
+            if pars[2]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setScale(pars[2])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setFree(0)
 
-    def _setPLSuperExpCutoff(self,name):
+
+
+    def _setPLSuperExpCutoff(self,name,pars=None):
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-11)
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(1.)
@@ -132,4 +180,18 @@ class ModelTester(Loggin.Message):
 
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(self.config['energy']['emin'])
         self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
+        
+        if pars!=None:
+            if pars[0]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-11)
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(pars[0]/1e-11)
+            if pars[1]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[1])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(0)
+            if pars[2]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[1])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(0)
+            if pars[3]!=None:
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setScale(pars[2])
+                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setFree(0)
 
