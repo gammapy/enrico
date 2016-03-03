@@ -1,7 +1,10 @@
 import os
 import scipy.stats
 import SummedLikelihood
-import pickle
+try:
+    import cPickle as pickle
+except:
+    print("cPickle not found, using pickle instead")
 from enrico.fitmaker import FitMaker
 from enrico.gtfunction import Observation
 from enrico import Loggin
@@ -24,6 +27,7 @@ class ModelTester(Loggin.Message):
         except:
             self._GenFit()
             self.FitRunner.PerformFit(self.Fit, False)
+
             with open(self.folder+"/TestModel/Fit.pickle","w") as pfile:
                 print("Saving current Fit to %s" %(self.folder+"/TestModel/Fit.pickle"))
                 pickle.dump(self.FitRunner,pfile)
@@ -100,6 +104,16 @@ class ModelTester(Loggin.Message):
                 #self._printResults()
 
     def RunAFit(self,srcname,model,pars=None):
+        # Freezing some parameters to accelerate the LRT. 
+        print("Freezing not interesting model parameters")
+        for i in range(len(self.Fit.model.params)):
+            if self.Fit.model[i].isFree():
+                self.Fit.freeze(i)
+        
+        # Release diffuse models (background)
+        self.Fit.thaw(self.Fit.par_index("IsoDiffModel", 'Normalization'))
+        self.Fit.thaw(self.Fit.par_index("GalDiffModel", 'Value'))
+
         self.info("Computing loglike value for "+model)
         #self._GenFit()
         self.Fit.logLike.getSource(srcname).setSpectrum(model)
@@ -220,23 +234,23 @@ class ModelTester(Loggin.Message):
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setFree(0)
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(pars[0]/1e-11)
                 par = self.Fit.par_index(name, 'Prefactor')
-                self.Fit-freeze(par)
+                self.Fit.freeze(par)
             if pars[1]!=None:
                 print("Fixing Index1")
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[1])
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(0)
                 par = self.Fit.par_index(name, 'Index1')
-                self.Fit-freeze(par)
+                self.Fit.freeze(par)
             if pars[2]!=None:
                 print("Fixing Index2")
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setScale(pars[2])
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setFree(0)
                 par = self.Fit.par_index(name, 'Index2')
-                self.Fit-freeze(par)
+                self.Fit.freeze(par)
             if pars[3]!=None:
                 print("Fixing Cutoff")
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setScale(pars[3])
                 self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setFree(0)
                 par = self.Fit.par_index(name, 'Cutoff')
-                self.Fit-freeze(par)
+                self.Fit.freeze(par)
 
