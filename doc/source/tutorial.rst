@@ -74,6 +74,9 @@ Statement enclosed in [] are default, being there to help you.
    Target Name : PG155+113
    Right Ascension: 238.92935
    Declination: 11.190102
+   redshift, no effect if null [0] : 0.49
+   ebl model to used
+   0=Kneiske, 1=Primack05, 2=Kneiske_HighUV, 3=Stecker05, 4=Franceschini, 5=Finke, 6=Gilmore : 4
    Options are : PowerLaw, PowerLaw2, LogParabola, PLExpCutoff
    Spectral Model [PowerLaw] : PowerLaw2
    ROI Size [15] : 10
@@ -84,7 +87,13 @@ Statement enclosed in [] are default, being there to help you.
    End time [334165418] : 256970880
    Emin [100] : 200
    Emax [300000] : 
-
+   IRFs [CALDB] : 
+   evclass [128] : 
+   evtype [3] : 
+   Corresponding IRFs	=	('P8R2_SOURCE_V6', ['BACK', 'FRONT'])
+   Is this ok? [y] : y
+   Corresponding zmax =  95
+   
 Note :
 
 * Always give the full path for the files
