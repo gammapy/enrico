@@ -22,8 +22,9 @@ def AppLC(infile):
     LCoutfolder = folder+"/"+AppLCPath
     os.system("mkdir -p "+LCoutfolder)
 
-    #Change the ROI to 1 degree
-    config['space']['rad'] = 1
+    #Change the ROI to the desired radius in degree, legacy 1 deg.
+    try: config['space']['rad'] = config['AppLC']['rad']
+    except NameError: config['space']['rad'] = 1
 
     Nbins = config['AppLC']['NLCbin']#Number of bins
     #Get The time bin
