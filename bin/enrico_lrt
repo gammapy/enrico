@@ -21,11 +21,13 @@ except:
 
 if len(sys.argv)==3:
     # Read a file containing a list of config files.
+    mes.info("work on the config file "+infile)
     config = get_config(infile)
     ModelTest = ModelTester(config)
     ModelTest.TestModelFromFile(sys.argv[2])
 else:
-    # Back to enrico_likelihood cae
+    # Back to enrico_likelihood case
+    mes.info("work on the config file "+infile)
     config = get_config(infile)
     ModelTest = ModelTester(config)
     ModelTest.TestModel()

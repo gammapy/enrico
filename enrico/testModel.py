@@ -19,6 +19,8 @@ class ModelTester(Loggin.Message):
         self.folder = self.config['out']
         os.system("mkdir -p "+self.folder+"/TestModel")
         self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
+        
+        '''
         try:
             with open(self.folder+"/TestModel/Fit.pickle","r") as pfile:
                 print("Retrieving previous Fit from %s" \
@@ -33,6 +35,9 @@ class ModelTester(Loggin.Message):
                 print("Saving current Fit to %s" \
                     %(self.folder+"/TestModel/Fit.pickle"))
                 pickle.dump(self.FitRunner,pfile)
+        '''
+        self._GenFit()
+        self.FitRunner.PerformFit(self.Fit, False)
 
         # Store the results in a dictionnary
         self.Results = {}
