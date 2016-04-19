@@ -401,14 +401,30 @@ The tool `enrico_contour` allows to make a contour of 2  free parameters of the 
 Get the highest energy events
 -----------------------
 
-The tool `enrico_srcprob' compute the highest energy photons that can be associated to a list of sources (provided in an ascii file). The probability of the photons to be associated to the sources is also computed
+The tool `enrico_srcprob` compute the highest energy photons that can be associated to a list of sources (provided in an ascii file). The probability of the photons to be associated to the sources is also computed
 
 Refine source position
 -----------------------
 
-The tool `enrico_findsrc' is based on gtfindsource and find the best position of a source
+The tool `enrico_findsrc` is based on gtfindsource and find the best position of a source
 
 Check different models
 ----------------------
 
 `enrico_testmodel` will run the gtlike analysis with different model and compute the loglikehihood value for each model. The user can then decide, base on a LRT which model best describe the data. Fits files must have been generated before.
+
+Test a particular model list
+----------------------------
+
+`enrico_lrt` will run the gtlike analysis with a (list of) model(s) given as lines in a models file. The user can decide which parameters are to be fixed (by specifying a value) and which ones are going to be free (None value). 
+
+Lines should contain something like: LogParabola, None, 1.571613825, 0.06406550853 
+
+Then we call the lrt macro by running:
+
+`enrico_lrt mysourceconfig.conf mylistofmodels.txt`
+
+The macro uses Pickle to save Fit results (in order to accelerate future queries).
+Results and files will be saved to the /TestModel/ subdirectory. The .results file
+contains the likelihood value appended to the end of the model 
+

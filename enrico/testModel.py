@@ -21,7 +21,8 @@ class ModelTester(Loggin.Message):
         self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
         try:
             with open(self.folder+"/TestModel/Fit.pickle","r") as pfile:
-                print("Retrieving previous Fit from %s" %(self.folder+"/TestModel/Fit.pickle"))
+                print("Retrieving previous Fit from %s" \
+                    %(self.folder+"/TestModel/Fit.pickle"))
                 self.FitRunner = pickle.load(pfile)
                 self.Fit = self.FitRunner.CreateLikeObject()
         except:
@@ -29,7 +30,8 @@ class ModelTester(Loggin.Message):
             self.FitRunner.PerformFit(self.Fit, False)
 
             with open(self.folder+"/TestModel/Fit.pickle","w") as pfile:
-                print("Saving current Fit to %s" %(self.folder+"/TestModel/Fit.pickle"))
+                print("Saving current Fit to %s" \
+                    %(self.folder+"/TestModel/Fit.pickle"))
                 pickle.dump(self.FitRunner,pfile)
 
         # Store the results in a dictionnary
@@ -76,32 +78,41 @@ class ModelTester(Loggin.Message):
         self._printResults()
 
     def TestModelFromFile(self,inputfile):
-        """ Set model and pars from file (test only a custom model) """
-        with open(inputfile,'r') as r:
-            content = r.read().rstrip().split(",")
+        """ Set model and pars from file (test only a custom model)
+            This function allow us to test several custom models by calculating 
+            their likelihood """
+        
+        Inputfile = open(inputfile,'r')
+        with open(self.folder+"/TestModel/TestModel.results","w") as empty: pass
+        Dumpfile  = open(self.folder+"/TestModel/TestModel.results","a+")
+        
+        for currentmodel in Inputfile.readlines():
+            content = currentmodel.rstrip().split(",")
             model = content[0]
             pars = content[1:]
-               
-            Dumpfile = open(self.folder+"/TestModel/TestModel.results","w")
+
             if model not in self.modellist:
-                print("WARNING: given model %s not in the valid range %s" %(str(model), str(self.modellist)))
-                for key in self.modellist:
-                    self.Results[key] = self.RunAFit(self.config["target"]["name"],key)
-                    Dumpfile.write(key + '\t' + str(self.Results[key]) + '\n')
-            else:
-                for k in xrange(len(pars)):
-                    try: pars[k] = float(pars[k])
-                    except: pars[k]=None
-                
-                # Reduce the list of possible models to the current one
-                self.modellist = [model]
-                
-                print("Using model %s with parameters %s" %(str(model), str(pars)))
-                self.Results[model] = self.RunAFit(self.config["target"]["name"],model,pars)
-                Dumpfile.write(model + '\t' + str(self.Results[model]) + '\n')
-                Dumpfile.close()
-                print("%s Log(Like) = %s" %(model,self.Results[model]))
-                #self._printResults()
+                print("WARNING: given model %s not in the valid range %s" \
+                    %(str(model), str(self.modellist)))
+                continue
+
+            for k in xrange(len(pars)):
+                try: pars[k] = float(pars[k])
+                except: pars[k]=None
+
+            # Reduce the list of possible models to the current one
+            self.modellist = [model]
+
+            print("Using model %s with parameters %s" %(str(model), str(pars)))
+            self.Results[model] = self.RunAFit(self.config["target"]["name"],model,pars)
+            _sep_= ', '
+            Dumpfile.write(model + _sep_ + _sep_.join([str(k) for k in pars]) \
+                + _sep_ + str(self.Results[model]) + '\n')
+            
+            print("%s Log(Like) = %s" %(model,self.Results[model]))
+        
+        Inputfile.close()
+        Dumpfile.close()
 
     def RunAFit(self,srcname,model,pars=None):
         # Freezing some parameters to accelerate the LRT. 
@@ -140,117 +151,123 @@ class ModelTester(Loggin.Message):
           return 0
 
     def _setPowerLaw(self,name,pars=None):
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-11)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(1.)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setFree(1)
+        SrcSpectrum = self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum']
+        SrcSpectrum.getParam('Prefactor').setBounds(1e-7,1e7)
+        SrcSpectrum.getParam('Prefactor').setScale(1e-11)
+        SrcSpectrum.getParam('Prefactor').setValue(1.)
+        SrcSpectrum.getParam('Prefactor').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(-5,0)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(-2)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(1)
+        SrcSpectrum.getParam('Index').setBounds(-5,0)
+        SrcSpectrum.getParam('Index').setValue(-2)
+        SrcSpectrum.getParam('Index').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(self.config['energy']['emin'])
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
+        SrcSpectrum.getParam('Scale').setValue(self.config['energy']['emin'])
+        SrcSpectrum.getParam('Scale').setBounds(20,3e6)
         
+        # Set each non-None parameter to the wanted value and fix it.
         if pars!=None:
             if pars[0]!=None:
                 print("Fixing Prefactor")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setFree(0)
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(pars[0]/1e-11)
+                SrcSpectrum.getParam('Prefactor').setFree(0)
+                SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
                 par = self.Fit.par_index(name, 'Prefactor')
                 self.Fit.freeze(par)
             if pars[1]!=None:
                 print("Fixing Index")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setScale(pars[1])
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
+                SrcSpectrum.getParam('Index').setScale(pars[1])
+                SrcSpectrum.getParam('Index').setFree(0)
                 par = self.Fit.par_index(name, 'Prefactor')
                 self.Fit-freeze(par)
 
 
     def _setLogParabola(self,name,pars=None):
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setBounds(1e-7,1e7)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setScale(1e-11)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setValue(1.)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setFree(1)
+        SrcSpectrum = self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum']
+        SrcSpectrum.getParam('norm').setBounds(1e-7,1e7)
+        SrcSpectrum.getParam('norm').setScale(1e-11)
+        SrcSpectrum.getParam('norm').setValue(1.)
+        SrcSpectrum.getParam('norm').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setBounds(0,5)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setValue(2)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setFree(1)
+        SrcSpectrum.getParam('alpha').setBounds(0,5)
+        SrcSpectrum.getParam('alpha').setValue(2)
+        SrcSpectrum.getParam('alpha').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setBounds(0.01,10)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setValue(0.5)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setFree(1)
+        SrcSpectrum.getParam('beta').setBounds(0.01,10)
+        SrcSpectrum.getParam('beta').setValue(0.5)
+        SrcSpectrum.getParam('beta').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setValue(self.config['energy']['emin'])
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setFree(0)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Eb').setBounds(20,3e6)
+        SrcSpectrum.getParam('Eb').setValue(self.config['energy']['emin'])
+        SrcSpectrum.getParam('Eb').setFree(0)
+        SrcSpectrum.getParam('Eb').setBounds(20,3e6) 
         
+        # Set each non-None parameter to the wanted value and fix it.
         if pars!=None:
             if pars[0]!=None:
                 print("Fixing norm")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setFree(0)
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('norm').setValue(pars[0]/1e-11)
+                SrcSpectrum.getParam('norm').setFree(0)
+                SrcSpectrum.getParam('norm').setValue(pars[0]/1e-11)
                 par = self.Fit.par_index(name, 'norm')
                 self.Fit.freeze(par)
             if pars[1]!=None:
                 print("Fixing alpha")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setFree(0)
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('alpha').setScale(pars[1])
+                SrcSpectrum.getParam('alpha').setFree(0)
+                SrcSpectrum.getParam('alpha').setScale(pars[1])
                 par = self.Fit.par_index(name, 'alpha')
                 self.Fit.freeze(par)
             if pars[2]!=None:
                 print("Fixing beta")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setFree(0)
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('beta').setScale(pars[2])
+                SrcSpectrum.getParam('beta').setFree(0)
+                SrcSpectrum.getParam('beta').setScale(pars[2])
                 par = self.Fit.par_index(name, 'beta')
                 self.Fit.freeze(par)
 
 
 
     def _setPLSuperExpCutoff(self,name,pars=None):
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-7,1e7)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-11)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(1.)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setFree(1)
+        SrcSpectrum = self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum']
+        SrcSpectrum.getParam('Prefactor').setBounds(1e-7,1e7)
+        SrcSpectrum.getParam('Prefactor').setScale(1e-11)
+        SrcSpectrum.getParam('Prefactor').setValue(1.)
+        SrcSpectrum.getParam('Prefactor').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setBounds(-5,0)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setValue(-2)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(1)
+        SrcSpectrum.getParam('Index1').setBounds(-5,0)
+        SrcSpectrum.getParam('Index1').setValue(-2)
+        SrcSpectrum.getParam('Index1').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setValue(-1)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setBounds(-5,-0.05)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setFree(0)
+        SrcSpectrum.getParam('Index2').setValue(-1)
+        SrcSpectrum.getParam('Index2').setBounds(-5,-0.05)
+        SrcSpectrum.getParam('Index2').setFree(0)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setBounds(20,3e6)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setValue(1e4)
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setFree(1)
+        SrcSpectrum.getParam('Cutoff').setBounds(20,3e6)
+        SrcSpectrum.getParam('Cutoff').setValue(1e4)
+        SrcSpectrum.getParam('Cutoff').setFree(1)
 
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(self.config['energy']['emin'])
-        self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
+        SrcSpectrum.getParam('Scale').setValue(self.config['energy']['emin'])
+        SrcSpectrum.getParam('Scale').setBounds(20,3e6)
         
+        # Set each non-None parameter to the wanted value and fix it.
         if pars!=None:
             if pars[0]!=None:
                 print("Fixing Prefactor")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setFree(0)
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(pars[0]/1e-11)
+                SrcSpectrum.getParam('Prefactor').setFree(0)
+                SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
                 par = self.Fit.par_index(name, 'Prefactor')
                 self.Fit.freeze(par)
             if pars[1]!=None:
                 print("Fixing Index1")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setScale(pars[1])
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index1').setFree(0)
+                SrcSpectrum.getParam('Index1').setScale(pars[1])
+                SrcSpectrum.getParam('Index1').setFree(0)
                 par = self.Fit.par_index(name, 'Index1')
                 self.Fit.freeze(par)
             if pars[2]!=None:
                 print("Fixing Index2")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setScale(pars[2])
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index2').setFree(0)
+                SrcSpectrum.getParam('Index2').setScale(pars[2])
+                SrcSpectrum.getParam('Index2').setFree(0)
                 par = self.Fit.par_index(name, 'Index2')
                 self.Fit.freeze(par)
             if pars[3]!=None:
                 print("Fixing Cutoff")
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setScale(pars[3])
-                self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Cutoff').setFree(0)
+                SrcSpectrum.getParam('Cutoff').setScale(pars[3])
+                SrcSpectrum.getParam('Cutoff').setFree(0)
                 par = self.Fit.par_index(name, 'Cutoff')
                 self.Fit.freeze(par)
 

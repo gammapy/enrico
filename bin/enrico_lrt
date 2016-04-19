@@ -7,6 +7,12 @@ from enrico.config import get_config
 from enrico.testModel import ModelTester
 from enrico import Loggin
 mes = Loggin.Message()
+
+# Usage example: enrico_lrt PG1553.conf lrt.test
+# Where PG1553.conf is a standard enrico config file
+# and lrt.test contain the model parameters:
+# e.g. LogParabola, None, 1.571613825, 0.06406550853
+
 try:
     infile = sys.argv[1]
 except:
@@ -14,23 +20,16 @@ except:
     mes.error('Config file or modelfile not found.')
 
 
-if len(sys.argv)==3 :
-#read an config file alone. If not working, try to read an ascii file with different conf file
-  try : 
-    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
-    for inf in liste:
-      mes.info("work on the config file "+inf)
-      config = get_config(inf)
-      ModelTest = ModelTester(config)
-      ModelTest.TestModelFromFile(sys.argv[2])
-  except :
+if len(sys.argv)==3:
+    # Read a file containing a list of config files.
     config = get_config(infile)
     ModelTest = ModelTester(config)
     ModelTest.TestModelFromFile(sys.argv[2])
 else:
-    inf = sys.argv[1]
-    mes.info("work on the config file "+inf)
-    config = get_config(inf)
+    # Back to enrico_likelihood case
+    cfgfile = sys.argv[1]
+    mes.info("work on the config file "+cfgfile)
+    config = get_config(cfgfile)
     ModelTest = ModelTester(config)
     ModelTest.TestModelFromFile(sys.argv[2])
 
