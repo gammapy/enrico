@@ -424,7 +424,12 @@ Then we call the lrt macro by running:
 
 `enrico_lrt mysourceconfig.conf mylistofmodels.txt`
 
-The macro uses Pickle to save Fit results (in order to accelerate future queries).
+If no list of models is specified, enrico_lrt will execute the routines in 
+enrico_testmodel.
+
 Results and files will be saved to the /TestModel/ subdirectory. The .results file
-contains the likelihood value appended to the end of the model 
+contains the likelihood value appended to the end of the model. Please note that
+the formatting is slightly different than in `enrico_testmodel` (comma separated
+instead of tab separated values)
+
 
