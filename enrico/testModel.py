@@ -121,14 +121,17 @@ class ModelTester(Loggin.Message):
             if self.Fit.model[i].isFree():
                 self.Fit.freeze(i)
         
-        # Release diffuse models (background)
-        self.Fit.thaw(self.Fit.par_index("IsoDiffModel", 'Normalization'))
-        self.Fit.thaw(self.Fit.par_index("GalDiffModel", 'Value'))
-
         self.info("Computing loglike value for "+model)
         #self._GenFit()
         self.Fit.logLike.getSource(srcname).setSpectrum(model)
         
+        if (pars==None):
+            pars=[None,None,None,None]
+        else:
+            # Release diffuse models (background)
+            self.Fit.thaw(self.Fit.par_index("IsoDiffModel", 'Normalization'))
+            self.Fit.thaw(self.Fit.par_index("GalDiffModel", 'Value'))
+
         if model=="PowerLaw":
             self._setPowerLaw(srcname,pars)
         if model=="LogParabola":
@@ -146,7 +149,6 @@ class ModelTester(Loggin.Message):
           self.Fit.writeXml(self.folder+"/TestModel/TestModel"+model+".xml")
           return self.Fit.logLike.value()
         except :
-          raise
           self.warning("No convergence for model : "+model+" ??")
           return 0
 
@@ -165,19 +167,18 @@ class ModelTester(Loggin.Message):
         SrcSpectrum.getParam('Scale').setBounds(20,3e6)
         
         # Set each non-None parameter to the wanted value and fix it.
-        if pars!=None:
-            if pars[0]!=None:
-                print("Fixing Prefactor")
-                SrcSpectrum.getParam('Prefactor').setFree(0)
-                SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
-                par = self.Fit.par_index(name, 'Prefactor')
-                self.Fit.freeze(par)
-            if pars[1]!=None:
-                print("Fixing Index")
-                SrcSpectrum.getParam('Index').setScale(pars[1])
-                SrcSpectrum.getParam('Index').setFree(0)
-                par = self.Fit.par_index(name, 'Prefactor')
-                self.Fit-freeze(par)
+        if pars[0]!=None:
+            print("Fixing Prefactor")
+            SrcSpectrum.getParam('Prefactor').setFree(0)
+            SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
+            par = self.Fit.par_index(name, 'Prefactor')
+            self.Fit.freeze(par)
+        if pars[1]!=None:
+            print("Fixing Index")
+            SrcSpectrum.getParam('Index').setScale(pars[1])
+            SrcSpectrum.getParam('Index').setFree(0)
+            par = self.Fit.par_index(name, 'Prefactor')
+            self.Fit-freeze(par)
 
 
     def _setLogParabola(self,name,pars=None):
@@ -200,25 +201,24 @@ class ModelTester(Loggin.Message):
         SrcSpectrum.getParam('Eb').setBounds(20,3e6) 
         
         # Set each non-None parameter to the wanted value and fix it.
-        if pars!=None:
-            if pars[0]!=None:
-                print("Fixing norm")
-                SrcSpectrum.getParam('norm').setFree(0)
-                SrcSpectrum.getParam('norm').setValue(pars[0]/1e-11)
-                par = self.Fit.par_index(name, 'norm')
-                self.Fit.freeze(par)
-            if pars[1]!=None:
-                print("Fixing alpha")
-                SrcSpectrum.getParam('alpha').setFree(0)
-                SrcSpectrum.getParam('alpha').setScale(pars[1])
-                par = self.Fit.par_index(name, 'alpha')
-                self.Fit.freeze(par)
-            if pars[2]!=None:
-                print("Fixing beta")
-                SrcSpectrum.getParam('beta').setFree(0)
-                SrcSpectrum.getParam('beta').setScale(pars[2])
-                par = self.Fit.par_index(name, 'beta')
-                self.Fit.freeze(par)
+        if pars[0]!=None:
+            print("Fixing norm")
+            SrcSpectrum.getParam('norm').setFree(0)
+            SrcSpectrum.getParam('norm').setValue(pars[0]/1e-11)
+            par = self.Fit.par_index(name, 'norm')
+            self.Fit.freeze(par)
+        if pars[1]!=None:
+            print("Fixing alpha")
+            SrcSpectrum.getParam('alpha').setFree(0)
+            SrcSpectrum.getParam('alpha').setScale(pars[1])
+            par = self.Fit.par_index(name, 'alpha')
+            self.Fit.freeze(par)
+        if pars[2]!=None:
+            print("Fixing beta")
+            SrcSpectrum.getParam('beta').setFree(0)
+            SrcSpectrum.getParam('beta').setScale(pars[2])
+            par = self.Fit.par_index(name, 'beta')
+            self.Fit.freeze(par)
 
 
 
@@ -245,29 +245,28 @@ class ModelTester(Loggin.Message):
         SrcSpectrum.getParam('Scale').setBounds(20,3e6)
         
         # Set each non-None parameter to the wanted value and fix it.
-        if pars!=None:
-            if pars[0]!=None:
-                print("Fixing Prefactor")
-                SrcSpectrum.getParam('Prefactor').setFree(0)
-                SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
-                par = self.Fit.par_index(name, 'Prefactor')
-                self.Fit.freeze(par)
-            if pars[1]!=None:
-                print("Fixing Index1")
-                SrcSpectrum.getParam('Index1').setScale(pars[1])
-                SrcSpectrum.getParam('Index1').setFree(0)
-                par = self.Fit.par_index(name, 'Index1')
-                self.Fit.freeze(par)
-            if pars[2]!=None:
-                print("Fixing Index2")
-                SrcSpectrum.getParam('Index2').setScale(pars[2])
-                SrcSpectrum.getParam('Index2').setFree(0)
-                par = self.Fit.par_index(name, 'Index2')
-                self.Fit.freeze(par)
-            if pars[3]!=None:
-                print("Fixing Cutoff")
-                SrcSpectrum.getParam('Cutoff').setScale(pars[3])
-                SrcSpectrum.getParam('Cutoff').setFree(0)
-                par = self.Fit.par_index(name, 'Cutoff')
-                self.Fit.freeze(par)
+        if pars[0]!=None:
+            print("Fixing Prefactor")
+            SrcSpectrum.getParam('Prefactor').setFree(0)
+            SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
+            par = self.Fit.par_index(name, 'Prefactor')
+            self.Fit.freeze(par)
+        if pars[1]!=None:
+            print("Fixing Index1")
+            SrcSpectrum.getParam('Index1').setScale(pars[1])
+            SrcSpectrum.getParam('Index1').setFree(0)
+            par = self.Fit.par_index(name, 'Index1')
+            self.Fit.freeze(par)
+        if pars[2]!=None:
+            print("Fixing Index2")
+            SrcSpectrum.getParam('Index2').setScale(pars[2])
+            SrcSpectrum.getParam('Index2').setFree(0)
+            par = self.Fit.par_index(name, 'Index2')
+            self.Fit.freeze(par)
+        if pars[3]!=None:
+            print("Fixing Cutoff")
+            SrcSpectrum.getParam('Cutoff').setScale(pars[3])
+            SrcSpectrum.getParam('Cutoff').setFree(0)
+            par = self.Fit.par_index(name, 'Cutoff')
+            self.Fit.freeze(par)
 

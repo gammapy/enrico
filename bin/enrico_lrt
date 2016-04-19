@@ -19,18 +19,15 @@ except:
     print('Usage: '+sys.argv[0]+' <config file name> <modelfile>')
     mes.error('Config file or modelfile not found.')
 
-
 if len(sys.argv)==3:
     # Read a file containing a list of config files.
     config = get_config(infile)
     ModelTest = ModelTester(config)
     ModelTest.TestModelFromFile(sys.argv[2])
-else:
-    # Back to enrico_likelihood case
-    cfgfile = sys.argv[1]
-    mes.info("work on the config file "+cfgfile)
-    config = get_config(cfgfile)
+elif:
+    # Back to enrico_likelihood cae
+    config = get_config(infile)
     ModelTest = ModelTester(config)
-    ModelTest.TestModelFromFile(sys.argv[2])
+    ModelTest.TestModel()
 
 
