@@ -24,7 +24,7 @@ if len(sys.argv)==3:
     config = get_config(infile)
     ModelTest = ModelTester(config)
     ModelTest.TestModelFromFile(sys.argv[2])
-elif:
+else:
     # Back to enrico_likelihood cae
     config = get_config(infile)
     ModelTest = ModelTester(config)
