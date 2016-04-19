@@ -24,25 +24,45 @@ you might fail and will have to ask someone at your institute for help.
 Install the Fermi ScienceTools
 ------------------------------
 
-Download and install the Fermi Science Tools as described 
-`here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/software/>`__.
+The first step is to get the Fermi Science Tools
 
-Then do this to set up your shell (we are assuming `bash` throughout) for Fermi analysis:
+Download and install the Fermi Science Tools as described 
+`here <http://fermi.gsfc.nasa.gov/ssc/data/analysis/software/>`__. Best option
+is to download the binnary and unzip them
+
+
+Set up your shell (we are assuming `bash` throughout) for Fermi analysis. The
+first thing to do is to setup a environment variable 'FERMI_DIR'. This variable
+must point to the folder where the 'init_fermi.sh' script is. For exemple for
+the v10r0p5 version of the ST and the SL6 binary you have :
+
 
 .. code-block:: bash
 
-   export FERMI_DIR = <...>
-   source $FERMI_DIR/bin/init_fermi.sh
+   export FERMI_DIR = /Where/I/put/the/ST/ScienceTools-v10r0p5-fssc-20150518-x86_64-unknown-linux-gnu-libc2.12/x86_64-unknown-linux-gnu-libc2.12
+   source $FERMI_DIR/init_fermi.sh
+
+An 'ls' command in the FERMI_DIR should give you something like :
+
+.. code-block:: bash
+
+    BUILD_DIR  build  etc             fermi-init.sh  help   include  macros  refdata  syspfiles  tutorials
+    bin        cint   fermi-init.csh  fonts
 
 Check that you have access to the Fermi command line tools and python packages:
 
 .. code-block:: bash
 
    gtirfs
+
+If there is no error message, the ST are installed.
+
+.. code-block:: bash
+		
    python
    >>> import UnbinnedAnalysis
 
-If there is no error message, the ST are installed. ST come with all the needed python packages (numpy, scipy) but you might want to install them.
+If there is no error message, the python support of ST is installed.
 
 Install Enrico
 --------------
@@ -54,15 +74,38 @@ Get the enrico package
    git clone https://github.com/gammapy/enrico.git
 
 
-Make sure your PATH contains the enrico command line tools (in the scripts directory)
-and PYTHONPATH contain the enrico python package:
+Again you have to setup an environment variable name ENRICO_DIR which point to
+the enrico folder. After the clone type
+
+
+.. code-block:: bash
+   
+   cd enrico
+   export ENRICO_DIR=$PWD
+
+or alternatavely 
 
 .. code-block:: bash
 
-   export ENRICO_DIR=< location of your Enrico software checkout >
+   export ENRICO_DIR=/Where/I/put/Enrico/enrico/
+
+
+An 'ls' command in the ENRICO_DIR should give you something like :
+
+.. code-block:: bash
+
+    CHANGES.txt  LICENSE.txt  README.rst  bin  doc  enrico  enrico-init.csh  enrico-init.sh  script
+
+The last step is to source the init file:
+
+.. code-block:: bash
+
    source $ENRICO_DIR/enrico-init.sh
 
-Run the following command to check the status of your analysis environment:
+
+This command will setup you PATH and PYTHONPATH variable to have access to the
+enrico tools. Run the following command to check the status of your analysis
+environment:
 
 .. code-block:: bash
 
