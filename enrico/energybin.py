@@ -53,6 +53,9 @@ def PrepareEbin(Fit, FitRunner):
     #Replace the evt file with the fits file produced before
     #in order to speed up the production of the fits files
     config['file']['event'] = FitRunner.obs.eventfile
+    # use ltcube from global fit to speed up analysis
+    if config['file']['ltcube'] == "":
+        config['file']['ltcube'] = FitRunner.obs.Cubename
     #update the config to allow the fit in energy bins
     config['UpperLimit']['envelope'] = 'no' 
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!

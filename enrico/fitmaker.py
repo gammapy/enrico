@@ -54,8 +54,11 @@ class FitMaker(Loggin.Message):
             self.obs.DiffResps()#run gtdiffresp
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
-        self._log('gtltcube', 'Make live time cube')#run gtexpcube
-        self.obs.ExpCube()
+        if self.config["file"]["ltcube"] == "":
+            self._log('gtltcube', 'Make live time cube')#run gtexpcube
+            self.obs.ExpCube()
+        else:
+            self.obs.Cubename = self.config["file"]["ltcube"]
 
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
@@ -204,7 +207,8 @@ class FitMaker(Loggin.Message):
             Scale = spectrum.getParam(par).getScale()
             Result[par] = ParValue * Scale
             Result['d'+par] = ParError * Scale
-            if ParError>0: # Compute MINOS errors for relevent parameters  Fit.Ts(self.obs.srcname) > 5 and
+            # Compute MINOS errors for relevent parameters  Fit.Ts(self.obs.srcname) > 5 and
+            if ParError>0 and self.config['Spectrum']['minos'] == 'yes':
                 try:
                     MinosErrors = Fit.minosError(self.obs.srcname, par)
                     if self.config['verbose'] == 'yes' :
@@ -218,8 +222,8 @@ class FitMaker(Loggin.Message):
                           (ParValue, ParError, Scale))
             else:
                 if self.config['verbose'] == 'yes' :
-                    print(par+" :  %2.2f   %2.0e" %
-                      (ParValue, Scale))
+                    print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                      (ParValue, ParError, Scale))
 
         try: # get covariance matrix
             if self.config['verbose'] == 'yes' :
