@@ -329,7 +329,7 @@ def GetlistFromFits(config, catalog):
         extended_fitsfilename = ""
         for extname in extendedsrcname:
             if extname == extendedName[i]:
-		extended_fitsfilename = extendedfits[j]  
+                extended_fitsfilename = extendedfits[j]
             j+=1
 
         # if the source has a separation less than 0.1deg to the target and has
@@ -353,6 +353,16 @@ def GetlistFromFits(config, catalog):
             if not(extended_fitsfilename==""):
                 mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
                 Nextended+=1
+
+        # srcs that were kept fixed in the 3FGL: add them as fixed srcs
+        elif rspace < roi and sigma[i] == -np.inf:
+            sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
+                            'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
+                            'SpectrumType': spectype[i],'ExtendedName': extended_fitsfilename})
+            if not(extended_fitsfilename==""):
+               mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
+               Nextended+=1
 
         else:
             # if the source is inside the ROI: add it as a frozen source
