@@ -33,6 +33,8 @@ class Observation:
         #Fits files
         self.eventfile = folder+'/'+self.srcname+inttag+"_Evt.fits"
         self.Cubename  = folder+'/'+self.srcname+inttag+"_ltCube.fits"
+        if Configuration['file']['ltcube'] != "":
+            self.Cubename = Configuration['file']['ltcube']
         self.Mapname   = folder+'/'+self.srcname+inttag+"_ExpMap.fits"
         self.BinnedMapfile = folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
         self.cmapfile  = folder+'/'+self.srcname+inttag+"_CountMap.fits"
