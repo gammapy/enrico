@@ -120,14 +120,8 @@ class ModelTester(Loggin.Message):
         Dumpfile.close()
 
     def RunAFit(self,srcname,model,pars=None):
-        # Freezing some parameters to accelerate the LRT. 
-        print("Freezing not interesting model parameters")
-        for i in range(len(self.Fit.model.params)):
-            if self.Fit.model[i].isFree():
-                self.Fit.freeze(i)
-        
+        # Compute the loglike for the current model for the given parameter set.
         self.info("Computing loglike value for "+model)
-        #self._GenFit()
         self.Fit.logLike.getSource(srcname).setSpectrum(model)
         
         if (pars==None):
