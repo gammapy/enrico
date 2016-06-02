@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+"""Run fit with gtlike and a custom model to compute the log like"""
+import sys
+import logging
+import numpy as np
+from enrico.config import get_config
+from enrico.testModel import ModelTester
+from enrico import Loggin
+mes = Loggin.Message()
+
+# Usage example: enrico_lrt PG1553.conf lrt.test
+# Where PG1553.conf is a standard enrico config file
+# and lrt.test contain the model parameters:
+# e.g. LogParabola, None, 1.571613825, 0.06406550853
+
+try:
+    infile = sys.argv[1]
+except:
+    print('Usage: '+sys.argv[0]+' <config file name> <modelfile>')
+    mes.error('Config file or modelfile not found.')
+
+if len(sys.argv)==3:
+    # Read a file containing a list of config files.
+    mes.info("work on the config file "+infile)
+    config = get_config(infile)
+    ModelTest = ModelTester(config)
+    ModelTest.TestModelFromFile(sys.argv[2])
+else:
+    # Back to enrico_likelihood case
+    mes.info("work on the config file "+infile)
+    config = get_config(infile)
+    ModelTest = ModelTester(config)
+    ModelTest.TestModel()
+
+

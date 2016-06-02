@@ -235,6 +235,9 @@ class LightCurve(Loggin.Message):
             IndexName = 'Index1'
             CutoffName = 'Cutoff'
             CutoffErrName = 'dCutoff'
+        else:
+            IndexName = 'alpha'
+            CutoffName = None
         IndexErrName = 'd' + IndexName
 
         Nfail = 0
@@ -476,7 +479,20 @@ class LightCurve(Loggin.Message):
 
             #Spectral index management!
             self.info("Spectral index frozen to a value of 2")
-            utils.FreezeParams(Fit, self.srcname, 'Index', -2)
+            if (self.config['target']['spectrum'] == 'PowerLaw' or
+                self.config['target']['spectrum'] == 'PowerLaw2'):
+                IndexName = 'Index'
+                IndexValue = -2
+            elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
+                self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
+                IndexName = 'Index1'
+                IndexValue = -2
+            else:
+                IndexName = 'alpha'
+                IndexValue = 0.5
+
+            utils.FreezeParams(Fit, self.srcname, IndexName, IndexValue)
+
             LogL1.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
             Model_type = Fit.model.srcs[self.srcname].spectrum().genericName()
