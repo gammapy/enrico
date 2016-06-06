@@ -19,7 +19,7 @@ from enrico import environ
 
 class FitMaker(Loggin.Message):
     """Collection of functions to prepare/run the GTLIKE fit
-     and compute an upper limit is needed"""
+     and compute an upper limit if needed"""
     def __init__(self, obs, config):
         super(FitMaker,self).__init__()
         Loggin.Message.__init__(self)
@@ -42,7 +42,7 @@ class FitMaker(Loggin.Message):
         """Run the different ST tools and compute the fits files
            First it runs the tools that are common to the binned 
            and unbinned analysis chain then it run the specific
-           tools following the choise of the user"""
+           tools following the choice of the user"""
 
         #Run the tools common to binned and unbinned chain
         self._log('gtselect', 'Select data from library')#run gtselect
@@ -54,8 +54,19 @@ class FitMaker(Loggin.Message):
             self.obs.DiffResps()#run gtdiffresp
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
-        self._log('gtltcube', 'Make live time cube')#run gtexpcube
-        self.obs.ExpCube()
+        # Produces ltcube depending on whether the variable below is empty
+        # otherwise uses the one provided in the string (i.e. gtltcube
+        # will not even be called)
+        if self.config['file']['ltcube'] == "": 
+            self._log('gtltcube', 'Make live time cube')#run gtexpcube
+            self.obs.ExpCube()
+        else:
+            self._log('gtltcube', 'Make live time cube')
+            print "Skipping creation of live time cube: it was generated before"
+            print self.config['file']['ltcube']
+
+
+        	
 
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain

@@ -15,11 +15,11 @@ from enrico import utils
 class Observation:
     # init function of the Observation class. 
     # folder : folder where the produced fits files will be stored.
-    # configuration is the confi of enrico (contains the variable)
+    # configuration is the config of enrico (contains the variables)
     
     def __init__(self,folder,Configuration,tag=""):
         
-        #Read the configuration object and init all the variable
+        #Read the configuration object and init all variables
         self.Configuration = Configuration
         inttag = "_"+Configuration['file']['tag']
         if not(tag==""):
@@ -32,7 +32,11 @@ class Observation:
 
         #Fits files
         self.eventfile = folder+'/'+self.srcname+inttag+"_Evt.fits"
-        self.Cubename  = folder+'/'+self.srcname+inttag+"_ltCube.fits"
+        if Configuration['file']['ltcube'] == "":
+           self.Cubename  = folder+'/'+self.srcname+inttag+"_ltCube.fits"
+        else:
+           self.Cubename  = Configuration['file']['ltcube']
+                  
         self.Mapname   = folder+'/'+self.srcname+inttag+"_ExpMap.fits"
         self.BinnedMapfile = folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
         self.cmapfile  = folder+'/'+self.srcname+inttag+"_CountMap.fits"
@@ -279,7 +283,7 @@ class Observation:
         expCube['zmax']=self.Configuration['analysis']['zmax'] 
         expCube['phibins']=self.Configuration['space']['phibins']
         expCube['clobber'] = self.clobber
-        expCube.run()
+       	expCube.run()
 
     def ExpMap(self):
         "Run gtexpmap for unbinned analysis"
