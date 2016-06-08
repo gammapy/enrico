@@ -5,7 +5,7 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     from enrico import utils
     from enrico.gtfunction import Observation
     from enrico.fitmaker import FitMaker
-    
+
     """ run an analysis"""
     Obs = Observation(folder, config, tag=tag)
     if verbose:
@@ -17,11 +17,12 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     return FitRunner
 
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
-    #check is the summed likelihood method should be used and get the 
+    #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
     SummedLike = config['Spectrum']['SummedLike']
     folder = config['out']
     if SummedLike == 'yes':
+        import sys
         # Create two obs instances
         sys.exit("not yet working")
         FitRunnerfront = Analysis(folder, config, tag="FRONT", verbose = verbose)
@@ -48,7 +49,7 @@ def run(infile):
     from enrico import utils
     from enrico import energybin
     from enrico.config import get_config
-    
+
     """Run an entire Fermi analysis (spectrum) by reading a config file"""
     config = get_config(infile)
     folder = config['out']
@@ -68,13 +69,14 @@ def run(infile):
         if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
             FitRunner.ComputeSED(Fit)
         outXml = utils._dump_xml(config)
-        if config['Spectrum']['SummedLike'] != 'yes': # the possiblity of making the model map is checked inside the function
+        if config['Spectrum']['SummedLike'] != 'yes':
+            # the possiblity of making the model map is checked inside the function
             FitRunner.ModelMap(outXml)
 
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
     energybin.RunEbin(folder,Nbin,Fit,FitRunner)
-   
+
     del(Result)
     del(FitRunner)
 

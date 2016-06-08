@@ -40,7 +40,7 @@ class FitMaker(Loggin.Message):
 
     def GenerateFits(self):
         """Run the different ST tools and compute the fits files
-           First it runs the tools that are common to the binned 
+           First it runs the tools that are common to the binned
            and unbinned analysis chain then it run the specific
            tools following the choise of the user"""
 
@@ -126,27 +126,33 @@ class FitMaker(Loggin.Message):
         # Now the precise fit will be done
         #change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
-        #fit with the user optimizer and ask gtlike to compute the covariance matrix 
-        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) #fit with the user optimizer and ask gtlike to compute the covariance matrix 
+        #fit with the user optimizer and ask gtlike to compute the covariance matrix
+        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) #fit with the user optimizer and ask gtlike to compute the covariance matrix
 
         print Fit
 
-        self.RemoveWeakSources(Fit)#remove source with TS<1 to be sure that MINUIT will converge
-        if writeXml : 
+        # remove source with TS<min_source_TS (default=1)
+        # to be sure that MINUIT will converge
+        try:             self.config['fitting']['min_source_TS']
+        except KeyError: self.config['fitting']['min_source_TS'] = 1.
+
+        self.RemoveWeakSources(Fit,\
+            self.config['fitting']['min_source_TS'])
+        if writeXml :
             Fit.writeXml(utils._dump_xml(self.config))
 
         self.success("Fit with gtlike preformed")
 
-    def RemoveWeakSources(self,Fit):
+    def RemoveWeakSources(self,Fit,minTS=1.0):
         """Remove the weak source after a fit and reoptimized
          weak mens TS<1"""
-        self._log('','Remove all the weak (TS<1) sources')
+        self._log('','Remove all the weak (TS<%.2f) sources' %minTS)
         NoWeakSrcLeft = False
         while not(NoWeakSrcLeft):
             NoWeakSrcLeft = True
             for src in Fit.model.srcNames:
                 ts = Fit.Ts(src)
-                if  ts< 1 and not(src == self.obs.srcname) and Fit.logLike.getSource(src).getType() == 'Point':
+                if  (ts<minTS) and not(src == self.obs.srcname) and Fit.logLike.getSource(src).getType() == 'Point':
                     self.warning("deleting source "+src+" with TS = "+str(ts)+" from the model")
                     NoWeakSrcLeft = False
                     Fit.deleteSource(src)
@@ -245,7 +251,7 @@ class FitMaker(Loggin.Message):
         """ Compute UL using Feldman-cousin poisson stat"""
         self.info('Compute the exposure')#run gtexposure
 
-        try : 
+        try :
             spfile = pyfits.open(self.obs.lcfile)
         except:
             self.obs.GtLCbin(dt = self.config['time']['tmax']-self.config['time']['tmin'])
@@ -254,7 +260,7 @@ class FitMaker(Loggin.Message):
         self.obs.Configuration['AppLC']['index'] = self.config['UpperLimit']['SpectralIndex']
         self.obs.GtExposure()
         Exposure = np.sum(spfile[1].data.field("EXPOSURE"))
- 
+
         ###
         self.info('Compute the psf')#run gtexposure
         self.obs.GtPSF()
@@ -290,12 +296,12 @@ class FitMaker(Loggin.Message):
             return -1
 
         cl = str(int(float(self.config['UpperLimit']['cl'])*100))
-        try : 
+        try :
             ullookup = np.genfromtxt(environ.ENRICO_DIR+'/enrico/extern/UL_poisson_'+cl+'.dat',unpack=True)
         except:
             self.warning("cannot find the file "+environ.ENRICO_DIR+'/enrico/extern/UL_poisson_'+cl+'.dat')
         bkglookup = np.array([0.0,0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0])
-        measurement = ullookup[0] #the first row is the measurement 
+        measurement = ullookup[0] #the first row is the measurement
 
         uls = ullookup[2:-1:2] #keep only 1 row over 2 since we don't care about LL
 
@@ -308,7 +314,7 @@ class FitMaker(Loggin.Message):
         See the ST cicerone for more information on the 2 method"""
 
         self._log('UpperLimit', 'Compute upper Limit')
-        #Index given by the user  
+        #Index given by the user
         self.info("Assumed index is "+str(self.config['UpperLimit']['SpectralIndex']))
 
         IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
@@ -344,7 +350,7 @@ class FitMaker(Loggin.Message):
             print "Upper limit using Poisson statistic: ", ul
 
         print "This is an ul on the integral flux in ph/cm2/s"
-        return ul #Return the result. This is an ul on the integral flux in ph/cm2/s 
+        return ul #Return the result. This is an ul on the integral flux in ph/cm2/s
 
     def EnvelopeUL(self, Fit):
         """Compute the envelope UL. An UL is computed for different index and the maximum is taken at each energy.
@@ -379,9 +385,9 @@ class FitMaker(Loggin.Message):
             print "Index = ", indx, " UL = ", ul_val  #small print
             for j in xrange(Npgraph):
                 model_name = Fit.model.srcs[self.obs.srcname].spectrum().genericName()
-                #compute the DNDE value. The computation change is 
+                #compute the DNDE value. The computation change is
                 #the model is PowerLaw or PowerLaw2
-                #Note : Other model are not taken into account 
+                #Note : Other model are not taken into account
                 #and no UL will be computed
                 if model_name == 'PowerLaw2':
                     newUl = ul_val * (indx + 1) * pow(ener[j], indx + 2) / (pow(self.obs.Emax, indx + 1) - pow(self.obs.Emin, indx + 1))
@@ -402,7 +408,7 @@ class FitMaker(Loggin.Message):
         import plotting#plotting is the dedicated library
         from enrico.constants import SpectrumPath
         filename = self.config['out'] + '/'+SpectrumPath+'/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
-        Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin, 
+        Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin,
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)
         result._DumpSED(Param)

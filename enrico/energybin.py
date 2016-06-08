@@ -40,7 +40,7 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
 def PrepareEbin(Fit, FitRunner):
     """ Prepare the computation of spectral point in energy bins by
     i) removing the weak sources (TS<1) # not true
-    ii) updating the config file (option and energy) 
+    ii) updating the config file (option and energy)
     and save it in a new ascii file
     iii) changing the spectral model and saving it in a new xml file.
     A list of the ascii files is returned"""
@@ -54,12 +54,12 @@ def PrepareEbin(Fit, FitRunner):
     #in order to speed up the production of the fits files
     config['file']['event'] = FitRunner.obs.eventfile
     #update the config to allow the fit in energy bins
-    config['UpperLimit']['envelope'] = 'no' 
+    config['UpperLimit']['envelope'] = 'no'
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
     config['out'] = FitRunner.config['out'] + '/'+EbinPath + str(NEbin)
     config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
     #copy the chose of the user for the enery bin computing
-    config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration'] 
+    config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration']
     config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
     tag = FitRunner.config['file']['tag']
     lEmax = np.log10(float(FitRunner.config['energy']['emax']))
@@ -123,7 +123,7 @@ def RunEbin(folder,Nbin,Fit,FitRunner):
              if Newconfig['Submit'] == 'no' : #run directly
                  os.system(cmd)
              else : #submit a job to a cluster
-                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind) 
+                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
                  scriptname = prefix + "_Script.sh"
                  JobLog = prefix + "_Job.log"
                  JobName = (Newconfig['target']['name'] + "_" +
