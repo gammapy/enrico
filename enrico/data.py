@@ -16,9 +16,11 @@ default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
 # Download URLs
 FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
 FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
+WEEKLY_DIFFUSE_URL = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 CATALOG_URL = join(FSSC_URL, 'data/access/lat/4yr_catalog')
 DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
 WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
+WEEKLY_DIFFRSP_URL = join(HEASARC_FTP, 'weekly/diffuse')
 SPACECRAFT_URL = join(FSSC_FTP_URL, 'mission/spacecraft',
                       SPACECRAFT)
 
