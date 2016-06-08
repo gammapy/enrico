@@ -62,8 +62,8 @@ def AppLC(infile):
     PlotAppLC(Nbins,LCoutfolder,Obs.lcfile)
 
 def MakeTimebinFile(Obs,timefile):
-
     spfile = pyfits.open(Obs.eventfile)
+    spfile[1].data.sort(order='TIME')
     Time = spfile[1].data.field(9)[:-1]
 
     bounds = ((Time[1:] + Time[:-1])/2.).tolist() # compute the edge of the cells
@@ -81,6 +81,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     ROOT.gStyle.SetOptStat(0)
 
     spfile=pyfits.open(FITSfile)
+    spfile[1].data.sort(order='TIME')
 
     Time =  utils.met_to_MJD(spfile[1].data.field(0)[:-1])#mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/DAY_IN_SECOND
     dTime = (spfile[1].data.field(1)[:-1])/DAY_IN_SECOND
