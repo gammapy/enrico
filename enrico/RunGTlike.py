@@ -2,9 +2,20 @@
 
 
 def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
+    import os
     from enrico import utils
     from enrico.gtfunction import Observation
     from enrico.fitmaker import FitMaker
+    from enrico.xml_model import XmlMaker
+    import Loggin
+
+    mes = Loggin.Message()
+
+    # If there is no xml file, create it and print a warning
+    if (not os.path.isfile(config['file']['xml'])):
+        mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
+        XmlMaker(config)
+
 
     """ run an analysis"""
     Obs = Observation(folder, config, tag=tag)
@@ -17,6 +28,11 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     return FitRunner
 
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
+    import os
+    import os.path
+    from utils import hasKey, isKey
+    import Loggin
+    mes = Loggin.Message()
     #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
     SummedLike = config['Spectrum']['SummedLike']
@@ -37,6 +53,54 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         Fit.addComponent(FitB)
         Fit.addComponent(FitF)
         FitRunner = FitRunnerback
+    elif hasKey(config,'ComponentAnalysis') == True:
+        # Create one obs instance for each component
+        if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
+            mes.info("Breaking the analysis in PSF 0,1,2,3.")
+            # Clone the configs
+            config_psfs = [None]*4
+            config_xmls = [None]*4
+            FitPSFs     = [None]*4
+            AnalysisPSFs     = [None]*4
+            import SummedLikelihood
+            Fit = SummedLikelihood.SummedLikelihood()
+            for k in xrange(4):
+                config_psfs[k] = dict(config)
+                # Tune parameters
+                config_psfs[k]['event']['evtype'] = int(2**(k+2))
+                config_psfs[k]['file']['tag'] = str("PSF%d" %k)
+                oldxml = config_psfs[k]['file']['xml']
+                config_psfs[k]['file']['xml'] = oldxml.replace('model.xml','model_PSF%d.xml'%k)
+                AnalysisPSFs[k] = Analysis(folder, config_psfs[k], \
+                    tag=config_psfs[k]['file']['tag'], \
+                    verbose = verbose)
+                FitPSFs[k] = AnalysisPSFs[k].CreateLikeObject()
+                Fit.addComponent(FitPSFs[k])
+            FitRunner = AnalysisPSFs[0]
+        elif hasKey(config['ComponentAnalysis'],'EDISP'):
+            mes.info("Breaking the analysis in EDISP 0,1,2,3.")
+            # Clone the configs
+            config_edisps = [None]*4
+            config_xmls = [None]*4
+            FitEDISPs     = [None]*4
+            AnalysisEDISPs     = [None]*4
+            import SummedLikelihood
+            Fit = SummedLikelihood.SummedLikelihood()
+            for k in xrange(4):
+                config_edisps[k] = dict(config)
+                # Tune parameters
+                config_edisps[k]['event']['evtype'] = int(2**(k+6))
+                config_edisps[k]['file']['tag'] = str("EDISP%d" %k)
+                config_edisps[k]['file']['xml'].replace('model','model_EDISP%d'%k)
+                oldxml = config_edisp[k]['file']['xml']
+                config_edisp[k]['file']['xml'] = oldxml.replace('model.xml','model_EDISO%d.xml'%k)
+                AnalysisEDISPs[k] = Analysis(folder, config_edisps[k], \
+                    tag=config_edisps[k]['file']['tag'], \
+                    verbose = verbose)
+                FitEDISPs[k] = AnalysisEDISPs[k].CreateLikeObject()
+                Fit.addComponent(FitEDISPs[k])
+            FitRunner = AnalysisEDISPs[0]
+
     else:
         # Create one obs instance
         FitRunner = Analysis(folder, config, tag="", verbose = verbose)
@@ -59,7 +123,8 @@ def run(infile):
     # create all the fit files and run gtlike
     FitRunner.PerformFit(Fit)
 
-    Result = FitRunner.GetAndPrintResults(Fit)#Get and dump the target specific results
+    #Get and dump the target specific results
+    Result = FitRunner.GetAndPrintResults(Fit)
     utils.DumpResult(Result, config)
 
     #plot the SED and model map if possible and asked

@@ -13,12 +13,12 @@ from enrico import utils
 
 
 class Observation:
-    # init function of the Observation class. 
+    # init function of the Observation class.
     # folder : folder where the produced fits files will be stored.
     # configuration is the confi of enrico (contains the variable)
-    
+
     def __init__(self,folder,Configuration,tag=""):
-        
+
         #Read the configuration object and init all the variable
         self.Configuration = Configuration
         inttag = "_"+Configuration['file']['tag']
@@ -84,16 +84,16 @@ class Observation:
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.cmapfile
         evtbin['algorithm'] = "CMAP"
-        evtbin['nxpix'] = self.npix 
-        evtbin['nypix'] = self.npix 
+        evtbin['nxpix'] = self.npix
+        evtbin['nypix'] = self.npix
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = self.Configuration['space']['coordsys']
         evtbin["emin"] = self.Emin
         evtbin["emax"] = self.Emax
-        evtbin['xref'] = self.ra 
+        evtbin['xref'] = self.ra
         evtbin['yref'] = self.dec
         evtbin['axisrot'] = 0
-        evtbin['proj'] = self.Configuration['space']['proj'] 
+        evtbin['proj'] = self.Configuration['space']['proj']
         evtbin['clobber'] = self.clobber
         evtbin.run()
 
@@ -110,7 +110,7 @@ class Observation:
         exposure['scfile'] = self.ft2
         exposure['target'] = self.srcname
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            exposure['evtype']= self.Configuration['event']['evtype'] 
+            exposure['evtype']= self.Configuration['event']['evtype']
         exposure['irfs'] = self.irfs
         exposure['srcmdl'] = "none"
         exposure['specin'] = -self.Configuration['AppLC']['index']
@@ -146,7 +146,7 @@ class Observation:
         evtbin['nypix'] = self.npix
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = self.Configuration['space']['coordsys']
-        evtbin['xref'] = self.ra 
+        evtbin['xref'] = self.ra
         evtbin['yref'] = self.dec
         evtbin["emin"] = self.Emin
         evtbin["emax"] = self.Emax
@@ -168,7 +168,7 @@ class Observation:
         expcube2['outfile'] = self.BinnedMapfile
         expcube2['cmap'] = self.ccube
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            expcube2['evtype']= self.Configuration['event']['evtype'] 
+            expcube2['evtype']= self.Configuration['event']['evtype']
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
@@ -182,14 +182,14 @@ class Observation:
         """Run gtselect tool"""
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventfile
-        filter['ra'] = self.ra 
-        filter['dec'] = self.dec 
+        filter['ra'] = self.ra
+        filter['dec'] = self.dec
         filter['rad'] = self.roi
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
         filter['tmin'] = self.t1
         filter['tmax'] = self.t2
-        filter['zmax'] = self.Configuration['analysis']['zmax'] 
+        filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = self.Configuration['event']['evtype']
         filter['clobber'] = self.clobber
@@ -257,7 +257,7 @@ class Observation:
         diffResps['scfile']=self.ft2
         diffResps['srcmdl']=self.xmlfile
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            diffResps['evtype']= self.Configuration['event']['evtype'] 
+            diffResps['evtype']= self.Configuration['event']['evtype']
             diffResps['evclass']=self.Configuration['event']['evclass']
         else :
             diffResps['evtype']= 'INDEF'
@@ -269,14 +269,14 @@ class Observation:
         diffResps.run()
         print "\ndone"
 
-    def ExpCube(self): 
+    def ExpCube(self):
         "Run gtltcube tool to produce livetime cube"
         expCube['evfile']=self.eventfile
         expCube['scfile']=self.ft2
         expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
         expCube['binsz']=1
-        expCube['zmax']=self.Configuration['analysis']['zmax'] 
+        expCube['zmax']=self.Configuration['analysis']['zmax']
         expCube['phibins']=self.Configuration['space']['phibins']
         expCube['clobber'] = self.clobber
         expCube.run()
@@ -289,7 +289,7 @@ class Observation:
         expMap['expcube'] = self.Cubename
         expMap['outfile'] = self.Mapname
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            expMap['evtype']= self.Configuration['event']['evtype'] 
+            expMap['evtype']= self.Configuration['event']['evtype']
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
@@ -297,7 +297,7 @@ class Observation:
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
         expMap['clobber'] = self.clobber
-        expMap.run() 
+        expMap.run()
 
     def SrcMap(self):
         """Run gtsrcmap tool for binned analysis"""
@@ -307,7 +307,7 @@ class Observation:
         srcMaps['bexpmap'] = self.BinnedMapfile
         srcMaps['srcmdl']=self.xmlfile
 #        if  self.Configuration['event']['irfs'] != 'CALDB':
-#            srcMaps['evtype']= self.Configuration['event']['evtype'] 
+#            srcMaps['evtype']= self.Configuration['event']['evtype']
 #        else :
 #            srcMaps['evtype']= 'INDEF'
         srcMaps['irfs']= self.irfs
@@ -324,7 +324,7 @@ class Observation:
         model_map['bexpmap'] = self.BinnedMapfile
         model_map['srcmdl'] = xml
 #        if  self.Configuration['event']['irfs'] != 'CALDB':
-#            model_map['evtype']= self.Configuration['event']['evtype'] 
+#            model_map['evtype']= self.Configuration['event']['evtype']
 #        else :
 #            model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
@@ -340,7 +340,7 @@ class Observation:
         findsrc['evfile'] = self.eventfile
         findsrc['scfile'] = self.ft2
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            findsrc['evtype']= self.Configuration['event']['evtype'] 
+            findsrc['evtype']= self.Configuration['event']['evtype']
         else :
             findsrc['evtype']= 'INDEF'
         findsrc['irfs'] = self.irfs
@@ -362,7 +362,7 @@ class Observation:
         srcprob['evfile'] = self.eventfile
         srcprob['scfile'] = self.ft2
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            srcprob['evtype']= self.Configuration['event']['evtype'] 
+            srcprob['evtype']= self.Configuration['event']['evtype']
         else :
             srcprob['evtype']= 'INDEF'
         srcprob['irfs'] = self.irfs
@@ -380,7 +380,7 @@ class Observation:
         psf["outfile"] = self.psf
         psf["irfs"]    = irfs
         psf["evtype"]  = self.Configuration['event']['evtype']
-        psf["ra"]      = self.ra 
+        psf["ra"]      = self.ra
         psf["dec"]     = self.dec
         psf["emin"]    = self.Emin
         psf["emax"]    = self.Emax
