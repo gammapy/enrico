@@ -30,6 +30,7 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     import os
     import os.path
+    from enrico.extern.configobj import ConfigObj
     from utils import hasKey, isKey
     import Loggin
     mes = Loggin.Message()
@@ -65,7 +66,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             import SummedLikelihood
             Fit = SummedLikelihood.SummedLikelihood()
             for k in xrange(4):
-                config_psfs[k] = dict(config)
+                config_psfs[k] = ConfigObj(config)
                 # Tune parameters
                 config_psfs[k]['event']['evtype'] = int(2**(k+2))
                 config_psfs[k]['file']['tag'] = str("PSF%d" %k)
@@ -87,7 +88,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             import SummedLikelihood
             Fit = SummedLikelihood.SummedLikelihood()
             for k in xrange(4):
-                config_edisps[k] = dict(config)
+                config_edisps[k] = ConfigObj(config)
                 # Tune parameters
                 config_edisps[k]['event']['evtype'] = int(2**(k+6))
                 config_edisps[k]['file']['tag'] = str("EDISP%d" %k)
