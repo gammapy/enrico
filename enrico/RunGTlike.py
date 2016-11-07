@@ -59,10 +59,10 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
             mes.info("Breaking the analysis in PSF 0,1,2,3.")
             # Clone the configs
-            config_psfs = [None]*4
-            config_xmls = [None]*4
-            FitPSFs     = [None]*4
-            AnalysisPSFs     = [None]*4
+            config_psfs  = [None]*4
+            config_xmls  = [None]*4
+            FitPSFs      = [None]*4
+            AnalysisPSFs = [None]*4
             import SummedLikelihood
             Fit = SummedLikelihood.SummedLikelihood()
             for k in xrange(4):
@@ -78,13 +78,43 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 FitPSFs[k] = AnalysisPSFs[k].CreateLikeObject()
                 Fit.addComponent(FitPSFs[k])
             FitRunner = AnalysisPSFs[0]
+        elif hasKey(config['ComponentAnalysis'],'EUnBinned'):
+            mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
+            # Clone the configs
+            config_bin   = [None]*2
+            config_xmls  = [None]*2
+            FitBIN       = [None]*2
+            AnalysisBIN  = [None]*2
+            import SummedLikelihood
+            Fit = SummedLikelihood.SummedLikelihood()
+            for k,name in enumerate(["highE","lowE"]):
+                config_bin[k] = ConfigObj(config)
+                # Tune parameters
+                config_bin[k]['event']['evtype'] = int(2**(k+6))
+                config_bin[k]['file']['tag'] = str("%s" %name)
+                config_bin[k]['file']['xml'].replace('model','model_%s'%name)
+                if name is "lowE":
+                    config_bin[k]['analysis']['emax']       = config['ComponentAnalysis']['EUnBinned']
+                    config_bin[k]['analysis']['likelihood'] = "binned"
+                elif name is "highE":
+                    config_bin[k]['analysis']['emin']           = config['ComponentAnalysis']['EUnBinned']
+                    config_bin[k]['analysis']['likelihood']     = "unbinned"
+                    config_bin[k]['analysis']['ComputeDiffrsp'] = "yes"
+                oldxml = config_bin[k]['file']['xml']
+                config_bin[k]['file']['xml'] = oldxml.replace('model.xml','model_%s.xml'%name)
+                AnalysisBIN[k] = Analysis(folder, config_bin[k], \
+                    tag=config_bin[k]['file']['tag'], \
+                    verbose=verbose)
+                FitBIN[k] = AnalysisBIN[k].CreateLikeObject()
+                Fit.addComponent(FitBIN[k])
+            FitRunner = AnalysisBIN[0]
         elif hasKey(config['ComponentAnalysis'],'EDISP'):
             mes.info("Breaking the analysis in EDISP 0,1,2,3.")
             # Clone the configs
-            config_edisps = [None]*4
-            config_xmls = [None]*4
-            FitEDISPs     = [None]*4
-            AnalysisEDISPs     = [None]*4
+            config_edisps  = [None]*4
+            config_xmls    = [None]*4
+            FitEDISPs      = [None]*4
+            AnalysisEDISPs = [None]*4
             import SummedLikelihood
             Fit = SummedLikelihood.SummedLikelihood()
             for k in xrange(4):
@@ -93,15 +123,14 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config_edisps[k]['event']['evtype'] = int(2**(k+6))
                 config_edisps[k]['file']['tag'] = str("EDISP%d" %k)
                 config_edisps[k]['file']['xml'].replace('model','model_EDISP%d'%k)
-                oldxml = config_edisp[k]['file']['xml']
-                config_edisp[k]['file']['xml'] = oldxml.replace('model.xml','model_EDISO%d.xml'%k)
+                oldxml = config_edisps[k]['file']['xml']
+                config_edisp[k]['file']['xml'] = oldxml.replace('model.xml','model_EDISP%d.xml'%k)
                 AnalysisEDISPs[k] = Analysis(folder, config_edisps[k], \
                     tag=config_edisps[k]['file']['tag'], \
                     verbose = verbose)
                 FitEDISPs[k] = AnalysisEDISPs[k].CreateLikeObject()
                 Fit.addComponent(FitEDISPs[k])
             FitRunner = AnalysisEDISPs[0]
-
     else:
         # Create one obs instance
         FitRunner = Analysis(folder, config, tag="", verbose = verbose)
