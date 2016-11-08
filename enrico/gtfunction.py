@@ -231,13 +231,16 @@ class Observation:
             os.unlink(file.strip()) # strip of endline char
 
     def MkTime(self):
+        import os.path
         """compute GTI"""
         if self.Configuration['time']['file'] != '':
             self.time_selection()
         selstr = self.Configuration['analysis']['filter']
         outfile = self.eventfile+".tmp"
-        self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
-        os.system("mv "+self.eventfile+".tmp "+self.eventfile)
+        ## Maketime does not listen to clobber variable
+        if (os.path.exists(outfile) and not self.clobber):
+            self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
+            os.system("mv "+self.eventfile+".tmp "+self.eventfile)
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""

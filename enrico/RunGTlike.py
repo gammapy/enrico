@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     import os
     from enrico import utils
@@ -30,6 +29,7 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     import os
     import os.path
+    import math
     from enrico.extern.configobj import ConfigObj
     from utils import hasKey, isKey
     import Loggin
@@ -78,7 +78,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 FitPSFs[k] = AnalysisPSFs[k].CreateLikeObject()
                 Fit.addComponent(FitPSFs[k])
             FitRunner = AnalysisPSFs[0]
-        elif hasKey(config['ComponentAnalysis'],'EUnBinned'):
+        elif isKey(config['ComponentAnalysis'],'EUnBinned') is not -1.:
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
             # Clone the configs
             config_bin   = [None]*2
@@ -87,17 +87,26 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             AnalysisBIN  = [None]*2
             import SummedLikelihood
             Fit = SummedLikelihood.SummedLikelihood()
-            for k,name in enumerate(["highE","lowE"]):
+            EUnBinned = config['ComponentAnalysis']['EUnBinned']
+            emintotal = config['energy']['emin']
+            emaxtotal = config['energy']['emax']
+            
+            # Run the following analysis depending on the case
+            # this is general, no matter if we are in the total fit or the Ebin #N fit. 
+            if EUnBinned<=emintotal:    analysestorun = ["highE"]
+            elif EUnBinned>=emaxtotal:  analysestorun = ["lowE"]
+            else:                       analysestorun = ["lowE","highE"]
+            
+            for k,name in enumerate(analysestorun):
                 config_bin[k] = ConfigObj(config)
                 # Tune parameters
-                config_bin[k]['event']['evtype'] = int(2**(k+6))
                 config_bin[k]['file']['tag'] = str("%s" %name)
                 config_bin[k]['file']['xml'].replace('model','model_%s'%name)
                 if name is "lowE":
-                    config_bin[k]['analysis']['emax']       = config['ComponentAnalysis']['EUnBinned']
+                    config_bin[k]['energy']['emax'] = min(config_bin[k]['energy']['emax'],EUnBinned)
                     config_bin[k]['analysis']['likelihood'] = "binned"
                 elif name is "highE":
-                    config_bin[k]['analysis']['emin']           = config['ComponentAnalysis']['EUnBinned']
+                    config_bin[k]['energy']['emin'] = max(config_bin[k]['energy']['emin'],EUnBinned)
                     config_bin[k]['analysis']['likelihood']     = "unbinned"
                     config_bin[k]['analysis']['ComputeDiffrsp'] = "yes"
                 oldxml = config_bin[k]['file']['xml']
@@ -108,7 +117,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 FitBIN[k] = AnalysisBIN[k].CreateLikeObject()
                 Fit.addComponent(FitBIN[k])
             FitRunner = AnalysisBIN[0]
-        elif hasKey(config['ComponentAnalysis'],'EDISP'):
+        elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
             mes.info("Breaking the analysis in EDISP 0,1,2,3.")
             # Clone the configs
             config_edisps  = [None]*4
@@ -131,6 +140,9 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 FitEDISPs[k] = AnalysisEDISPs[k].CreateLikeObject()
                 Fit.addComponent(FitEDISPs[k])
             FitRunner = AnalysisEDISPs[0]
+        else:
+            # Create one obs instance
+            FitRunner = Analysis(folder, config, tag="", verbose = verbose)
     else:
         # Create one obs instance
         FitRunner = Analysis(folder, config, tag="", verbose = verbose)
