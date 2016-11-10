@@ -81,7 +81,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 FitPSFs[k] = AnalysisPSFs[k].CreateLikeObject()
                 Fit.addComponent(FitPSFs[k])
             FitRunner = AnalysisPSFs[0]
-        elif isKey(config['ComponentAnalysis'],'EUnBinned') is not -1.:
+        elif isKey(config['ComponentAnalysis'],'EUnBinned')>=0:
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
             # Clone the configs
             config_bin   = [None]*2
@@ -95,6 +95,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             emaxtotal = float(config['energy']['emax'])
             # Run the following analysis depending on the case
             # this is general, no matter if we are in the total fit or the Ebin #N fit. 
+
             if EUnBinned<=emintotal:    analysestorun = ["highE"]
             elif EUnBinned>=emaxtotal:  analysestorun = ["lowE"]
             else:                       analysestorun = ["lowE","highE"]
