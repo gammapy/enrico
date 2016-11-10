@@ -38,7 +38,7 @@ class Observation:
         self.cmapfile  = folder+'/'+self.srcname+inttag+"_CountMap.fits"
         self.lcfile    = folder+'/'+self.srcname+inttag+"_applc.fits"
         self.ccube     = folder+'/'+self.srcname+inttag+"_CCUBE.fits"
-        self.scrMap    = folder+'/'+self.srcname+inttag+"_srcMap.fits"
+        self.srcMap    = folder+'/'+self.srcname+inttag+"_srcMap.fits"
         self.ModelMap  = folder+'/'+self.srcname+inttag+"_ModelMap.fits"
         self.BinDef  = folder+'/'+self.srcname+inttag+"_BinDef.fits"
         self.Probfile  = folder+'/'+self.srcname+inttag+"_prob.fits"
@@ -53,7 +53,9 @@ class Observation:
         self.dec       = float(Configuration['space']['yref'])
         self.roi       = float(Configuration['space']['rad'])
         self.irfs      = Configuration['event']['irfs']
-
+        
+        #diffuse Response
+        self.diffrspflag = folder+'/'+self.srcname+inttag+"_diffrsp.flag"
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
@@ -76,10 +78,15 @@ class Observation:
         print "evclass\t=\t",self.Configuration['event']['evclass']
         print "evtype\t=\t",self.Configuration['event']['evtype']
         if  self.Configuration['event']['irfs'] == 'CALDB':
-             print "Corresponding IRFs\t=\t",utils.GetIRFS(self.Configuration['event']['evclass'],self.Configuration['event']['evtype'])
+            print "Corresponding IRFs\t=\t",\
+            utils.GetIRFS(self.Configuration['event']['evclass'],\
+            self.Configuration['event']['evtype'])
 
     def Gtbin(self):
         """Run gtbin with the CMAP option. A count map is produced"""
+        if (self.clobber == "no" and os.path.isfile(self.cmapfile)):
+            #print("File exists and clobber is False")
+            return(0)
         evtbin['evfile'] = self.eventfile
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.cmapfile
@@ -98,6 +105,9 @@ class Observation:
         evtbin.run()
 
     def GtBinDef(self,filename):
+        if (self.clobber == "no" and os.path.isfile(self.BinDef)):
+            #print("File exists and clobber is False")
+            return(0)
         bindef = GtApp('gtbindef', 'Likelihood')
         bindef['bintype'] = 'T'
         bindef['binfile'] = filename
@@ -120,6 +130,9 @@ class Observation:
     def GtLCbin(self,dt=60):
         """Run gtbin with the LC option. the default dt is 60 sec and data can be rebinned after.
           Can also take a file as input to define the time bins"""
+        if (self.clobber == "no" and os.path.isfile(self.lcfile)):
+            #print("File exists and clobber is False")
+            return(0)
         evtbin['evfile'] = self.eventfile
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.lcfile
@@ -137,6 +150,9 @@ class Observation:
 
     def GtCcube(self):
         """Run gtbin with the CCUBE option"""
+        if (self.clobber == "no" and os.path.isfile(self.ccube)):
+            #print("File exists and clobber is False")
+            return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
         evtbin['evfile'] = self.eventfile
         evtbin['scfile'] = self.ft2
@@ -155,13 +171,17 @@ class Observation:
         evtbin['ebinalg'] = "LOG"
         evtbin['axisrot'] = 0
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
-        #The number of bin is the number of decade * the number of bin per decade (given by the users)
+        #The number of bin is the number of decade * the number of bin 
+        #per decade (given by the users)
         evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
         evtbin['clobber'] = self.clobber
         evtbin.run()
 
     def GtBinnedMap(self):
         """Run the gtexpcube2 tool for binned analysis"""
+        if (self.clobber == "no" and os.path.isfile(self.BinnedMapfile)):
+            #print("File exists and clobber is False")
+            return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
         expcube2 = GtApp('gtexpcube2', 'Likelihood')
         expcube2['infile'] = self.Cubename
@@ -180,6 +200,9 @@ class Observation:
 
     def FirstCut(self):
         """Run gtselect tool"""
+        if (self.clobber == "no" and os.path.isfile(self.eventfile)):
+            #print("File exists and clobber is False")
+            return(0)
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventfile
         filter['ra'] = self.ra
@@ -244,6 +267,9 @@ class Observation:
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""
+        if (self.clobber == "no" and os.path.isfile(outfile)):
+            #print("File exists and clobber is False")
+            return(0)
         maketime['scfile'] = self.ft2
         maketime['filter'] = selstr#self.Configuration['analysis']['filter']
         maketime['roicut'] = roicut
@@ -256,6 +282,9 @@ class Observation:
 
     def DiffResps(self):
         """run gtdiffresp"""
+        if (self.clobber == "no" and os.path.isfile(self.diffrspflag)):
+            #print("File exists and clobber is False")
+            return(0)
         diffResps['evfile']=self.eventfile
         diffResps['scfile']=self.ft2
         diffResps['srcmdl']=self.xmlfile
@@ -270,10 +299,16 @@ class Observation:
 
         diffResps['clobber'] = self.clobber
         diffResps.run()
+        with open(self.diffrspflag,"w") as diffrspflag:
+            diffrspflag.write("")
+
         print "\ndone"
 
     def ExpCube(self):
         "Run gtltcube tool to produce livetime cube"
+        if (self.clobber == "no" and os.path.isfile(self.Cubename)):
+            #print("File exists and clobber is False")
+            return(0)
         expCube['evfile']=self.eventfile
         expCube['scfile']=self.ft2
         expCube['outfile']=self.Cubename
@@ -286,6 +321,9 @@ class Observation:
 
     def ExpMap(self):
         "Run gtexpmap for unbinned analysis"
+        if (self.clobber == "no" and os.path.isfile(self.Mapname)):
+            #print("File exists and clobber is False")
+            return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
         expMap['evfile'] = self.eventfile
         expMap['scfile'] = self.ft2
@@ -304,17 +342,20 @@ class Observation:
 
     def SrcMap(self):
         """Run gtsrcmap tool for binned analysis"""
+        if (self.clobber == "no" and os.path.isfile(self.srcMap)):
+            #print("File exists and clobber is False")
+            return(0)
         srcMaps['scfile'] = self.ft2
         srcMaps['expcube'] = self.Cubename
         srcMaps['cmap'] = self.ccube
         srcMaps['bexpmap'] = self.BinnedMapfile
         srcMaps['srcmdl']=self.xmlfile
-#        if  self.Configuration['event']['irfs'] != 'CALDB':
-#            srcMaps['evtype']= self.Configuration['event']['evtype']
-#        else :
-#            srcMaps['evtype']= 'INDEF'
+        # if  self.Configuration['event']['irfs'] != 'CALDB':
+        #   srcMaps['evtype']= self.Configuration['event']['evtype']
+        # else :
+        #   srcMaps['evtype']= 'INDEF'
         srcMaps['irfs']= self.irfs
-        srcMaps['outfile'] = self.scrMap
+        srcMaps['outfile'] = self.srcMap
         srcMaps['emapbnds']='no'
         srcMaps['clobber'] = self.clobber
         srcMaps.run()
@@ -322,14 +363,17 @@ class Observation:
     def ModelMaps(self,xml):
         """Run gtmodelmap tool for binned analysis and make a subtraction of the produced map
          with the count map to produce a residual map"""
+        if (self.clobber == "no" and os.path.isfile(self.ModelMap)):
+            #print("File exists and clobber is False")
+            return(0)
         model_map['expcube'] = self.Cubename
-        model_map['srcmaps'] = self.scrMap
+        model_map['srcmaps'] = self.srcMap
         model_map['bexpmap'] = self.BinnedMapfile
         model_map['srcmdl'] = xml
-#        if  self.Configuration['event']['irfs'] != 'CALDB':
-#            model_map['evtype']= self.Configuration['event']['evtype']
-#        else :
-#            model_map['evtype']= 'INDEF'
+        # if  self.Configuration['event']['irfs'] != 'CALDB':
+        #   model_map['evtype']= self.Configuration['event']['evtype']
+        # else :
+        #   model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
         model_map['outfile'] = self.ModelMap
         model_map['clobber'] = self.clobber
@@ -339,6 +383,10 @@ class Observation:
 
     def FindSource(self):
         """Run the gtfindsrc tool"""
+        outfile = utils._dump_findsrcout(self.Configuration)
+        if (self.clobber == "no" and os.path.isfile(outfile)):
+            #print("File exists and clobber is False")
+            return(0)
         findsrc = GtApp('gtfindsrc', 'Likelihood')
         findsrc['evfile'] = self.eventfile
         findsrc['scfile'] = self.ft2
@@ -356,11 +404,14 @@ class Observation:
         findsrc['ftol'] = self.Configuration["fitting"]["ftol"]
         findsrc['clobber'] = self.clobber
         findsrc['reopt'] = self.Configuration["findsrc"]["Refit"]
-        findsrc['outfile'] = utils._dump_findsrcout(self.Configuration)
+        findsrc['outfile'] = outfile
         findsrc.run()
 
     def SrcProb(self):
         """Run the gtsrcprob tool"""
+        if (self.clobber == "no" and os.path.isfile(self.Probfile)):
+            #print("File exists and clobber is False")
+            return(0)
         srcprob = GtApp('gtsrcprob', 'Likelihood')
         srcprob['evfile'] = self.eventfile
         srcprob['scfile'] = self.ft2
@@ -376,6 +427,9 @@ class Observation:
         srcprob.run()
 
     def GtPSF(self):
+        if (self.clobber == "no" and os.path.isfile(self.psf)):
+            #print("File exists and clobber is False")
+            return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
         irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],self.Configuration['event']['evtype'])
         psf = GtApp('gtpsf', 'Likelihood')

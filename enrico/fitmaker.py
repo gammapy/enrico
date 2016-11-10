@@ -76,7 +76,7 @@ class FitMaker(Loggin.Message):
 
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
-            Obs = BinnedObs(srcMaps=self.obs.scrMap,
+            Obs = BinnedObs(srcMaps=self.obs.srcMap,
                             expCube=self.obs.Cubename,
                             binnedExpMap=self.obs.BinnedMapfile,
                             irfs=self.obs.irfs)
@@ -94,7 +94,8 @@ class FitMaker(Loggin.Message):
                                    optimizer=self.config['fitting']['optimizer'])
 
         if float(self.config['Spectrum']['FrozenSpectralIndex']) > 0:
-            if Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw" or Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw2":
+            if Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw" or\
+                    Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw2":
                 PhIndex = Fit.par_index(self.obs.srcname, 'Index')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
@@ -127,10 +128,9 @@ class FitMaker(Loggin.Message):
         #change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
-        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) #fit with the user optimizer and ask gtlike to compute the covariance matrix
-
-        print Fit
-
+        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) 
+        #fit with the user optimizer and ask gtlike to compute the covariance matrix
+        #print Fit
         # remove source with TS<min_source_TS (default=1)
         # to be sure that MINUIT will converge
         try:             self.config['fitting']['min_source_TS']
@@ -152,10 +152,13 @@ class FitMaker(Loggin.Message):
             NoWeakSrcLeft = True
             for src in Fit.model.srcNames:
                 ts = Fit.Ts(src)
-                if  (ts<minTS) and not(src == self.obs.srcname) and Fit.logLike.getSource(src).getType() == 'Point':
-                    self.warning("deleting source "+src+" with TS = "+str(ts)+" from the model")
-                    NoWeakSrcLeft = False
-                    Fit.deleteSource(src)
+                if  (ts<minTS) and not(src == self.obs.srcname):
+                    #and Fit.logLike.getSource(src).getType() == 'Point':
+                    for comp in Fit.components:
+                        if comp.logLike.getSource(src).getType() == 'Point':
+                            self.warning("deleting source "+src+" with TS = "+str(ts)+" from the model")
+                            NoWeakSrcLeft = False
+                            comp.deleteSource(src)
             if not(NoWeakSrcLeft):
                 self._log('Re-optimize', '')
                 Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
@@ -174,9 +177,9 @@ class FitMaker(Loggin.Message):
             # Print src name, Npred and TS for source with TS > 5
             print "Source Name\tNpred\tTS"
             #TODO
-#            for src in Fit.model.srcNames:
-#                if Fit.Ts(src) > 5:
-#                    print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
+        #for src in Fit.model.srcNames:
+        #if Fit.Ts(src) > 5:
+        #   print src, "\t%2.3f\t%2.3f" % (Fit.NpredValue(src), Fit.Ts(src))
 
         # fill the dictonnary with some values
         Result['Optimizer'] = self.config['fitting']['optimizer']
@@ -207,7 +210,7 @@ class FitMaker(Loggin.Message):
         for par in ParName : #Loop over the parameters and get value, error and scale
             ParValue = spectrum.getParam(par).value()
             ParError = spectrum.getParam(par).error()
-            Scale = spectrum.getParam(par).getScale()
+            Scale    = spectrum.getParam(par).getScale()
             Result[par] = ParValue * Scale
             Result['d'+par] = ParError * Scale
             if ParError>0: # Compute MINOS errors for relevent parameters  Fit.Ts(self.obs.srcname) > 5 and
@@ -255,9 +258,18 @@ class FitMaker(Loggin.Message):
             spfile = pyfits.open(self.obs.lcfile)
         except:
             self.obs.GtLCbin(dt = self.config['time']['tmax']-self.config['time']['tmin'])
-#            spfile = pyfits.open(self.obs.lcfile)
-
-        self.obs.Configuration['AppLC']['index'] = self.config['UpperLimit']['SpectralIndex']
+            #spfile = pyfits.open(self.obs.lcfile)
+        
+        try:
+            self.obs.Configuration['AppLC']['index'] = self.config['UpperLimit']['SpectralIndex']
+        except:
+            try:
+                self.obs.Configuration['AppLC']['index']
+            except:
+                self.info("Cannot find the spectral index")
+                self.obs.Configuration['AppLC']['index'] = 1.5
+        
+        self.info("Assuming spectral index of %s" %self.info("Assuming default index of 1.5"))
         self.obs.GtExposure()
         Exposure = np.sum(spfile[1].data.field("EXPOSURE"))
 
@@ -279,8 +291,10 @@ class FitMaker(Loggin.Message):
                    break
 
         #read the CCUBE
-        x = np.arange(-abs(int(ccube[0].header["CRPIX1"])*ccube[0].header["CDELT1"]),abs(ccube[0].header["CRPIX1"]*ccube[0].header["CDELT1"]),abs(ccube[0].header["CDELT1"]))
-        y = np.arange(-abs(ccube[0].header["CRPIX2"]*ccube[0].header["CDELT2"]),abs(int(ccube[0].header["CRPIX2"])*ccube[0].header["CDELT2"]),abs(ccube[0].header["CDELT2"]))
+        x = np.arange(-abs(int(ccube[0].header["CRPIX1"])*ccube[0].header["CDELT1"]),\
+                abs(ccube[0].header["CRPIX1"]*ccube[0].header["CDELT1"]),abs(ccube[0].header["CDELT1"]))
+        y = np.arange(-abs(ccube[0].header["CRPIX2"]*ccube[0].header["CDELT2"]),\
+                abs(int(ccube[0].header["CRPIX2"])*ccube[0].header["CDELT2"]),abs(ccube[0].header["CDELT2"]))
 
         xx, yy = np.meshgrid(x, y)
         dist = np.sqrt(xx**2 + yy**2)
@@ -390,7 +404,8 @@ class FitMaker(Loggin.Message):
                 #Note : Other model are not taken into account
                 #and no UL will be computed
                 if model_name == 'PowerLaw2':
-                    newUl = ul_val * (indx + 1) * pow(ener[j], indx + 2) / (pow(self.obs.Emax, indx + 1) - pow(self.obs.Emin, indx + 1))
+                    newUl = ul_val * (indx + 1) * pow(ener[j], indx + 2) \
+                        / (pow(self.obs.Emax, indx + 1) - pow(self.obs.Emin, indx + 1))
                 elif model_name == 'PowerLaw':
                     IdEScale = utils.getParamIndx(Fit, self.obs.srcname, 'Scale')
                     Escale = Fit[IdEScale].value()
@@ -402,16 +417,20 @@ class FitMaker(Loggin.Message):
         for j in xrange(Npgraph):
             print ener[j], " ", Ulenv[j]
 
-    def ComputeSED(self, Fit):
+    def ComputeSED(self, Fit, dump=False):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
-        import plotting#plotting is the dedicated library
+        import plotting #plotting is the dedicated library
         from enrico.constants import SpectrumPath
-        filename = self.config['out'] + '/'+SpectrumPath+'/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
+        filename = self.config['out'] + '/'+SpectrumPath+\
+                '/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin,
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)
-        result._DumpSED(Param)
+        if (dump):
+            result._DumpSED(Param)
+
+        return(result)
 
     def ModelMap(self, xml):
         """Make a model Map. Valid only if the statistic is binned"""

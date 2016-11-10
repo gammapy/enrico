@@ -531,28 +531,26 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
 
 
 def XmlMaker(config):
-  folder = config['out']
-  os.system('mkdir -p ' + folder)
+    folder = config['out']
+    os.system('mkdir -p ' + folder)
+    # test if the user provide a catalog or not.
+    #if not use the default one
+    if config['environ']['FERMI_CATALOG_DIR'] == '':
+        catalogDir = env.CATALOG_DIR
+        print "use the default location of the catalog"
+    else:
+        catalogDir = config['environ']['FERMI_CATALOG_DIR']
 
+    if config['environ']['FERMI_CATALOG'] == '':
+        catalog = catalogDir + "/" + env.CATALOG
+        print "use the default catalog"
+    else:
+        catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
 
-# test if the user provide a catalog or not.
-#if not use the default one
-  if config['environ']['FERMI_CATALOG_DIR'] == '':
-    catalogDir = env.CATALOG_DIR
-    print "use the default location of the catalog"
-  else:
-    catalogDir = config['environ']['FERMI_CATALOG_DIR']
+    print "Use the catalog : ", catalog
 
-  if config['environ']['FERMI_CATALOG'] == '':
-    catalog = catalogDir + "/" + env.CATALOG
-    print "use the default catalog"
-  else:
-    catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
-
-  print "Use the catalog : ", catalog
-
-  lib, doc = CreateLib()
-  srclist = GetlistFromFits(config, catalog)
-  WriteXml(lib, doc, srclist, config)
-  Xml_to_Reg(folder + "/Roi_model",
-                            srclist, Prog=sys.argv[0])
+    lib, doc = CreateLib()
+    srclist = GetlistFromFits(config, catalog)
+    WriteXml(lib, doc, srclist, config)
+    Xml_to_Reg(folder + "/Roi_model",
+        srclist, Prog=sys.argv[0])
