@@ -5,7 +5,6 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
     from enrico import utils
     from enrico.gtfunction import Observation
     from enrico.fitmaker import FitMaker
-    from enrico.xml_model import XmlMaker
     import Loggin
 
     mes = Loggin.Message()
@@ -25,6 +24,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     import os.path
     import math
     import SummedLikelihood
+    from enrico.xml_model import XmlMaker
     from enrico.extern.configobj import ConfigObj
     from utils import hasKey, isKey
     import Loggin
@@ -72,9 +72,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config_psfs[k] = ConfigObj(config)
                 # Tune parameters
                 config_psfs[k]['event']['evtype'] = int(2**(k+2))
-                #config_psfs[k]['file']['tag'] = str("PSF%d" %k)
                 oldxml = config_psfs[k]['file']['xml']
-                #config_psfs[k]['file']['xml'] = oldxml.replace('model.xml','model_PSF%d.xml'%k)
                 AnalysisPSFs[k] = Analysis(folder, config_psfs[k], \
                     tag="PSF%d"%k,\
                     verbose = verbose)
@@ -104,8 +102,6 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             for k,name in enumerate(analysestorun):
                 config_bin[k] = ConfigObj(config)
                 # Tune parameters
-                config_bin[k]['file']['tag'] = str("%s" %name)
-                #config_bin[k]['file']['xml'].replace('model','model_%s'%name)
                 if name is "lowE":
                     config_bin[k]['energy']['emax'] = min(config_bin[k]['energy']['emax'],EUnBinned)
                     config_bin[k]['analysis']['likelihood'] = "binned"
@@ -114,7 +110,6 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     config_bin[k]['analysis']['likelihood']     = "unbinned"
                     config_bin[k]['analysis']['ComputeDiffrsp'] = "yes"
                 oldxml = config_bin[k]['file']['xml']
-                #config_bin[k]['file']['xml'] = oldxml.replace('model.xml','model_%s.xml'%name)
                 AnalysisBIN[k] = Analysis(folder, config_bin[k], \
                     tag=name,\
                     verbose=verbose)
@@ -140,8 +135,6 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config_edisps[k] = ConfigObj(config)
                 # Tune parameters
                 config_edisps[k]['event']['evtype'] = int(2**(k+6))
-                config_edisps[k]['file']['tag'] = str("EDISP%d" %k)
-                #config_edisps[k]['file']['xml'].replace('model','model_EDISP%d'%k)
                 oldxml = config_edisps[k]['file']['xml']
                 #config_edisp[k]['file']['xml'] = oldxml.replace('model.xml','model_EDISP%d.xml'%k)
                 AnalysisEDISPs[k] = Analysis(folder, config_edisps[k], \
