@@ -186,8 +186,21 @@ def run(infile):
         # Update the energy scale to decorrelation energy
         mes.info('Setting the decorrelation energy as new Scale for the spectral parameters')
         spectrum = Fit[FitRunner.obs.srcname].funcs['Spectrum']
-        spectrum.getParam("Scale").setValue(sedresult.decE)
-        FitRunner.PerformFit(Fit)
+        modeltype = spectrum.genericName()
+        if Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="PowerLaw":
+            varscale = "Scale"
+        if Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="PowerLaw2":
+            varscale = None
+        elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
+            varscale = "Scale"
+        elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="LogParabola":
+            varscale = "Eb"
+        elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="BrokenPowerLaw":
+            varscale = "Eb"
+        
+        if varname is not None:
+            spectrum.getParam(varscale).setValue(sedresult.decE)
+            FitRunner.PerformFit(Fit)
 
     if config['Spectrum']['ResultPlots'] == 'yes' :
         if config['Spectrum']['SummedLike'] != 'yes':
