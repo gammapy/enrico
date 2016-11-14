@@ -254,7 +254,7 @@ def AddSpatial(doc,ra,dec,extendedName=""):
       spatial.setAttribute('type', 'SkyDirFunction')
       addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
       addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
-    else : 
+    else :
       from environ import CATALOG_TEMPLATE_DIR
       from os.path import join
       spatialModel = join(CATALOG_TEMPLATE_DIR, extendedName)
@@ -375,7 +375,7 @@ def GetlistFromFits(config, catalog):
                    mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
                    Nextended+=1
 
-                   
+
     # if the target has not been added from catalog, add it now
     if sources[0]['name']!=srcname:
         Nfree += 1
@@ -434,13 +434,12 @@ def WriteXml(lib, doc, srclist, config):
         Gal = Gal_dir + "/" + config['model']['diffuse_gal']
 
     if config['model']['diffuse_iso'] == "":
-        try : 
+        try :
             Iso = utils.GetIso(config["event"]["evclass"],config["event"]["evtype"])
-
             if not(os.path.isfile(Iso)):
                 raise RuntimeError
         except:
-            mes.warning("Cannot guess Iso file, please have a look")
+            mes.warning("Cannot guess Iso file %s, please have a look" %Iso)
             Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
 
     else:
@@ -532,28 +531,26 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
 
 
 def XmlMaker(config):
-  folder = config['out']
-  os.system('mkdir -p ' + folder)
+    folder = config['out']
+    os.system('mkdir -p ' + folder)
+    # test if the user provide a catalog or not.
+    #if not use the default one
+    if config['environ']['FERMI_CATALOG_DIR'] == '':
+        catalogDir = env.CATALOG_DIR
+        print "use the default location of the catalog"
+    else:
+        catalogDir = config['environ']['FERMI_CATALOG_DIR']
 
+    if config['environ']['FERMI_CATALOG'] == '':
+        catalog = catalogDir + "/" + env.CATALOG
+        print "use the default catalog"
+    else:
+        catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
 
-# test if the user provide a catalog or not.
-#if not use the default one
-  if config['environ']['FERMI_CATALOG_DIR'] == '':
-    catalogDir = env.CATALOG_DIR
-    print "use the default location of the catalog"
-  else:
-    catalogDir = config['environ']['FERMI_CATALOG_DIR']
+    print "Use the catalog : ", catalog
 
-  if config['environ']['FERMI_CATALOG'] == '':
-    catalog = catalogDir + "/" + env.CATALOG
-    print "use the default catalog"
-  else:
-    catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
-
-  print "Use the catalog : ", catalog
-
-  lib, doc = CreateLib()
-  srclist = GetlistFromFits(config, catalog)
-  WriteXml(lib, doc, srclist, config)
-  Xml_to_Reg(folder + "/Roi_model",
-                            srclist, Prog=sys.argv[0])
+    lib, doc = CreateLib()
+    srclist = GetlistFromFits(config, catalog)
+    WriteXml(lib, doc, srclist, config)
+    Xml_to_Reg(folder + "/Roi_model",
+        srclist, Prog=sys.argv[0])

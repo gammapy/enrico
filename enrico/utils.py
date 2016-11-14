@@ -4,6 +4,15 @@ from math import log10
 import numpy as np
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
+def hasKey(dictionary,key):
+    try:             Item = dictionary[key]
+    except KeyError: return(False)
+    else:            return(True)
+
+def isKey(dictionary,key):
+    if not hasKey(dictionary,key): return(None)
+    return(dictionary[key])
+
 def _log(text, line=True):
     if line:
         print("\033[34m"+'# ' + '*' * 60)
@@ -193,7 +202,7 @@ def _SpecFileName(config):
 
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
-    return (config['out'] + "/" + config['target']['name'] 
+    return (config['out'] + "/" + config['target']['name']
                   + "_" + config['target']['spectrum'] + "_"+
                   config['file']['tag'] + "_out.xml")
 
@@ -303,6 +312,8 @@ def GetSDC(val):
     return deno
 
 def GetIRFS(evtclass,evttype):
+    from enrico import Loggin
+    mes = Loggin.Message()
     classirfs = {1:"P8R2_TRANSIENT100A",2:"P8R2_TRANSIENT100E",4:"P8R2_TRANSIENT100",8:"P8R2_TRANSIENT020E",
 			16:"P8R2_TRANSIENT020",32:"P8R2_TRANSIENT010E",64:"P8R2_TRANSIENT010",128:"P8R2_SOURCE",
 			256:"P8R2_CLEAN",521:"P8R2_ULTRACLEAN",1024:"P8R2_ULTRACLEANVETO",32768:"P8R2_TRANSIENT100S",
@@ -321,7 +332,10 @@ def GetIRFS(evtclass,evttype):
     typ = []
     for t in result:
         typ.append(typeirfs[t])
-    return classirfs[evtclass]+"_V6",typ
+
+    classirf = classirfs[evtclass]+"_V6"
+    #mes.info("Using IRFS for: class %s and type %s" %(str(classirf),str(typ)))
+    return classirf,typ
 
 
 def GetIso(evtclass,evttype):
@@ -330,7 +344,7 @@ def GetIso(evtclass,evttype):
     if len(irfs[1])> 1:
         res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_v06.txt')
     else:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+irfs[0]+'_'+str(irfs[1])+'_v06.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+irfs[0]+'_'+str(irfs[1][0])+'_v06.txt')
     return res
 
 
@@ -339,7 +353,7 @@ def GetZenithCut(evtclass,evttype,emin):
     ener = np.array([50,100,200,300,500])
     emin_ind = sum(ener-0.1<emin)-1
     All = [80,90 ,95 ,100 ,100 ]
-#FRONT+BACK, EDISP0-EDISP3	80	90 	95 	100 	100 
+    #FRONT+BACK, EDISP0-EDISP3	80	90 	95 	100 	100
     FRONT = [85 ,95 ,100 ,100 ,100]
     BACK = [75,85 ,90 ,95 ,100]
     PSF0 = [70,80 ,85 ,90 ,95]

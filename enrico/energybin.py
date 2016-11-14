@@ -12,14 +12,7 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     If the spectral model is PowerLaw, the prefactor is updated
     if not the model is change to PowerLaw.
     The index is frozen in all cases"""
-
-    Eav = utils.GetE0(E1, E2)
-
-    # Set Parameters
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(utils.fluxScale(Pref))
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(utils.fluxNorm(Pref))
-
+    
     Gamma_min=-5
     Gamma_max=0
     # if approximated Gamma is outside of bounds set it to limit
@@ -28,19 +21,27 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     elif Gamma > Gamma_max:
         Gamma = Gamma_max
 
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(Gamma_min,Gamma_max)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
+    Eav = utils.GetE0(E1, E2)
 
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
-    Fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
+    for comp in Fit.components:
+        # Set Parameters
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(utils.fluxScale(Pref))
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(utils.fluxNorm(Pref))
+
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(Gamma_min,Gamma_max)
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
+
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
 
     return Fit
 
 def PrepareEbin(Fit, FitRunner):
     """ Prepare the computation of spectral point in energy bins by
     i) removing the weak sources (TS<1) # not true
-    ii) updating the config file (option and energy) 
+    ii) updating the config file (option and energy)
     and save it in a new ascii file
     iii) changing the spectral model and saving it in a new xml file.
     A list of the ascii files is returned"""
@@ -52,20 +53,20 @@ def PrepareEbin(Fit, FitRunner):
     config['verbose'] ='no' #Be quiet
     #Replace the evt file with the fits file produced before
     #in order to speed up the production of the fits files
-    config['file']['event'] = FitRunner.obs.eventfile
+    config['file']['event'] = FitRunner.obs.eventcoarse
     #update the config to allow the fit in energy bins
-    config['UpperLimit']['envelope'] = 'no' 
+    config['UpperLimit']['envelope'] = 'no'
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
     config['out'] = FitRunner.config['out'] + '/'+EbinPath + str(NEbin)
     config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
     #copy the chose of the user for the enery bin computing
-    config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration'] 
+    config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration']
     config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
     tag = FitRunner.config['file']['tag']
     lEmax = np.log10(float(FitRunner.config['energy']['emax']))
     lEmin = np.log10(float(FitRunner.config['energy']['emin']))
     utils._log("Preparing submission of fit into energy bins")
-    print("Emin = ", float(FitRunner.config['energy']['emin']),
+    print(" Emin = ", float(FitRunner.config['energy']['emin']),
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
@@ -85,8 +86,10 @@ def PrepareEbin(Fit, FitRunner):
 
     Model_type = Fit.model.srcs[srcname].spectrum().genericName()
     # if the model is not PowerLaw : change the model
-    if not(Model_type == 'PowerLaw') :
-      Fit.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
+    if not(Model_type == 'PowerLaw'):
+        for comp in Fit.components:
+            comp.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
+        config['target']['spectrum'] = "PowerLaw"
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
@@ -123,7 +126,7 @@ def RunEbin(folder,Nbin,Fit,FitRunner):
              if Newconfig['Submit'] == 'no' : #run directly
                  os.system(cmd)
              else : #submit a job to a cluster
-                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind) 
+                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
                  scriptname = prefix + "_Script.sh"
                  JobLog = prefix + "_Job.log"
                  JobName = (Newconfig['target']['name'] + "_" +

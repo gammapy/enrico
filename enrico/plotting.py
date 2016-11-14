@@ -26,7 +26,6 @@ class Params:
         self.PointColor = PointColor
 
 
-
 class Result(Loggin.Message):
     """Helper class to get the results from a (Un)BinnedAnalysis object
     and compute the SED and errors"""
@@ -41,18 +40,31 @@ class Result(Loggin.Message):
         self.srcpars = pyLikelihood.StringVector()
         Fit[pars.srcname].src.spectrum().getFreeParamNames(self.srcpars)
 
+    def GetDecorrelationEnergy(self,par):
+        self.E, self.SED = self.MakeSED(par)
+        self.Err = self.MakeSEDError(par)
+        for i in xrange(par.N):
+          if self.Err[i]/self.SED[i] == min(self.Err/self.SED):
+            self.decE       = self.E[i]
+            self.decFlux    = self.SED[i]/self.E[i]**2*ERG_TO_MEV
+            self.decFluxerr = self.Err[i]/self.E[i]**2*ERG_TO_MEV
+            self.decSED     = self.SED[i]
+            self.decSEDerr  = self.Err[i]
+
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
         The count and residuals plot vs E is also made"""
-        E, SED = self.MakeSED(par)
-        Err = self.MakeSEDError(par)
-        print
-        for i in xrange(par.N):
-          if Err[i]/SED[i] == min(Err/SED):
-            self.info("Decorrelation energy : %4.2e MeV"%E[i])
-            self.info("Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" %(SED[i]/E[i]**2*ERG_TO_MEV,Err[i]/E[i]**2*ERG_TO_MEV))
-            self.info("SED value at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" %(SED[i],Err[i]))
-        print
+        
+        try:
+            self.decE
+        except NameError:
+            self.GetDecorrelationEnergy(par)
+
+        self.info("Decorrelation energy : %4.2e MeV"% self.decE)
+        self.info("Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" \
+                %(self.decFlux, self.decFluxerr))
+        self.info("SED value at the Decorrelation energy : %2.2e +/-  %2.2e erg/cm2/s" \
+                %(self.decSED, self.decSEDerr))
 
         try:
             self.CountsPlot(par)
@@ -63,7 +75,7 @@ class Result(Loggin.Message):
         save_file = open(par.PlotName + '.dat', 'w')
         save_file.write("# log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
         for i in xrange(par.N):
-            save_file.write("%12.4e  %12.4e  %12.4e \n" % (E[i], SED[i], Err[i]))
+            save_file.write("%12.4e  %12.4e  %12.4e \n" % (self.E[i], self.SED[i], self.Err[i]))
         save_file.close()
 
     def MakeFlux(self, params):
@@ -148,7 +160,8 @@ class Result(Loggin.Message):
         ghcount.SetYTitle("Counts / bin")
         ghcount.Draw()
 
-        tgrobs = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',obs), array.array('f',err_E), array.array('f',obs_err))
+        tgrobs = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',obs), \
+                array.array('f',err_E), array.array('f',obs_err))
         tgrobs.SetLineColor(2)
         tgrobs.SetMarkerColor(2)
         tgrobs.SetMarkerStyle(20)
