@@ -37,6 +37,18 @@ class FitMaker(Loggin.Message):
               (self.task_number, task, description))
         print "\033[34m"+'# ' + '*' * 60+"\033[0m"
         self.task_number += 1
+        
+    def FirstSelection(self,config=None):
+        """Make a coarse selection of events from original file"""
+        self._log('gtselect', 'Select data from library, coarse cut')#run gtselect
+        if config!=None:
+            self.obs.Configuration = config
+            self.obs.LoadConfiguration()
+            self.obs.FirstCut()
+            self.obs.Configuration = self.config
+            self.obs.LoadConfiguration()
+        else:
+            self.obs.FirstCut()
 
     def GenerateFits(self):
         """Run the different ST tools and compute the fits files
@@ -45,8 +57,8 @@ class FitMaker(Loggin.Message):
            tools following the choise of the user"""
 
         #Run the tools common to binned and unbinned chain
-        self._log('gtselect', 'Select data from library')#run gtselect
-        self.obs.FirstCut()
+        self._log('gtselect', 'Select data from library, fine cut')#run gtselect
+        self.obs.SelectEvents()
         self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtmktime
         self.obs.MkTime()
         if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
@@ -120,17 +132,17 @@ class FitMaker(Loggin.Message):
 
         self._log('gtlike', 'Run likelihood analysis')
         try:
-            Fit.fit(0,optimizer="DRMNGB") #first try to run gtlike to approche the minimum
+            Fit.fit(1, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
         except:
-            pass
+            pass #first try to run gtlike to approche the minimum
 
         # Now the precise fit will be done
         #change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
-        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer']) 
+        self.log_like = Fit.fit(1,covar=True, optimizer=self.config['fitting']['optimizer']) 
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
-        #print Fit
+        print Fit
         # remove source with TS<min_source_TS (default=1)
         # to be sure that MINUIT will converge
         try:             self.config['fitting']['min_source_TS']
@@ -427,6 +439,7 @@ class FitMaker(Loggin.Message):
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin,
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)
+        result.GetDecorrelationEnergy(Param)
         if (dump):
             result._DumpSED(Param)
 

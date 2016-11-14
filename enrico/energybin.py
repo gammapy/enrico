@@ -29,7 +29,6 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
         comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(utils.fluxScale(Pref))
         comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(utils.fluxNorm(Pref))
 
-
         comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(Gamma_min,Gamma_max)
         comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
         comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
@@ -54,7 +53,7 @@ def PrepareEbin(Fit, FitRunner):
     config['verbose'] ='no' #Be quiet
     #Replace the evt file with the fits file produced before
     #in order to speed up the production of the fits files
-    config['file']['event'] = FitRunner.obs.eventfile
+    config['file']['event'] = FitRunner.obs.eventcoarse
     #update the config to allow the fit in energy bins
     config['UpperLimit']['envelope'] = 'no'
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
@@ -67,7 +66,7 @@ def PrepareEbin(Fit, FitRunner):
     lEmax = np.log10(float(FitRunner.config['energy']['emax']))
     lEmin = np.log10(float(FitRunner.config['energy']['emin']))
     utils._log("Preparing submission of fit into energy bins")
-    print("Emin = ", float(FitRunner.config['energy']['emin']),
+    print(" Emin = ", float(FitRunner.config['energy']['emin']),
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
@@ -88,8 +87,9 @@ def PrepareEbin(Fit, FitRunner):
     Model_type = Fit.model.srcs[srcname].spectrum().genericName()
     # if the model is not PowerLaw : change the model
     if not(Model_type == 'PowerLaw'):
-      for comp in fit.components:
-          comp.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
+        for comp in Fit.components:
+            comp.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
+        config['target']['spectrum'] = "PowerLaw"
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])

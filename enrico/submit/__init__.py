@@ -124,7 +124,8 @@ def call(cmd,
         text +='source $FERMI_DIR/fermi-init.sh\n'
         text +='export ENRICO_DIR='+enricoDir+'\n'
         text +='source $ENRICO_DIR/enrico-init.sh\n'
-
+        text +='#PBS -o '+qsub_log+'\n'
+        text +='#PBS -j oe\n'
         text += cmd
 
         # Now reset cmd to be the qsub command

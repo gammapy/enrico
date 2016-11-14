@@ -54,7 +54,12 @@ class Result(Loggin.Message):
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
         The count and residuals plot vs E is also made"""
-        self.GetDecorrelationEnergy(par)
+        
+        try:
+            self.decE
+        except NameError:
+            self.GetDecorrelationEnergy(par)
+
         self.info("Decorrelation energy : %4.2e MeV"% self.decE)
         self.info("Diffential flux  at the Decorrelation energy : %2.2e +/-  %2.2e ph/cm2/s/MeV" \
                 %(self.decFlux, self.decFluxerr))

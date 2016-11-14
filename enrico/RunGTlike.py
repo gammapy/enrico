@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
+def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
     import os
     from enrico import utils
     from enrico.gtfunction import Observation
@@ -14,9 +14,11 @@ def Analysis(folder, config, tag="", convtyp='-1', verbose = 1):
         utils._log('SUMMARY: ' + tag)
         Obs.printSum()
 
+    
     FitRunner = FitMaker(Obs, config)##Class
     if config['Spectrum']['FitsGeneration'] == 'yes':
-        FitRunner.GenerateFits() #Generates fits files
+        FitRunner.FirstSelection(configgeneric) #Generates fits files for the coarse selection
+        FitRunner.GenerateFits() #Generates fits files for the rest of the products
     return FitRunner
 
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
@@ -48,8 +50,10 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             # Set Summed Likelihood to True
             config['Spectrum']['SummedLike'] = 'yes'
             FitRunnerfront = Analysis(folder, config, \
+                configgeneric=config,\
                 tag="FRONT", verbose = verbose)
             FitRunnerback = Analysis(folder, config, \
+                configgeneric=config,\
                 tag="BACK", verbose = verbose)
             if not(xmlfile ==""):
                 FitRunnerfront.obs.xmlfile = xmlfile
@@ -74,10 +78,11 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config_psfs[k]['event']['evtype'] = int(2**(k+2))
                 oldxml = config_psfs[k]['file']['xml']
                 AnalysisPSFs[k] = Analysis(folder, config_psfs[k], \
+                    configgeneric=config,\
                     tag="PSF%d"%k,\
                     verbose = verbose)
                 if not(xmlfile ==""):
-                    FitPSFs[k].obs.xmlfile = xmlfile
+                    AnalysisPSF[k].obs.xmlfile = xmlfile
                 FitPSFs[k] = AnalysisPSFs[k].CreateLikeObject()
                 Fit.addComponent(FitPSFs[k])
             FitRunner = AnalysisPSFs[0]
@@ -100,28 +105,33 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             elif EUnBinned>=emaxtotal:  analysestorun = ["lowE"]
             else:                       analysestorun = ["lowE","highE"]
             
+            print(analysestorun)
+
+            oldxml = config['file']['xml']
             for k,name in enumerate(analysestorun):
                 config_bin[k] = ConfigObj(config)
                 # Tune parameters
                 if name is "lowE":
-                    config_bin[k]['energy']['emax'] = min(config_bin[k]['energy']['emax'],EUnBinned)
+                    config_bin[k]['energy']['emin'] = emintotal
+                    config_bin[k]['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
                     config_bin[k]['analysis']['likelihood'] = "binned"
+                    config_bin[k]['analysis']['ComputeDiffrsp'] = "no"
                 elif name is "highE":
-                    config_bin[k]['energy']['emin'] = max(config_bin[k]['energy']['emin'],EUnBinned)
-                    config_bin[k]['analysis']['likelihood']     = "unbinned"
+                    config_bin[k]['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
+                    config_bin[k]['energy']['emax'] = emaxtotal
+                    config_bin[k]['analysis']['likelihood'] = "unbinned"
                     config_bin[k]['analysis']['ComputeDiffrsp'] = "yes"
-                oldxml = config_bin[k]['file']['xml']
                 AnalysisBIN[k] = Analysis(folder, config_bin[k], \
+                    configgeneric=config,\
                     tag=name,\
                     verbose=verbose)
                 if not(xmlfile ==""):
-                    FitBINs[k].obs.xmlfile = xmlfile
-                AnalysisBIN[k].obs.Emin = emintotal
-                AnalysisBIN[k].obs.Emax = emaxtotal
+                    AnalysisBIN[k].obs.xmlfile = xmlfile
                 FitBIN[k] = AnalysisBIN[k].CreateLikeObject()
                 Fit.addComponent(FitBIN[k])
             FitRunner = AnalysisBIN[0]
-            FitRunner.config = config
+            FitRunner.obs.Emin = emintotal
+            FitRunner.obs.Emax = emaxtotal
 
         elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
             mes.info("Breaking the analysis in EDISP 0,1,2,3.")
@@ -137,14 +147,15 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 # Tune parameters
                 config_edisps[k]['event']['evtype'] = int(2**(k+6))
                 oldxml = config_edisps[k]['file']['xml']
-                #config_edisp[k]['file']['xml'] = oldxml.replace('model.xml','model_EDISP%d.xml'%k)
                 AnalysisEDISPs[k] = Analysis(folder, config_edisps[k], \
+                    configgeneric=config,\
                     tag="EDISP%d"%k,\
                     verbose = verbose)
                 if not(xmlfile ==""):
-                    FitEDISPs[k].obs.xmlfile = xmlfile
+                    AnalysisEDISP[k].obs.xmlfile = xmlfile
                 FitEDISPs[k] = AnalysisEDISPs[k].CreateLikeObject()
                 Fit.addComponent(FitEDISPs[k])
+                print(Fit.components)
             FitRunner = AnalysisEDISPs[0]
     
     try:
@@ -156,6 +167,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         if not(xmlfile ==""):
             FitRunner.obs.xmlfile = xmlfile
     
+    FitRunner.config = config
     return FitRunner,Fit
 
 def run(infile):
@@ -198,11 +210,12 @@ def run(infile):
         elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="BrokenPowerLaw":
             varscale = "Eb"
         
-        if varname is not None:
+        if varscale is not None:
             spectrum.getParam(varscale).setValue(sedresult.decE)
             FitRunner.PerformFit(Fit)
 
     if config['Spectrum']['ResultPlots'] == 'yes' :
+        outXml = utils._dump_xml(config)
         if config['Spectrum']['SummedLike'] != 'yes':
             # the possiblity of making the model map is checked inside the function
             FitRunner.ModelMap(outXml)

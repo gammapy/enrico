@@ -18,44 +18,50 @@ class Observation:
     # configuration is the confi of enrico (contains the variable)
 
     def __init__(self,folder,Configuration,tag=""):
-
-        #Read the configuration object and init all the variable
         self.Configuration = Configuration
-        inttag = "_"+Configuration['file']['tag']
-        if not(tag==""):
-            inttag+="_"+tag
+        self.tag = tag
+        self.folder = folder
+        self.LoadConfiguration()
+        
+    def LoadConfiguration(self):
+        #Read the configuration object and init all the variable
+        filetag = self.Configuration['file']['tag'] 
+        inttag  = "_"+filetag
+        if not(self.tag==""):
+            inttag+="_"+self.tag
 
-        self.srcname   = Configuration['target']['name']
-        self.ft1       = Configuration['file']['event']
-        self.ft2       = Configuration['file']['spacecraft']
-        self.xmlfile   = Configuration['file']['xml']
+        self.srcname   = self.Configuration['target']['name']
+        self.ft1       = self.Configuration['file']['event']
+        self.ft2       = self.Configuration['file']['spacecraft']
+        self.xmlfile   = self.Configuration['file']['xml']
 
-        #Fits files
-        self.eventfile = folder+'/'+self.srcname+inttag+"_Evt.fits"
-        self.Cubename  = folder+'/'+self.srcname+inttag+"_ltCube.fits"
-        self.Mapname   = folder+'/'+self.srcname+inttag+"_ExpMap.fits"
-        self.BinnedMapfile = folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
-        self.cmapfile  = folder+'/'+self.srcname+inttag+"_CountMap.fits"
-        self.lcfile    = folder+'/'+self.srcname+inttag+"_applc.fits"
-        self.ccube     = folder+'/'+self.srcname+inttag+"_CCUBE.fits"
-        self.srcMap    = folder+'/'+self.srcname+inttag+"_srcMap.fits"
-        self.ModelMap  = folder+'/'+self.srcname+inttag+"_ModelMap.fits"
-        self.BinDef  = folder+'/'+self.srcname+inttag+"_BinDef.fits"
-        self.Probfile  = folder+'/'+self.srcname+inttag+"_prob.fits"
-        self.psf     = folder+'/'+self.srcname+inttag+"_psf.fits"
+        #Fits files 
+        self.eventcoarse = self.folder+'/'+self.srcname+filetag+"_EvtCoarse.fits"
+        self.eventfile = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
+        self.Cubename  = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
+        self.Mapname   = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
+        self.BinnedMapfile = self.folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
+        self.cmapfile  = self.folder+'/'+self.srcname+inttag+"_CountMap.fits"
+        self.lcfile    = self.folder+'/'+self.srcname+inttag+"_applc.fits"
+        self.ccube     = self.folder+'/'+self.srcname+inttag+"_CCUBE.fits"
+        self.srcMap    = self.folder+'/'+self.srcname+inttag+"_srcMap.fits"
+        self.ModelMap  = self.folder+'/'+self.srcname+inttag+"_ModelMap.fits"
+        self.BinDef    = self.folder+'/'+self.srcname+inttag+"_BinDef.fits"
+        self.Probfile  = self.folder+'/'+self.srcname+inttag+"_prob.fits"
+        self.psf       = self.folder+'/'+self.srcname+inttag+"_psf.fits"
 
         #Variables
-        self.t1        = float(Configuration['time']['tmin'])
-        self.t2        = float(Configuration['time']['tmax'])
-        self.Emin      = float(Configuration['energy']['emin'])
-        self.Emax      = float(Configuration['energy']['emax'])
-        self.ra        = float(Configuration['space']['xref'])
-        self.dec       = float(Configuration['space']['yref'])
-        self.roi       = float(Configuration['space']['rad'])
-        self.irfs      = Configuration['event']['irfs']
+        self.t1        = float(self.Configuration['time']['tmin'])
+        self.t2        = float(self.Configuration['time']['tmax'])
+        self.Emin      = float(self.Configuration['energy']['emin'])
+        self.Emax      = float(self.Configuration['energy']['emax'])
+        self.ra        = float(self.Configuration['space']['xref'])
+        self.dec       = float(self.Configuration['space']['yref'])
+        self.roi       = float(self.Configuration['space']['rad'])
+        self.irfs      = self.Configuration['event']['irfs']
         
         #diffuse Response
-        self.diffrspflag = folder+'/'+self.srcname+inttag+"_diffrsp.flag"
+        self.diffrspflag = self.folder+'/'+self.srcname+inttag+"_diffrsp.flag"
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
@@ -172,8 +178,8 @@ class Observation:
         evtbin['axisrot'] = 0
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
         #The number of bin is the number of decade * the number of bin 
-        #per decade (given by the users)
-        evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
+        #per decade (given by the users). The +0.5 rounds it properly
+        evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
         evtbin['clobber'] = self.clobber
         evtbin.run()
 
@@ -192,18 +198,38 @@ class Observation:
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
-        expcube2['enumbins'] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
+        expcube2['enumbins'] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
         expcube2.run()
-
+    
     def FirstCut(self):
         """Run gtselect tool"""
         if (self.clobber == "no" and os.path.isfile(self.eventfile)):
             #print("File exists and clobber is False")
             return(0)
         filter['infile'] = self.ft1
+        filter['outfile'] = self.eventcoarse
+        filter['ra'] = self.ra
+        filter['dec'] = self.dec
+        filter['rad'] = self.roi
+        filter['emin'] = self.Emin
+        filter['emax'] = self.Emax
+        filter['tmin'] = self.t1
+        filter['tmax'] = self.t2
+        filter['zmax'] = self.Configuration['analysis']['zmax']
+        filter['evclass'] = self.Configuration['event']['evclass']
+        filter['evtype'] = "INDEF"
+        filter['clobber'] = self.clobber
+        filter.run()
+
+    def SelectEvents(self):
+        """Run gtselect tool"""
+        if (self.clobber == "no" and os.path.isfile(self.eventfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        filter['infile'] = self.eventcoarse
         filter['outfile'] = self.eventfile
         filter['ra'] = self.ra
         filter['dec'] = self.dec
@@ -336,7 +362,7 @@ class Observation:
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = self.roi+10
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
-        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
+        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
         expMap['clobber'] = self.clobber
         expMap.run()
 
@@ -441,7 +467,7 @@ class Observation:
         psf["dec"]     = self.dec
         psf["emin"]    = self.Emin
         psf["emax"]    = self.Emax
-        psf["nenergies"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade'])
+        psf["nenergies"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
         psf["thetamax"] = 5.
         psf.run()
 
