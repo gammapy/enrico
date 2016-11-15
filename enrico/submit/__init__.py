@@ -174,4 +174,5 @@ def call(cmd,
         fh.close()
 
     if not dry:
+        print("Running: %s" %cmd)
         os.system(cmd)

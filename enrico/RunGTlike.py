@@ -62,6 +62,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             FitF = FitRunnerfront.CreateLikeObject()
             Fit.addComponent(FitB)
             Fit.addComponent(FitF)
+            if verbose: print(Fit.components)
             FitRunner = FitRunnerback
         elif isKey(config['ComponentAnalysis'],'PSF') == 'yes':
             mes.info("Breaking the analysis in PSF 0,1,2,3.")
@@ -85,7 +86,32 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     AnalysisPSF[k].obs.xmlfile = xmlfile
                 FitPSFs[k] = AnalysisPSFs[k].CreateLikeObject()
                 Fit.addComponent(FitPSFs[k])
+            if verbose: print(Fit.components)
             FitRunner = AnalysisPSFs[0]
+        elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
+            mes.info("Breaking the analysis in EDISP 0,1,2,3.")
+            # Clone the configs
+            config_edisps  = [None]*4
+            config_xmls    = [None]*4
+            FitEDISPs      = [None]*4
+            AnalysisEDISPs = [None]*4
+            # Set Summed Likelihood to True
+            config['Spectrum']['SummedLike'] = 'yes'
+            for k in xrange(4):
+                config_edisps[k] = ConfigObj(config)
+                # Tune parameters
+                config_edisps[k]['event']['evtype'] = int(2**(k+6))
+                oldxml = config_edisps[k]['file']['xml']
+                AnalysisEDISPs[k] = Analysis(folder, config_edisps[k], \
+                    configgeneric=config,\
+                    tag="EDISP%d"%k,\
+                    verbose = verbose)
+                if not(xmlfile ==""):
+                    AnalysisEDISP[k].obs.xmlfile = xmlfile
+                FitEDISPs[k] = AnalysisEDISPs[k].CreateLikeObject()
+                Fit.addComponent(FitEDISPs[k])
+            if verbose: print(Fit.components)
+            FitRunner = AnalysisEDISPs[0]
         elif isKey(config['ComponentAnalysis'],'EUnBinned')>=0:
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
             # Clone the configs
@@ -129,34 +155,10 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     AnalysisBIN[k].obs.xmlfile = xmlfile
                 FitBIN[k] = AnalysisBIN[k].CreateLikeObject()
                 Fit.addComponent(FitBIN[k])
+            if verbose: print(Fit.components)
             FitRunner = AnalysisBIN[0]
             FitRunner.obs.Emin = emintotal
             FitRunner.obs.Emax = emaxtotal
-
-        elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
-            mes.info("Breaking the analysis in EDISP 0,1,2,3.")
-            # Clone the configs
-            config_edisps  = [None]*4
-            config_xmls    = [None]*4
-            FitEDISPs      = [None]*4
-            AnalysisEDISPs = [None]*4
-            # Set Summed Likelihood to True
-            config['Spectrum']['SummedLike'] = 'yes'
-            for k in xrange(4):
-                config_edisps[k] = ConfigObj(config)
-                # Tune parameters
-                config_edisps[k]['event']['evtype'] = int(2**(k+6))
-                oldxml = config_edisps[k]['file']['xml']
-                AnalysisEDISPs[k] = Analysis(folder, config_edisps[k], \
-                    configgeneric=config,\
-                    tag="EDISP%d"%k,\
-                    verbose = verbose)
-                if not(xmlfile ==""):
-                    AnalysisEDISP[k].obs.xmlfile = xmlfile
-                FitEDISPs[k] = AnalysisEDISPs[k].CreateLikeObject()
-                Fit.addComponent(FitEDISPs[k])
-                print(Fit.components)
-            FitRunner = AnalysisEDISPs[0]
     
     try:
         FitRunner
