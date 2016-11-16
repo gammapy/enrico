@@ -52,6 +52,20 @@ FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
          ('DIFFUSE_ISO_CLEAN',  DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEAN)]
 
 
+fermievtypes = {\
+    'FRONT': 1,
+    'BACK': 2,
+    'PSF0': 4,
+    'PSF1': 8,
+    'PSF2': 16,
+    'PSF3': 32,
+    'EDISP0': 64,
+    'EDISP1': 128,
+    'EDISP2': 256,
+    'EDISP3': 512,
+    }
+
+
 def check_dirs():
     """Check directory availability"""
     print('*** DIRECTORIES ***')
