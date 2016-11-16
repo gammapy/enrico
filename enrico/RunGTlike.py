@@ -62,7 +62,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                         tag=TYPE, verbose = verbose)
                     if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
                     Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addcomponent(Fits[k])
+                    Fit.addComponent(Fits[k])
                 except RuntimeError,e:
                     if 'RuntimeError: gtltcube execution failed' in str(e):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
@@ -83,7 +83,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                         tag=TYPE, verbose = verbose)
                     if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
                     Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addcomponent(Fits[k])
+                    Fit.addComponent(Fits[k])
                 except RuntimeError,e:
                     if 'RuntimeError: gtltcube execution failed' in str(e):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
@@ -104,7 +104,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                         tag=TYPE, verbose = verbose)
                     if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
                     Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addcomponent(Fits[k])
+                    Fit.addComponent(Fits[k])
                 except RuntimeError,e:
                     if 'RuntimeError: gtltcube execution failed' in str(e):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
