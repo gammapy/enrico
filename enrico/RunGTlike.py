@@ -55,7 +55,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             oldxml = config['file']['xml']
             for k,TYPE in enumerate(["FRONT", "BACK"]):
                 configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes['TYPE']
+                configs[k]['event']['evtype'] = fermievtypes[TYPE]
                 try:
                     Analyses[k] = Analysis(folder, configs[k], \
                         configgeneric=config,\
@@ -76,7 +76,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             config['Spectrum']['SummedLike'] = 'yes'
             for k,TYPE in enumerate(["PSF0", "PSF1", "PSF2", "PSF3"]):
                 configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes['TYPE']
+                configs[k]['event']['evtype'] = fermievtypes[TYPE]
                 try:
                     Analyses[k] = Analysis(folder, configs[k], \
                         configgeneric=config,\
@@ -97,7 +97,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             config['Spectrum']['SummedLike'] = 'yes'
             for k,TYPE in enumerate(["EDISP0", "EDISP1", "EDISP2", "EDISP3"]):
                 configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes['TYPE']
+                configs[k]['event']['evtype'] = fermievtypes[TYPE]
                 try:
                     Analyses[k] = Analysis(folder, configs[k], \
                         configgeneric=config,\
