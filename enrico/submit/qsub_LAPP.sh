@@ -24,8 +24,10 @@ export HOME=$LAPP_APP_SHARED
 export PATH=$FERMI_DIR/bin:$PATH
 
 
-if [ ! -d "${PFILES}" ]; then
-    mkdir ${PFILES}
+if [ "${PFILES}" != "" ]; then
+    if [ ! -d "${PFILES}" ]; then
+        mkdir ${PFILES}
+    fi
 fi
 
 
