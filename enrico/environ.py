@@ -11,7 +11,8 @@ log = logging.getLogger(__name__)
 #Submission farm name
 #Currently supported : LAPP-Annecy, MPIK-HD, CCIN2P3, LOCAL-relaxedtimes
 #FARM = os.environ.get('FARM','MPIK')
-FARM = os.environ.get('FARM','LOCAL')
+FARM  = os.environ.get('FARM','LOCAL')
+QUEUE = os.environ.get('QUEUE','batch')
 
 # Directory names
 ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
