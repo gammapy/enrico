@@ -54,7 +54,7 @@ def wait_for_slot(max_jobs):
 def GetSubCmd():
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'LOCAL' :   ['qsub -V','-l ct:48:00:00 walltime=48:00:00'],
+         'LOCAL' :   ['qsub -V','-l ct:48:00:00 -l walltime=48:00:00'],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
