@@ -59,7 +59,9 @@ class ModelTester(Loggin.Message):
          else:
              Obs = Observation(self.folder, self.config, tag="")
              self.FitRunner = FitMaker(Obs, self.config)##Class
-             self.Fit = self.FitRunner.CreateLikeObject()
+             #self.Fit = self.FitRunner.CreateLikeObject()
+             self.Fit = SummedLikelihood.SummedLikelihood()
+             self.Fit.addComponent(self.FitRunner.CreateLikeObject())
 
     def _printResults(self):
         print 
@@ -122,21 +124,24 @@ class ModelTester(Loggin.Message):
     def RunAFit(self,srcname,model,pars=None):
         # Compute the loglike for the current model for the given parameter set.
         self.info("Computing loglike value for "+model)
-        self.Fit.logLike.getSource(srcname).setSpectrum(model)
+        for comp in self.Fit.components:
+            comp.logLike.getSource(srcname).setSpectrum(model)
         
         if (pars==None):
             pars=[None,None,None,None]
         else:
             # Release diffuse models (background)
-            self.Fit.thaw(self.Fit.par_index("IsoDiffModel", 'Normalization'))
-            self.Fit.thaw(self.Fit.par_index("GalDiffModel", 'Value'))
+            for comp in self.Fit.components:
+                comp.thaw(self.Fit.par_index("IsoDiffModel", 'Normalization'))
+                comp.thaw(self.Fit.par_index("GalDiffModel", 'Value'))
 
-        if model=="PowerLaw":
-            self._setPowerLaw(srcname,pars)
-        if model=="LogParabola":
-            self._setLogParabola(srcname,pars)
-        if model=="PLSuperExpCutoff":
-            self._setPLSuperExpCutoff(srcname,pars)
+        for comp in self.Fit.components:
+            if model=="PowerLaw":
+                self._setPowerLaw(comp,srcname,pars)
+            if model=="LogParabola":
+                self._setLogParabola(comp,srcname,pars)
+            if model=="PLSuperExpCutoff":
+                self._setPLSuperExpCutoff(comp,srcname,pars)
         
         #change the fit tolerance to the one given by the user
         #self.Fit.ftol = float(self.config['fitting']['ftol'])
@@ -146,13 +151,16 @@ class ModelTester(Loggin.Message):
           # Get the names of the parameters for the source of interest
           print "Loglike Value for ",model,": ",self.Fit.logLike.value()
           self.Fit.writeXml(self.folder+"/TestModel/TestModel"+model+".xml")
-          return self.Fit.logLike.value()
+          loglikevalue = 0
+          for comp in self.Fit.components:
+              loglikevalue += comp.logLike.value()
+          return loglikevalue
         except :
           self.warning("No convergence for model : "+model+" ??")
           return 0
 
-    def _setPowerLaw(self,name,pars=None):
-        SrcSpectrum = self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum']
+    def _setPowerLaw(self,comp,name,pars=None):
+        SrcSpectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
         SrcSpectrum.getParam('Prefactor').setBounds(1e-7,1e7)
         SrcSpectrum.getParam('Prefactor').setScale(1e-11)
         SrcSpectrum.getParam('Prefactor').setValue(1.)
@@ -170,18 +178,18 @@ class ModelTester(Loggin.Message):
             print("Fixing Prefactor")
             SrcSpectrum.getParam('Prefactor').setFree(0)
             SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
-            par = self.Fit.par_index(name, 'Prefactor')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'Prefactor')
+            comp.freeze(par)
         if pars[1]!=None:
             print("Fixing Index")
             SrcSpectrum.getParam('Index').setScale(pars[1])
             SrcSpectrum.getParam('Index').setFree(0)
-            par = self.Fit.par_index(name, 'Prefactor')
-            self.Fit-freeze(par)
+            par = comp.par_index(name, 'Prefactor')
+            comp-freeze(par)
 
 
-    def _setLogParabola(self,name,pars=None):
-        SrcSpectrum = self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum']
+    def _setLogParabola(self,comp,name,pars=None):
+        SrcSpectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
         SrcSpectrum.getParam('norm').setBounds(1e-7,1e7)
         SrcSpectrum.getParam('norm').setScale(1e-11)
         SrcSpectrum.getParam('norm').setValue(1.)
@@ -204,25 +212,25 @@ class ModelTester(Loggin.Message):
             print("Fixing norm")
             SrcSpectrum.getParam('norm').setFree(0)
             SrcSpectrum.getParam('norm').setValue(pars[0]/1e-11)
-            par = self.Fit.par_index(name, 'norm')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'norm')
+            comp.freeze(par)
         if pars[1]!=None:
             print("Fixing alpha")
             SrcSpectrum.getParam('alpha').setFree(0)
             SrcSpectrum.getParam('alpha').setScale(pars[1])
-            par = self.Fit.par_index(name, 'alpha')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'alpha')
+            comp.freeze(par)
         if pars[2]!=None:
             print("Fixing beta")
             SrcSpectrum.getParam('beta').setFree(0)
             SrcSpectrum.getParam('beta').setScale(pars[2])
-            par = self.Fit.par_index(name, 'beta')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'beta')
+            comp.freeze(par)
 
 
 
-    def _setPLSuperExpCutoff(self,name,pars=None):
-        SrcSpectrum = self.Fit.logLike.getSource(name).getSrcFuncs()['Spectrum']
+    def _setPLSuperExpCutoff(self,comp,name,pars=None):
+        SrcSpectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
         SrcSpectrum.getParam('Prefactor').setBounds(1e-7,1e7)
         SrcSpectrum.getParam('Prefactor').setScale(1e-11)
         SrcSpectrum.getParam('Prefactor').setValue(1.)
@@ -248,24 +256,24 @@ class ModelTester(Loggin.Message):
             print("Fixing Prefactor")
             SrcSpectrum.getParam('Prefactor').setFree(0)
             SrcSpectrum.getParam('Prefactor').setValue(pars[0]/1e-11)
-            par = self.Fit.par_index(name, 'Prefactor')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'Prefactor')
+            comp.freeze(par)
         if pars[1]!=None:
             print("Fixing Index1")
             SrcSpectrum.getParam('Index1').setScale(pars[1])
             SrcSpectrum.getParam('Index1').setFree(0)
-            par = self.Fit.par_index(name, 'Index1')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'Index1')
+            comp.freeze(par)
         if pars[2]!=None:
             print("Fixing Index2")
             SrcSpectrum.getParam('Index2').setScale(pars[2])
             SrcSpectrum.getParam('Index2').setFree(0)
-            par = self.Fit.par_index(name, 'Index2')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'Index2')
+            comp.freeze(par)
         if pars[3]!=None:
             print("Fixing Cutoff")
             SrcSpectrum.getParam('Cutoff').setScale(pars[3])
             SrcSpectrum.getParam('Cutoff').setFree(0)
-            par = self.Fit.par_index(name, 'Cutoff')
-            self.Fit.freeze(par)
+            par = comp.par_index(name, 'Cutoff')
+            comp.freeze(par)
 

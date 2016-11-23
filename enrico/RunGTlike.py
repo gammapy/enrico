@@ -152,7 +152,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             FitRunner.obs.Emax = emaxtotal
 
     try:
-        FitRunner
+        FitRunner.config
     except NameError:
         # Create one obs instance
         FitRunner = Analysis(folder, config, tag="", verbose = verbose)
