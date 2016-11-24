@@ -75,9 +75,12 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    if (ebl!=None):
+    try:
         spec.setAttribute('type', 'EblAtten::PowerLaw')
-    else:
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+    except TypeError,NameError:
         spec.setAttribute('type', 'PowerLaw')
     addParameter(spec, 'Prefactor',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
@@ -117,6 +120,13 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
         spec.setAttribute('type', 'EblAtten::PowerLaw2')
     else:
         spec.setAttribute('type', 'PowerLaw2')
+    try:
+        spec.setAttribute('type', 'EblAtten::PowerLaw2')
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+    except TypeError,NameError:
+        spec.setAttribute('type', 'PowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index', index_free, index_value, 1.0,
@@ -154,9 +164,12 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    if (ebl!=None):
+    try:
         spec.setAttribute('type', 'EblAtten::LogParabola')
-    else:
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+    except TypeError,NameError:
         spec.setAttribute('type', 'LogParabola')
     addParameter(spec, 'norm',
                  norm_free, norm_value, norm_scale, norm_min, norm_max)
@@ -199,10 +212,13 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    if (ebl!=None):
-        spec.setAttribute('type', 'EblAtten::BrokenPowerLaw2')
-    else:
-        spec.setAttribute('type', 'BrokenPowerLaw2')
+    try:
+        spec.setAttribute('type', 'EblAtten::BrokePowerLaw2')
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+    except TypeError,NameError:
+        spec.setAttribute('type', 'BrokePowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index1',
@@ -244,9 +260,12 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    if (ebl!=None):
+    try:
         spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff')
-    else:
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+    except TypeError,NameError:
         spec.setAttribute('type', 'PLSuperExpCutoff')
     addParameter(spec, 'Prefactor',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
@@ -258,13 +277,6 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
     addParameter(spec, 'Index2', index2_free, index2_value, 1.0,
                  index2_min, index2_max)
    
-    try:
-        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
-        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
-    except TypeError,NameError:
-        pass
-
     src.appendChild(spec)
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
@@ -407,6 +419,8 @@ def GetlistFromFits(config, catalog):
         sources.insert(0,{'name':srcname, 'ra': ra_src, 'dec': dec_src,
                        'flux': 1e-9, 'index':-2, 'scale': emin,
                        'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
+                       'SpectrumType': model,'ExtendedName': ""})
+
     
     mes.info("Summary of the XML model generation")
     print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
@@ -476,20 +490,30 @@ def WriteXml(lib, doc, srclist, config):
 
     print "Iso model file ",Iso
     print "Galactic model file ",Gal
-   
+  
+    yesnodict = {}
+    for y in ['yes',True,'true',1,1.0,'1','1.0']:
+        yesnodict[y] = 1
+    for n in ['no',False,'false',0,0.0,'0','0.0']:
+        yesnodict[n] = 0
+
     try:
-        ebl = {}
-        ebl['tau_norm']      = 1.0
-        ebl['free_redshift'] = 0 # NOTE:ToDo
-        ebl['free_tau_norm'] = config['target']['fit_tau']
-        ebl['redshift']      = config['target']['redshift']
-        ebl['model']         = config['target']['ebl_model']
+        ebldict = {}
+        ebldict['tau_norm']      = 1.0
+        ebldict['free_redshift'] = 0 # NOTE:ToDo
+        ebldict['free_tau_norm'] = yesnodict[config['target']['fit_tau']]
+        ebldict['redshift']      = float(config['target']['redshift'])
+        ebldict['model']         = int(config['target']['ebl_model'])
     except NameError:
-        ebl = None
+        ebldict = None
 
     # loop over the list of sources and add it to the library
     for i in xrange(len(srclist)):
         name = srclist[i].get('name')
+        if (name == config['target']['name']):
+            ebl = ebldict
+        else:
+            ebl = None
         ra = srclist[i].get('ra')
         dec = srclist[i].get('dec')
         free = srclist[i].get('IsFree')
