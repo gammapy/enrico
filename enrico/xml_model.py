@@ -75,6 +75,7 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
+    
     try:
         spec.setAttribute('type', 'EblAtten::PowerLaw')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
@@ -82,6 +83,7 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
     except TypeError,NameError:
         spec.setAttribute('type', 'PowerLaw')
+    
     addParameter(spec, 'Prefactor',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index', index_free, index_value, 1.0,
@@ -116,10 +118,6 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    if (ebl!=None):
-        spec.setAttribute('type', 'EblAtten::PowerLaw2')
-    else:
-        spec.setAttribute('type', 'PowerLaw2')
     try:
         spec.setAttribute('type', 'EblAtten::PowerLaw2')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
@@ -521,7 +519,7 @@ def WriteXml(lib, doc, srclist, config):
         extendedName = srclist[i].get('ExtendedName')
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
-            addPSPowerLaw1(lib, name, ra, dec, ebl,
+            addPSPowerLaw1(lib, name, ra, dec, "None",
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
