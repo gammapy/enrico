@@ -80,7 +80,7 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
         spec.setAttribute('type', 'EblAtten::PowerLaw')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 10) 
     except TypeError,NameError:
         spec.setAttribute('type', 'PowerLaw')
     
@@ -122,7 +122,7 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
         spec.setAttribute('type', 'EblAtten::PowerLaw2')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 10) 
     except TypeError,NameError:
         spec.setAttribute('type', 'PowerLaw2')
     addParameter(spec, 'Integral',
@@ -166,7 +166,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
         spec.setAttribute('type', 'EblAtten::LogParabola')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 10) 
     except TypeError,NameError:
         spec.setAttribute('type', 'LogParabola')
     addParameter(spec, 'norm',
@@ -214,7 +214,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
         spec.setAttribute('type', 'EblAtten::BrokePowerLaw2')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 10) 
     except TypeError,NameError:
         spec.setAttribute('type', 'BrokePowerLaw2')
     addParameter(spec, 'Integral',
@@ -262,7 +262,7 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
         spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 8) 
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 10) 
     except TypeError,NameError:
         spec.setAttribute('type', 'PLSuperExpCutoff')
     addParameter(spec, 'Prefactor',
@@ -519,10 +519,17 @@ def WriteXml(lib, doc, srclist, config):
         extendedName = srclist[i].get('ExtendedName')
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
-            addPSPowerLaw1(lib, name, ra, dec, "None",
+            if (ebl==None):
+                addPSPowerLaw1(lib, name, ra, dec, "None",
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
+            if (ebl!=None):
+                addPSLogparabola(lib, name, ra, dec, ebl,
+                              norm_free=free, norm_value=srclist[i].get('flux'),
+                              alpha_free=free, alpha_value=abs(srclist[i].get('index')),
+                              beta_free=0, beta_min=0, beta_max=0,
+                              beta_value=0,extendedName=extendedName)
         if spectype.strip() == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec, ebl,
                             emin=emin, emax=emax,

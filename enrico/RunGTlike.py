@@ -192,15 +192,14 @@ def run(infile):
         mes.info('Setting the decorrelation energy as new Scale for the spectral parameters')
         spectrum = Fit[FitRunner.obs.srcname].funcs['Spectrum']
         modeltype = spectrum.genericName()
-        if Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="PowerLaw":
-            varscale = "Scale"
-        if Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="PowerLaw2":
+        genericName = Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()
+        varscale = None
+        if genericName=="PowerLaw2":
             varscale = None
-        elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
+        elif genericName in ["PowerLaw", "PLSuperExpCutoff"]:
             varscale = "Scale"
-        elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="LogParabola":
-            varscale = "Eb"
-        elif Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()=="BrokenPowerLaw":
+        elif genericName in ["LogParabola","EblAtten::LogParabola", \
+                             "BrokenPowerLaw", "EblAtten::BrokenPowerLaw"]:
             varscale = "Eb"
 
         if varscale is not None:
