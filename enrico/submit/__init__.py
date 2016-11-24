@@ -57,7 +57,7 @@ def GetSubCmd():
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'LOCAL' :   ['qsub -V','-l nice=19 -q %s'%queuetext],
+         'LOCAL' :   ['qsub -V','-l nice=19 %s'%queuetext],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
