@@ -169,6 +169,10 @@ class FitMaker(Loggin.Message):
                 if  (ts<minTS) and not(src == self.obs.srcname):
                     #and Fit.logLike.getSource(src).getType() == 'Point':
                     for comp in Fit.components:
+                    :q
+                    :q
+
+
                         if comp.logLike.getSource(src).getType() == 'Point':
                             if self.config['verbose'] == 'yes' :
                                 self.info("deleting source "+src+" with TS = "+str(ts)+" from the model")
