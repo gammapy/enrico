@@ -131,11 +131,14 @@ class FitMaker(Loggin.Message):
         the releveant results"""
 
         self._log('gtlike', 'Run likelihood analysis')
-
         try:
             Fit.fit(1, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
         except:
-            pass #first try to run gtlike to approche the minimum
+            self.warning("First FIT did not converge with DRMNGB, trying DRMNFB")
+            try:
+                Fit.fit(1, optimizer="DRMNFB")
+            except:
+                self.warning("First FIT did not converge with DRMNFB either")
 
         # Now the precise fit will be done
         #change the fit tolerance to the one given by the user

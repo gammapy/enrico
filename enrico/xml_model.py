@@ -502,6 +502,8 @@ def WriteXml(lib, doc, srclist, config):
         ebldict['free_tau_norm'] = yesnodict[config['target']['fit_tau']]
         ebldict['redshift']      = float(config['target']['redshift'])
         ebldict['model']         = int(config['target']['ebl_model'])
+        if ebldict['redshift'] < 1.e-3:
+            ebldict = None
     except NameError:
         ebldict = None
 
