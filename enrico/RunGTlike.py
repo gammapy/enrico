@@ -193,18 +193,20 @@ def run(infile):
         spectrum = Fit[FitRunner.obs.srcname].funcs['Spectrum']
         modeltype = spectrum.genericName()
         genericName = Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()
-        varscale = None
-        if genericName=="PowerLaw2":
+        
+        if (config['energy']['decorrelation_energy'] == 'yes'):
             varscale = None
-        elif genericName in ["PowerLaw", "PLSuperExpCutoff"]:
-            varscale = "Scale"
-        elif genericName in ["LogParabola","EblAtten::LogParabola", \
-                             "BrokenPowerLaw", "EblAtten::BrokenPowerLaw"]:
-            varscale = "Eb"
+            if genericName=="PowerLaw2":
+                varscale = None
+            elif genericName in ["PowerLaw", "PLSuperExpCutoff"]:
+                varscale = "Scale"
+            elif genericName in ["LogParabola","EblAtten::LogParabola", \
+                                 "BrokenPowerLaw", "EblAtten::BrokenPowerLaw"]:
+                varscale = "Eb"
 
-        if varscale is not None:
-            spectrum.getParam(varscale).setValue(sedresult.decE)
-            FitRunner.PerformFit(Fit)
+            if varscale is not None:
+                spectrum.getParam(varscale).setValue(sedresult.decE)
+                FitRunner.PerformFit(Fit)
 
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)

@@ -105,6 +105,7 @@ def PrepareEbin(Fit, FitRunner):
         #update the energy bounds
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
+        config['energy']['decorrelation_energy'] = "no"
 
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
