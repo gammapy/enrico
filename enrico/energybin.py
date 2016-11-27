@@ -57,6 +57,7 @@ def PrepareEbin(Fit, FitRunner):
     #update the config to allow the fit in energy bins
     config['UpperLimit']['envelope'] = 'no'
     config['Ebin']['NumEnergyBins'] = '0'#no new bin in energy!
+    config['target']['redshift']    = '0'#Disable EBL correction
     config['out'] = FitRunner.config['out'] + '/'+EbinPath + str(NEbin)
     config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
     #copy the chose of the user for the enery bin computing
