@@ -38,9 +38,10 @@ class LightCurve(Loggin.Message):
 
         self.folder = self.config['out']
 
-        #No plot, no bin in energy, Normal UL
+        #No plot, no bin in energy, no decE optimization, Normal UL
         self.config['Spectrum']['ResultPlots'] = 'no'
         self.config['Ebin']['NumEnergyBins'] = 0
+        self.config['energy']['decorrelation_energy'] = 'no'
         self.config['UpperLimit']['envelope'] = 'no'
         #No submition. Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
