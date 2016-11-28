@@ -16,9 +16,6 @@ def sed(config,infile):
     enricodir = environ.DIRS.get('ENRICO_DIR')
     fermidir = environ.DIRS.get('FERMI_DIR')
 
-    # only for the global SED, by default it is disabled
-    config['energy']['decorrelation_energy'] = 'yes'
-
     if config['Spectrum']['SummedLike'] == 'yes':
         GenericName = (config['target']['name'] + "_" +
                    config['analysis']['likelihood'] +
