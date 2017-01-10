@@ -227,10 +227,10 @@ def _dump_filename(config):
     """Give the name of the file where the results will be dumped"""
     return (config['out'] + '/' + config['target']['name'] + '_' +
             str(config['target']['spectrum']) + '_' +
-            str(int(config['time']['tmin'])) + '_' +
-            str(int(config['time']['tmax'])) + '_' +
-            str(int(config['energy']['emin'])) + '_' +
-            str(int(config['energy']['emax'])) + "_"+
+            str(int(0.5+config['time']['tmin'])) + '_' +
+            str(int(0.5+config['time']['tmax'])) + '_' +
+            str(int(0.5+config['energy']['emin'])) + '_' +
+            str(int(0.5+config['energy']['emax'])) + "_"+
                   config['file']['tag'] +  ".results")
 
 
