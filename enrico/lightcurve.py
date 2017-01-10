@@ -46,8 +46,19 @@ class LightCurve(Loggin.Message):
         #No submition. Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
 #        self.config['verbose'] ='no' #Be quiet
+        
+        # Try to speed-up the analysis by reusing the evt file from the main analysis
+        self._RecycleEvtCoarse()
 
         self.configfile = []#All the config file in the disk are stored in a list
+
+    def _RecycleEvtCoarse(self):
+        ''' Try to guess if there's an EvtCoarse file with the events extracted, reuse it '''
+        import os.path
+        evtcoarsefile = str("%s/%s_%s_EvtCoarse.fits"%(self.folder,self.srcname,self.Tag))
+        if os.path.isfile(evtcoarsefile):
+            print("reusing %s as event file to speed-up the analysis" %evtcoarsefile)
+            self.config['file']['event'] = evtcoarsefile
 
     def _MakeTimeBins(self):
         self.time_array = np.zeros(0)

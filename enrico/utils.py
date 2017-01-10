@@ -162,18 +162,25 @@ def getParamIndx(fit, name, parameter):
     """Get index for a specific parameter for a specific source
     from model in UnbinnedAnalysis object fit"""
     ID = -1
+    # Try to get the first component (if summed analysis)
+    try:    fit = fit.components[0]:
+    except: pass
     spec = fit[name].funcs['Spectrum']
     for indx, parName in zip(spec._parIds, spec.paramNames):
         if(parName == parameter):
             ID = indx
     if(ID == -1):
         print('Parameter %s not found for source %s in file %s.' %
-              (parameter, name, fit.srcModel))
+             (parameter, name, fit.srcModel))
+            
     return ID
 
 def FreezeParams(fit, name, parameter, value):
-    fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
-    fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
+    try:    components = fit.components
+    except: components = [fit]
+    for comp in components:
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
+        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
 
 def ApproxPref(Fit, ener,name):
     Pref = np.zeros(len(ener)-1)
