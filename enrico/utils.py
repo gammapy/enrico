@@ -163,7 +163,7 @@ def getParamIndx(fit, name, parameter):
     from model in UnbinnedAnalysis object fit"""
     ID = -1
     # Try to get the first component (if summed analysis)
-    try:    fit = fit.components[0]:
+    try:    fit = fit.components[0]
     except: pass
     spec = fit[name].funcs['Spectrum']
     for indx, parName in zip(spec._parIds, spec.paramNames):
