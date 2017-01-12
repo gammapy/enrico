@@ -105,23 +105,22 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
-        configbin = self.config
         for i in xrange(self.Nbin):
-            configbin['time']['tmin'] = self.time_array[2*i]
-            configbin['time']['tmax'] = self.time_array[2*i+1]
-            configbin['file']['tag'] = self.Tag + '_LC_' + str(i)
-            filename = (configbin['out'] + "Config_" + str(i) + "_" +
-                    str(configbin['time']['tmin']) + "_" +
-                    str(configbin['time']['tmax']))#Name of the config file
+            self.config['time']['tmin'] = self.time_array[2*i]
+            self.config['time']['tmax'] = self.time_array[2*i+1]
+            self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
+            filename = (self.config['out'] + "Config_" + str(i) + "_" +
+                    str(self.config['time']['tmin']) + "_" +
+                    str(self.config['time']['tmax']))#Name of the config file
 
             if len(self.gtifile)==1:
-                configbin['time']['file']=self.gtifile[0]
+                self.config['time']['file']=self.gtifile[0]
             elif len(self.gtifile)>1:
                 print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
-                configbin['time']['file']=self.gtifile[i]
+                self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
-                configbin.write(open(filename, 'w'))
+                self.config.write(open(filename, 'w'))
 
             self.configfile.append(filename)
 
