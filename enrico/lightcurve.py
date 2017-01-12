@@ -18,8 +18,9 @@ class LightCurve(Loggin.Message):
         super(LightCurve,self).__init__()
         Loggin.Message.__init__(self)
         ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
-        self.config = config
-
+        self.config        = get_config(config)
+        self.generalconfig = get_config(config)
+        print(self.generalconfig)
         #Read the config
         self.srcname = self.config['target']['name'] #src name
         self.Tag = self.config['file']['tag']
@@ -51,7 +52,7 @@ class LightCurve(Loggin.Message):
         self._RecycleEvtCoarse()
 
         self.configfile = []#All the config file in the disk are stored in a list
-
+    
     def _RecycleEvtCoarse(self):
         ''' Try to guess if there's an EvtCoarse file with the events extracted, reuse it '''
         import os.path
@@ -104,25 +105,25 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
+        configbin = self.config
         for i in xrange(self.Nbin):
-            self.config['time']['tmin'] = self.time_array[2*i]
-            self.config['time']['tmax'] = self.time_array[2*i+1]
-            self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
-            filename = (self.config['out'] + "Config_" + str(i) + "_" +
-                    str(self.config['time']['tmin']) + "_" +
-                    str(self.config['time']['tmax']))#Name of the config file
+            configbin['time']['tmin'] = self.time_array[2*i]
+            configbin['time']['tmax'] = self.time_array[2*i+1]
+            configbin['file']['tag'] = self.Tag + '_LC_' + str(i)
+            filename = (configbin['out'] + "Config_" + str(i) + "_" +
+                    str(configbin['time']['tmin']) + "_" +
+                    str(configbin['time']['tmax']))#Name of the config file
 
             if len(self.gtifile)==1:
-                self.config['time']['file']=self.gtifile[0]
+                configbin['time']['file']=self.gtifile[0]
             elif len(self.gtifile)>1:
                 print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
-                self.config['time']['file']=self.gtifile[i]
+                configbin['time']['file']=self.gtifile[i]
 
             if write == 'yes':
-                self.config.write(open(filename, 'w'))
+                configbin.write(open(filename, 'w'))
 
             self.configfile.append(filename)
-
 
     def _MakeLC(self,Path=LightcurvePath) :
         import gc
@@ -239,8 +240,12 @@ class LightCurve(Loggin.Message):
         # Find name used for index parameter
         if (self.config['target']['spectrum'] == 'PowerLaw' or
                 self.config['target']['spectrum'] == 'PowerLaw2'):
-            IndexName = 'Index'
-            CutoffName = None
+            if float(self.config['target']['redshift'])==0:
+                IndexName = 'Index'
+                CutoffName = None
+            else:
+                IndexName = 'alpha'
+                CutoffName = None
         elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
                 self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
             IndexName = 'Index1'
@@ -459,8 +464,9 @@ class LightCurve(Loggin.Message):
         utils._log('Computing Variability index ')
 
         self.config['Spectrum']['FitsGeneration'] = 'no'
-#        ValueDC = self.GetDCValue()
-        ResultDicDC = utils.ReadResult(self.config)
+        # ValueDC = self.GetDCValue()
+        print(self.generalconfig)
+        ResultDicDC = utils.ReadResult(self.generalconfig)
         LogL1 = []
         LogL0 = []
         Time = []
