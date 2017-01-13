@@ -18,8 +18,9 @@ class LightCurve(Loggin.Message):
         super(LightCurve,self).__init__()
         Loggin.Message.__init__(self)
         ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
-        self.config = config
-
+        self.config        = get_config(config)
+        self.generalconfig = get_config(config)
+        print(self.generalconfig)
         #Read the config
         self.srcname = self.config['target']['name'] #src name
         self.Tag = self.config['file']['tag']
@@ -38,15 +39,27 @@ class LightCurve(Loggin.Message):
 
         self.folder = self.config['out']
 
-        #No plot, no bin in energy, Normal UL
+        #No plot, no bin in energy, no decE optimization, Normal UL
         self.config['Spectrum']['ResultPlots'] = 'no'
         self.config['Ebin']['NumEnergyBins'] = 0
+        self.config['energy']['decorrelation_energy'] = 'no'
         self.config['UpperLimit']['envelope'] = 'no'
         #No submition. Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
 #        self.config['verbose'] ='no' #Be quiet
+        
+        # Try to speed-up the analysis by reusing the evt file from the main analysis
+        self._RecycleEvtCoarse()
 
         self.configfile = []#All the config file in the disk are stored in a list
+    
+    def _RecycleEvtCoarse(self):
+        ''' Try to guess if there's an EvtCoarse file with the events extracted, reuse it '''
+        import os.path
+        evtcoarsefile = str("%s/%s_%s_EvtCoarse.fits"%(self.folder,self.srcname,self.Tag))
+        if os.path.isfile(evtcoarsefile):
+            print("reusing %s as event file to speed-up the analysis" %evtcoarsefile)
+            self.config['file']['event'] = evtcoarsefile
 
     def _MakeTimeBins(self):
         self.time_array = np.zeros(0)
@@ -92,7 +105,6 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
-
         for i in xrange(self.Nbin):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
@@ -111,7 +123,6 @@ class LightCurve(Loggin.Message):
                 self.config.write(open(filename, 'w'))
 
             self.configfile.append(filename)
-
 
     def _MakeLC(self,Path=LightcurvePath) :
         import gc
@@ -228,8 +239,12 @@ class LightCurve(Loggin.Message):
         # Find name used for index parameter
         if (self.config['target']['spectrum'] == 'PowerLaw' or
                 self.config['target']['spectrum'] == 'PowerLaw2'):
-            IndexName = 'Index'
-            CutoffName = None
+            if float(self.config['target']['redshift'])==0:
+                IndexName = 'Index'
+                CutoffName = None
+            else:
+                IndexName = 'alpha'
+                CutoffName = None
         elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
                 self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
             IndexName = 'Index1'
@@ -448,8 +463,9 @@ class LightCurve(Loggin.Message):
         utils._log('Computing Variability index ')
 
         self.config['Spectrum']['FitsGeneration'] = 'no'
-#        ValueDC = self.GetDCValue()
-        ResultDicDC = utils.ReadResult(self.config)
+        # ValueDC = self.GetDCValue()
+        print(self.generalconfig)
+        ResultDicDC = utils.ReadResult(self.generalconfig)
         LogL1 = []
         LogL0 = []
         Time = []

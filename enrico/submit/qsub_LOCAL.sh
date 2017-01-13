@@ -20,15 +20,8 @@
 #export TMP_DIR=/var/spool/pbs/tmpdir
 #####################################################################
 
-export HOME=$LAPP_APP_SHARED
+export HOME=$HOME
 export PATH=$FERMI_DIR/bin:$PATH
-
-
-if [ "${PFILES}" != "" ]; then
-    if [ ! -d "${PFILES}" ]; then
-        mkdir ${PFILES}
-    fi
-fi
 
 
 echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "

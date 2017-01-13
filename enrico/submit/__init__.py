@@ -52,14 +52,19 @@ def wait_for_slot(max_jobs):
 
 ##Function to chose the Farm commands
 def GetSubCmd():
+  queuetext = ""
+  if [ environ.QUEUE != "" ]:
+      queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
+         'LOCAL' :   ['qsub -V','-l nice=19 %s'%queuetext],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
 def GetSubOutput(qsub_log):
   cmd = {'LAPP' :    ['-o', qsub_log, '-j', 'oe'],
          'MPIK' :    ['-o', qsub_log, '-j', 'y'],
+         'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
          'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes']}
   return cmd[environ.FARM]
 ###
@@ -100,6 +105,8 @@ def call(cmd,
     max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
+    elif environ.FARM=="LOCAL":
+        max_jobs = 2000
     elif environ.FARM=="CCIN2P3":
         max_jobs = 3500
 
@@ -121,9 +128,14 @@ def call(cmd,
             text += '\ncd {0}\n\n'.format(exec_dir)
 
         text +='export FERMI_DIR='+fermiDir+'\n'
-        text +='source $FERMI_DIR/fermi-init.sh\n'
+        #text +='export HEADAS_DIR='+fermiDir+'\n'
         text +='export ENRICO_DIR='+enricoDir+'\n'
+        #text +='source $HEADAS_DIR/headas-init.sh\n'
+        text +='source $FERMI_DIR/fermi-init.sh\n'
         text +='source $ENRICO_DIR/enrico-init.sh\n'
+        text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
+        text +='export LATEXDIR=/tmp/aux\n'
+        text +='env\n'
         text +='#PBS -o '+qsub_log+'\n'
         text +='#PBS -j oe\n'
         text += cmd
@@ -174,4 +186,5 @@ def call(cmd,
         fh.close()
 
     if not dry:
+        print("Running: %s" %cmd)
         os.system(cmd)

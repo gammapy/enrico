@@ -36,7 +36,7 @@ class Observation:
         self.xmlfile   = self.Configuration['file']['xml']
 
         #Fits files 
-        self.eventcoarse = self.folder+'/'+self.srcname+filetag+"_EvtCoarse.fits"
+        self.eventcoarse = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
         self.eventfile = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
         self.Cubename  = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
         self.Mapname   = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
