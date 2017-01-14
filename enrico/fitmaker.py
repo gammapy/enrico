@@ -116,10 +116,13 @@ class FitMaker(Loggin.Message):
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
                 Fit.freeze(PhIndex)
                 self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
-            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
-                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
+            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="LogParabola":
+                PhIndex = Fit.par_index(self.obs.srcname, 'alpha')
+                CuIndex = Fit.par_index(self.obs.srcname, 'beta')
                 Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+                Fit[CuIndex] = 0
                 Fit.freeze(PhIndex)
+                Fit.freeze(CuIndex)
                 self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
             else:
               self.warning("The model is not a PowerLaw. Cannot freeze the index.")
@@ -349,9 +352,21 @@ class FitMaker(Loggin.Message):
         #Index given by the user
         self.info("Assumed index is "+str(self.config['UpperLimit']['SpectralIndex']))
 
-        IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
-        Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
-        Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
+        parameters = dict()
+        parameters['Index']  = -self.config['UpperLimit']['SpectralIndex']
+        parameters['alpha']  = +self.config['UpperLimit']['SpectralIndex']
+        parameters['Index1'] = -self.config['UpperLimit']['SpectralIndex']
+        parameters['beta']   = 0
+        parameters['Index2'] = 2
+        parameters['Cutoff'] = 30000
+        
+        for key in parameters.keys():
+            try:
+                IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
+                Fit[IdGamma] = parameters[key] # set the parameter
+                Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
+            except:
+                continue
 
         import scipy.stats
         cl = float(self.config['UpperLimit']['cl'])

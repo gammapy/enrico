@@ -464,7 +464,6 @@ class LightCurve(Loggin.Message):
 
         self.config['Spectrum']['FitsGeneration'] = 'no'
         # ValueDC = self.GetDCValue()
-        print(self.generalconfig)
         ResultDicDC = utils.ReadResult(self.generalconfig)
         LogL1 = []
         LogL0 = []
