@@ -353,12 +353,12 @@ class FitMaker(Loggin.Message):
         self.info("Assumed index is "+str(self.config['UpperLimit']['SpectralIndex']))
 
         parameters = dict()
-        parameters['Index']  = -self.config['UpperLimit']['SpectralIndex']
-        parameters['alpha']  = +self.config['UpperLimit']['SpectralIndex']
-        parameters['Index1'] = -self.config['UpperLimit']['SpectralIndex']
+        parameters['Index']  = -float(self.config['UpperLimit']['SpectralIndex'])
+        parameters['alpha']  = +float(self.config['UpperLimit']['SpectralIndex'])
+        parameters['Index1'] = -float(self.config['UpperLimit']['SpectralIndex'])
         parameters['beta']   = 0
-        parameters['Index2'] = 2
-        parameters['Cutoff'] = 30000
+        parameters['Index2'] = 2.
+        parameters['Cutoff'] = 30000. # set the cutoff to be high
         
         for key in parameters.keys():
             try:
