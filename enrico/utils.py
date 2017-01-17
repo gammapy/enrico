@@ -172,15 +172,20 @@ def getParamIndx(fit, name, parameter):
     if(ID == -1):
         print('Parameter %s not found for source %s in file %s.' %
              (parameter, name, fit.srcModel))
-            
+
     return ID
 
 def FreezeParams(fit, name, parameter, value):
-    try:    components = fit.components
-    except: components = [fit]
-    for comp in components:
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
+    components = [fit]
+    for c in fit.components:
+        components.append(c)
+
+    for comp in fit.components:
+        try:
+            comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
+            comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
+        except:
+            pass
 
 def ApproxPref(Fit, ener,name):
     Pref = np.zeros(len(ener)-1)
