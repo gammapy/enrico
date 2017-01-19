@@ -54,10 +54,11 @@ def wait_for_slot(max_jobs):
 def GetSubCmd():
   queuetext = ""
   if [ environ.QUEUE != "" ]:
+      queueoptions = "%s " %(environ.TORQUE_RESOURCES) 
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'LOCAL' :   ['qsub -V','-l nice=19 %s'%queuetext],
+         'LOCAL' :   ['qsub -V','%s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
