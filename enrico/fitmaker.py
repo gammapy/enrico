@@ -105,7 +105,7 @@ class FitMaker(Loggin.Message):
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
 
-        if float(self.config['Spectrum']['FrozenSpectralIndex']) > 0:
+        if float(self.config['Spectrum']['FrozenSpectralIndex']) != 0:
             parameters = dict()
             parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])
             parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
@@ -360,9 +360,7 @@ class FitMaker(Loggin.Message):
         
         for key in parameters.keys():
             try:
-                IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
-                Fit[IdGamma] = parameters[key] # set the parameter
-                Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
+                utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key]
             except:
                 continue
 
@@ -413,8 +411,7 @@ class FitMaker(Loggin.Message):
 
         for i in xrange(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
-            Fit[PhIndex] = indx
-            Fit.freeze(PhIndex)#Freeze the index
+            utils.FreezeParams(Fit,self.srcname,PhIndex,indx)
             #Use either the profile or the integral method
             self.info("Methode used: "+self.config['UpperLimit']['Method'])
             if self.config['UpperLimit']['Method'] == "Profile":

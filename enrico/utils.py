@@ -176,16 +176,16 @@ def getParamIndx(fit, name, parameter):
     return ID
 
 def FreezeParams(fit, name, parameter, value):
-    components = [fit]
-    for c in fit.components:
-        components.append(c)
-
-    for comp in fit.components:
-        try:
-            comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
-            comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
-        except:
-            pass
+    try:
+        fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
+        fit.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
+    except:
+        for comp in self.components:
+            try:
+                comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setValue(value)
+                comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam(parameter).setFree(0)
+            except:
+                continue
 
 def ApproxPref(Fit, ener,name):
     Pref = np.zeros(len(ener)-1)
