@@ -360,7 +360,7 @@ class FitMaker(Loggin.Message):
         
         for key in parameters.keys():
             try:
-                utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key]
+                utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key])
             except:
                 continue
 
