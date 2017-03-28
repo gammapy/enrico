@@ -132,11 +132,11 @@ class FitMaker(Loggin.Message):
 
         self._log('gtlike', 'Run likelihood analysis')
         try:
-            Fit.fit(1, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
+            Fit.fit(0, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
         except:
             self.warning("First FIT did not converge with DRMNGB, trying DRMNFB")
             try:
-                Fit.fit(1, optimizer="DRMNFB")
+                Fit.fit(0, optimizer="DRMNFB")
             except:
                 self.warning("First FIT did not converge with DRMNFB either")
 
@@ -144,7 +144,7 @@ class FitMaker(Loggin.Message):
         #change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
-        self.log_like = Fit.fit(1,covar=True, optimizer=self.config['fitting']['optimizer'])
+        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
         if self.config['verbose'] == 'yes' :
             print Fit

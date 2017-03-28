@@ -353,6 +353,7 @@ def PlotDataPoints(config,pars):
         E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/'+EbinPath+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
+        
         try:#read the config file of each data points
             CurConf = get_config(filename)
             mes.info("Reading "+filename)
