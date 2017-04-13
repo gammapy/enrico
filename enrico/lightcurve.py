@@ -312,7 +312,7 @@ class LightCurve(Loggin.Message):
             gTHNpred.Draw()
             TgrNpred.Draw('zP')
 	    if len(Npred_detected)>0:
-	    	TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
+	    	_,TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
 	    	TgrNpred_detected.SetLineColor(2)
 	    	TgrNpred_detected.SetMarkerColor(2)
 	    	TgrNpred_detected.Draw('zP')
