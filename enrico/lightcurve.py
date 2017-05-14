@@ -261,6 +261,8 @@ class LightCurve(Loggin.Message):
             #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
             try :
                 ResultDic = utils.ReadResult(CurConfig)
+                if ResultDic == {}:
+                    raise(ValueError)
             except :
                 self._errorReading("Fail reading config file",i)
                 Nfail+=1

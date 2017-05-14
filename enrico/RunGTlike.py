@@ -145,6 +145,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     Fits[k] = Analyses[k].CreateLikeObject()
                     Fit.addComponent(Fits[k])
                 except RuntimeError,e:
+                    raise
                     if 'RuntimeError: gtltcube execution failed' in str(e):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
             FitRunner = Analyses[0]
