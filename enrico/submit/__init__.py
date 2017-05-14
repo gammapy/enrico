@@ -41,6 +41,8 @@ def jobs_in_queue():
         except OSError:
             # Wait 5 minutes and try again
             time.sleep(300)
+            if trial==59:
+                raise
         else:
             break
         
