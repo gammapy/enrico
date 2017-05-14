@@ -119,7 +119,7 @@ def call(cmd,
     if environ.FARM=="LAPP":
         max_jobs = 1000
     elif environ.FARM=="LOCAL":
-        max_jobs = 50
+        max_jobs = 100
     elif environ.FARM=="CCIN2P3":
         max_jobs = 3500
 
