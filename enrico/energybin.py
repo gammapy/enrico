@@ -14,7 +14,7 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     The index is frozen in all cases"""
     
     Gamma_min=-5
-    Gamma_max=0
+    Gamma_max=0.5
     # if approximated Gamma is outside of bounds set it to limit
     if Gamma < Gamma_min:
         Gamma = Gamma_min
