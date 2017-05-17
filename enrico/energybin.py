@@ -17,9 +17,9 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     Gamma_max=0.5
     # if approximated Gamma is outside of bounds set it to limit
     if Gamma < Gamma_min:
-        Gamma = Gamma_min
+        Gamma = Gamma_min + (Gamma_max-Gamma_min)*0.05
     elif Gamma > Gamma_max:
-        Gamma = Gamma_max
+        Gamma = Gamma_max - (Gamma_max-Gamma_min)*0.05
 
     Eav = utils.GetE0(E1, E2)
 
@@ -106,6 +106,8 @@ def PrepareEbin(Fit, FitRunner):
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
         config['energy']['decorrelation_energy'] = "no"
+        # Change the spectral index to follow the Estimated Gamma 
+        config['UpperLimit']['SpectralIndex'] = Gamma[ibin]
 
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
