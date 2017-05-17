@@ -13,14 +13,6 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     if not the model is change to PowerLaw.
     The index is frozen in all cases"""
     
-    Gamma_min=-5
-    Gamma_max=0.5
-    # if approximated Gamma is outside of bounds set it to limit
-    if Gamma < Gamma_min:
-        Gamma = Gamma_min + (Gamma_max-Gamma_min)*0.05
-    elif Gamma > Gamma_max:
-        Gamma = Gamma_max - (Gamma_max-Gamma_min)*0.05
-
     Eav = utils.GetE0(E1, E2)
 
     for comp in Fit.components:
@@ -45,7 +37,12 @@ def PrepareEbin(Fit, FitRunner):
     and save it in a new ascii file
     iii) changing the spectral model and saving it in a new xml file.
     A list of the ascii files is returned"""
-
+    
+    # if approximated Gamma is outside of bounds set it to limit
+    Gamma_min=-5
+    Gamma_max=0.5
+    Gamma = min(max(Gamma_min,Gamma),Gamma_max)
+    
     NEbin = int(FitRunner.config['Ebin']['NumEnergyBins'])
 
     config = FitRunner.config
@@ -107,7 +104,10 @@ def PrepareEbin(Fit, FitRunner):
         config['energy']['emax'] = str(ener[ibin + 1])
         config['energy']['decorrelation_energy'] = "no"
         # Change the spectral index to follow the Estimated Gamma 
-        config['UpperLimit']['SpectralIndex'] = Gamma[ibin]
+        # if approximated Gamma is outside of bounds set it to limit
+        Gamma_min=-5
+        Gamma_max=0.5
+        config['UpperLimit']['SpectralIndex'] = -min(max(Gamma_min,Gamma[ibin]),Gamma_max)
 
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
