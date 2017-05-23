@@ -199,7 +199,7 @@ def run(infile):
             varscale = None
             if genericName=="PowerLaw2":
                 varscale = None
-            elif genericName in ["PowerLaw", "PLSuperExpCutoff"]:
+            elif genericName in ["PowerLaw", "PLSuperExpCutoff", "EblAtten::PLSuperExpCutoff"]:
                 varscale = "Scale"
             elif genericName in ["LogParabola","EblAtten::LogParabola", \
                                  "BrokenPowerLaw", "EblAtten::BrokenPowerLaw"]:
