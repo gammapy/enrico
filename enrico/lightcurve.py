@@ -305,17 +305,17 @@ class LightCurve(Loggin.Message):
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
-        if self.config['LightCurve']['DiagnosticPlots'] == 'yes':
-            fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
+        if self.config['LightCurve']['DiagnosticPlots'] == 'yes' and len(Npred)>0:
             gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
             TgrNpred.Draw('zP')
 	    if len(Npred_detected)>0:
-	    	TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
+	    	_,TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
 	    	TgrNpred_detected.SetLineColor(2)
 	    	TgrNpred_detected.SetMarkerColor(2)
 	    	TgrNpred_detected.Draw('zP')
+		fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
 	    	fittedFunc.Draw("SAME")
 
 	    	CanvNpred.Print(LcOutPath+"_Npred.png")
@@ -464,9 +464,11 @@ class LightCurve(Loggin.Message):
         utils._log('Computing Variability index ')
 
         self.config['Spectrum']['FitsGeneration'] = 'no'
-        # ValueDC = self.GetDCValue()
-        print(self.generalconfig)
-        ResultDicDC = utils.ReadResult(self.generalconfig)
+ 	try :
+	        ResultDicDC = utils.ReadResult(self.generalconfig)
+	except :
+		self.warning("No results file found; please run enrico_sed first.")
+		return
         LogL1 = []
         LogL0 = []
         Time = []
