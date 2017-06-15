@@ -22,16 +22,16 @@ if len(sys.argv)==2 :
     for inf in liste:
       mes.info("work on the config file "+inf)
       config = get_config(inf)
-      lc = lc.LightCurve(config)
-      lc.PlotLC()
+      lcobject = lc.LightCurve(config)
+      lcobject.PlotLC()
   except :
     config = get_config(infile)
-    lc = lc.LightCurve(config)
-    lc.PlotLC()
+    lcobject = lc.LightCurve(config)
+    lcobject.PlotLC()
 else:
   for inf in sys.argv[1:]:
     mes.info("work on the config file "+inf)
     config = get_config(inf)
-    lc = lc.LightCurve(config)
-    lc.PlotLC()
+    lcobject = lc.LightCurve(config)
+    lcobject.PlotLC()
 
