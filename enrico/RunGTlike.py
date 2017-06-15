@@ -180,6 +180,10 @@ def run(infile):
     # create all the fit files and run gtlike
     FitRunner.PerformFit(Fit)
 
+    #Get and dump the target specific results
+    Result = FitRunner.GetAndPrintResults(Fit)
+    utils.DumpResult(Result, config)
+
     #plot the SED and model map if possible and asked
     if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
         if config['Spectrum']['ResultPlots'] == 'yes':
@@ -188,14 +192,14 @@ def run(infile):
             sedresult = FitRunner.ComputeSED(Fit,dump=True)
         else:
             sedresult = FitRunner.ComputeSED(Fit,dump=False)
-
-        # Update the energy scale to decorrelation energy
-        mes.info('Setting the decorrelation energy as new Scale for the spectral parameters')
-        spectrum = Fit[FitRunner.obs.srcname].funcs['Spectrum']
-        modeltype = spectrum.genericName()
-        genericName = Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()
         
         if (config['energy']['decorrelation_energy'] == 'yes'):
+            #Update the energy scale to decorrelation energy
+            mes.info('Setting the decorrelation energy as new Scale for the spectral parameters')
+            spectrum = Fit[FitRunner.obs.srcname].funcs['Spectrum']
+            modeltype = spectrum.genericName()
+            genericName = Fit.model.srcs[FitRunner.obs.srcname].spectrum().genericName()
+
             varscale = None
             if genericName=="PowerLaw2":
                 varscale = None
@@ -209,15 +213,15 @@ def run(infile):
                 spectrum.getParam(varscale).setValue(sedresult.decE)
                 FitRunner.PerformFit(Fit)
 
+
+
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
         if config['Spectrum']['SummedLike'] != 'yes':
             # the possiblity of making the model map is checked inside the function
             FitRunner.ModelMap(outXml)
 
-    #Get and dump the target specific results
-    Result = FitRunner.GetAndPrintResults(Fit)
-    utils.DumpResult(Result, config)
+
 
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']

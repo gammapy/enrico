@@ -290,9 +290,8 @@ class Observation:
             self.time_selection()
         selstr = self.Configuration['analysis']['filter']
         outfile = self.mktimefile+".tmp"
-        ## Maketime does not listen to clobber variable
-        #if (os.path.exists(outfile) and self.clobber=="no"):
-        if (os.path.exists(self.mktimefile) or self.clobber):
+        ## Maketime does not listen to clobber variables
+        if (not os.path.exists(outfile) or self.clobber):
             self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
             os.system("mv "+outfile+" "+self.mktimefile)
 

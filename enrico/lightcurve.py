@@ -239,11 +239,7 @@ class LightCurve(Loggin.Message):
         # Find name used for index parameter
         if (self.config['target']['spectrum'] == 'PowerLaw' or
                 self.config['target']['spectrum'] == 'PowerLaw2'):
-            if float(self.config['target']['redshift'])==0:
                 IndexName = 'Index'
-                CutoffName = None
-            else:
-                IndexName = 'alpha'
                 CutoffName = None
         elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
                 self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
@@ -317,16 +313,18 @@ class LightCurve(Loggin.Message):
             CanvNpred = _GetCanvas()
             gTHNpred.Draw()
             TgrNpred.Draw('zP')
+	    if len(Npred_detected)>0:
+	    	_,TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
+	    	TgrNpred_detected.SetLineColor(2)
+	    	TgrNpred_detected.SetMarkerColor(2)
+	    	TgrNpred_detected.Draw('zP')
+	    	fittedFunc.Draw("SAME")
 
-            _,TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
-            TgrNpred_detected.SetLineColor(2)
-            TgrNpred_detected.SetMarkerColor(2)
-            TgrNpred_detected.Draw('zP')
-            fittedFunc.Draw("SAME")
-
-            CanvNpred.Print(LcOutPath+"_Npred.png")
-            CanvNpred.Print(LcOutPath+"_Npred.eps")
-            CanvNpred.Print(LcOutPath+"_Npred.C")
+	    	CanvNpred.Print(LcOutPath+"_Npred.png")
+	    	CanvNpred.Print(LcOutPath+"_Npred.eps")
+	    	CanvNpred.Print(LcOutPath+"_Npred.C")
+	    else :
+		print "No Npred Plot produced"
 
             gTHTS,TgrTS = plotting.PlotTS(Time,TimeErr,TS)
             CanvTS = _GetCanvas()
@@ -417,15 +415,18 @@ class LightCurve(Loggin.Message):
     def CheckNpred(self,Npred,Flux,FluxErr,detected_indices):
         """check if the errors are well computed using the Npred/sqrt(Npred) vs Flux/FluxErr relation
            and print corresponding point which failled"""
-        _,TgrNpred = plotting.PlotNpred(Npred[detected_indices],Flux[detected_indices],FluxErr[detected_indices])
         func = ROOT.TF1("func","pol1",np.min(np.sqrt(Npred)),np.max(np.sqrt(Npred)))
-        TgrNpred.Fit(func,"Q")
-        for i in xrange(len(Flux)):
-            if Flux[i]/FluxErr[i]>2*func.Eval(sqrt(Npred[i])):
-                self._errorReading("problem in errors calculation for",i)
-                print "Flux +/- error = ",Flux[i]," +/- ",FluxErr[i]
-                print "V(Npred) = ",sqrt(Npred[i])
-                print 
+
+        if len(detected_indices) > 0 :
+	        _,TgrNpred = plotting.PlotNpred(Npred[detected_indices],Flux[detected_indices],FluxErr[detected_indices])
+
+        	TgrNpred.Fit(func,"Q")
+        	for i in xrange(len(Flux)):
+        	    if Flux[i]/FluxErr[i]>2*func.Eval(sqrt(Npred[i])):
+                	self._errorReading("problem in errors calculation for",i)
+               		print "Flux +/- error = ",Flux[i]," +/- ",FluxErr[i]
+                	print "V(Npred) = ",sqrt(Npred[i])
+                	print 
         func.SetLineColor(15)
         func.SetLineStyle(2)
         return func

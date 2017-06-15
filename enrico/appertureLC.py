@@ -33,7 +33,8 @@ def AppLC(infile):
     Obs = Observation(LCoutfolder, config, tag="")
     if config['AppLC']["FitsGeneration"] == "yes":
         _log('gtselect', 'Select data from library')#run gtselect
-        Obs.FirstCut()
+        #Obs.FirstCut()
+        Obs.SelectEvents()
         _log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
         Obs.MkTime()
 
