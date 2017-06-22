@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 #FARM = os.environ.get('FARM','MPIK')
 FARM  = os.environ.get('FARM','LOCAL')
 QUEUE = os.environ.get('QUEUE','batch')
+TORQUE_RESOURCES = os.environ.get('TORQUE_RESOURCES','')
 
 # Directory names
 ENRICO_DIR = os.environ.get('ENRICO_DIR', '')

@@ -31,9 +31,21 @@ def _options_to_str(options):
 
 def jobs_in_queue():
     """ Returns the number of jobs this user has in the queue """
+    import time
     from subprocess import Popen, PIPE
     user = os.environ['USER']
-    fh = Popen("qstat -u {user}".format(user=user), stdout=PIPE, shell=True)
+    for trial in xrange(60):
+        try:
+            fh = Popen("qstat -u {user}".format(user=user), \
+                    stdout=PIPE, shell=True)
+        except OSError:
+            # Wait 5 minutes and try again
+            time.sleep(300)
+            if trial==59:
+                raise
+        else:
+            break
+        
     njobs = len(fh.stdout.readlines())
     # If there are no jobs we will get 0 lines.
     # If there are jobs there will be two extra header lines.
@@ -54,10 +66,11 @@ def wait_for_slot(max_jobs):
 def GetSubCmd():
   queuetext = ""
   if [ environ.QUEUE != "" ]:
+      queueoptions = "%s " %(environ.TORQUE_RESOURCES) 
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'LOCAL' :   ['qsub -V','-l nice=19 %s'%queuetext],
+         'LOCAL' :   ['qsub -V','%s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
@@ -106,7 +119,7 @@ def call(cmd,
     if environ.FARM=="LAPP":
         max_jobs = 1000
     elif environ.FARM=="LOCAL":
-        max_jobs = 2000
+        max_jobs = 100
     elif environ.FARM=="CCIN2P3":
         max_jobs = 3500
 
