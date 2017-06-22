@@ -37,7 +37,8 @@ class Observation:
 
         #Fits files 
         self.eventcoarse = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
-        self.eventfile = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
+        self.eventfile   = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
+        self.mktimefile  = self.folder+'/'+self.srcname+inttag+"_MkTime.fits"
         self.Cubename  = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
         self.Mapname   = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
         self.BinnedMapfile = self.folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
@@ -90,10 +91,10 @@ class Observation:
 
     def Gtbin(self):
         """Run gtbin with the CMAP option. A count map is produced"""
-        if (self.clobber == "no" and os.path.isfile(self.cmapfile)):
+        if (self.clobber=="no" and os.path.isfile(self.cmapfile)):
             #print("File exists and clobber is False")
             return(0)
-        evtbin['evfile'] = self.eventfile
+        evtbin['evfile'] = self.mktimefile
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.cmapfile
         evtbin['algorithm'] = "CMAP"
@@ -111,7 +112,7 @@ class Observation:
         evtbin.run()
 
     def GtBinDef(self,filename):
-        if (self.clobber == "no" and os.path.isfile(self.BinDef)):
+        if (self.clobber=="no" and os.path.isfile(self.BinDef)):
             #print("File exists and clobber is False")
             return(0)
         bindef = GtApp('gtbindef', 'Likelihood')
@@ -136,10 +137,10 @@ class Observation:
     def GtLCbin(self,dt=60):
         """Run gtbin with the LC option. the default dt is 60 sec and data can be rebinned after.
           Can also take a file as input to define the time bins"""
-        if (self.clobber == "no" and os.path.isfile(self.lcfile)):
+        if (self.clobber=="no" and os.path.isfile(self.lcfile)):
             #print("File exists and clobber is False")
             return(0)
-        evtbin['evfile'] = self.eventfile
+        evtbin['evfile'] = self.mktimefile
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.lcfile
         evtbin['algorithm'] = "LC"
@@ -156,11 +157,11 @@ class Observation:
 
     def GtCcube(self):
         """Run gtbin with the CCUBE option"""
-        if (self.clobber == "no" and os.path.isfile(self.ccube)):
+        if (self.clobber=="no" and os.path.isfile(self.ccube)):
             #print("File exists and clobber is False")
             return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
-        evtbin['evfile'] = self.eventfile
+        evtbin['evfile'] = self.mktimefile
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.ccube
         evtbin['algorithm'] = "CCUBE"
@@ -185,7 +186,7 @@ class Observation:
 
     def GtBinnedMap(self):
         """Run the gtexpcube2 tool for binned analysis"""
-        if (self.clobber == "no" and os.path.isfile(self.BinnedMapfile)):
+        if (self.clobber=="no" and os.path.isfile(self.BinnedMapfile)):
             #print("File exists and clobber is False")
             return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
@@ -206,7 +207,7 @@ class Observation:
     
     def FirstCut(self):
         """Run gtselect tool"""
-        if (self.clobber == "no" and os.path.isfile(self.eventfile)):
+        if (self.clobber=="no" and os.path.isfile(self.eventcoarse)):
             #print("File exists and clobber is False")
             return(0)
         filter['infile'] = self.ft1
@@ -226,7 +227,7 @@ class Observation:
 
     def SelectEvents(self):
         """Run gtselect tool"""
-        if (self.clobber == "no" and os.path.isfile(self.eventfile)):
+        if (self.clobber=="no" and os.path.isfile(self.eventfile)):
             #print("File exists and clobber is False")
             return(0)
         filter['infile'] = self.eventcoarse
@@ -268,11 +269,14 @@ class Observation:
         with open(evlist_filename,'w') as evlistfile:
             evlistfile.writelines(eventlist)
 
-        # Redo first-cut to consolidate into single fits file (gtmktime does not accept lists!)
-        ft1 = self.ft1 # Store FT1 to restore it later
-        self.ft1 = evlist_filename
-        self.FirstCut()
-        self.ft1 = ft1
+        # Redo SelectEvents to consolidate into single fits file (gtmktime does not accept lists!)
+        eventcoarse = self.eventcoarse # Store eventcoarse to restore it later
+        clobber = self.clobber         # Store clobber settings, we will force clobber at this step
+        self.eventcoarse = evlist_filename
+        self.clobber = True
+        self.SelectEvents()
+        self.eventcoarse = eventcoarse
+        self.clobber = clobber
 
         # Clean cruft: all temp event files and event file list
         os.unlink(evlist_filename)
@@ -285,33 +289,33 @@ class Observation:
         if self.Configuration['time']['file'] != '':
             self.time_selection()
         selstr = self.Configuration['analysis']['filter']
-        outfile = self.eventfile+".tmp"
+        outfile = self.mktimefile+".tmp"
         ## Maketime does not listen to clobber variables
         if (not os.path.exists(outfile) or self.clobber):
             self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
-            os.system("mv "+self.eventfile+".tmp "+self.eventfile)
+            os.system("mv "+outfile+" "+self.mktimefile)
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""
-        if (self.clobber == "no" and os.path.isfile(outfile)):
+        if (self.clobber=="no" and os.path.isfile(self.diffrspflag)):
             #print("File exists and clobber is False")
             return(0)
-        maketime['scfile'] = self.ft2
-        maketime['filter'] = selstr#self.Configuration['analysis']['filter']
-        maketime['roicut'] = roicut
-        maketime['tstart'] = self.t1
-        maketime['tstop'] = self.t2
-        maketime['evfile']= self.eventfile
-        maketime['outfile']=outfile
+        maketime['scfile']  = self.ft2
+        maketime['filter']  = selstr #self.Configuration['analysis']['filter']
+        maketime['roicut']  = roicut
+        maketime['tstart']  = self.t1
+        maketime['tstop']   = self.t2
+        maketime['evfile']  = self.eventfile
+        maketime['outfile'] = outfile
         maketime['clobber'] = self.clobber
         maketime.run()
 
     def DiffResps(self):
         """run gtdiffresp"""
-        if (self.clobber == "no" and os.path.isfile(self.diffrspflag)):
+        if (self.clobber=="no" and os.path.isfile(self.diffrspflag)):
             #print("File exists and clobber is False")
             return(0)
-        diffResps['evfile']=self.eventfile
+        diffResps['evfile']=self.mktimefile
         diffResps['scfile']=self.ft2
         diffResps['srcmdl']=self.xmlfile
         if  self.Configuration['event']['irfs'] != 'CALDB':
@@ -332,10 +336,10 @@ class Observation:
 
     def ExpCube(self):
         "Run gtltcube tool to produce livetime cube"
-        if (self.clobber == "no" and os.path.isfile(self.Cubename)):
+        if (self.clobber=="no" and os.path.isfile(self.Cubename)):
             #print("File exists and clobber is False")
             return(0)
-        expCube['evfile']=self.eventfile
+        expCube['evfile']=self.mktimefile
         expCube['scfile']=self.ft2
         expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
@@ -347,11 +351,11 @@ class Observation:
 
     def ExpMap(self):
         "Run gtexpmap for unbinned analysis"
-        if (self.clobber == "no" and os.path.isfile(self.Mapname)):
+        if (self.clobber=="no" and os.path.isfile(self.Mapname)):
             #print("File exists and clobber is False")
             return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
-        expMap['evfile'] = self.eventfile
+        expMap['evfile'] = self.mktimefile
         expMap['scfile'] = self.ft2
         expMap['expcube'] = self.Cubename
         expMap['outfile'] = self.Mapname
@@ -368,7 +372,7 @@ class Observation:
 
     def SrcMap(self):
         """Run gtsrcmap tool for binned analysis"""
-        if (self.clobber == "no" and os.path.isfile(self.srcMap)):
+        if (self.clobber=="no" and os.path.isfile(self.srcMap)):
             #print("File exists and clobber is False")
             return(0)
         srcMaps['scfile'] = self.ft2
@@ -389,7 +393,7 @@ class Observation:
     def ModelMaps(self,xml):
         """Run gtmodelmap tool for binned analysis and make a subtraction of the produced map
          with the count map to produce a residual map"""
-        if (self.clobber == "no" and os.path.isfile(self.ModelMap)):
+        if (self.clobber=="no" and os.path.isfile(self.ModelMap)):
             #print("File exists and clobber is False")
             return(0)
         model_map['expcube'] = self.Cubename
@@ -410,11 +414,11 @@ class Observation:
     def FindSource(self):
         """Run the gtfindsrc tool"""
         outfile = utils._dump_findsrcout(self.Configuration)
-        if (self.clobber == "no" and os.path.isfile(outfile)):
+        if (self.clobber=="no" and os.path.isfile(outfile)):
             #print("File exists and clobber is False")
             return(0)
         findsrc = GtApp('gtfindsrc', 'Likelihood')
-        findsrc['evfile'] = self.eventfile
+        findsrc['evfile'] = self.mktimefile
         findsrc['scfile'] = self.ft2
         if  self.Configuration['event']['irfs'] != 'CALDB':
             findsrc['evtype']= self.Configuration['event']['evtype']
@@ -435,11 +439,11 @@ class Observation:
 
     def SrcProb(self):
         """Run the gtsrcprob tool"""
-        if (self.clobber == "no" and os.path.isfile(self.Probfile)):
+        if (self.clobber=="no" and os.path.isfile(self.Probfile)):
             #print("File exists and clobber is False")
             return(0)
         srcprob = GtApp('gtsrcprob', 'Likelihood')
-        srcprob['evfile'] = self.eventfile
+        srcprob['evfile'] = self.mktimefile
         srcprob['scfile'] = self.ft2
         if  self.Configuration['event']['irfs'] != 'CALDB':
             srcprob['evtype']= self.Configuration['event']['evtype']
@@ -453,7 +457,7 @@ class Observation:
         srcprob.run()
 
     def GtPSF(self):
-        if (self.clobber == "no" and os.path.isfile(self.psf)):
+        if (self.clobber=="no" and os.path.isfile(self.psf)):
             #print("File exists and clobber is False")
             return(0)
         Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade

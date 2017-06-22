@@ -257,6 +257,8 @@ class LightCurve(Loggin.Message):
             #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
             try :
                 ResultDic = utils.ReadResult(CurConfig)
+                if ResultDic == {}:
+                    raise(ValueError)
             except :
                 self._errorReading("Fail reading config file",i)
                 Nfail+=1
@@ -464,11 +466,13 @@ class LightCurve(Loggin.Message):
         utils._log('Computing Variability index ')
 
         self.config['Spectrum']['FitsGeneration'] = 'no'
- 	try :
-	        ResultDicDC = utils.ReadResult(self.generalconfig)
-	except :
-		self.warning("No results file found; please run enrico_sed first.")
-		return
+
+        try :
+            ResultDicDC = utils.ReadResult(self.generalconfig)
+        except :
+            self.warning("No results file found; please run enrico_sed first.")
+            return
+        
         LogL1 = []
         LogL0 = []
         Time = []
@@ -497,28 +501,28 @@ class LightCurve(Loggin.Message):
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!
-            self.info("Spectral index frozen to a value of 2")
-            if (self.config['target']['spectrum'] == 'PowerLaw' or
-                self.config['target']['spectrum'] == 'PowerLaw2'):
-                IndexName = 'Index'
-                IndexValue = -2
-            elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
-                self.config['target']['spectrum'] == 'PLSuperExpCutoff'):
-                IndexName = 'Index1'
-                IndexValue = -2
-            else:
-                IndexName = 'alpha'
-                IndexValue = 0.5
+            parameters = dict()
+            parameters['Index']  = -2.
+            parameters['alpha']  = +2.
+            parameters['Index1'] = -2.
+            parameters['beta']   = 0
+            parameters['Index2'] = 2.
+            parameters['Cutoff'] = 30000. # set the cutoff to be high
 
-            utils.FreezeParams(Fit, self.srcname, IndexName, IndexValue)
+            for key in parameters.keys():
+                try:
+                    utils.FreezeParams(Fit, self.srcname, key, parameters[key])
+                except:
+                    continue
 
             LogL1.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
-            Model_type = Fit.model.srcs[self.srcname].spectrum().genericName()
-            if (Model_type == 'PowerLaw') :
-                utils.FreezeParams(Fit, self.srcname, 'Prefactor', utils.fluxNorm(ResultDicDC['Prefactor']))
-            if (Model_type == 'PowerLaw2') :
-                utils.FreezeParams(Fit, self.srcname, 'Integral', utils.fluxNorm(ResultDicDC['Integral']))
+            for key in ["norm","Prefactor","Integral"]:
+                try:
+                    utils.FreezeParams(Fit,self.srcname,key, utils.fluxNorm(ResultsDicDC[key]))
+                except:
+                    continue
+            
             LogL0.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
             del Fit #Clean memory

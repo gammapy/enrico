@@ -145,6 +145,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     Fits[k] = Analyses[k].CreateLikeObject()
                     Fit.addComponent(Fits[k])
                 except RuntimeError,e:
+                    raise
                     if 'RuntimeError: gtltcube execution failed' in str(e):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
             FitRunner = Analyses[0]
@@ -202,7 +203,7 @@ def run(infile):
             varscale = None
             if genericName=="PowerLaw2":
                 varscale = None
-            elif genericName in ["PowerLaw", "PLSuperExpCutoff"]:
+            elif genericName in ["PowerLaw", "PLSuperExpCutoff", "EblAtten::PLSuperExpCutoff"]:
                 varscale = "Scale"
             elif genericName in ["LogParabola","EblAtten::LogParabola", \
                                  "BrokenPowerLaw", "EblAtten::BrokenPowerLaw"]:

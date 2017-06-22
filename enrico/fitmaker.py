@@ -105,24 +105,25 @@ class FitMaker(Loggin.Message):
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
 
-        if float(self.config['Spectrum']['FrozenSpectralIndex']) > 0:
-            if Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw" or\
-                    Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PowerLaw2":
-                PhIndex = Fit.par_index(self.obs.srcname, 'Index')
-                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-                Fit.freeze(PhIndex)
-            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
-                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
-                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-                Fit.freeze(PhIndex)
-                self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
-            elif Fit.model.srcs[self.obs.srcname].spectrum().genericName()=="PLSuperExpCutoff":
-                PhIndex = Fit.par_index(self.obs.srcname, 'Index1')
-                Fit[PhIndex] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-                Fit.freeze(PhIndex)
-                self.info("Freezing spectral index at -"+str(self.config['Spectrum']['FrozenSpectralIndex']))
-            else:
-              self.warning("The model is not a PowerLaw. Cannot freeze the index.")
+        if float(self.config['Spectrum']['FrozenSpectralIndex']) != 0:
+            parameters = dict()
+            parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+            parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
+            parameters['Index1'] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+            parameters['beta']   = 0
+            parameters['Index2'] = 2.
+            parameters['Cutoff'] = 30000. # set the cutoff to be high
+            
+            for key in parameters.keys():
+                try:
+                    IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
+                    Fit[IdGamma] = parameters[key] # set the parameter
+                    Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
+                except:
+                    continue
+                else:
+                    self.info("Freezing %s at %s"\
+                            %(key,str(self.config['Spectrum']['FrozenSpectralIndex'])))
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
     def PerformFit(self, Fit, writeXml = True):
@@ -349,9 +350,19 @@ class FitMaker(Loggin.Message):
         #Index given by the user
         self.info("Assumed index is "+str(self.config['UpperLimit']['SpectralIndex']))
 
-        IdGamma = utils.getParamIndx(Fit, self.obs.srcname, 'Index')
-        Fit[IdGamma] = -self.config['UpperLimit']['SpectralIndex']#set the index
-        Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
+        parameters = dict()
+        parameters['Index']  = -float(self.config['UpperLimit']['SpectralIndex'])
+        parameters['alpha']  = +float(self.config['UpperLimit']['SpectralIndex'])
+        parameters['Index1'] = -float(self.config['UpperLimit']['SpectralIndex'])
+        parameters['beta']   = 0
+        parameters['Index2'] = 2.
+        parameters['Cutoff'] = 30000. # set the cutoff to be high
+        
+        for key in parameters.keys():
+            try:
+                utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key])
+            except:
+                continue
 
         import scipy.stats
         cl = float(self.config['UpperLimit']['cl'])
@@ -400,8 +411,7 @@ class FitMaker(Loggin.Message):
 
         for i in xrange(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
-            Fit[PhIndex] = indx
-            Fit.freeze(PhIndex)#Freeze the index
+            utils.FreezeParams(Fit,self.srcname,PhIndex,indx)
             #Use either the profile or the integral method
             self.info("Methode used: "+self.config['UpperLimit']['Method'])
             if self.config['UpperLimit']['Method'] == "Profile":
