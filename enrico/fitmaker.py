@@ -97,7 +97,7 @@ class FitMaker(Loggin.Message):
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
-            Obs = UnbinnedObs(self.obs.eventfile,
+            Obs = UnbinnedObs(self.obs.mktimefile,
                               self.obs.ft2,
                               expMap=self.obs.Mapname,
                               expCube=self.obs.Cubename,
