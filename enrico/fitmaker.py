@@ -37,7 +37,7 @@ class FitMaker(Loggin.Message):
               (self.task_number, task, description))
         print "\033[34m"+'# ' + '*' * 60+"\033[0m"
         self.task_number += 1
-        
+
     def FirstSelection(self,config=None):
         """Make a coarse selection of events from original file"""
         self._log('gtselect', 'Select data from library, coarse cut')#run gtselect
@@ -97,7 +97,7 @@ class FitMaker(Loggin.Message):
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
-            Obs = UnbinnedObs(self.obs.eventfile,
+            Obs = UnbinnedObs(self.obs.mktimefile,
                               self.obs.ft2,
                               expMap=self.obs.Mapname,
                               expCube=self.obs.Cubename,
@@ -113,7 +113,7 @@ class FitMaker(Loggin.Message):
             parameters['beta']   = 0
             parameters['Index2'] = 2.
             parameters['Cutoff'] = 30000. # set the cutoff to be high
-            
+
             for key in parameters.keys():
                 try:
                     IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
@@ -278,7 +278,7 @@ class FitMaker(Loggin.Message):
         except:
             self.obs.GtLCbin(dt = self.config['time']['tmax']-self.config['time']['tmin'])
             #spfile = pyfits.open(self.obs.lcfile)
-        
+
         try:
             self.obs.Configuration['AppLC']['index'] = self.config['UpperLimit']['SpectralIndex']
         except:
@@ -287,7 +287,7 @@ class FitMaker(Loggin.Message):
             except:
                 self.info("Cannot find the spectral index")
                 self.obs.Configuration['AppLC']['index'] = 1.5
-        
+
         self.info("Assuming spectral index of %s" %self.info("Assuming default index of 1.5"))
         self.obs.GtExposure()
         Exposure = np.sum(spfile[1].data.field("EXPOSURE"))
@@ -357,7 +357,7 @@ class FitMaker(Loggin.Message):
         parameters['beta']   = 0
         parameters['Index2'] = 2.
         parameters['Cutoff'] = 30000. # set the cutoff to be high
-        
+
         for key in parameters.keys():
             try:
                 utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key])
