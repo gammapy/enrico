@@ -42,14 +42,13 @@ class Result(Loggin.Message):
 
     def GetDecorrelationEnergy(self,par):
         self.E, self.SED = self.MakeSED(par)
-        self.Err = self.MakeSEDError(par)
-        for i in xrange(par.N):
-          if self.Err[i]/self.SED[i] == min(self.Err/self.SED):
-            self.decE       = self.E[i]
-            self.decFlux    = self.SED[i]/self.E[i]**2*ERG_TO_MEV
-            self.decFluxerr = self.Err[i]/self.E[i]**2*ERG_TO_MEV
-            self.decSED     = self.SED[i]
-            self.decSEDerr  = self.Err[i]
+        self.Err         = self.MakeSEDError(par)
+        i=np.argmin(self.Err/self.SED)
+        self.decE       = self.E[i]
+        self.decFlux    = self.SED[i]/self.E[i]**2*ERG_TO_MEV
+        self.decFluxerr = self.Err[i]/self.E[i]**2*ERG_TO_MEV
+        self.decSED     = self.SED[i]
+        self.decSEDerr  = self.Err[i]
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
