@@ -180,10 +180,6 @@ def run(infile):
     # create all the fit files and run gtlike
     FitRunner.PerformFit(Fit)
 
-    #Get and dump the target specific results
-    Result = FitRunner.GetAndPrintResults(Fit)
-    utils.DumpResult(Result, config)
-
     #plot the SED and model map if possible and asked
     if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
         if config['Spectrum']['ResultPlots'] == 'yes':
@@ -212,8 +208,10 @@ def run(infile):
             if varscale is not None:
                 spectrum.getParam(varscale).setValue(sedresult.decE)
                 FitRunner.PerformFit(Fit)
-
-
+            
+    #Get and dump the target specific results
+    Result = FitRunner.GetAndPrintResults(Fit)
+    utils.DumpResult(Result, config)
 
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
