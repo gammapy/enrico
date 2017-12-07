@@ -262,8 +262,6 @@ class Observation:
             outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
             self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
-            maketime['outfile'] = outfile
-            maketime.run()
 
         evlist_filename = self.eventfile.replace('.fits','.list')
         with open(evlist_filename,'w') as evlistfile:
@@ -286,18 +284,20 @@ class Observation:
     def MkTime(self):
         import os.path
         """compute GTI"""
+        ## Maketime does not listen to clobber variables
+        if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
+            return(0)
+
         if self.Configuration['time']['file'] != '':
             self.time_selection()
         selstr = self.Configuration['analysis']['filter']
         outfile = self.mktimefile+".tmp"
-        ## Maketime does not listen to clobber variables
-        if (not os.path.exists(outfile) or self.clobber):
-            self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
-            os.system("mv "+outfile+" "+self.mktimefile)
+        self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
+        os.system("mv "+outfile+" "+self.mktimefile)
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""
-        if (self.clobber=="no" and os.path.isfile(self.diffrspflag)):
+        if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
             #print("File exists and clobber is False")
             return(0)
         maketime['scfile']  = self.ft2

@@ -276,6 +276,8 @@ def time_selection_string(config,numbin0):
 
     selstr=''
     last=True
+
+    if np.shape(bins)==(2,): bins = [bins]
     for numbin in range(numbin0,len(bins)):
         tbin=bins[numbin]
         selstr+='((START>{0:.0f})&&(STOP<{1:.0f}))||'.format(tbin[0],tbin[1])
