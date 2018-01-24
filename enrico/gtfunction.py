@@ -360,13 +360,13 @@ class Observation:
         expMap['expcube'] = self.Cubename
         expMap['outfile'] = self.Mapname
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            expMap['evtype']= self.Configuration['event']['evtype']
+            expMap['evtype'] = self.Configuration['event']['evtype']
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = self.roi+10
-        #The number of bin is the number of decade * the number of bin per decade (given by the users)
-        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        #The number of bin is the number of decade * the number of bin per decade (given by the users, with a minimum of 2)
+        expMap['nenergies'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         expMap.run()
 
@@ -471,7 +471,7 @@ class Observation:
         psf["dec"]     = self.dec
         psf["emin"]    = self.Emin
         psf["emax"]    = self.Emax
-        psf["nenergies"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         psf.run()
 
