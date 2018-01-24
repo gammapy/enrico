@@ -74,14 +74,14 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         iTS = sedresult.SED/sedresult.Err
         TScumula = 0
         TSperbin = 1.*sum(iTS)/NEbin
-        ener = [lEmin]
+        ener = [10**lEmin]
         while ipo<len(sedresult.E)-1:
             TScumula += iTS[ipo]
             if TScumula/TSperbin > 1:
-                ener.append(sedresult.E[ipo])
+                ener.append(10**sedresult.E[ipo])
                 TScumula -= TSperbin
             ipo += 1
-        ener.append(lEmax)
+        ener.append(10**lEmax)
     else:
         # Make the bins equispaced in logE (standard) 
         ener = np.logspace(lEmin, lEmax, NEbin + 1)
