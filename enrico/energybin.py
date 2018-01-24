@@ -134,7 +134,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     return paramsfile
 
 
-def RunEbin(folder,Nbin,Fit,FitRunner,sedresult==None):
+def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
     if int(Nbin) > 0:
         configfiles = PrepareEbin(Fit, FitRunner,sedresult)
         ind = 0
