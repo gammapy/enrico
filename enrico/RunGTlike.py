@@ -219,12 +219,12 @@ def run(infile):
             # the possiblity of making the model map is checked inside the function
             FitRunner.ModelMap(outXml)
 
-
-
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
-    energybin.RunEbin(folder,Nbin,Fit,FitRunner)
 
+    energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
+    
+    del(sedresult)
     del(Result)
     del(FitRunner)
 

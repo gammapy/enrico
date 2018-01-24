@@ -35,7 +35,7 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
 
     return Fit
 
-def PrepareEbin(Fit, FitRunner):
+def PrepareEbin(Fit, FitRunner,sedresult=None):
     """ Prepare the computation of spectral point in energy bins by
     i) removing the weak sources (TS<1) # not true
     ii) updating the config file (option and energy)
@@ -68,7 +68,24 @@ def PrepareEbin(Fit, FitRunner):
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
-    ener = np.logspace(lEmin, lEmax, NEbin + 1)
+    if config['Ebin']['TSDistEbin'] = 'yes' and sedresult!=None:
+        # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
+        ipo = 0
+        iTS = sedresult.SED/sedresult.Err
+        TScumula = 0
+        TSperbin = 1.*sum(iTS)/NEbin
+        ener = [lEmin]
+        while ipo<len(sedresult.E):
+            TScumula += iTS[ipo]
+            ipo += 1
+            if TScumula/TSperbin > 1:
+                ener.append(sedresult.E[ipo])
+                TScumula -= TSperbin
+        ener.append(lEmax)
+    else:
+        # Make the bins equispaced in logE (standard) 
+        ener = np.logspace(lEmin, lEmax, NEbin + 1)
+
     os.system("mkdir -p " + config['out'])
     paramsfile = []
 
@@ -117,9 +134,9 @@ def PrepareEbin(Fit, FitRunner):
     return paramsfile
 
 
-def RunEbin(folder,Nbin,Fit,FitRunner):
+def RunEbin(folder,Nbin,Fit,FitRunner,sedresult==None):
     if int(Nbin) > 0:
-        configfiles = PrepareEbin(Fit, FitRunner)
+        configfiles = PrepareEbin(Fit, FitRunner,sedresult)
         ind = 0
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
