@@ -75,12 +75,12 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         TScumula = 0
         TSperbin = 1.*sum(iTS)/NEbin
         ener = [lEmin]
-        while ipo<len(sedresult.E):
+        while ipo<len(sedresult.E)-1:
             TScumula += iTS[ipo]
-            ipo += 1
             if TScumula/TSperbin > 1:
                 ener.append(sedresult.E[ipo])
                 TScumula -= TSperbin
+            ipo += 1
         ener.append(lEmax)
     else:
         # Make the bins equispaced in logE (standard) 
