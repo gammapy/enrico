@@ -68,7 +68,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
-    if config['Ebin']['TSDistEbin'] = 'yes' and sedresult!=None:
+    if config['Ebin']['TSDistEbin'] == 'yes' and sedresult!=None:
         # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
         ipo = 0
         iTS = sedresult.SED/sedresult.Err
