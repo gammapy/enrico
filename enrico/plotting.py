@@ -363,7 +363,8 @@ def PlotDataPoints(config,pars):
         #fill the energy arrays
         Epoint[i] = results.get("Scale")
         if Epoint[i] in [results.get("Emin"),results.get("Emax")]:
-            Epoint[i] = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
+            Epoint[i] = 10**((np.log10(results.get("Emin"))+np.log10(results.get("Emax")))/2.)
+            #Epoint[i] = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
 
         EpointErrm[i] = Epoint[i] - results.get("Emin")
         EpointErrp[i] = results.get("Emax") - Epoint[i]
