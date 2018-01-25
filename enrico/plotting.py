@@ -349,7 +349,7 @@ def PlotDataPoints(config,pars):
 
     from enrico.constants import EbinPath
     for i in xrange(NEbin):#Loop over the energy bins
-        E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
+        #E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/'+EbinPath+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
         
@@ -358,12 +358,15 @@ def PlotDataPoints(config,pars):
             mes.info("Reading "+filename)
             results = utils.ReadResult(CurConf)
         except:
-            mes.warning("cannot read the Results of energy "+ str(E))
+            mes.warning("cannot read the Results of energy bin "+ str(i))
             continue
         #fill the energy arrays
-        Epoint[i] = E
-        EpointErrm[i] = E - results.get("Emin")
-        EpointErrp[i] = results.get("Emax") - E
+        Epoint[i] = results.get("Scale")
+        if Epoint[i] in [results.get("Emin"),results.get("Emax")]:
+            Epoint[i] = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
+
+        EpointErrm[i] = Epoint[i] - results.get("Emin")
+        EpointErrp[i] = results.get("Emax") - Epoint[i]
         dprefactor = 0
 
         #Compute the flux or the UL (in SED format)
