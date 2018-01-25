@@ -67,7 +67,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
-    if config['Ebin']['TSDistEbin'] == 'yes' and sedresult!=None:
+    if config['Ebin']['DistEbins'] in ['TS','mix'] and sedresult!=None:
         # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
         ipo = 0
         iTS = sedresult.SED/sedresult.Err
@@ -81,6 +81,10 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
                 TScumula -= TSperbin
             ipo += 1
         ener.append(10**lEmax)
+        ener = np.array(ener)
+        # intermediate approach (between both TS-spaced and logE spaced)
+        if config['Ebin']['DistEbins'] == 'mix':
+            ener = 0.5*(ener + np.logspace(lEmin, lEmax, NEbin + 1))
     else:
         # Make the bins equispaced in logE (standard)
         ener = np.logspace(lEmin, lEmax, NEbin + 1)

@@ -373,7 +373,7 @@ def PlotDataPoints(config,pars):
         #Compute the flux or the UL (in SED format)
         if results.has_key('Ulvalue'):
             PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
-                                    results.get("Emin"),results.get("Emax"),E)
+                                    results.get("Emin"),results.get("Emax"),Epoint[i])
             Fluxpoint[i] = MEV_TO_ERG  * PrefUl * Epoint[i] ** 2
             arrows.append(ROOT.TArrow(Epoint[i], Fluxpoint[i], Epoint[i],
                                      Fluxpoint[i] * 0.5, 0.02, "|>"))
