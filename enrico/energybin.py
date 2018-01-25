@@ -12,26 +12,25 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     If the spectral model is PowerLaw, the prefactor is updated
     if not the model is change to PowerLaw.
     The index is frozen in all cases"""
-    
+
     # if approximated Gamma is outside of bounds set it to limit
     Gamma_min=-5
     Gamma_max=0.5
     Gamma = min(max(Gamma_min,Gamma),Gamma_max)
-    
+
     Eav = utils.GetE0(E1, E2)
 
     for comp in Fit.components:
         # Set Parameters
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(utils.fluxScale(Pref))
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(utils.fluxNorm(Pref))
-
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(Gamma_min,Gamma_max)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
-
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
+        spectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
+        spectrum.getParam('Prefactor').setBounds(1e-5,1e5)
+        spectrum.getParam('Prefactor').setScale(utils.fluxScale(Pref))
+        spectrum.getParam('Prefactor').setValue(utils.fluxNorm(Pref))
+        spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
+        spectrum.getParam('Index').setValue(Gamma)
+        spectrum.getParam('Index').setFree(0)
+        spectrum.getParam('Scale').setValue(Eav)
+        spectrum.getParam('Scale').setBounds(20,3e6)
 
     return Fit
 
@@ -42,7 +41,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     and save it in a new ascii file
     iii) changing the spectral model and saving it in a new xml file.
     A list of the ascii files is returned"""
-        
+
     NEbin = int(FitRunner.config['Ebin']['NumEnergyBins'])
 
     config = FitRunner.config
@@ -78,12 +77,12 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         while ipo<len(sedresult.E)-1:
             TScumula += iTS[ipo]
             if TScumula/TSperbin > 1:
-                ener.append(10**sedresult.E[ipo])
+                ener.append(sedresult.E[ipo])
                 TScumula -= TSperbin
             ipo += 1
         ener.append(10**lEmax)
     else:
-        # Make the bins equispaced in logE (standard) 
+        # Make the bins equispaced in logE (standard)
         ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
     os.system("mkdir -p " + config['out'])
@@ -120,7 +119,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
         config['energy']['decorrelation_energy'] = "no"
-        # Change the spectral index to follow the Estimated Gamma 
+        # Change the spectral index to follow the Estimated Gamma
         # if approximated Gamma is outside of bounds set it to limit
         Gamma_min=-5
         Gamma_max=0.5
