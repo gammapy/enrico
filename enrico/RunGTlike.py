@@ -179,6 +179,7 @@ def run(infile):
     FitRunner,Fit = GenAnalysisObjects(config)
     # create all the fit files and run gtlike
     FitRunner.PerformFit(Fit)
+    sedresult = None
 
     #plot the SED and model map if possible and asked
     if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
@@ -215,9 +216,9 @@ def run(infile):
 
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
-        if config['Spectrum']['SummedLike'] != 'yes':
-            # the possiblity of making the model map is checked inside the function
-            FitRunner.ModelMap(outXml)
+        #if config['Spectrum']['SummedLike'] != 'yes':
+        # the possiblity of making the model map is checked inside the function
+        FitRunner.ModelMap(outXml)
 
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
