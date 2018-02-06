@@ -287,6 +287,7 @@ def PlotNpred(Npred, Flux, FluxErr):
 
 def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
     """Scatter plot X(Time)"""
+
     ArrowSize = (max(x) + max(xErr) * 1.3 -
         (min(x) - max(xErr) * 1.3)) * 0.1
     
@@ -308,8 +309,8 @@ def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
     tgraph.SetMarkerStyle(20)
     return gh, tgraph, arrows
 
-def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
-    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr)
+def PlotFoldedLC(Time, TimeErr, Flux, FluxErr, tag="Flux (photon cm^{-2} s^{-1})"):
+    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr, tag)
 
     xmin = 0
     xmax = 1
@@ -322,7 +323,7 @@ def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     gh.SetXTitle("Orbital Phase")
-    gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
+    gh.SetYTitle(tag)
     return gh, tgraph, arrows
 
 def PlotDataPoints(config,pars):
