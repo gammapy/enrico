@@ -243,11 +243,11 @@ class Result(Loggin.Message):
 
         # Save the plots in different formats
         filebase = Parameter.PlotName
-        cplot.Print(filebase + "_CountsPlot.eps")
         cplot.Print(filebase + "_CountsPlot.C")
+        cplot.Print(filebase + "_CountsPlot.eps")
         cplot.Print(filebase + "_CountsPlot.png")
-        cres.Print(filebase + "_ResPlot.eps")
         cres.Print(filebase + "_ResPlot.C")
+        cres.Print(filebase + "_ResPlot.eps")
         cres.Print(filebase + "_ResPlot.png")
         os.system("rm " + imName)
         image.close()
