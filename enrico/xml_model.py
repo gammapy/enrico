@@ -75,15 +75,15 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
     else:
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
-    
+
     try:
         spec.setAttribute('type', 'EblAtten::PowerLaw')
-        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
-        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20) 
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
         spec.setAttribute('type', 'PowerLaw')
-    
+
     addParameter(spec, 'Prefactor',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index', index_free, index_value, 1.0,
@@ -120,9 +120,9 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
     spec = doc.createElement('spectrum')
     try:
         spec.setAttribute('type', 'EblAtten::PowerLaw2')
-        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
-        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20) 
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
         spec.setAttribute('type', 'PowerLaw2')
     addParameter(spec, 'Integral',
@@ -164,9 +164,9 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
     spec = doc.createElement('spectrum')
     try:
         spec.setAttribute('type', 'EblAtten::LogParabola')
-        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
-        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20) 
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
         spec.setAttribute('type', 'LogParabola')
     addParameter(spec, 'norm',
@@ -212,9 +212,9 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
     spec = doc.createElement('spectrum')
     try:
         spec.setAttribute('type', 'EblAtten::BrokePowerLaw2')
-        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
-        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20) 
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
         spec.setAttribute('type', 'BrokePowerLaw2')
     addParameter(spec, 'Integral',
@@ -260,9 +260,9 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
     spec = doc.createElement('spectrum')
     try:
         spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff')
-        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5) 
-        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5) 
-        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20) 
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
         spec.setAttribute('type', 'PLSuperExpCutoff')
     addParameter(spec, 'Prefactor',
@@ -274,7 +274,7 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
                  cutoff_min, cutoff_max)
     addParameter(spec, 'Index2', index2_free, index2_value, 1.0,
                  index2_min, index2_max)
-   
+
     src.appendChild(spec)
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
@@ -326,22 +326,49 @@ def GetlistFromFits(config, catalog):
     dec = data.field('DEJ2000')
     flux = data.field('Flux_Density')
     pivot = data.field('Pivot_Energy')
-    index = data.field('Spectral_Index')
+    is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
     try :  # valid for the 2FGH, not for the 1FHL
-      cutoff = data.field('Cutoff')
-      beta = data.field('beta')
-      spectype = data.field('SpectrumType')
+      if is8yr:
+        spectype = data.field('SpectrumType')
+        index = data.field('PL_Index')
+        #if spectype is 'PowerLaw':
+        #    index = data.field('PL_Index')
+        #if spectype is 'LogParabola':
+        #index = data.field('LP_Index')
+        beta  = data.field('LP_beta')
+        #if spectype is 'PLSuperExpCutoff2':
+        # From the makeFL8Yxml.py script
+        #index  = data.field('PLEC_Index')
+        #pivot  = data.field('PivotEnergy')
+        expfac = data.field('PLEC_Expfactor')
+        expind = data.field('PLEC_Exp_Index')
+        cutoff=(1./expfac)**(1./expind)
+        #cutoff = data.field('Cutoff')
+        #beta = data.field('LP_beta')
+      else:
+        index = data.field('Spectral_Index')
+        cutoff = data.field('Cutoff')
+        beta = data.field('beta')
+        spectype = data.field('SpectrumType')
     except :
+      raise
+      index = data.field('Spectral_Index')
       cutoff = np.zeros(names.size)
       beta = np.zeros(names.size)
       spectype = np.array(names.size*["PowerLaw"])
       pivot *= 1e3 ## energy in the 1FHL are in GeV
       flux *= 1e3
+
     try :
       extendedName    = data.field('Extended_Source_Name')
-      extendedfits    = cfile[5].data.field('Spatial_Filename')
-      extendedsrcname = cfile[5].data.field('Source_Name')
+      if is8yr:
+        extendedfits    = cfile[2].data.field('Spatial_Filename')
+        extendedsrcname = cfile[2].data.field('Source_Name')
+      else:
+        extendedfits    = cfile[5].data.field('Spatial_Filename')
+        extendedsrcname = cfile[5].data.field('Source_Name')
     except:
+      raise
       mes.warning("Cannot find the extended source list: please check the xml")
       extendedName = np.array(names.size*[""])
       extendedsrcname = []
@@ -419,7 +446,7 @@ def GetlistFromFits(config, catalog):
                        'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
                        'SpectrumType': model,'ExtendedName': ""})
 
-    
+
     mes.info("Summary of the XML model generation")
     print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
@@ -488,7 +515,7 @@ def WriteXml(lib, doc, srclist, config):
 
     print "Iso model file ",Iso
     print "Galactic model file ",Gal
-  
+
     yesnodict = {}
     for y in ['yes',True,'true',1,1.0,'1','1.0']:
         yesnodict[y] = 1
@@ -532,22 +559,24 @@ def WriteXml(lib, doc, srclist, config):
                               alpha_free=free, alpha_value=abs(srclist[i].get('index')),
                               beta_free=0, beta_min=0, beta_max=0,
                               beta_value=0,extendedName=extendedName)
-        if spectype.strip() == "PowerLaw2":
+        elif spectype.strip() == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec, ebl,
                             emin=emin, emax=emax,
                             flux_free=free, flux_value=srclist[i].get('flux'),
                             index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
-        if spectype.strip() == "LogParabola":
+        elif spectype.strip() == "LogParabola":
             addPSLogparabola(lib, name, ra, dec, ebl, enorm=srclist[i].get('scale'),
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=free, alpha_value=abs(srclist[i].get('index')),
                               beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName)
-        if spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff":
+        elif spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff" or spectype == "PLSuperExpCutoff2":
             addPSPLSuperExpCutoff(lib, name, ra, dec, ebl,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=free, index1_value=srclist[i].get('index'),
                               cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
+        else:
+            print('Warning!!!, unknown model %s' %spectype.strip())
 
     folder = config['out']
     os.system('mkdir -p ' + folder)
