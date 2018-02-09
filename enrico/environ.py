@@ -47,6 +47,7 @@ except :
 
 # File names
 CATALOG_VERSION = '16'
+CATALOG_8yr_VERSION = '5'
 TEMPLATE_VERSION = '15'
 if CATALOG_DIR :
   CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_v%s/Templates'% TEMPLATE_VERSION)
@@ -56,6 +57,7 @@ if CATALOG_DIR :
     pass
 
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
+CATALOG_8yr = 'gll_psc_8year_v%s.fit' % CATALOG_8yr_VERSION
 DIFFUSE_GAL = 'gll_iem_v06.fits'
 DIFFUSE_ISO_SOURCE = 'iso_P8R2_SOURCE_V6_v06.txt'
 DIFFUSE_ISO_SOURCE = 'iso_P8R2_SOURCE_V6_v06.txt'
