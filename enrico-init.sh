@@ -15,6 +15,7 @@
 # $ init_fermi
 # $ init_enrico
 
+export ENRICO_DIR=/Users/davidsanchez/Soft/enrico
 echo "Adding Enrico to PATH and PYTHONPATH"
 export PATH=$PATH:$ENRICO_DIR/bin
 export PYTHONPATH=$ENRICO_DIR:$PYTHONPATH

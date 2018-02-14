@@ -180,7 +180,7 @@ class Observation:
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
         #The number of bin is the number of decade * the number of bin 
         #per decade (given by the users). The +0.5 rounds it properly
-        evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        evtbin["enumbins"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         evtbin['clobber'] = self.clobber
         evtbin.run()
 
@@ -199,7 +199,7 @@ class Observation:
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
-        expcube2['enumbins'] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
@@ -365,8 +365,8 @@ class Observation:
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = self.roi+10
-        #The number of bin is the number of decade * the number of bin per decade (given by the users)
-        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        #The number of bin is the number of decade * the number of bin per decade (given by the userss, with a minimum of 2)
+        expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         expMap.run()
 
@@ -471,7 +471,7 @@ class Observation:
         psf["dec"]     = self.dec
         psf["emin"]    = self.Emin
         psf["emax"]    = self.Emax
-        psf["nenergies"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         psf.run()
 
