@@ -37,7 +37,7 @@ class FitMaker(Loggin.Message):
               (self.task_number, task, description))
         print "\033[34m"+'# ' + '*' * 60+"\033[0m"
         self.task_number += 1
-        
+
     def FirstSelection(self,config=None):
         """Make a coarse selection of events from original file"""
         self._log('gtselect', 'Select data from library, coarse cut')#run gtselect
@@ -97,7 +97,7 @@ class FitMaker(Loggin.Message):
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
-            Obs = UnbinnedObs(self.obs.eventfile,
+            Obs = UnbinnedObs(self.obs.mktimefile,
                               self.obs.ft2,
                               expMap=self.obs.Mapname,
                               expCube=self.obs.Cubename,
@@ -105,15 +105,15 @@ class FitMaker(Loggin.Message):
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
 
-        if float(self.config['Spectrum']['FrozenSpectralIndex']) != 0:
+        if float(self.config['Spectrum']['FrozenSpectralIndex'] and self.config['target']['spectrum']) == "PowerLaw":
             parameters = dict()
             parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-            parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
-            parameters['Index1'] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-            parameters['beta']   = 0
-            parameters['Index2'] = 2.
-            parameters['Cutoff'] = 30000. # set the cutoff to be high
-            
+            # parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
+            # parameters['Index1'] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+            # parameters['beta']   = 0
+            # parameters['Index2'] = 2.
+            # parameters['Cutoff'] = 30000. # set the cutoff to be high
+
             for key in parameters.keys():
                 try:
                     IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
@@ -132,14 +132,16 @@ class FitMaker(Loggin.Message):
         the releveant results"""
 
         self._log('gtlike', 'Run likelihood analysis')
-        try:
-            Fit.fit(0, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
-        except:
-            self.warning("First FIT did not converge with DRMNGB, trying DRMNFB")
-            try:
-                Fit.fit(0, optimizer="DRMNFB")
-            except:
-                self.warning("First FIT did not converge with DRMNFB either")
+        # TODO fix this part
+
+        # try:
+        # Fit.fit(0,covar=False, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
+        # except:
+            # self.warning("First FIT did not converge with DRMNGB, trying DRMNFB")
+            # try:
+                # Fit.fit(0, optimizer="DRMNFB")
+            # except:
+                # self.warning("First FIT did not converge with DRMNFB either")
 
         # Now the precise fit will be done
         #change the fit tolerance to the one given by the user
@@ -147,8 +149,7 @@ class FitMaker(Loggin.Message):
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
         self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
         #fit with the user optimizer and ask gtlike to compute the covariance matrix
-        if self.config['verbose'] == 'yes' :
-            print Fit
+
         # remove source with TS<min_source_TS (default=1)
         # to be sure that MINUIT will converge
         try:             self.config['fitting']['min_source_TS']
@@ -278,7 +279,7 @@ class FitMaker(Loggin.Message):
         except:
             self.obs.GtLCbin(dt = self.config['time']['tmax']-self.config['time']['tmin'])
             #spfile = pyfits.open(self.obs.lcfile)
-        
+
         try:
             self.obs.Configuration['AppLC']['index'] = self.config['UpperLimit']['SpectralIndex']
         except:
@@ -287,7 +288,7 @@ class FitMaker(Loggin.Message):
             except:
                 self.info("Cannot find the spectral index")
                 self.obs.Configuration['AppLC']['index'] = 1.5
-        
+
         self.info("Assuming spectral index of %s" %self.info("Assuming default index of 1.5"))
         self.obs.GtExposure()
         Exposure = np.sum(spfile[1].data.field("EXPOSURE"))
@@ -357,7 +358,7 @@ class FitMaker(Loggin.Message):
         parameters['beta']   = 0
         parameters['Index2'] = 2.
         parameters['Cutoff'] = 30000. # set the cutoff to be high
-        
+
         for key in parameters.keys():
             try:
                 utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key])

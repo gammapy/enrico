@@ -177,24 +177,26 @@ def GetSrc(Fit,ra,dec):
     """ return a Source object by cloning a pointlike source from the Fit object
     the source is rename, move to (ra,dec) and the spetral model is change to PowerLaw"""
     ind = 0
-    for name in  Fit.logLike.srcNames() :
-        src = Fit.logLike.getSource(name).clone()
-        if str(type(src))=="<type 'NoneType'>" :
-            continue
-        if src.getType() == 'Point' :
-            src.setName("Spurious")
-            src.setSpectrum("PowerLaw")
-            src.getSrcFuncs()['Position'].getParam('RA').setValue(ra)
-            src.getSrcFuncs()['Position'].getParam('DEC').setValue(dec)
+    
+    for comp in Fit.components:
+        for name in  comp.logLike.srcNames() :
+            src = comp.logLike.getSource(name).clone()
+            if str(type(src))=="<type 'NoneType'>" :
+                continue
+            if src.getType() == 'Point' :
+                src.setName("Spurious")
+                src.setSpectrum("PowerLaw")
+                src.getSrcFuncs()['Position'].getParam('RA').setValue(ra)
+                src.getSrcFuncs()['Position'].getParam('DEC').setValue(dec)
 
-            src.getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
-            src.getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-9)
-            src.getSrcFuncs()['Spectrum'].getParam('Index').setBounds(-5,0)
+                src.getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
+                src.getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(1e-9)
+                src.getSrcFuncs()['Spectrum'].getParam('Index').setBounds(-5,0)
 
-            src.getSrcFuncs()['Spectrum'].getParam('Scale').setValue(300)
-            src.getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(1e-5,1e5)
+                src.getSrcFuncs()['Spectrum'].getParam('Scale').setValue(300)
+                src.getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(1e-5,1e5)
 
-            return src
+                return src
 
 
 
@@ -220,4 +222,3 @@ if __name__ == '__main__':
         from enrico import Loggin
         mes = Loggin.Message()
         mes.error("Wrong number of arguments")
-

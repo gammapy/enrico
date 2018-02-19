@@ -4,9 +4,9 @@ from enrico import environ
 from enrico.constants import EbinPath
 from enrico.submit import call
 from enrico.config import get_config
-from enrico import utils
+from enrico import utils,Loggin
 
-def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
+def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     """Change the spectral model of a source called name
     to allow a fit between E1 and E2
     If the spectral model is PowerLaw, the prefactor is updated
@@ -20,22 +20,19 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     
     Eav = utils.GetE0(E1, E2)
 
-    for comp in Fit.components:
-        # Set Parameters
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setBounds(1e-5,1e5)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setScale(utils.fluxScale(Pref))
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Prefactor').setValue(utils.fluxNorm(Pref))
+    spectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
+    spectrum.getParam('Prefactor').setBounds(1e-5,1e5)
+    spectrum.getParam('Prefactor').setScale(utils.fluxScale(Pref))
+    spectrum.getParam('Prefactor').setValue(utils.fluxNorm(Pref))
+    spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
+    spectrum.getParam('Index').setValue(Gamma)
+    spectrum.getParam('Index').setFree(0)
+    spectrum.getParam('Scale').setValue(Eav)
+    spectrum.getParam('Scale').setBounds(20,3e6)
 
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setBounds(Gamma_min,Gamma_max)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setValue(Gamma)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Index').setFree(0)
+    return comp
 
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setValue(Eav)
-        comp.logLike.getSource(name).getSrcFuncs()['Spectrum'].getParam('Scale').setBounds(20,3e6)
-
-    return Fit
-
-def PrepareEbin(Fit, FitRunner):
+def PrepareEbin(Fit, FitRunner,sedresult=None):
     """ Prepare the computation of spectral point in energy bins by
     i) removing the weak sources (TS<1) # not true
     ii) updating the config file (option and energy)
@@ -43,11 +40,14 @@ def PrepareEbin(Fit, FitRunner):
     iii) changing the spectral model and saving it in a new xml file.
     A list of the ascii files is returned"""
         
+    mes = Loggin.Message()
+
     NEbin = int(FitRunner.config['Ebin']['NumEnergyBins'])
 
     config = FitRunner.config
 
     config['verbose'] ='no' #Be quiet
+
     #Replace the evt file with the fits file produced before
     #in order to speed up the production of the fits files
     config['file']['event'] = FitRunner.obs.eventcoarse
@@ -68,7 +68,28 @@ def PrepareEbin(Fit, FitRunner):
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
-    ener = np.logspace(lEmin, lEmax, NEbin + 1)
+    if config['Ebin']['DistEbins'] in ['TS','mix'] and sedresult!=None:
+        # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
+        ipo = 0
+        iTS = sedresult.SED/sedresult.Err
+        TScumula = 0
+        TSperbin = 1.*sum(iTS)/NEbin
+        ener = [10**lEmin]
+        while ipo<len(sedresult.E)-1:
+            TScumula += iTS[ipo]
+            if TScumula/TSperbin > 1:
+                ener.append(sedresult.E[ipo])
+                TScumula -= TSperbin
+            ipo += 1
+        ener.append(10**lEmax)
+        ener = np.array(ener)
+        # intermediate approach (between both TS-spaced and logE spaced)
+        if config['Ebin']['DistEbins'] == 'mix':
+            ener = 0.5*(ener + np.logspace(lEmin, lEmax, NEbin + 1))
+    else:
+        # Make the bins equispaced in logE (standard)
+        ener = np.logspace(lEmin, lEmax, NEbin + 1)
+
     os.system("mkdir -p " + config['out'])
     paramsfile = []
 
@@ -89,16 +110,28 @@ def PrepareEbin(Fit, FitRunner):
             comp.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
         config['target']['spectrum'] = "PowerLaw"
 
+    xmltag_list = [""]#handle summed like analysis
+    if config['ComponentAnalysis']['FrontBack'] == "yes":
+        xmltag_list = ["_FRONT","_BACK"]
+        mes.info("Splitting Front/Back events")
+    elif config['ComponentAnalysis']['PSF'] == "yes":
+        xmltag_list = ["_PSF0","_PSF1","_PSF2"]
+        mes.info("Splitting PSF events")
+    elif config['ComponentAnalysis']['EDISP'] == "yes":
+        xmltag_list = ["_EDISP0","_EDISP1","_EDISP2","_EDISP3"]
+        mes.info("Splitting EDISP events")
+
+
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
-        from enrico import Loggin
-        mes = Loggin.Message()
-        mes.info("Submition # "+str(ibin)+" at energy "+str(E))
+        mes.info("Submitting # "+str(ibin)+" at energy "+str(E))
         #Update the model for the bin
-        NewFitObject = ChangeModel(Fit, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
-        Xmlname = (config['out'] + "/" + srcname + "_" + str(ibin) + ".xml")
-        NewFitObject.writeXml(Xmlname)# dump the corresponding xml file
-        config['file']['xml'] = Xmlname
+        for  comp,xmltag in zip(Fit.components, xmltag_list):
+            NewFitObject = ChangeModel(comp, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
+            Xmlname = (config['out'] + "/" + srcname + "_" + str(ibin) +xmltag+ ".xml")
+
+            NewFitObject.writeXml(Xmlname)# dump the corresponding xml file
+            config['file']['xml'] = Xmlname.replace(xmltag,"")
         #update the energy bounds
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
@@ -117,9 +150,9 @@ def PrepareEbin(Fit, FitRunner):
     return paramsfile
 
 
-def RunEbin(folder,Nbin,Fit,FitRunner):
+def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
     if int(Nbin) > 0:
-        configfiles = PrepareEbin(Fit, FitRunner)
+        configfiles = PrepareEbin(Fit, FitRunner,sedresult)
         ind = 0
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')

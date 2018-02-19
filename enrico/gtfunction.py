@@ -180,7 +180,7 @@ class Observation:
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
         #The number of bin is the number of decade * the number of bin 
         #per decade (given by the users). The +0.5 rounds it properly
-        evtbin["enumbins"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        evtbin["enumbins"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         evtbin['clobber'] = self.clobber
         evtbin.run()
 
@@ -199,7 +199,7 @@ class Observation:
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
-        expcube2['enumbins'] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
@@ -262,8 +262,6 @@ class Observation:
             outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
             self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
-            maketime['outfile'] = outfile
-            maketime.run()
 
         evlist_filename = self.eventfile.replace('.fits','.list')
         with open(evlist_filename,'w') as evlistfile:
@@ -286,18 +284,20 @@ class Observation:
     def MkTime(self):
         import os.path
         """compute GTI"""
+        ## Maketime does not listen to clobber variables
+        if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
+            return(0)
+
         if self.Configuration['time']['file'] != '':
             self.time_selection()
         selstr = self.Configuration['analysis']['filter']
         outfile = self.mktimefile+".tmp"
-        ## Maketime does not listen to clobber variables
-        if (not os.path.exists(outfile) or self.clobber):
-            self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
-            os.system("mv "+outfile+" "+self.mktimefile)
+        self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
+        os.system("mv "+outfile+" "+self.mktimefile)
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""
-        if (self.clobber=="no" and os.path.isfile(self.diffrspflag)):
+        if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
             #print("File exists and clobber is False")
             return(0)
         maketime['scfile']  = self.ft2
@@ -365,8 +365,8 @@ class Observation:
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = self.roi+10
-        #The number of bin is the number of decade * the number of bin per decade (given by the users)
-        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        #The number of bin is the number of decade * the number of bin per decade (given by the userss, with a minimum of 2)
+        expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         expMap.run()
 
@@ -471,7 +471,7 @@ class Observation:
         psf["dec"]     = self.dec
         psf["emin"]    = self.Emin
         psf["emax"]    = self.Emax
-        psf["nenergies"] = int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         psf.run()
 

@@ -42,14 +42,13 @@ class Result(Loggin.Message):
 
     def GetDecorrelationEnergy(self,par):
         self.E, self.SED = self.MakeSED(par)
-        self.Err = self.MakeSEDError(par)
-        for i in xrange(par.N):
-          if self.Err[i]/self.SED[i] == min(self.Err/self.SED):
-            self.decE       = self.E[i]
-            self.decFlux    = self.SED[i]/self.E[i]**2*ERG_TO_MEV
-            self.decFluxerr = self.Err[i]/self.E[i]**2*ERG_TO_MEV
-            self.decSED     = self.SED[i]
-            self.decSEDerr  = self.Err[i]
+        self.Err         = self.MakeSEDError(par)
+        i=np.argmin(self.Err/self.SED)
+        self.decE       = self.E[i]
+        self.decFlux    = self.SED[i]/self.E[i]**2*ERG_TO_MEV
+        self.decFluxerr = self.Err[i]/self.E[i]**2*ERG_TO_MEV
+        self.decSED     = self.SED[i]
+        self.decSEDerr  = self.Err[i]
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
@@ -288,6 +287,7 @@ def PlotNpred(Npred, Flux, FluxErr):
 
 def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
     """Scatter plot X(Time)"""
+
     ArrowSize = (max(x) + max(xErr) * 1.3 -
         (min(x) - max(xErr) * 1.3)) * 0.1
     
@@ -309,8 +309,8 @@ def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
     tgraph.SetMarkerStyle(20)
     return gh, tgraph, arrows
 
-def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
-    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr)
+def PlotFoldedLC(Time, TimeErr, Flux, FluxErr, tag="Flux (photon cm^{-2} s^{-1})"):
+    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr, tag)
 
     xmin = 0
     xmax = 1
@@ -323,7 +323,7 @@ def PlotFoldedLC(Time, TimeErr, Flux, FluxErr):
     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
     gh.SetStats(000)
     gh.SetXTitle("Orbital Phase")
-    gh.SetYTitle("Flux (photon cm^{-2} s^{-1})")
+    gh.SetYTitle(tag)
     return gh, tgraph, arrows
 
 def PlotDataPoints(config,pars):
@@ -350,7 +350,7 @@ def PlotDataPoints(config,pars):
 
     from enrico.constants import EbinPath
     for i in xrange(NEbin):#Loop over the energy bins
-        E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
+        #E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/'+EbinPath+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
         
@@ -359,18 +359,22 @@ def PlotDataPoints(config,pars):
             mes.info("Reading "+filename)
             results = utils.ReadResult(CurConf)
         except:
-            mes.warning("cannot read the Results of energy "+ str(E))
+            mes.warning("cannot read the Results of energy bin "+ str(i))
             continue
         #fill the energy arrays
-        Epoint[i] = E
-        EpointErrm[i] = E - results.get("Emin")
-        EpointErrp[i] = results.get("Emax") - E
+        Epoint[i] = results.get("Scale")
+        if Epoint[i] in [results.get("Emin"),results.get("Emax")]:
+            Epoint[i] = 10**((np.log10(results.get("Emin"))+np.log10(results.get("Emax")))/2.)
+            #Epoint[i] = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
+
+        EpointErrm[i] = Epoint[i] - results.get("Emin")
+        EpointErrp[i] = results.get("Emax") - Epoint[i]
         dprefactor = 0
 
         #Compute the flux or the UL (in SED format)
         if results.has_key('Ulvalue'):
             PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
-                                    results.get("Emin"),results.get("Emax"),E)
+                                    results.get("Emin"),results.get("Emax"),Epoint[i])
             Fluxpoint[i] = MEV_TO_ERG  * PrefUl * Epoint[i] ** 2
             arrows.append(ROOT.TArrow(Epoint[i], Fluxpoint[i], Epoint[i],
                                      Fluxpoint[i] * 0.5, 0.02, "|>"))
@@ -520,4 +524,3 @@ def PlotUL(pars,config,ULFlux,Index):
     c_plot.Print(filebase + '.C')
     c_plot.Print(filebase + '.eps')
     c_plot.Print(filebase + '.png')
-
