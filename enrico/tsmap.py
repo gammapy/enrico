@@ -75,15 +75,17 @@ class TSMap(Loggin.Message):
         src = GetSrc(Fit,ra,dec) # get the Source object at postion ra dec
 
         if self.config['TSMap']['RemoveTarget'] : # remove the target is asked
-            Fit.deleteSource(self.config['target']['name'])
+            for comp in Fit.components:
+                comp.deleteSource(self.config['target']['name'])
 
         if self.config['TSMap']['Re-Fit']: # reoptimze before is asked
             Fit.fit(0,optimizer=self.config['fitting']['optimizer'])
 
-        for par in xrange(Fit.logLike.getNumParams()): # freeze all the source parameters
-            Fit[par].setFree(0)
+        for comp in Fit.components:
+            for par in xrange(comp.logLike.getNumParams()): # freeze all the source parameters
+                comp[par].setFree(0)
+            comp.addSource(src)# add a spurious source
 
-        Fit.addSource(src)# add a spurious source
         # dump the *new* xml file
         Fit.writeXml(self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") 
 

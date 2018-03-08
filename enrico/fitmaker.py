@@ -105,7 +105,7 @@ class FitMaker(Loggin.Message):
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
 
-        if float(self.config['Spectrum']['FrozenSpectralIndex'] and self.config['target']['spectrum']) == "PowerLaw":
+        if float(self.config['Spectrum']['FrozenSpectralIndex']>0) and self.config['target']['spectrum'] == "PowerLaw":
             parameters = dict()
             parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])
             # parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
