@@ -88,7 +88,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 configgeneric=config,\
                 tag=typeirfs[evt], verbose = verbose)
 
-            # if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+            if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
             Fit_component = Analyse.CreateLikeObject()
             Fit.addComponent(Fit_component)
     FitRunner = Analyse
