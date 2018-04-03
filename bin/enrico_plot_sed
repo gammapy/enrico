@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """Plot a SED"""
-import sys
+import sys,os
 import numpy as np
 from enrico.plotting import PlotSED,PlotUL,Params
 from enrico.config import get_config
 from enrico.utils import ReadResult,_SpecFileName
 
 def plot(config):
+  os.system("mkdir -p "+config["out"]+"/Spectrum")
   srcname = config['target']['name']
   Emin = config['energy']['emin']
   Emax = config['energy']['emax']
