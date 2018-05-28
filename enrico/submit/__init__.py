@@ -70,6 +70,7 @@ def GetSubCmd():
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
+         'DESY' :    ['qsub'],
          'LOCAL' :   ['qsub -V','%s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
@@ -78,6 +79,7 @@ def GetSubOutput(qsub_log):
   cmd = {'LAPP' :    ['-o', qsub_log, '-j', 'oe'],
          'MPIK' :    ['-o', qsub_log, '-j', 'y'],
          'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
+         'DESY' :    ['-o', qsub_log, '-j', 'y'],
          'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes']}
   return cmd[environ.FARM]
 ###
@@ -118,6 +120,8 @@ def call(cmd,
     max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
+    elif environ.FARM=="DESY":
+        max_jobs = 1000
     elif environ.FARM=="LOCAL":
         max_jobs = 100
     elif environ.FARM=="CCIN2P3":
@@ -150,13 +154,12 @@ def call(cmd,
         text +='export LATEXDIR=/tmp/aux\n'
         text +='env\n'
         text +='#PBS -o '+qsub_log+'\n'
-        text +='#PBS -j oe\n'
         text += cmd
 
         # Now reset cmd to be the qsub command
         cmd = GetSubCmd()
         if jobname:
-            if environ.FARM=="CCIN2P3":
+            if environ.FARM in ["CCIN2P3","DESY"]:
                 if jobname[0].isdigit():
                     jobname='_'+jobname
             cmd += ['-N', jobname]
