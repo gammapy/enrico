@@ -352,11 +352,13 @@ class FitMaker(Loggin.Message):
 
         parameters = dict()
         parameters['Index']  = -float(self.config['UpperLimit']['SpectralIndex'])
-        parameters['alpha']  = +float(self.config['UpperLimit']['SpectralIndex'])
+        parameters['alpha']  = float(self.config['UpperLimit']['SpectralIndex'])
         parameters['Index1'] = -float(self.config['UpperLimit']['SpectralIndex'])
         parameters['beta']   = 0
         parameters['Index2'] = 2.
-        parameters['Cutoff'] = 30000. # set the cutoff to be high
+        #parameters['redshift'] = 0.
+        parameters['Cutoff'] = 200000. # set the cutoff to be high
+
         
         for key in parameters.keys():
             try:
@@ -373,18 +375,26 @@ class FitMaker(Loggin.Message):
             if Fit.Ts(self.obs.srcname)<2 :
                 self.warning("TS of the source is very low, better to use Integral method")
             import UpperLimits
-            ulobject = UpperLimits.UpperLimits(Fit)
-            ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
-                                      emax=self.obs.Emax,delta=delta)
-                                      #delta=2.71 / 2)
+            try:
+                ulobject = UpperLimits.UpperLimits(Fit)
+                ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
+                                          emax=self.obs.Emax,delta=delta)
+                                          #delta=2.71 / 2)
+            except RuntimeError:
+                self.warning("Runtime error calculating the UL.")
+                return(0)
             self.info("Upper limit using Profile method: ")
             print ulobject[self.obs.srcname].results
             self.warning("Be sure to have enough photons to validate the gaussian assumption")
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             import IntegralUpperLimit
-            ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname, cl=cl,
-                                                verbosity=0,emin=self.obs.Emin,
-                                                emax=self.obs.Emax)
+            try:
+                ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname, cl=cl,
+                                                    verbosity=0,emin=self.obs.Emin,
+                                                    emax=self.obs.Emax)
+            except RuntimeError:
+                self.warning("Runtime error calculating the UL.")
+                return(0)
             print "Upper limit using Integral method: ", ul
             self.warning("Be sure to have enough photons to validate the gaussian assumption")
 

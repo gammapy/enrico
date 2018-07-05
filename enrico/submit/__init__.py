@@ -10,6 +10,7 @@ import sys
 import logging
 import subprocess
 import os
+#import stat
 from os.path import join, dirname
 import commands
 import time
@@ -70,8 +71,8 @@ def GetSubCmd():
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'DESY' :    ['qsub'],
-         'LOCAL' :   ['qsub -V','%s %s'%(queueoptions,queuetext)],
+         'DESY' :    ['qsub','-js 99999 -R y -V -terse -l h_rss=16G -V %s %s'%(queueoptions,queuetext)],
+         'LOCAL' :   ['qsub','-V %s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
@@ -163,7 +164,7 @@ def call(cmd,
                 if jobname[0].isdigit():
                     jobname='_'+jobname
             cmd += ['-N', jobname]
-
+        
         if scriptfile == None:
             # Note that mkstemp() returns an int,
             # which represents an open file handle,
@@ -182,6 +183,8 @@ def call(cmd,
             del outfd
             
         cmd += GetSubOutput(qsub_log)
+        if environ.FARM in ["DESY"]:
+            cmd += ['/usr/bin/singularity','exec','/project/singularity/images/SL6.img','sh']
         cmd += [scriptfile]
 
         cmd = _cmd_to_str(cmd)
@@ -200,6 +203,7 @@ def call(cmd,
         fh = file(scriptfile, 'w')
         fh.write(text + '\n')
         fh.close()
+        #os.chmod(scriptfile, stat.S_IRWXU)
 
     if not dry:
         print("Running: %s" %cmd)

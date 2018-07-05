@@ -215,10 +215,10 @@ class Observation:
         filter['ra'] = self.ra
         filter['dec'] = self.dec
         filter['rad'] = self.roi
-        filter['emin'] = self.Emin
-        filter['emax'] = self.Emax
         filter['tmin'] = self.t1
         filter['tmax'] = self.t2
+        filter['emin'] = self.Emin
+        filter['emax'] = self.Emax
         filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = "INDEF"
@@ -232,13 +232,13 @@ class Observation:
             return(0)
         filter['infile'] = self.eventcoarse
         filter['outfile'] = self.eventfile
-        filter['ra'] = self.ra
-        filter['dec'] = self.dec
-        filter['rad'] = self.roi
+        filter['ra'] =   "INDEF"      # self.ra
+        filter['dec'] =  "INDEF"      #self.dec
+        filter['rad'] =  "INDEF"      #self.roi
+        filter['tmin'] = "INDEF"      #self.t1
+        filter['tmax'] = "INDEF"      #self.t2
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
-        filter['tmin'] = self.t1
-        filter['tmax'] = self.t2
         filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = self.Configuration['event']['evtype']
@@ -260,7 +260,7 @@ class Observation:
         while not last:
             selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
             outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            self._RunMktime(selstr,outfile,'no')
+            self._RunMktime(selstr,outfile,None)
             eventlist.append(outfile+'\n')
 
         evlist_filename = self.eventfile.replace('.fits','.list')
@@ -302,7 +302,8 @@ class Observation:
             return(0)
         maketime['scfile']  = self.ft2
         maketime['filter']  = selstr #self.Configuration['analysis']['filter']
-        maketime['roicut']  = roicut
+        if roicut is not None:
+            maketime['roicut']  = roicut
         maketime['tstart']  = self.t1
         maketime['tstop']   = self.t2
         maketime['evfile']  = self.eventfile
@@ -340,7 +341,7 @@ class Observation:
             #print("File exists and clobber is False")
             return(0)
         expCube['evfile']=self.mktimefile
-        expCube['scfile']=self.ft2
+        expCube['scfile']=self.ft2.lstrip('@')
         expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
         expCube['binsz']=1
@@ -364,7 +365,7 @@ class Observation:
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
-        expMap['srcrad'] = self.roi+10
+        expMap['srcrad'] = 30 #self.roi #+10
         #The number of bin is the number of decade * the number of bin per decade (given by the users, with a minimum of 2)
         expMap['nenergies'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber

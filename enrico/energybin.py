@@ -16,7 +16,12 @@ def ChangeModel(Fit, E1, E2, name, Pref, Gamma):
     # if approximated Gamma is outside of bounds set it to limit
     Gamma_min=-5
     Gamma_max=0.5
-    Gamma = min(max(Gamma_min,Gamma),Gamma_max)
+    if Gamma<Gamma_min:
+        Gamma=Gamma_min+0.01
+    elif Gamma>Gamma_max:
+        Gamma=Gamma_max-0.01
+    
+    #Gamma = min(max(Gamma_min,Gamma),Gamma_max)
 
     Eav = utils.GetE0(E1, E2)
 
@@ -127,7 +132,8 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         # if approximated Gamma is outside of bounds set it to limit
         Gamma_min=-5
         Gamma_max=0.5
-        config['UpperLimit']['SpectralIndex'] = -min(max(Gamma_min,Gamma[ibin]),Gamma_max)
+        if config['UpperLimit']['TSlimit']<Fit.Ts(srcname) :
+            config['UpperLimit']['SpectralIndex'] = -min(max(Gamma_min,Gamma[ibin]),Gamma_max)
 
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
