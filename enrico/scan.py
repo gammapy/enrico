@@ -7,7 +7,7 @@ import RunGTlike
 import ROOT
 import numpy,os,string,array
 from enrico import Loggin
-
+import matplotlib.pyplot as plt
 
 def MakeScan(Fit,spectrum,par,bmin,bmax,opt,N=100):
     Param = numpy.zeros(N)
@@ -49,23 +49,24 @@ def Scan(config):
           spectrum.getParam(par).setFree(1)
           ParValue = spectrum.getParam(par).setValue(ParValue)
 
-          tgr = ROOT.TGraph(param.size,param,loglike)
-          tgr.GetHistogram().SetXTitle("Parameter: "+par)
-          tgr.GetHistogram().SetYTitle("Log(Like)")
-          tgr.SetLineColor(2)
-          tgr.Draw('AL')
+          plt.figure()
+          plt.plot(param,loglike,"-r")
+          plt.title(par)
+          plt.xlabel("Parameter: "+par)
+          plt.ylabel("Log(Like)")
 
           os.system("mkdir -p "+config["out"]+"/"+cst.ScanPath)
           savefile = open(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".txt","w")
           for i in xrange(param.size):
              savefile.write(str(param[i])+" "+str(loglike[i])+"\n")
           savefile.close()
-          cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".eps")
-          cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".C")
-          cres.Print(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".png")
+          plt.savefig(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".png", dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
 
 def Contour(config):
-    ROOT.gROOT.SetBatch(ROOT.kTRUE)
+    # ROOT.gROOT.SetBatch(ROOT.kTRUE)
 #    cres = ROOT.TCanvas("Contour")
     config["Spectrum"]["FitsGeneration"] = "no"
     parname1 = config["Contours"]["parname1"]
@@ -78,7 +79,6 @@ def Contour(config):
 
     mes = Loggin.Message()
     mes.info("Computing Contours for "+parname1+" and "+parname2)
-
 
     ### Check part !!!!
     findpar2 = findpar1 = False

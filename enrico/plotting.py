@@ -1,14 +1,15 @@
 import os
-import array
 import numpy as np
-import ROOT
 import pyfits
 import pyLikelihood
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
-from enrico import root_style
 from enrico.config import get_config
 from enrico import utils
 from enrico import Loggin
+
 
 class Params:
     """Collection of Plotting parameters like Energy bounds,
@@ -118,8 +119,8 @@ class Result(Loggin.Message):
 
     def CountsPlot(self, Parameter):
         """@todo: document me"""
-        ROOT.gROOT.SetBatch(ROOT.kTRUE)
         imName = "tmp.fits"
+        filebase = Parameter.PlotName
 
         total   = np.array([])
         obs     = np.array([])
@@ -171,47 +172,24 @@ class Result(Loggin.Message):
         residual = np.zeros(Nbin)
         Dres = np.zeros(Nbin)
 
-        cplot = ROOT.TCanvas("Counts_Plot")
-        cplot.SetLogy()
-        cplot.SetLogx()
-        ghcount = ROOT.TH2F("ghcount", "", 80, min(E)*0.3,max(E)*2, 100, 0.1, max(obs) * 2)
-        ghcount.SetStats(000)
-        ghcount.SetXTitle("E (MeV) ")
-        ghcount.SetYTitle("Counts / bin")
-        ghcount.Draw()
+        plt.figure()
+        plt.loglog()
+        plt.title('Counts plot')
+        plt.xlabel("E (MeV) ")
+        plt.ylabel("Counts / bin")
+        plt.errorbar(E,obs,xerr=err_E,yerr=obs_err,fmt='o',color="red",ls='None',label="Data")
+        plt.plot(E,other,'--',color="blue",label=Parameter.srcname)
+        plt.plot(E,src,'-',color="green",label="Other Sources")
+        plt.plot(E,total,'-',ls='None',label="All Sources")
+        plt.legend()
+        plt.savefig(filebase + "_CountsPlot.png", dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
 
-        tgrobs = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',obs), \
-                array.array('f',err_E), array.array('f',obs_err))
-        tgrobs.SetLineColor(2)
-        tgrobs.SetMarkerColor(2)
-        tgrobs.SetMarkerStyle(20)
-        tgrobs.Draw("pz")
-
-        tgrother = ROOT.TGraph(Nbin, array.array('f',E), array.array('f',other))
-        tgrother.SetLineWidth(2)
-        tgrother.SetLineStyle(2)
-        tgrother.Draw("L")
-
-        tgr = ROOT.TGraph(Nbin, array.array('f',E), array.array('f',src) )
-        tgr.SetLineColor(1)
-        tgr.SetLineWidth(2)
-        tgr.Draw("L")
-
-        tgrsum = ROOT.TGraph(Nbin,  array.array('f',E),  array.array('f',total))
-        tgrsum.SetLineStyle(3)
-        tgrsum.SetLineWidth(2)
-        tgrsum.Draw("L")
-
-        legarc =ROOT.TLegend(0.6968391,0.6716102,0.8807471,0.845339);
-        legarc.AddEntry(tgrobs,"Data","lp");
-        legarc.AddEntry(tgr,Parameter.srcname,"l");
-        legarc.AddEntry(tgrother,"Other Sources","l");
-        legarc.AddEntry(tgrsum,"All Sources","l");
-        legarc.SetFillColor(0)
-        legarc.Draw()
-
-        cres = ROOT.TCanvas("Residuals_Plot")
-        cres.SetLogx()
+        plt.figure()
+        plt.title('Residuals plot')
+        plt.semilogx()
 
         for i in xrange(Nbin):
             try:
@@ -225,108 +203,40 @@ class Result(Loggin.Message):
 
         ymin = min(residual) - max(Dres)
         ymax = max(residual) + max(Dres)
-        ghres = ROOT.TH2F("ghres", "", 80, min(E)*0.3,max(E)*2, 100, ymin, ymax)
-        ghres.SetStats(000)
-        ghres.SetXTitle("E (MeV) ")
-        ghres.SetYTitle("(counts-model)/model")
-        ghres.Draw()
-        tgres = ROOT.TGraphErrors(Nbin, array.array('f',E), array.array('f',residual), array.array('f',err_E), array.array('f',Dres))
-        tgres.SetLineColor(2)
-        tgres.SetMarkerColor(2)
-        tgres.Draw("p*z")
-
+        plt.ylim(ymax = ymax, ymin = ymin)
+        plt.xlim(xmin = min(E)*0.3, xmax = max(E)*2)
+        plt.xlabel("E (MeV) ")
+        plt.ylabel("(counts-model)/model")
+        plt.errorbar(E,residual,xerr=err_E,yerr=Dres,fmt='o',color="red",ls='None',label="Data")
         zero = np.zeros(2)
         Ezero = np.array([0, 1e10])
-        tg0 = ROOT.TGraph(2, array.array('f',Ezero), array.array('f',zero))
-        tg0.SetLineStyle(2)
-        tg0.Draw("L")
-
-        # Save the plots in different formats
-        filebase = Parameter.PlotName
-        cplot.Print(filebase + "_CountsPlot.eps")
-        cplot.Print(filebase + "_CountsPlot.C")
-        cplot.Print(filebase + "_CountsPlot.png")
-        cres.Print(filebase + "_ResPlot.eps")
-        cres.Print(filebase + "_ResPlot.C")
-        cres.Print(filebase + "_ResPlot.png")
+        plt.plot(Ezero,zero,'-',color='black')
+        plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
         os.system("rm " + imName)
         image.close()
 
-def PlotTS(Time, TimeErr, TS):
-    """Scatter plot TS(Time)"""
-    Time = np.asarray(Time)
-    TimeErr = np.asarray(TimeErr)
-    TS = np.asarray(TS)
-    zero = np.zeros_like(TS)
-    gh = ROOT.TH2F("ghts", "", 80, min(Time) - max(TimeErr) * 3,
-                   max(Time) + max(TimeErr) * 3, 100, 0, max(TS) * 1.2)
-    gh.SetStats(000)
-    gh.SetXTitle("Time")
-    gh.SetYTitle("Test Statistic")
-    tgraph = ROOT.TGraphErrors(len(TS), Time, TS, TimeErr, zero)
-    tgraph.SetMarkerColor(1)
-    tgraph.SetMarkerStyle(5)
-    return gh, tgraph
 
+# def PlotFoldedLC(Time, TimeErr, Flux, FluxErr, tag="Flux (photon cm^{-2} s^{-1})"):
+#     _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr, tag)
 
-def PlotNpred(Npred, Flux, FluxErr):
-    """Scatter plot Flux(Npred)"""
-    NdN = np.asarray(Npred) /np.sqrt(Npred)
-    FdF = np.asarray(Flux) / (np.asarray(FluxErr) + 1e-20)
-    xmin = min(NdN) * 0.8
-    xmax = max(NdN) * 1.2
-    ymin, ymax = min(FdF) * 0.8, max(FdF) * 1.2
-    gh = ROOT.TH2F("ghnpred", "", 80, xmin, xmax, 100, ymin, ymax)
-    gh.SetStats(000)
-    gh.SetXTitle("Npred/sqrt(Npred)")
-    gh.SetYTitle("Flux/#Delta Flux")
-    tgraph = ROOT.TGraph(len(Npred), NdN, FdF)
-    tgraph.SetMarkerColor(1)
-    tgraph.SetMarkerStyle(5)
-    return gh, tgraph
+#     xmin = 0
+#     xmax = 1
+#     if max(FluxErr)==0:
+#         ymin = 0.
+#         ymax = max(Flux)*1.3
+#     else:
+#         ymin = np.min(min(Flux) - max(FluxErr) * 1.3, 0.)
+#         ymax = (max(Flux) + max(FluxErr)) * 1.3
+#     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
+#     gh.SetStats(000)
+#     gh.SetXTitle("Orbital Phase")
+#     gh.SetYTitle(tag)
+#     return gh, tgraph, arrows
 
-def PlotLC(Time, TimeErr, x, xErr, tag="Flux (photon cm^{-2} s^{-1})"):
-    """Scatter plot X(Time)"""
-
-    ArrowSize = (max(x) + max(xErr) * 1.3 -
-        (min(x) - max(xErr) * 1.3)) * 0.1
-    
-    arrows = []
-    for i in xrange(len(Time)):
-        if xErr[i] == 0:
-            arrows.append(ROOT.TArrow(Time[i], x[i], Time[i],
-                                     x[i] - ArrowSize, 0.015, "|>"))
-    xmin = min(Time) - max(TimeErr) * 10
-    xmax = max(Time) + max(TimeErr) * 10
-    ymin = min(x) - max(xErr) * 1.3
-    ymax = max(x) + max(xErr) * 1.3
-    gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
-    gh.SetStats(000)
-    gh.SetXTitle("Time")
-    gh.SetYTitle(tag)
-    tgraph = ROOT.TGraphErrors(len(Time), Time, x, TimeErr, xErr)
-    tgraph.SetMarkerColor(1)
-    tgraph.SetMarkerStyle(20)
-    return gh, tgraph, arrows
-
-def PlotFoldedLC(Time, TimeErr, Flux, FluxErr, tag="Flux (photon cm^{-2} s^{-1})"):
-    _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr, tag)
-
-    xmin = 0
-    xmax = 1
-    if max(FluxErr)==0:
-        ymin = 0.
-        ymax = max(Flux)*1.3
-    else:
-        ymin = np.min(min(Flux) - max(FluxErr) * 1.3, 0.)
-        ymax = (max(Flux) + max(FluxErr)) * 1.3
-    gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
-    gh.SetStats(000)
-    gh.SetXTitle("Orbital Phase")
-    gh.SetYTitle(tag)
-    return gh, tgraph, arrows
-
-def PlotDataPoints(config,pars):
+def GetDataPoints(config,pars):
     """Collect the data points/UL and generate a TGraph for the points
     and a list of TArrow for the UL. All is SED format"""
 
@@ -341,6 +251,7 @@ def PlotDataPoints(config,pars):
     Fluxpoint = np.zeros(NEbin)
     FluxpointErrp = np.zeros(NEbin)
     FluxpointErrm = np.zeros(NEbin)
+    uplim = np.zeros(NEbin,dtype=int)
     ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
     mes = Loggin.Message()
@@ -376,43 +287,41 @@ def PlotDataPoints(config,pars):
             PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
                                     results.get("Emin"),results.get("Emax"),Epoint[i])
             Fluxpoint[i] = MEV_TO_ERG  * PrefUl * Epoint[i] ** 2
-            arrows.append(ROOT.TArrow(Epoint[i], Fluxpoint[i], Epoint[i],
-                                     Fluxpoint[i] * 0.5, 0.02, "|>"))
+            uplim[i] = 1
         else : #Not an UL : compute points + errors
             Fluxpoint[i] = MEV_TO_ERG  * results.get("Prefactor") * Epoint[i] ** 2
-            dprefactor = results.get("dPrefactor")
+
+        dprefactor = results.get("dPrefactor")
+        try:
+            down = abs(results.get("dPrefactor-"))
+            up = results.get("dPrefactor+")
+            if down==0 or  up ==0 :
+              mes.error("cannot get Error value")
+            FluxpointErrp[i] = MEV_TO_ERG  * up * Epoint[i] ** 2
+            FluxpointErrm[i] = MEV_TO_ERG  * down * Epoint[i] ** 2
+        except:
             try:
-                down = abs(results.get("dPrefactor-"))
-                up = results.get("dPrefactor+")
-                if down==0 or  up ==0 :
-                  mes.error("cannot get Error value")
-                FluxpointErrp[i] = MEV_TO_ERG  * up * Epoint[i] ** 2
-                FluxpointErrm[i] = MEV_TO_ERG  * down * Epoint[i] ** 2
+                err = MEV_TO_ERG  * dprefactor * Epoint[i] ** 2
+                FluxpointErrp[i] = err
+                FluxpointErrm[i] = err
             except:
-                try:
-                    err = MEV_TO_ERG  * dprefactor * Epoint[i] ** 2
-                    FluxpointErrp[i] = err
-                    FluxpointErrm[i] = err
-                except:
-                    pass
+                pass
+
         mes.info("Energy bins results")
         print "Energy = ",Epoint[i]
-        print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
-
         #Save the data point in a ascii file
-        dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( MEV_TO_ERG  * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
-    #create a TGraph for the points
-    tgpoint = ROOT.TGraphAsymmErrors(NEbin, Epoint, Fluxpoint, EpointErrm,
-                                     EpointErrp, FluxpointErrm, FluxpointErrp)
-    tgpoint.SetMarkerStyle(20)
+        if results.has_key('Ulvalue'):
+            dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t0\t0\t0\n")
+            print "E**2. dN/dE = ",Fluxpoint[i]
+        else:
+            dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( MEV_TO_ERG  * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
+            print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
     dumpfile.close()
-    return tgpoint, arrows
+    return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
 
 
 def PlotSED(config,pars):
     """plot a nice SED with a butterfly and points"""
-    ROOT.gROOT.SetBatch(ROOT.kTRUE)
-    root_style.RootStyle()
 
     # Read the ascii file where the butterfly is stored
     filebase = utils._SpecFileName(config)
@@ -447,80 +356,48 @@ def PlotSED(config,pars):
     ErrorE[-1] = E[0]
 
     #Actually make the plot
-    c_plot = ROOT.TCanvas(pars.PlotName)
-    c_plot.SetLogx()
-    c_plot.SetLogy()
+    plt.figure()
+    plt.title(pars.PlotName)
+    plt.loglog()
 
-    xmin, xmax = E[0] * 0.8, E[-1] * 1.5
-    ymin = min(np.array(SED) - np.array(Err)) * 0.2
-    ymax = max(np.array(SED) + np.array(Err)) * 3
-    ghSED = ROOT.TH2F("ghSED", "", 10000, xmin, xmax, 100, ymin, ymax)
-    ghSED.SetStats(000)
-    ghSED.SetTitle(pars.PlotName)
-    ghSED.SetXTitle("E [MeV]")
-    ghSED.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
-    ghSED.Draw()
-
-    tgr = ROOT.TGraph(ilen, np.array(E), np.array(SED))
-    tgr.SetLineWidth(2)
-    tgr.SetLineColor(pars.LineColor)
-    tgr.Draw("L")
-
-    tgerr = ROOT.TGraph(2 * ilen + 1, ErrorE, ErrorFlux)
-    tgerr.SetLineColor(pars.LineColor)
-    tgerr.Draw("L")
+    plt.xlabel(r"E [MeV]")
+    plt.ylabel(r"$E^{2}dN/dE [ erg.cm^{-2}.s^{-1} ]$")
+    plt.plot(E,SED,"-r")
+    plt.plot(ErrorE,ErrorFlux,"-r")
 
     #Plot points
     NEbin = int(config['Ebin']['NumEnergyBins'])
     if NEbin > 0:
-        tgpoint, Arrow = PlotDataPoints(config,pars) #collect data points
-        tgpoint.SetLineColor(pars.PointColor)
-        tgpoint.SetMarkerColor(pars.PointColor)
-        tgpoint.Draw("pz")
-        for i in xrange(len(Arrow)):
-            Arrow[i].SetLineColor(pars.PointColor)
-            Arrow[i].SetFillColor(pars.PointColor)
-            Arrow[i].Draw()
+        Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim = GetDataPoints(config,pars) #collect data points
 
+    print uplim
+    print FluxpointErrm
+    print FluxpointErrp
+    # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
+    plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',capsize=0,color='black',ls='None',uplims=uplim)
     #save the canvas
-    c_plot.Print(filebase + '.C')
-    c_plot.Print(filebase + '.eps')
-    c_plot.Print(filebase + '.png')
+    plt.savefig(filebase + '.png', dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
 
 def PlotUL(pars,config,ULFlux,Index):
-
-    ROOT.gROOT.SetBatch(ROOT.kTRUE)
-    root_style.RootStyle()
 
     #Compute the SED
     E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
     SED = MEV_TO_ERG  * E ** 2 * (-Index+1)*ULFlux* np.power(E,-Index)/(np.power(pars.Emax,-Index+1)-np.power(pars.Emin,-Index+1))
 
     #Actually make the plot
-    c_plot = ROOT.TCanvas(pars.PlotName)
-    c_plot.SetLogx()
-    c_plot.SetLogy()
+    plt.xlabel(r"E [MeV]")
+    plt.ylabel(r"$E^{2}dN/dE [ erg.cm^{-2}.s^{-1} ]$")
+    plt.loglog()
+    plt.plot(E,SED,"-",color='black')
 
-    xmin, xmax = E[0] * 0.7, E[-1] * 1.6
-    ymin = min(SED[0], SED[-1]) * 0.15
-    ymax = max(SED[0], SED[-1]) * 3
-    ghSED = ROOT.TH2F("ghSED", "", 10000, xmin, xmax, 100, ymin, ymax)
-    ghSED.SetStats(000)
-    ghSED.SetTitle(pars.PlotName)
-    ghSED.SetXTitle("E [MeV]")
-    ghSED.SetYTitle("E^{2}dN/dE [ erg cm^{-2} s^{-1} ] ")
-    ghSED.Draw()
-
-    tgr = ROOT.TGraph(pars.N, np.array(E), np.array(SED))
-    tgr.Draw("L")
-
-    Ar_1=ROOT.TArrow(E[0],SED[0]*0.2,E[0],SED[0],0.02)
-    Ar_2=ROOT.TArrow(E[-1],SED[-1]*0.2,E[-1],SED[-1],0.02)
-    Ar_2.Draw("<|")
-    Ar_1.Draw("<|")
-
-    #save the canvas
+    plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',uplims=[1,1])
+ 
+    #save the plot
     filebase = utils._SpecFileName(config)
-    c_plot.Print(filebase + '.C')
-    c_plot.Print(filebase + '.eps')
-    c_plot.Print(filebase + '.png')
+    plt.savefig(filebase + '.png', dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)

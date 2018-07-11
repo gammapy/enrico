@@ -21,9 +21,9 @@ def plot(config):
     PlotSED(config,Param)
   else :
     try :
-        PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
+      PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
     except :
-        print "Not able to plot an upper limit in a SED diagram. UL computed?"
+      print "Not able to plot an upper limit in a SED diagram. UL computed?"
 
 from enrico import Loggin
 mes = Loggin.Message()

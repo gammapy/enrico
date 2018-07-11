@@ -8,6 +8,7 @@ from enrico.gtfunction import Observation
 from enrico.config import get_config
 from enrico import environ
 from enrico import utils
+import matplotlib.pyplot as plt
 
 def AppLC(infile):
     '''Main function of the apperture photometrie Lightcurve script. Read the config file and run the analysis'''
@@ -33,7 +34,7 @@ def AppLC(infile):
     Obs = Observation(LCoutfolder, config, tag="")
     if config['AppLC']["FitsGeneration"] == "yes":
         _log('gtselect', 'Select data from library')#run gtselect
-        #Obs.FirstCut()
+        Obs.FirstCut()
         Obs.SelectEvents()
         _log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtdiffresp
         Obs.MkTime()
@@ -143,6 +144,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
    #Save the canvas in the Apperture LightCurve subfolder
     CanvExposure.Print(LCoutfolder+'/Exposure.eps')
     CanvExposure.Print(LCoutfolder+'/Exposure.C')
+
 
     CanvFlux = ROOT.TCanvas()
     flux_histo.SetNameTitle("Apperture_Photometry_Flux","Apperture_Photometry_Flux")
