@@ -5,7 +5,6 @@ import scipy.optimize
 from scipy.stats import chi2
 import matplotlib.pyplot as plt
 from enrico import utils
-from enrico import root_style
 from enrico import plotting
 from enrico import environ
 from enrico.config import get_config
@@ -23,7 +22,7 @@ class LightCurve(Loggin.Message):
     def __init__(self, config):
         super(LightCurve,self).__init__()
         Loggin.Message.__init__(self)
-        ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
+
         self.config        = get_config(config)
         self.generalconfig = get_config(config)
         print(self.generalconfig)
@@ -222,7 +221,7 @@ class LightCurve(Loggin.Message):
         self._PlotLC(True)
 
     def _PlotLC(self,folded=False):
-        root_style.RootStyle()#Nice plot style
+
 
         self.info("Reading files produced by enrico")
         LcOutPath = self.LCfolder + self.config['target']['name']

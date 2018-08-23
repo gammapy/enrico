@@ -380,7 +380,7 @@ class Observation:
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = self.roi+10
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
-        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
+        expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         expMap.run()
 
