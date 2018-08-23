@@ -1,7 +1,9 @@
 import os
 from math import sqrt
 import numpy as np
-import ROOT
+import scipy.optimize
+from scipy.stats import chi2
+import matplotlib.pyplot as plt
 from enrico import utils
 from enrico import root_style
 from enrico import plotting
@@ -11,6 +13,10 @@ from enrico.constants import LightcurvePath,FoldedLCPath
 from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
 from enrico import Loggin
+
+pol0 = lambda x,p1: p1*x
+pol1 = lambda x,p1,p2: p1+p2*x
+
 
 class LightCurve(Loggin.Message):
     """Class to calculate light curves and variability indexes."""
@@ -226,15 +232,17 @@ class LightCurve(Loggin.Message):
         TimeErr = []
         Flux = []
         FluxErr = []
+        # FluxErrChi2 = []
         Index = []
         IndexErr = []
         Cutoff = []
         CutoffErr = []
         FluxForNpred = []
-        FluxErrForNpred = []
+        # FluxErrForNpred = []
         Npred = []
         Npred_detected_indices = []
         TS = []
+        uplim = []
 
         # Find name used for index parameter
         if (self.config['target']['spectrum'] == 'PowerLaw' or
@@ -269,19 +277,23 @@ class LightCurve(Loggin.Message):
             TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
             if ResultDic.has_key('Ulvalue') :
+                uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
-                FluxErr.append(0)
-                Index.append(ResultDic.get(IndexName))
-                IndexErr.append(0)
+                # FluxErr.append(0)
+                # FluxErrChi2.append(ResultDic.get("dFlux"))
+                # Index.append(ResultDic.get(IndexName))
+                # IndexErr.append(0)
             else :
+                uplim.append(0)
                 Flux.append(ResultDic.get("Flux"))
-                FluxErr.append(ResultDic.get("dFlux"))
-                Index.append(ResultDic.get(IndexName))
-                IndexErr.append(ResultDic.get(IndexErrName))
-                if CutoffName is not None:
-                    Cutoff.append(ResultDic.get(CutoffName))
-                    CutoffErr.append(ResultDic.get(CutoffErrName))
-            FluxErrForNpred.append(ResultDic.get("dFlux"))
+            FluxErr.append(ResultDic.get("dFlux"))
+            # FluxErrChi2.append(ResultDic.get("dFlux"))
+            Index.append(ResultDic.get(IndexName))
+            IndexErr.append(ResultDic.get(IndexErrName))
+                # if CutoffName is not None:
+                    # Cutoff.append(ResultDic.get(CutoffName))
+                    # CutoffErr.append(ResultDic.get(CutoffErrName))
+            # FluxErrForNpred.append(ResultDic.get("dFlux"))
             FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
             Npred.append(ResultDic.get("Npred"))
@@ -289,120 +301,123 @@ class LightCurve(Loggin.Message):
             if (CurConfig['LightCurve']['TSLightCurve']<float(ResultDic.get("TS"))):
                 Npred_detected_indices.append(i-Nfail)
 
-        #change the list into np array
-        TS = np.array(TS)
+        # #change the list into np array
+        # TS = np.array(TS)
         Npred = np.array(Npred)
         Npred_detected = Npred[Npred_detected_indices]
         Time = np.array(Time)
-        TimeErr = np.array(TimeErr)
+        # TimeErr = np.array(TimeErr)
         Flux = np.array(Flux)
         FluxErr = np.array(FluxErr)
-        Index = np.array(Index)
-        IndexErr = np.array(IndexErr)
-        Cutoff = np.array(Cutoff)
-        CutoffErr = np.array(CutoffErr)
+        # Index = np.array(Index)
+        # IndexErr = np.array(IndexErr)
+        # Cutoff = np.array(Cutoff)
+        # CutoffErr = np.array(CutoffErr)
         FluxForNpred = np.array(FluxForNpred)
-        FluxErrForNpred = np.array(FluxErrForNpred)
+        # FluxErrForNpred = np.array(FluxErrForNpred)
 
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
         if self.config['LightCurve']['DiagnosticPlots'] == 'yes' and len(Npred)>0:
-            gTHNpred,TgrNpred = plotting.PlotNpred(Npred,FluxForNpred,FluxErrForNpred)
-            CanvNpred = _GetCanvas()
-            gTHNpred.Draw()
-            TgrNpred.Draw('zP')
-	    if len(Npred_detected)>0:
-	    	_,TgrNpred_detected = plotting.PlotNpred(Npred_detected,Flux[Npred_detected_indices],FluxErrForNpred[Npred_detected_indices])
-	    	TgrNpred_detected.SetLineColor(2)
-	    	TgrNpred_detected.SetMarkerColor(2)
-	    	TgrNpred_detected.Draw('zP')
-		fittedFunc = self.CheckNpred(Npred,FluxForNpred,FluxErrForNpred,Npred_detected_indices)#check the errors calculation
-	    	fittedFunc.Draw("SAME")
+            #plot Npred vs flux
+            plt.figure()
+            NdN = np.asarray(Npred) /np.sqrt(Npred)
+            FdF = np.asarray(FluxForNpred) / (np.asarray(FluxErr) + 1e-20)
+            plt.errorbar(NdN, FdF,fmt='+',color='black')
 
-	    	CanvNpred.Print(LcOutPath+"_Npred.png")
-	    	CanvNpred.Print(LcOutPath+"_Npred.eps")
-	    	CanvNpred.Print(LcOutPath+"_Npred.C")
-	    else :
-		print "No Npred Plot produced"
+            if len(Npred_detected)>0:
+                NdN = np.asarray(Npred_detected) /np.sqrt(Npred_detected)
+                FdF = np.asarray(FluxForNpred[Npred_detected_indices]) / (np.asarray(FluxErr[Npred_detected_indices]) + 1e-20)
+                plt.errorbar(NdN, FdF,fmt='+',color='red')
 
-            gTHTS,TgrTS = plotting.PlotTS(Time,TimeErr,TS)
-            CanvTS = _GetCanvas()
-            gTHTS.Draw()
-            TgrTS.Draw('zP')
-            CanvTS.Print(LcOutPath+'_TS.png')
-            CanvTS.Print(LcOutPath+'_TS.eps')
-            CanvTS.Print(LcOutPath+'_TS.C')
+                popt,_ = scipy.optimize.curve_fit(pol1, NdN, FdF, p0=[0,1])#, sigma=dydata)
+
+
+                for i in xrange(len(FluxForNpred)):
+                    if FluxForNpred[i]/FluxErr[i]>2*pol1(sqrt(Npred[i]),popt[0],popt[1]):
+                        self._errorReading("problem in errors calculation for",i)
+                        print "Flux +/- error = ",FluxForNpred[i]," +/- ",FluxErr[i]
+                        print "V(Npred) = ",sqrt(Npred[i])
+                        print 
+
+                plt.plot(np.array([0,max(NdN)]),pol1(np.array([0,max(NdN)]),popt[0],popt[1]),'--',color='black')
+                plt.xlabel("Npred/sqrt(Npred)")
+                plt.ylabel(r"Flux/$\Delta$ Flux")
+                plt.savefig(LcOutPath+"_Npred.png", dpi=150, facecolor='w', edgecolor='w',
+                    orientation='portrait', papertype=None, format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1,
+                    frameon=None)
+            else :
+                print "No Npred Plot produced"
+
+            #plot TS vs Time
+            plt.figure()
+            plt.ylim(ymin=min(TS)*0.8,ymax=max(TS)*1.2)
+            plt.xlabel("Time")
+            plt.ylabel("Test Statistic")
+            plt.errorbar(Time,TS,xerr=TimeErr,fmt='+',color='black',ls='None')
+            plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
+                    orientation='portrait', papertype=None, format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1,
+                    frameon=None)
 
 
 #    Plot the LC itself. This function return a TH2F for a nice plot
 #    a TGraph and a list of TArrow for the ULs
-        if folded:
-            phase = np.linspace(0,1,self.Nbin+1)
-            Time = (phase[1:]+phase[:-1])/2.
-            TimeErr = (phase[1:]-phase[:-1])/2.
-            gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
-            gTHIndex,TgrIndex,ArrowIndex = plotting.PlotFoldedLC(Time,TimeErr,Index,IndexErr,tag='Photon Index')
-            if CutoffName is not None:
-                gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr,tag='Cutoff')
-        else :
-            gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
-            gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr,tag='Photon Index')
-            if CutoffName is not None:
-                gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr,tag='Cutoff')
+        # if folded:
+        #     phase = np.linspace(0,1,self.Nbin+1)
+        #     Time = (phase[1:]+phase[:-1])/2.
+        #     TimeErr = (phase[1:]-phase[:-1])/2.
+        #     gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
+        #     gTHIndex,TgrIndex,ArrowIndex = plotting.PlotFoldedLC(Time,TimeErr,Index,IndexErr)
+        #     if CutoffName is not None:
+        #         gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
+        # else :
+        #     gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
+        #     gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr)
+        #     if CutoffName is not None:
+        #         gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
 
-        ### plot and save the flux LC
-        CanvLC = ROOT.TCanvas()
-        gTHLC.Draw()
-        TgrLC.Draw('zP')
+        # xmin = min(Time) - max(TimeErr) * 10
+        # xmax = max(Time) + max(TimeErr) * 10
+        # ymin = min(Flux) - max(FluxErr) * 1.3
+        # ymax = max(Flux) + max(FluxErr) * 1.3
+        plt.figure()
+        plt.xlabel("Time")
+        plt.ylabel("Flux (photon cm^{-2} s^{-1})")
+        # plt.ylim(ymin=ymin,ymax=ymax)
+        # plt.xlim(xmin=xmin,xmax=xmax)
+        plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,fmt='o',color='black',ls='None',uplims=uplim)
 
-        #plot the ul as arrow
-        for i in xrange(len(ArrowLC)):
-            ArrowLC[i].Draw()
+        plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
+                orientation='portrait', papertype=None, format=None,
+                transparent=False, bbox_inches=None, pad_inches=0.1,
+                frameon=None)
 
         # compute Fvar and probability of being cst
 
         self.info("Flux vs Time: infos")
-        self.FitWithCst(TgrLC)
+        self.FitWithCst(Time,Flux,FluxErr)
         self.Fvar(Flux,FluxErr)
 
-        #Save the canvas in the LightCurve subfolder
-        CanvLC.Print(LcOutPath+'_LC.png')
-        CanvLC.Print(LcOutPath+'_LC.eps')
-        CanvLC.Print(LcOutPath+'_LC.C')
+        # ### plot and save the Index LC
+        # CanvIndex = ROOT.TCanvas()
+        # gTHIndex.Draw()
+        # TgrIndex.Draw('zP')
 
-        ### plot and save the Index LC
-        CanvIndex = ROOT.TCanvas()
-        gTHIndex.Draw()
-        TgrIndex.Draw('zP')
+        # #plot the ul as arrow
+        # for i in xrange(len(ArrowIndex)):
+        #     ArrowIndex[i].Draw()
 
-        #plot the ul as arrow
-        for i in xrange(len(ArrowIndex)):
-            ArrowIndex[i].Draw()
+        # #Save the canvas in the LightCurve subfolder
+        # if self.config["LightCurve"]["SpectralIndex"] == 0 :
+        #     self.info("Index vs Time")
+        #     self.FitWithCst(Time,Index,IndexErr)
+        #     CanvIndex.Print(LcOutPath+'_Index.png')
+        #     CanvIndex.Print(LcOutPath+'_Index.eps')
+        #     CanvIndex.Print(LcOutPath+'_Index.C')
 
-        #Save the canvas in the LightCurve subfolder
-        if self.config["LightCurve"]["SpectralIndex"] == 0 :
-            self.info("Index vs Time")
-            self.FitWithCst(TgrIndex)
-            CanvIndex.Print(LcOutPath+'_Index.png')
-            CanvIndex.Print(LcOutPath+'_Index.eps')
-            CanvIndex.Print(LcOutPath+'_Index.C')
-
-        if len(Cutoff) > 0:
-            ### plot and save the Cutoff LC
-            CanvCutoff = ROOT.TCanvas()
-            gTHCutoff.Draw()
-            TgrCutoff.Draw('zP')
-
-            #plot the ul as arrow
-            for i in xrange(len(ArrowCutoff)):
-                ArrowCutoff[i].Draw()
-
-            print "Cutoff vs Time: infos"
-            self.FitWithCst(TgrCutoff)
-            CanvCutoff.Print(LcOutPath+'_Cutoff.png')
-            CanvCutoff.Print(LcOutPath+'_Cutoff.eps')
-            CanvCutoff.Print(LcOutPath+'_Cutoff.C')
 
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
@@ -411,25 +426,6 @@ class LightCurve(Loggin.Message):
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
-
-    def CheckNpred(self,Npred,Flux,FluxErr,detected_indices):
-        """check if the errors are well computed using the Npred/sqrt(Npred) vs Flux/FluxErr relation
-           and print corresponding point which failled"""
-        func = ROOT.TF1("func","pol1",np.min(np.sqrt(Npred)),np.max(np.sqrt(Npred)))
-
-        if len(detected_indices) > 0 :
-	        _,TgrNpred = plotting.PlotNpred(Npred[detected_indices],Flux[detected_indices],FluxErr[detected_indices])
-
-        	TgrNpred.Fit(func,"Q")
-        	for i in xrange(len(Flux)):
-        	    if Flux[i]/FluxErr[i]>2*func.Eval(sqrt(Npred[i])):
-                	self._errorReading("problem in errors calculation for",i)
-               		print "Flux +/- error = ",Flux[i]," +/- ",FluxErr[i]
-                	print "V(Npred) = ",sqrt(Npred[i])
-                	print 
-        func.SetLineColor(15)
-        func.SetLineStyle(2)
-        return func
 
     def Fvar(self,Flux,FluxErr):
         """Compute the Fvar as defined in Vaughan et al."""
@@ -446,18 +442,18 @@ class LightCurve(Loggin.Message):
             print  "\tFvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
         print 
 
-    def FitWithCst(self,tgrFlux):
+    def FitWithCst(self,x,y,dy):
         """Fit the LC with a constant function an
            print the chi2 and proba"""
-        func = ROOT.TF1('func','pol0')
-        func.SetLineColor(15)
-        func.SetLineStyle(3)
-        tgrFlux.Fit('func','Q')
+        res,_ = scipy.optimize.curve_fit(pol0,x,y,p0=[np.mean(y)],sigma=dy)
+        print res
+        print y
+        print dy
+        cost = np.sum(((pol0(x,res[0])-y)/dy)**2)
         self.info("Fit with a constant function")
-        print '\tChi2 = ',func.GetChisquare()," NDF = ",func.GetNDF()
-        print '\tprobability of being cst = ',func.GetProb()
+        print '\tChi2 = ',cost," NDF = ",len(y)-1
+        print '\tprobability of being cst = ',1 - chi2.cdf(cost,len(y)-1)
         print
-        del func
 
     def VariabilityIndex(self):
         """Compute the variability index as in the 2FLG catalogue. (see Nolan et al, 2012)"""
@@ -482,10 +478,7 @@ class LightCurve(Loggin.Message):
             try :
                 ResultDic = utils.ReadResult(CurConfig)
             except :
-                self._errorReading("fail reading the config file ",i)
-#                print "WARNING : fail reading the config file : ",CurConfig
-#                print "Job Number : ",i
-#                print "Please have a look at this job log file"
+                self._errorReading("Fail reading the config file ",i)
                 continue
 
 #            LogL1.append(ResultDic.get("log_like"))
@@ -527,25 +520,22 @@ class LightCurve(Loggin.Message):
 
             del Fit #Clean memory
 
-        Can = _GetCanvas()
-        TgrDC = ROOT.TGraph(len(Time),np.array(Time),np.array(LogL0))
-        TgrDC.Draw("ALP*")
-        TgrDC = ROOT.TGraph(len(Time),np.array(Time),np.array(LogL0))
-        TgrDC.SetMarkerColor(2)
-        TgrDC.Draw("PL*")
-        #Save the canvas in the LightCurve subfolder
-        Can.Print(LcOutPath+'_VarIndex.eps')
-        Can.Print(LcOutPath+'_VarIndex.C')
+
+        plt.figure()
+        plt.xlabel("Time")
+        plt.ylabel("Log(Like) Variability")
+        plt.errorbar(Time,LogL0,fmt='o',color='black',ls='None')
+
+        plt.savefig(LcOutPath+"_VarIndex.png", dpi=150, facecolor='w', edgecolor='w',
+                orientation='portrait', papertype=None, format=None,
+                transparent=False, bbox_inches=None, pad_inches=0.1,
+                frameon=None)
+
         self.info("Variability index calculation") 
         print "\t TSvar = ",2*(sum(LogL1)-sum(LogL0))
         print "\t NDF = ",len(LogL0)-1
-        print "\t Chi2 prob = ",ROOT.TMath.Prob(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
+        print "\t Chi2 prob = ",1 - chi2.cdf(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
         print 
-def _GetCanvas():
-    Canv = ROOT.TCanvas()
-    Canv.SetGridx()
-    Canv.SetGridy()
-    return Canv
 
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""

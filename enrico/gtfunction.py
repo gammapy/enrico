@@ -62,7 +62,7 @@ class Observation:
         self.irfs      = self.Configuration['event']['irfs']
         self.likelihood = self.Configuration['analysis']['likelihood']        
         
-        #Where to apply cuts in event selections (roicuts should not be applied twice)
+        #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST to crash)
         self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
         self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
 
@@ -274,7 +274,7 @@ class Observation:
         while not last:
             selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
             outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            self._RunMktime(selstr,outfile,None)
+            self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
 
         evlist_filename = self.eventfile.replace('.fits','.list')
@@ -309,17 +309,14 @@ class Observation:
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
         os.system("mv "+outfile+" "+self.mktimefile)
 
-    def _RunMktime(self,selstr,outfile,roicut=None):
+    def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""
         if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
             #print("File exists and clobber is False")
             return(0)
         maketime['scfile']  = self.ft2
         maketime['filter']  = selstr #self.Configuration['analysis']['filter']
-        if roicut is not None:
-            maketime['roicut']  = roicut
-        else:
-            maketime['roicut']  = "no"
+        maketime['roicut']  = roicut
         maketime['tstart']  = self.t1
         maketime['tstop']   = self.t2
         maketime['evfile']  = self.eventfile
@@ -357,7 +354,7 @@ class Observation:
             #print("File exists and clobber is False")
             return(0)
         expCube['evfile']=self.mktimefile
-        expCube['scfile']=self.ft2.lstrip('@')
+        expCube['scfile']=self.ft2.lstrip('@') # @ allows for weekly SC files
         expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
         expCube['binsz']=1
@@ -381,10 +378,9 @@ class Observation:
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
-        expMap['srcrad'] = 30 #self.roi #+10
-        #The number of bin is the number of decade * the number of bin per decade 
-        #(given by the users, with a minimum of 2)
-        expMap['nenergies'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
+        expMap['srcrad'] = self.roi+10
+        #The number of bin is the number of decade * the number of bin per decade (given by the users)
+        expMap['nenergies'] =  int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5)
         expMap['clobber'] = self.clobber
         expMap.run()
 

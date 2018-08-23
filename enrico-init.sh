@@ -15,12 +15,10 @@
 # $ init_fermi
 # $ init_enrico
 
-#export ROOTSYS=/afs/ifh.de/group/cta/cta/software/root/root_v5.34.32
-#source $ROOTSYS/bin/thisroot.sh
-
+if [ "$ENRICO_DIR" == "" ]; then
+    export ENRICO_DIR=$HOME
+fi
 echo "Adding Enrico to PATH and PYTHONPATH"
-
-
 export PATH=$PATH:$ENRICO_DIR/bin
 export PYTHONPATH=$ENRICO_DIR:$PYTHONPATH
 

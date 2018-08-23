@@ -16,12 +16,7 @@ def sed(config,infile):
     enricodir = environ.DIRS.get('ENRICO_DIR')
     fermidir = environ.DIRS.get('FERMI_DIR')
 
-    if config['Spectrum']['SummedLike'] == 'yes':
-        GenericName = (config['target']['name'] + "_" +
-                   config['analysis']['likelihood'] +
-                   "_Summed_" + config['file']['tag'])
-    else:
-        GenericName = (config['target']['name'] + "_" +
+    GenericName = (config['target']['name'] + "_" +
                    config['analysis']['likelihood'] +
                    "_Normal_" + config['file']['tag'])
 

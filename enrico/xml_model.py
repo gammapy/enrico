@@ -452,7 +452,7 @@ def GetlistFromFits(config, catalog):
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
 
-    #save log of the genration of the xml
+    #save log of the generation of the xml
     save = "catalog: "+catalog+"\n"
     save += "Add "+str(len(sources))+" sources in the ROI of "+str(roi)+ "("+str(config['space']['rad'])+"+ 2 ) degrees\n"
     save += " sources have free parameters inside "+str(max_radius)+" degrees\n"
@@ -501,11 +501,12 @@ def WriteXml(lib, doc, srclist, config):
             if not(os.path.isfile(Iso)):
                 raise RuntimeError
         except:
-            mes.warning("Cannot guess Iso file %s, please have a look" %Iso)
+            mes.warning("Cannot find Iso file %s, please have a look. Switching to default one" %Iso)
             Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
 
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
+
 
     #add diffuse sources
     addDiffusePL(lib, Iso, free=1, value=1.0,
@@ -644,6 +645,62 @@ def XmlMaker(config):
 
     lib, doc = CreateLib()
     srclist = GetlistFromFits(config, catalog)
-    WriteXml(lib, doc, srclist, config)
+
+
+    # deal with the summedlike analysis
+    xml = config["file"]["xml"]
+    if config['ComponentAnalysis']['FrontBack'] == "yes":
+      config["event"]["evtype"] = 1
+      config["file"]["xml"] = xml.replace(".xml","_FRONT.xml")
+      WriteXml(lib, doc, srclist, config)
+    
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 2
+      config["file"]["xml"] = xml.replace(".xml","_BACK.xml")
+      WriteXml(lib, doc, srclist, config)
+
+    elif config['ComponentAnalysis']['PSF'] == "yes":
+      config["event"]["evtype"] = 4
+      config["file"]["xml"] = xml.replace(".xml","_PSF0.xml")
+      WriteXml(lib, doc, srclist, config)
+    
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 8
+      config["file"]["xml"] = xml.replace(".xml","_PSF1.xml")
+      WriteXml(lib, doc, srclist, config)
+
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 16
+      config["file"]["xml"] = xml.replace(".xml","_PSF2.xml")
+      WriteXml(lib, doc, srclist, config)
+
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 32
+      config["file"]["xml"] = xml.replace(".xml","_PSF3.xml")
+      WriteXml(lib, doc, srclist, config)
+
+    elif config['ComponentAnalysis']['EDISP'] == "yes":
+      config["event"]["evtype"] = 64
+      config["file"]["xml"] = xml.replace(".xml","_EDISP0.xml")
+      WriteXml(lib, doc, srclist, config)
+    
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 128
+      config["file"]["xml"] = xml.replace(".xml","_EDISP1.xml")
+      WriteXml(lib, doc, srclist, config)
+
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 256
+      config["file"]["xml"] = xml.replace(".xml","_EDISP2.xml")
+      WriteXml(lib, doc, srclist, config)
+
+      lib, doc = CreateLib()
+      config["event"]["evtype"] = 512
+      config["file"]["xml"] = xml.replace(".xml","_EDISP3.xml")
+      WriteXml(lib, doc, srclist, config)
+      
+    else :
+      WriteXml(lib, doc, srclist, config)
+
     Xml_to_Reg(folder + "/Roi_model",
         srclist, Prog=sys.argv[0])

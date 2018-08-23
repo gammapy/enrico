@@ -4,6 +4,9 @@ from math import log10
 import numpy as np
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
+typeirfs={1:"FRONT",2:"BACK",3:"",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
+        128:"EDISP1",256:"EDISP2",512:"EDISP3"}
+
 def hasKey(dictionary,key):
     try:             Item = dictionary[key]
     except KeyError: return(False)
@@ -335,8 +338,6 @@ def GetIRFS(evtclass,evttype):
 			256:"P8R2_CLEAN",521:"P8R2_ULTRACLEAN",1024:"P8R2_ULTRACLEANVETO",32768:"P8R2_TRANSIENT100S",
 			65536:"P8R2_TRANSIENT015S",16777216:"P8R2_LLE"}
 
-    typeirfs={1:"FRONT",2:"BACK",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
-		128:"EDISP1",256:"EDISP2",512:"EDISP3"}
 
     result = []
     val = evttype

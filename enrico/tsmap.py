@@ -72,32 +72,38 @@ class TSMap(Loggin.Message):
         folder = self.config['out']
         _,Fit = GenAnalysisObjects(self.config,xmlfile=outXml) #get the Fit object
 
-        src = GetSrc(Fit,ra,dec) # get the Source object at postion ra dec
+        src = GetSrc(Fit,ra,dec) # get the Source object at position ra dec
 
         if self.config['TSMap']['RemoveTarget'] : # remove the target is asked
-            Fit.deleteSource(self.config['target']['name'])
+            for comp in Fit.components:
+                comp.deleteSource(self.config['target']['name'])
 
         if self.config['TSMap']['Re-Fit']: # reoptimze before is asked
             Fit.fit(0,optimizer=self.config['fitting']['optimizer'])
 
-        for par in xrange(Fit.logLike.getNumParams()): # freeze all the source parameters
-            Fit[par].setFree(0)
+        for comp in Fit.components:
+            for par in xrange(comp.logLike.getNumParams()): # freeze all the source parameters
+                comp[par].setFree(0)
+            comp.addSource(src)# add a spurious source
 
-        Fit.addSource(src)# add a spurious source
-        # dump the *new* xml file
+        # # dump the *new* xml file
         Fit.writeXml(self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") 
 
-        # a new Fit object with the new xml file is needed.
-        # just changing the position of the spurious source does not work 
-        _,TSFit = GenAnalysisObjects(self.config,xmlfile=self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") #get the Fit object
+        # # a new Fit object with the new xml file is needed.
+        # # just changing the position of the spurious source does not work 
+        _,Fit = GenAnalysisObjects(self.config,xmlfile=self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") #get the Fit object
 
-        TSFit.fit(0,optimizer=self.config['fitting']['optimizer'])
+        # Fit.fit(0,optimizer=self.config['fitting']['optimizer'])
+        Fit.fit(0,optimizer=self.config['fitting']['optimizer'])
 
         # save the result
         fsave = open(self._PixelFile(i,j),'w')
+        # fsave.write(str(ra)+"\t"+str(dec)+"\t"+
+        #             str(TSFit.Ts("Spurious"))+"\t"+
+        #             str(TSFit.logLike.value()))
         fsave.write(str(ra)+"\t"+str(dec)+"\t"+
-                    str(TSFit.Ts("Spurious"))+"\t"+
-                    str(TSFit.logLike.value()))
+                    str(Fit.Ts("Spurious"))+"\t"+
+                    str(Fit.logLike.value()))
         fsave.close()
 
     def FitOneRow(self,ra,i) :
@@ -105,7 +111,7 @@ class TSMap(Loggin.Message):
         using a loop and calling the fit for 1 pixel"""
         for j in xrange(self.npix):
             dec = self.DECref + self.binsz*(j-self.npix/2.)
-            self.info('FitOneRow '+str(dec))
+            self.info('FitOneRow at DEC = '+str(dec))
             self.FitOnePixel(ra,dec,i,j)
 
     def runTSMap(self,row=-1,column=-1) :
@@ -222,4 +228,3 @@ if __name__ == '__main__':
         from enrico import Loggin
         mes = Loggin.Message()
         mes.error("Wrong number of arguments")
-

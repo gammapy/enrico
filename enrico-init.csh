@@ -15,6 +15,7 @@
 # $ init_fermi
 # $ init_enrico
 
+setenv ENRICO_DIR $HOME
 echo "Adding Enrico to PATH and PYTHONPATH"
 setenv PATH ${PATH}:${ENRICO_DIR}/bin
 setenv PYTHONPATH ${ENRICO_DIR}:${PYTHONPATH}

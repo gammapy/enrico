@@ -1,11 +1,14 @@
 #!/usr/bin/env python
+import os,os.path,math
+from enrico import utils
+from enrico.gtfunction import Observation
+from enrico.fitmaker import FitMaker
+import Loggin
+import SummedLikelihood
+from enrico.extern.configobj import ConfigObj
+from utils import hasKey, isKey, typeirfs
 
 def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
-    import os
-    from enrico import utils
-    from enrico.gtfunction import Observation
-    from enrico.fitmaker import FitMaker
-    import Loggin
 
     mes = Loggin.Message()
     """ run an analysis"""
@@ -14,7 +17,6 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
         utils._log('SUMMARY: ' + tag)
         Obs.printSum()
 
-
     FitRunner = FitMaker(Obs, config)##Class
     if config['Spectrum']['FitsGeneration'] == 'yes':
         FitRunner.FirstSelection(configgeneric) #Generates fits files for the coarse selection
@@ -22,14 +24,7 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
     return FitRunner
 
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
-    import os
-    import os.path
-    import math
-    import SummedLikelihood
-    from enrico.xml_model import XmlMaker
-    from enrico.extern.configobj import ConfigObj
-    from utils import hasKey, isKey
-    import Loggin
+
     mes = Loggin.Message()
     #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
@@ -68,100 +63,70 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
             FitRunner = Analyses[0]
 
-        elif isKey(config['ComponentAnalysis'],'PSF') == 'yes':
-            from enrico.data import fermievtypes
-            mes.info("Breaking the analysis in PSF 0,1,2,3.")
-            # Clone the configs
-            # Set Summed Likelihood to True
-            config['Spectrum']['SummedLike'] = 'yes'
-            for k,TYPE in enumerate(["PSF0", "PSF1", "PSF2", "PSF3"]):
-                configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes[TYPE]
-                try:
-                    Analyses[k] = Analysis(folder, configs[k], \
-                        configgeneric=config,\
-                        tag=TYPE, verbose = verbose)
-                    if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
-                    Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addComponent(Fits[k])
-                except RuntimeError,e:
-                    if 'RuntimeError: gtltcube execution failed' in str(e):
-                        mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
-            FitRunner = Analyses[0]
+    EUnBinned = config['ComponentAnalysis']['EUnBinned']
+    emintotal = float(config['energy']['emin'])
+    emaxtotal = float(config['energy']['emax'])
 
-        elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
-            from enrico.data import fermievtypes
-            mes.info("Breaking the analysis in EDISP 0,1,2,3.")
-            # Clone the configs
-            # Set Summed Likelihood to True
-            config['Spectrum']['SummedLike'] = 'yes'
-            for k,TYPE in enumerate(["EDISP0", "EDISP1", "EDISP2", "EDISP3"]):
-                configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes[TYPE]
-                try:
-                    Analyses[k] = Analysis(folder, configs[k], \
-                        configgeneric=config,\
-                        tag=TYPE, verbose = verbose)
-                    if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
-                    Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addComponent(Fits[k])
-                except RuntimeError,e:
-                    if 'RuntimeError: gtltcube execution failed' in str(e):
-                        mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
-            FitRunner = Analyses[0]
+    evtnum = [config["event"]["evtype"]] #for std analysis
+    evtold = evtnum[0] #for std analysis
+ 
+    # Create one obs instance for each component
+    if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
+        evtnum = [1, 2]
+    if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
+        evtnum = [4,8,16,32]
+    if isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
+        evtnum = [64,128,256,521]
+    oldxml = config['file']['xml']
+    for k,evt in enumerate(evtnum):
+        config['event']['evtype'] = evt
+        config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml").replace("_.xml",".xml")
 
-        elif isKey(config['ComponentAnalysis'],'EUnBinned')>=0:
+        if EUnBinned>emintotal and EUnBinned<emaxtotal:
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
-            # Set Summed Likelihood to True
-            config['Spectrum']['SummedLike'] = 'yes'
-            EUnBinned = config['ComponentAnalysis']['EUnBinned']
-            emintotal = float(config['energy']['emin'])
-            emaxtotal = float(config['energy']['emax'])
-            # Run the following analysis depending on the case
-            # this is general, no matter if we are in the total fit or the Ebin #N fit.
-            if EUnBinned<=emintotal:    analysestorun = ["highE"]
-            elif EUnBinned>=emaxtotal:  analysestorun = ["lowE"]
-            else:                       analysestorun = ["lowE","highE"]
-            oldxml = config['file']['xml']
+            analysestorun = ["lowE","highE"]
+
             for k,TYPE in enumerate(analysestorun):
-                configs[k] = ConfigObj(config)
+                tag = TYPE
+                if typeirfs[evt] != "" : tag += "_"+typeirfs[evt]# handle name of fits file
+
                 # Tune parameters
                 if TYPE is "lowE":
-                    configs[k]['energy']['emin'] = emintotal
-                    configs[k]['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
-                    configs[k]['analysis']['likelihood'] = "binned"
-                    configs[k]['analysis']['ComputeDiffrsp'] = "no"
+                    config['energy']['emin'] = emintotal
+                    config['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
+                    config['analysis']['likelihood'] = "binned"
+                    config['analysis']['ComputeDiffrsp'] = "no"
                 elif TYPE is "highE":
-                    configs[k]['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
-                    configs[k]['energy']['emax'] = emaxtotal
-                    configs[k]['analysis']['likelihood'] = "unbinned"
-                    configs[k]['analysis']['ComputeDiffrsp'] = "yes"
-                try:
-                    Analyses[k] = Analysis(folder, configs[k], \
-                        configgeneric=config,\
-                        tag=TYPE,\
-                        verbose=verbose)
-                    if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
-                    Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addComponent(Fits[k])
-                except RuntimeError,e:
-                    raise
-                    if 'RuntimeError: gtltcube execution failed' in str(e):
-                        mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
-            FitRunner = Analyses[0]
+                    config['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
+                    config['energy']['emax'] = emaxtotal
+                    config['analysis']['likelihood'] = "unbinned"
+                    config['analysis']['ComputeDiffrsp'] = "yes"
+
+                Analyse = Analysis(folder, config, \
+                    configgeneric=config,\
+                    tag=TYPE,\
+                    verbose=verbose)
+
+
+                Fit_component = Analyse.CreateLikeObject()
+                Fit.addComponent(Fit_component)
+            FitRunner = Analyse
             FitRunner.obs.Emin = emintotal
             FitRunner.obs.Emax = emaxtotal
 
-    try:
-        FitRunner.config
-    except NameError:
-        # Create one obs instance
-        FitRunner = Analysis(folder, config, tag="", verbose = verbose)
-        Fit.addComponent(FitRunner.CreateLikeObject())
-        if not(xmlfile ==""):
-            FitRunner.obs.xmlfile = xmlfile
+        else:
+            Analyse = Analysis(folder, config, \
+                configgeneric=config,\
+                tag=typeirfs[evt], verbose = verbose)
 
+            if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+            Fit_component = Analyse.CreateLikeObject()
+            Fit.addComponent(Fit_component)
+    FitRunner = Analyse
+
+    config["event"]["evtype"] = evtold
     FitRunner.config = config
+
     return FitRunner,Fit
 
 def run(infile):
@@ -216,8 +181,7 @@ def run(infile):
 
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
-        #if config['Spectrum']['SummedLike'] != 'yes':
-        # the possiblity of making the model map is checked inside the function
+        # the possibility of making the model map is checked inside the function
         FitRunner.ModelMap(outXml)
 
     #  Make energy bins by running a *new* analysis
