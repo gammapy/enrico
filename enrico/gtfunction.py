@@ -60,7 +60,12 @@ class Observation:
         self.dec       = float(self.Configuration['space']['yref'])
         self.roi       = float(self.Configuration['space']['rad'])
         self.irfs      = self.Configuration['event']['irfs']
+        self.likelihood = self.Configuration['analysis']['likelihood']        
         
+        #Where to apply cuts in event selections (roicuts should not be applied twice)
+        self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
+        self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
+
         #diffuse Response
         self.diffrspflag = self.folder+'/'+self.srcname+inttag+"_diffrsp.flag"
 
@@ -212,11 +217,20 @@ class Observation:
             return(0)
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventcoarse
-        filter['ra'] = self.ra
-        filter['dec'] = self.dec
-        filter['rad'] = self.roi
-        filter['tmin'] = self.t1
-        filter['tmax'] = self.t2
+        if (self.roicuts == True):
+            filter['ra'] = self.ra
+            filter['dec'] = self.dec
+            filter['rad'] = self.roi
+        else:
+            filter['ra']  = 0
+            filter['dec'] = 0
+            filter['rad'] = 180
+        if (self.timecuts == True):
+            filter['tmin'] = self.t1
+            filter['tmax'] = self.t2
+        else:
+            filter['tmin'] = "INDEF"
+            filter['tmax'] = "INDEF"
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
         filter['zmax'] = self.Configuration['analysis']['zmax']
@@ -232,9 +246,9 @@ class Observation:
             return(0)
         filter['infile'] = self.eventcoarse
         filter['outfile'] = self.eventfile
-        filter['ra'] =   "INDEF"      # self.ra
-        filter['dec'] =  "INDEF"      #self.dec
-        filter['rad'] =  "INDEF"      #self.roi
+        filter['ra'] =   0            #self.ra
+        filter['dec'] =  0            #self.dec
+        filter['rad'] =  180          #self.roi
         filter['tmin'] = "INDEF"      #self.t1
         filter['tmax'] = "INDEF"      #self.t2
         filter['emin'] = self.Emin
@@ -295,7 +309,7 @@ class Observation:
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
         os.system("mv "+outfile+" "+self.mktimefile)
 
-    def _RunMktime(self,selstr,outfile,roicut):
+    def _RunMktime(self,selstr,outfile,roicut=None):
         """run gtmktime tool"""
         if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
             #print("File exists and clobber is False")
@@ -304,6 +318,8 @@ class Observation:
         maketime['filter']  = selstr #self.Configuration['analysis']['filter']
         if roicut is not None:
             maketime['roicut']  = roicut
+        else:
+            maketime['roicut']  = "no"
         maketime['tstart']  = self.t1
         maketime['tstop']   = self.t2
         maketime['evfile']  = self.eventfile
@@ -366,7 +382,8 @@ class Observation:
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = 30 #self.roi #+10
-        #The number of bin is the number of decade * the number of bin per decade (given by the users, with a minimum of 2)
+        #The number of bin is the number of decade * the number of bin per decade 
+        #(given by the users, with a minimum of 2)
         expMap['nenergies'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         expMap.run()

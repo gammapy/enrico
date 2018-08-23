@@ -61,9 +61,10 @@ class FitMaker(Loggin.Message):
         self.obs.SelectEvents()
         self._log('gtmktime', 'Update the GTI and cut data based on ROI')#run gtmktime
         self.obs.MkTime()
-        if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
-            self._log('gtdiffrsp', 'Compute Diffuse response')
-            self.obs.DiffResps()#run gtdiffresp
+        if (self.config["analysis"]["likelihood"] == "unbinned"):
+            if (self.config["analysis"]["ComputeDiffrsp"] == "yes"):
+                self._log('gtdiffrsp', 'Compute Diffuse response')
+                self.obs.DiffResps()#run gtdiffresp
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
         self._log('gtltcube', 'Make live time cube')#run gtexpcube

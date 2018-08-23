@@ -128,6 +128,8 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         config['energy']['emin'] = str(ener[ibin])
         config['energy']['emax'] = str(ener[ibin + 1])
         config['energy']['decorrelation_energy'] = "no"
+        config['analysis']['evtroicuts'] = 'no'
+        config['analysis']['evttimecuts'] = 'no'
         # Change the spectral index to follow the Estimated Gamma
         # if approximated Gamma is outside of bounds set it to limit
         Gamma_min=-5
@@ -150,17 +152,18 @@ def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
         for conf in configfiles:
-             pathconf = folder + "/"+ EbinPath + str(Nbin) +"/" + conf
-             Newconfig = get_config(pathconf)
-             cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
-             if Newconfig['Submit'] == 'no' : #run directly
-                 os.system(cmd)
-             else : #submit a job to a cluster
-                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
-                 scriptname = prefix + "_Script.sh"
-                 JobLog = prefix + "_Job.log"
-                 JobName = (Newconfig['target']['name'] + "_" +
+            pathconf = folder + "/"+ EbinPath + str(Nbin) +"/" + conf
+            Newconfig = get_config(pathconf)
+            cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
+            #Newconfig['Submit'] = 'no' # force run locally
+            if Newconfig['Submit'] == 'no' : #run directly
+                os.system(cmd)
+            else : #submit a job to a cluster
+                prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
+                scriptname = prefix + "_Script.sh"
+                JobLog = prefix + "_Job.log"
+                JobName = (Newconfig['target']['name'] + "_" +
                            Newconfig['analysis']['likelihood'] +
                            "_Ebin_" + str(ind) + "_" + Newconfig['file']['tag'])
-                 call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)# submition
-             ind+=1
+                call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)# submition
+            ind+=1

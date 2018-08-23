@@ -183,8 +183,8 @@ def call(cmd,
             del outfd
             
         cmd += GetSubOutput(qsub_log)
-        if environ.FARM in ["DESY"]:
-            cmd += ['/usr/bin/singularity','exec','/project/singularity/images/SL6.img','sh']
+        #if environ.FARM in ["DESY"]:
+        #    cmd += ['/usr/bin/singularity','exec','/project/singularity/images/SL6.img','sh']
         cmd += [scriptfile]
 
         cmd = _cmd_to_str(cmd)
