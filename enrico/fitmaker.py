@@ -104,7 +104,8 @@ class FitMaker(Loggin.Message):
                               irfs=self.obs.irfs)
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
-
+	
+	# Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, we may want to allow fixed shape for that case
         if float(self.config['Spectrum']['FrozenSpectralIndex']>0) and self.config['target']['spectrum'] == "PowerLaw":
             parameters = dict()
             parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])

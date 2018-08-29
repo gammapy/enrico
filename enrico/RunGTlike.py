@@ -28,9 +28,40 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     mes = Loggin.Message()
     #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
+    SummedLike = config['Spectrum']['SummedLike']
     folder = config['out']
 
+    # If there is no xml file, create it and print a warning
+    if (not os.path.isfile(config['file']['xml'])):
+        mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
+        XmlMaker(config)
+
     Fit = SummedLikelihood.SummedLikelihood()
+    if hasKey(config,'ComponentAnalysis') == True:
+        # Create one obs instance for each component
+        configs  = [None]*4
+        Fits     = [None]*4
+        Analyses = [None]*4
+        if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
+            from enrico.data import fermievtypes
+            mes.info("Breaking the analysis in Front/Back events")
+            # Set Summed Likelihood to True
+            config['Spectrum']['SummedLike'] = 'yes'
+            oldxml = config['file']['xml']
+            for k,TYPE in enumerate(["FRONT", "BACK"]):
+                configs[k] = ConfigObj(config)
+                configs[k]['event']['evtype'] = fermievtypes[TYPE]
+                try:
+                    Analyses[k] = Analysis(folder, configs[k], \
+                        configgeneric=config,\
+                        tag=TYPE, verbose = verbose)
+                    if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
+                    Fits[k] = Analyses[k].CreateLikeObject()
+                    Fit.addComponent(Fits[k])
+                except RuntimeError,e:
+                    if 'RuntimeError: gtltcube execution failed' in str(e):
+                        mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
+            FitRunner = Analyses[0]
 
     EUnBinned = config['ComponentAnalysis']['EUnBinned']
     emintotal = float(config['energy']['emin'])

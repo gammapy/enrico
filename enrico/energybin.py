@@ -4,7 +4,7 @@ from enrico import environ
 from enrico.constants import EbinPath
 from enrico.submit import call
 from enrico.config import get_config
-from enrico import utils,Loggin
+from enrico import utils, Loggin
 
 def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     """Change the spectral model of a source called name
@@ -115,7 +115,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         xmltag_list = ["_FRONT","_BACK"]
         mes.info("Splitting Front/Back events")
     elif config['ComponentAnalysis']['PSF'] == "yes":
-        xmltag_list = ["_PSF0","_PSF1","_PSF2"]
+        xmltag_list = ["_PSF0","_PSF1","_PSF2","_PSF3"]
         mes.info("Splitting PSF events")
     elif config['ComponentAnalysis']['EDISP'] == "yes":
         xmltag_list = ["_EDISP0","_EDISP1","_EDISP2","_EDISP3"]
@@ -126,7 +126,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
         mes.info("Submitting # "+str(ibin)+" at energy "+str(E))
         #Update the model for the bin
-        for  comp,xmltag in zip(Fit.components, xmltag_list):
+        for comp,xmltag in zip(Fit.components, xmltag_list):
             NewFitObject = ChangeModel(comp, ener[ibin], ener[ibin + 1], srcname, Pref[ibin] ,Gamma[ibin])
             Xmlname = (config['out'] + "/" + srcname + "_" + str(ibin) +xmltag+ ".xml")
 

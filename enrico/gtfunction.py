@@ -60,7 +60,12 @@ class Observation:
         self.dec       = float(self.Configuration['space']['yref'])
         self.roi       = float(self.Configuration['space']['rad'])
         self.irfs      = self.Configuration['event']['irfs']
+        self.likelihood = self.Configuration['analysis']['likelihood']        
         
+        #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST to crash)
+        self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
+        self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
+
         #diffuse Response
         self.diffrspflag = self.folder+'/'+self.srcname+inttag+"_diffrsp.flag"
 
@@ -212,13 +217,22 @@ class Observation:
             return(0)
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventcoarse
-        filter['ra'] = self.ra
-        filter['dec'] = self.dec
-        filter['rad'] = self.roi
+        if (self.roicuts == True):
+            filter['ra'] = self.ra
+            filter['dec'] = self.dec
+            filter['rad'] = self.roi
+        else:
+            filter['ra']  = 0
+            filter['dec'] = 0
+            filter['rad'] = 180
+        if (self.timecuts == True):
+            filter['tmin'] = self.t1
+            filter['tmax'] = self.t2
+        else:
+            filter['tmin'] = "INDEF"
+            filter['tmax'] = "INDEF"
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
-        filter['tmin'] = self.t1
-        filter['tmax'] = self.t2
         filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = "INDEF"
@@ -232,13 +246,13 @@ class Observation:
             return(0)
         filter['infile'] = self.eventcoarse
         filter['outfile'] = self.eventfile
-        filter['ra'] = self.ra
-        filter['dec'] = self.dec
-        filter['rad'] = self.roi
+        filter['ra'] =   0            #self.ra
+        filter['dec'] =  0            #self.dec
+        filter['rad'] =  180          #self.roi
+        filter['tmin'] = "INDEF"      #self.t1
+        filter['tmax'] = "INDEF"      #self.t2
         filter['emin'] = self.Emin
         filter['emax'] = self.Emax
-        filter['tmin'] = self.t1
-        filter['tmax'] = self.t2
         filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = self.Configuration['event']['evtype']
@@ -340,7 +354,7 @@ class Observation:
             #print("File exists and clobber is False")
             return(0)
         expCube['evfile']=self.mktimefile
-        expCube['scfile']=self.ft2
+        expCube['scfile']=self.ft2.lstrip('@') # @ allows for weekly SC files
         expCube['outfile']=self.Cubename
         expCube['dcostheta']=0.025
         expCube['binsz']=1
@@ -360,12 +374,12 @@ class Observation:
         expMap['expcube'] = self.Cubename
         expMap['outfile'] = self.Mapname
         if  self.Configuration['event']['irfs'] != 'CALDB':
-            expMap['evtype']= self.Configuration['event']['evtype']
+            expMap['evtype'] = self.Configuration['event']['evtype']
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
         expMap['srcrad'] = self.roi+10
-        #The number of bin is the number of decade * the number of bin per decade (given by the userss, with a minimum of 2)
+        #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         expMap.run()

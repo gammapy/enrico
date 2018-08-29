@@ -6,13 +6,13 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # @todo: use config file for this?
-from enrico.environ import CATALOG_DIR, CATALOG, DIFFUSE_DIR, DIFFUSE_GAL, DIFFUSE_ISO_SOURCE, DIFFUSE_ISO_CLEAN
+from enrico.environ import CATALOG_DIR, CATALOG, CATALOG_8yr, DIFFUSE_DIR, DIFFUSE_GAL, DIFFUSE_ISO_SOURCE, DIFFUSE_ISO_CLEAN
 from enrico.environ import DIFFUSE_ISO_SOURCEPSF0, DIFFUSE_ISO_SOURCEPSF1, DIFFUSE_ISO_SOURCEPSF2, DIFFUSE_ISO_SOURCEPSF3
 from enrico.environ import DIFFUSE_ISO_SOURCEEDISP0, DIFFUSE_ISO_SOURCEEDISP1, DIFFUSE_ISO_SOURCEEDISP2, DIFFUSE_ISO_SOURCEEDISP3
 from enrico.environ import DIFFUSE_ISO_CLEANPSF0, DIFFUSE_ISO_CLEANPSF1, DIFFUSE_ISO_CLEANPSF2, DIFFUSE_ISO_CLEANPSF3
 from enrico.environ import DIFFUSE_ISO_CLEANEDISP0, DIFFUSE_ISO_CLEANEDISP1, DIFFUSE_ISO_CLEANEDISP2, DIFFUSE_ISO_CLEANEDISP3
 from enrico.environ import DIRS, DOWNLOAD_DIR, CATALOG_TEMPLATE_DIR, TEMPLATE_VERSION, PREPROCESSED_DIR
-from enrico.environ import WEEKLY_DIR, SPACECRAFT
+from enrico.environ import WEEKLY_DIR, SPACECRAFT, USE_FULLMISSION_SPACECRAFT
 
 #TODO: Read from default config
 default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
@@ -23,14 +23,16 @@ FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
 HEASARC_FTP = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 WEEKLY_DIFFUSE_URL = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 CATALOG_URL = join(FSSC_URL, 'data/access/lat/4yr_catalog')
+CATALOG_URL_8yr = join(FSSC_URL, 'data/access/lat/fl8y/')
 DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
 WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
+WEEKLY_SC_URL = join(FSSC_FTP_URL, 'weekly/spacecraft')
 WEEKLY_DIFFRSP_URL = join(HEASARC_FTP, 'weekly/diffuse')
-SPACECRAFT_URL = join(FSSC_FTP_URL, 'mission/spacecraft',
-                      SPACECRAFT)
+SPACECRAFT_URL = join(FSSC_FTP_URL, 'mission/spacecraft', SPACECRAFT)
 
 #        (_tag,                 _url,        _dir,        _file)
 FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
+         ('CATALOG',            CATALOG_URL_8yr, CATALOG_DIR, CATALOG_8yr),
          ('DIFFUSE_GAL',        DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_GAL),
          ('DIFFUSE_ISO_SOURCE', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCE),
          ('DIFFUSE_ISO_SOURCEPSF0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF0),
@@ -125,7 +127,10 @@ class Data(object):
         os.chdir(DOWNLOAD_DIR)
         if spacecraft:
             # -m --mirror
-            cmd = 'wget -N ' + SPACECRAFT_URL
+            if USE_FULLMISSION_SPACECRAFT:
+                cmd = 'wget -N ' + SPACECRAFT_URL
+            else:
+                cmd = 'wget -m -P weekly -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
             print('EXEC: ', cmd)
             os.system(cmd)
         if photon:
@@ -232,6 +237,20 @@ class Data(object):
         files = files[:weeks]
         log.debug('Writing weeks.lis with %04d lines.' % len(files))
         open('weeks.lis', 'w').writelines(files)
+        
+        if not USE_FULLMISSION_SPACECRAFT:
+            """Produce lists of weekly spacecraft list files."""
+            files = os.listdir(WEEKLY_SC_DIR)
+            # Select only fits files
+            files = [join(WEEKLY_SC_DIR, _) + '\n'
+                     for _ in files if _.endswith('.fits')]
+            # Sort chronologically
+            files.sort()
+            # Select only a subset of weeks
+            weeks = self.SELECTIONS[selection]
+            files = files[:weeks]
+            log.debug('Writing weeks.lis with %04d lines.' % len(files))
+            open('weeks_sc.lis', 'w').writelines(files)
 
     def _preprocess_gtselect(self, evclass, emin):
         """Run gtselect"""
@@ -258,7 +277,10 @@ class Data(object):
         """Run gtmktime"""
         from gt_apps import maketime as tool
         self._set_common_tool_options(tool)
-        tool['scfile'] = join(DOWNLOAD_DIR, SPACECRAFT)
+        if USE_FULLMISSION_SPACECRAFT:
+            tool['scfile'] = join(DOWNLOAD_DIR, SPACECRAFT)
+        else:
+            tool['scfile'] = '@weeks_sc.lis'
         tool['sctable'] = 'SC_DATA'
         tool['filter'] = default_filter
         tool['roicut'] = 'no'
@@ -278,7 +300,10 @@ class Data(object):
         self._set_common_tool_options(tool)
         tool['evfile'] = 'gtmktime.fits'
         tool['evtable'] = 'EVENTS'
-        tool['scfile'] = join(DOWNLOAD_DIR, SPACECRAFT)
+        if USE_FULLMISSION_SPACECRAFT:
+            tool['scfile'] = join(DOWNLOAD_DIR, SPACECRAFT)
+        else:
+            tool['scfile'] = '@weeks_sc.lis'
         tool['sctable'] = 'SC_DATA'
         tool['outfile'] = 'gtltcube.fits'
         tool['dcostheta'] = 0.025

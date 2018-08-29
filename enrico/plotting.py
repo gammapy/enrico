@@ -357,12 +357,13 @@ def PlotSED(config,pars):
 
     #Actually make the plot
     plt.figure()
-    plt.title(pars.PlotName)
+    plt.title(pars.PlotName.split("/")[-1])
+    name = pars.PlotName.split("/")[-1]
     plt.loglog()
 
-    plt.xlabel(r"E [MeV]")
-    plt.ylabel(r"$E^{2}dN/dE [ erg.cm^{-2}.s^{-1} ]$")
-    plt.plot(E,SED,"-r")
+    plt.xlabel(r"$\mathbf{E}\ \mathrm{[MeV]}$",fontsize='x-large')
+    plt.ylabel(r"$\mathbf{E^{2}\ dN/dE}\ \mathrm{[ erg\ cm^{-2} s^{-1} ]}$",fontsize='x-large')
+    plt.plot(E,SED,"-r",label='LAT model')
     plt.plot(ErrorE,ErrorFlux,"-r")
 
     #Plot points
@@ -374,11 +375,37 @@ def PlotSED(config,pars):
     print FluxpointErrm
     print FluxpointErrp
     # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
-    plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',capsize=0,color='black',ls='None',uplims=uplim)
+    plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',capsize=0,color='black',ls='None',uplims=uplim,label='LAT ebins')
+
+    #Set meaningful axes limits
+    xlim = plt.xlim()
+    ylim = plt.ylim()
+    xlim = (max([20,xlim[0]]),min([2e6,xlim[1]]))
+    ylim = (max([1e-13,ylim[0]]),min([1e-8,ylim[1]]))
+    plt.xlim(xlim)
+    plt.ylim(ylim)
+    # turn them into log10 scale
+    #xticks = plt.xticks()[0]
+    #xticklabels = np.array(np.log10(xticks),dtype=int) 
+    #plt.xticks(xticks,xticklabels)
+    #plt.xlabel('$\mathrm{\log_{10}\mathbf{(Energy)} \\ \\ [MeV]}$')
+    
+    plt.legend(fontsize='small',ncol=1,\
+               loc=3,numpoints=1)#,framealpha=0.75)
+
+
+    #Upper horizontal secondary axis with frequency
+    #Plt2 = plt.twiny()
+    #Plt2.set_xscale('log')
+    #Plt2.set_xlim(2.417990504024163e+20 *np.array(xlim))
+    #Plt2.set_xticklabels(np.array(np.log10(Plt2.get_xticks()),dtype=int))
+    #Plt2.set_xlabel('$\mathrm{\log_{10}\mathbf{(Frequency)} \\ \\ [Hz]}$')
+    
     #save the canvas
-    plt.savefig(filebase + '.png', dpi=150, facecolor='w', edgecolor='w',
+    #plt.grid()
+    plt.savefig("%s.png" %filebase, dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
+            transparent=False, bbox_inch=None, pad_inches=0.1,
             frameon=None)
 
 def PlotUL(pars,config,ULFlux,Index):

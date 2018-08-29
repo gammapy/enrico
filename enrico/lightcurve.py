@@ -22,6 +22,7 @@ class LightCurve(Loggin.Message):
     def __init__(self, config):
         super(LightCurve,self).__init__()
         Loggin.Message.__init__(self)
+
         self.config        = get_config(config)
         self.generalconfig = get_config(config)
         print(self.generalconfig)
@@ -220,6 +221,7 @@ class LightCurve(Loggin.Message):
         self._PlotLC(True)
 
     def _PlotLC(self,folded=False):
+
 
         self.info("Reading files produced by enrico")
         LcOutPath = self.LCfolder + self.config['target']['name']

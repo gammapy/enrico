@@ -3,7 +3,7 @@ import sys
 from os.path import join
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.extern.validate import Validator
-from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR
+from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR, USE_FULLMISSION_SPACECRAFT
 from enrico import Loggin, utils
 
 def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
@@ -87,7 +87,10 @@ def query_config():
 
 #    informations about the input files
     config['file'] = {}
-    config['file']['spacecraft'] = DOWNLOAD_DIR+'/lat_spacecraft_merged.fits'
+    if USE_FULLMISSION_SPACECRAFT:
+        config['file']['spacecraft'] = DOWNLOAD_DIR+'/lat_spacecraft_merged.fits'
+    else:
+        config['file']['spacecraft'] = '@'+DOWNLOAD_DIR+'/spacecraft.lis'
     ft2 = raw_input('FT2 file ['+config['file']['spacecraft']+'] : ')
     if not(ft2=='') :
       config['file']['spacecraft'] = ft2
