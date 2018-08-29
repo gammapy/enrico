@@ -371,11 +371,30 @@ def PlotSED(config,pars):
     if NEbin > 0:
         Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim = GetDataPoints(config,pars) #collect data points
 
-    print uplim
-    print FluxpointErrm
-    print FluxpointErrp
+    #print uplim
+    #print FluxpointErrm
+    #print FluxpointErrp
     # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
-    plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',capsize=0,color='black',ls='None',uplims=uplim,label='LAT ebins')
+    # Get the strict upper limit (best fit value + error, then set the error to 0 and the lower error to 20% of the value)
+    uplim = np.array(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
+    Fluxpoint[uplim] += FluxpointErrp[uplim]
+    FluxpointErrm[uplim] = 0
+    FluxpointErrp[uplim] = 0
+
+    # Plot the significant points
+    plt.errorbar(Epoint[~uplim], Fluxpoint[~uplim], 
+        xerr=[EpointErrm[~uplim], EpointErrp[~uplim]], 
+        yerr=[FluxpointErrm[~uplim], FluxpointErrp[~uplim]],
+        fmt='o',capsize=0,color='black',ls='None',uplims=False,label='LAT ebins')
+    
+    # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
+    plt.errorbar(Epoint[uplim], Fluxpoint[uplim], 
+        xerr=[EpointErrm[uplim], EpointErrp[uplim]], 
+        yerr=[FluxpointErrm[uplim], FluxpointErrp[uplim]],
+        fmt='o',markersize=0,capsize=0,color='black',ls='None',uplims=False)
+    plt.errorbar(Epoint[uplim], 0.8*Fluxpoint[uplim], 
+        yerr=[0.2*Fluxpoint[uplim], 0.2*Fluxpoint[uplim]],
+        fmt='o',markersize=0,capsize=4,color='black',ls='None',lolims=True)
 
     #Set meaningful axes limits
     xlim = plt.xlim()
