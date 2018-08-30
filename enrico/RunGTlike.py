@@ -32,7 +32,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     SummedLike = config['Spectrum']['SummedLike']
     folder = config['out']
 
-    # If there are no xml file, create it and print a warning
+    # If there are no xml files, create it and print a warning
     if (glob.glob("%s*.xml" %config['file']['xml'].replace('.xml','')) is []):
         mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
         XmlMaker(config)
@@ -79,7 +79,6 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     if isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
         evtnum = [64,128,256,521]
     oldxml = config['file']['xml']
-    print(oldxml)
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt
         config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml").replace("_.xml",".xml")
