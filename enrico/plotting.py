@@ -1,9 +1,12 @@
 import os
+from distutils.version import LooseVersion
 import numpy as np
 import pyfits
 import pyLikelihood
 import matplotlib
 matplotlib.use('Agg')
+matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 15})
+matplotlib.rc('text', usetex=True)
 import matplotlib.pyplot as plt
 from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
 from enrico.config import get_config
@@ -319,6 +322,47 @@ def GetDataPoints(config,pars):
     dumpfile.close()
     return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
 
+def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim):
+    """ plot an errorbar plot with upper limits """
+    # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
+    uplim = np.asarray(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
+    # make sure that the arrays are numpy arrays and not lists. 
+    x = np.asarray(x) 
+    xerrm = np.asarray(xerrm) 
+    xerrp = np.asarray(xerrp) 
+    y = np.asarray(y) 
+    yerrm = np.asarray(yerrm) 
+    yerrp = np.asarray(yerrp) 
+    # Get the strict upper limit (best fit value + error, then set the error to 0 and the lower error to 20% of the value)
+    y[uplim] += yerrp[uplim]
+    yerrm[uplim] = 0
+    yerrp[uplim] = 0
+
+    # Plot the significant points
+    plt.errorbar(x[~uplim], y[~uplim], 
+        xerr=[xerrm[~uplim], xerrp[~uplim]], 
+        yerr=[yerrm[~uplim], yerrp[~uplim]],
+        fmt='o',capsize=0,color='black',ls='None',uplims=False,label='LAT data')
+    
+    # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
+    # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
+    if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
+        plt.errorbar(x[uplim], y[uplim], 
+            xerr=[xerrm[uplim], xerrp[uplim]], 
+            yerr=[yerrm[uplim], yerrp[uplim]],
+            fmt='o',markersize=0,capsize=0,color='0.50',ls='None',lolims=False)
+        plt.errorbar(x[uplim], 0.8*y[uplim], 
+            yerr=[0.2*y[uplim], 0.2*y[uplim]],
+            fmt='o',markersize=0,capsize=4,color='0.50',ls='None',lolims=True)
+    else:
+        plt.errorbar(x[uplim], y[uplim], 
+            xerr=[xerrm[uplim], xerrp[uplim]], 
+            yerr=[yerrm[uplim], yerrp[uplim]],
+            fmt='o',markersize=0,capsize=0,color='0.50',ls='None',uplims=False)
+        plt.errorbar(x[uplim], 0.8*y[uplim], 
+            yerr=[0.2*y[uplim], 0.2*y[uplim]],
+            fmt='o',markersize=0,capsize=4,color='0.50',ls='None',uplims=True)
+    
 
 def PlotSED(config,pars):
     """plot a nice SED with a butterfly and points"""
@@ -357,12 +401,12 @@ def PlotSED(config,pars):
 
     #Actually make the plot
     plt.figure()
-    plt.title(pars.PlotName.split("/")[-1])
+    plt.title(pars.PlotName.split("/")[-1].replace('_','\_'))
     name = pars.PlotName.split("/")[-1]
     plt.loglog()
 
-    plt.xlabel(r"$\mathbf{E}\ \mathrm{[MeV]}$",fontsize='x-large')
-    plt.ylabel(r"$\mathbf{E^{2}\ dN/dE}\ \mathrm{[ erg\ cm^{-2} s^{-1} ]}$",fontsize='x-large')
+    plt.xlabel(r"Energy (MeV)")
+    plt.ylabel(r"$\mathrm{E^2\ dN/dE}\ \mathrm{(erg\ cm^{-2} s^{-1})}$")
     plt.plot(E,SED,"-r",label='LAT model')
     plt.plot(ErrorE,ErrorFlux,"-r")
 
@@ -370,31 +414,11 @@ def PlotSED(config,pars):
     NEbin = int(config['Ebin']['NumEnergyBins'])
     if NEbin > 0:
         Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim = GetDataPoints(config,pars) #collect data points
+        plot_errorbar_withuls(Epoint,EpointErrm,EpointErrp,Fluxpoint,FluxpointErrm,FluxpointErrp,uplim)
 
     #print uplim
     #print FluxpointErrm
     #print FluxpointErrp
-    # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
-    # Get the strict upper limit (best fit value + error, then set the error to 0 and the lower error to 20% of the value)
-    uplim = np.array(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
-    Fluxpoint[uplim] += FluxpointErrp[uplim]
-    FluxpointErrm[uplim] = 0
-    FluxpointErrp[uplim] = 0
-
-    # Plot the significant points
-    plt.errorbar(Epoint[~uplim], Fluxpoint[~uplim], 
-        xerr=[EpointErrm[~uplim], EpointErrp[~uplim]], 
-        yerr=[FluxpointErrm[~uplim], FluxpointErrp[~uplim]],
-        fmt='o',capsize=0,color='black',ls='None',uplims=False,label='LAT ebins')
-    
-    # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
-    plt.errorbar(Epoint[uplim], Fluxpoint[uplim], 
-        xerr=[EpointErrm[uplim], EpointErrp[uplim]], 
-        yerr=[FluxpointErrm[uplim], FluxpointErrp[uplim]],
-        fmt='o',markersize=0,capsize=0,color='black',ls='None',uplims=False)
-    plt.errorbar(Epoint[uplim], 0.8*Fluxpoint[uplim], 
-        yerr=[0.2*Fluxpoint[uplim], 0.2*Fluxpoint[uplim]],
-        fmt='o',markersize=0,capsize=4,color='black',ls='None',lolims=True)
 
     #Set meaningful axes limits
     xlim = plt.xlim()
@@ -439,7 +463,12 @@ def PlotUL(pars,config,ULFlux,Index):
     plt.loglog()
     plt.plot(E,SED,"-",color='black')
 
-    plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',uplims=[1,1])
+    # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
+    # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
+    if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
+        plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',lolims=[1,1])
+    else:
+        plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',uplims=[1,1])
  
     #save the plot
     filebase = utils._SpecFileName(config)

@@ -3,6 +3,10 @@ from math import sqrt
 import numpy as np
 import scipy.optimize
 from scipy.stats import chi2
+import matplotlib
+matplotlib.use('Agg')
+matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 15})
+matplotlib.rc('text', usetex=True)
 import matplotlib.pyplot as plt
 from enrico import utils
 from enrico import plotting
@@ -12,6 +16,7 @@ from enrico.constants import LightcurvePath,FoldedLCPath
 from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
 from enrico import Loggin
+from enrico.plotting import plot_errorbar_withuls
 
 pol0 = lambda x,p1: p1*x
 pol1 = lambda x,p1,p2: p1+p2*x
@@ -221,8 +226,6 @@ class LightCurve(Loggin.Message):
         self._PlotLC(True)
 
     def _PlotLC(self,folded=False):
-
-
         self.info("Reading files produced by enrico")
         LcOutPath = self.LCfolder + self.config['target']['name']
 
@@ -341,8 +344,8 @@ class LightCurve(Loggin.Message):
                         print 
 
                 plt.plot(np.array([0,max(NdN)]),pol1(np.array([0,max(NdN)]),popt[0],popt[1]),'--',color='black')
-                plt.xlabel("Npred/sqrt(Npred)")
-                plt.ylabel(r"Flux/$\Delta$ Flux")
+                plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
+                plt.ylabel(r"${\rm Flux/\Delta Flux}$")
                 plt.savefig(LcOutPath+"_Npred.png", dpi=150, facecolor='w', edgecolor='w',
                     orientation='portrait', papertype=None, format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -353,8 +356,8 @@ class LightCurve(Loggin.Message):
             #plot TS vs Time
             plt.figure()
             plt.ylim(ymin=min(TS)*0.8,ymax=max(TS)*1.2)
-            plt.xlabel("Time")
-            plt.ylabel("Test Statistic")
+            plt.xlabel(r"Time (s)")
+            plt.ylabel(r"Test Statistic")
             plt.errorbar(Time,TS,xerr=TimeErr,fmt='+',color='black',ls='None')
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
                     orientation='portrait', papertype=None, format=None,
@@ -383,11 +386,12 @@ class LightCurve(Loggin.Message):
         # ymin = min(Flux) - max(FluxErr) * 1.3
         # ymax = max(Flux) + max(FluxErr) * 1.3
         plt.figure()
-        plt.xlabel("Time")
-        plt.ylabel("Flux (photon cm^{-2} s^{-1})")
+        plt.xlabel(r"Time (s)")
+        plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
         # plt.ylim(ymin=ymin,ymax=ymax)
         # plt.xlim(xmin=xmin,xmax=xmax)
-        plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,fmt='o',color='black',ls='None',uplims=uplim)
+        #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,fmt='o',color='black',ls='None',uplims=uplim)
+        plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,uplim)
 
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
@@ -445,9 +449,9 @@ class LightCurve(Loggin.Message):
         """Fit the LC with a constant function an
            print the chi2 and proba"""
         res,_ = scipy.optimize.curve_fit(pol0,x,y,p0=[np.mean(y)],sigma=dy)
-        print res
-        print y
-        print dy
+        #print res
+        #print y
+        #print dy
         cost = np.sum(((pol0(x,res[0])-y)/dy)**2)
         self.info("Fit with a constant function")
         print '\tChi2 = ',cost," NDF = ",len(y)-1
