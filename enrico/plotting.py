@@ -406,7 +406,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
             ls='None',label='bayesian blocks')
 
-    
+        plt.legend()
 
 def PlotSED(config,pars):
     """plot a nice SED with a butterfly and points"""
