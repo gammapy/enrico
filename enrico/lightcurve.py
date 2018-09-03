@@ -162,8 +162,6 @@ class LightCurve(Loggin.Message):
                 #run(self.configfile[i])#run in command line
 
 
-
-
     def _MakePhasebin(self):
         """document me """
         self.time_array = np.zeros(self.Nbin*2)
@@ -391,7 +389,7 @@ class LightCurve(Loggin.Message):
         # plt.ylim(ymin=ymin,ymax=ymax)
         # plt.xlim(xmin=xmin,xmax=xmax)
         #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,fmt='o',color='black',ls='None',uplims=uplim)
-        plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,uplim)
+        plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,uplim,bblocks=True)
 
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,

@@ -12,7 +12,7 @@ from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
 from enrico.config import get_config
 from enrico import utils
 from enrico import Loggin
-
+from enrico.extern.astropy_bayesian_blocks import bayesian_blocks
 
 class Params:
     """Collection of Plotting parameters like Energy bounds,
@@ -322,8 +322,8 @@ def GetDataPoints(config,pars):
     dumpfile.close()
     return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
 
-def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim):
-    """ plot an errorbar plot with upper limits """
+def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
+    """ plot an errorbar plot with upper limits. Optionally compute and draw bayesian blocks (bblocks) """
     # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
     uplim = np.asarray(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
     # make sure that the arrays are numpy arrays and not lists. 
@@ -362,6 +362,50 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim):
         plt.errorbar(x[uplim], 0.8*y[uplim], 
             yerr=[0.2*y[uplim], 0.2*y[uplim]],
             fmt='o',markersize=0,capsize=4,color='0.50',ls='None',uplims=True)
+
+    if bblocks:
+        yerr = 0.5*(yerrm+yerrp)
+        y[uplim] = 0
+        yerr[uplim] = min(yerr[yerr>0])
+        edges = bayesian_blocks(x,y,yerr,fitness='measures',p0=0.5)
+        #edges = bayesian_blocks(x[yerr>0],y[yerr>0],yerr[yerr>0],fitness='measures',p0=0.1)
+        xvalues = 0.5*(edges[:-1]+edges[1:])
+        xerrors = 0.5*(edges[1:]-edges[:-1])
+        yvalues = []
+        yerrors = []
+        for k in xrange(len(edges)-1):
+            xmin,xmax = edges[k],edges[k+1]
+            filt = (x>=xmin)*(x<=xmax)*(yerr>0)
+            sum_inv_square = np.sum(1./yerr[filt]**2)
+            yvalues.append(np.sum(y[filt]/yerr[filt]**2)/sum_inv_square)
+            yerrors.append(1./np.sqrt(sum_inv_square))
+
+        yvalues = np.asarray(yvalues)
+        yerrors = np.asarray(yerrors)
+
+        # Plot the significant points
+        ystep = []
+        ystepmin = []
+        ystepmax = []
+        xstep = []
+        for k in xrange(len(xvalues)):
+            for _ in xrange(2):
+                ystep.append(yvalues[k]) # 3 values, to mark the minimum and center
+                ystepmin.append(yvalues[k]-yerrors[k]) # 3 values, to mark the minimum and center
+                ystepmax.append(yvalues[k]+yerrors[k]) # 3 values, to mark the minimum and center
+            xstep.append(xvalues[k]-xerrors[k])
+            xstep.append(xvalues[k]+xerrors[k])
+            
+        plt.step(xstep, ystep, 
+            color='#d62728',zorder=-10,
+            ls='solid')
+        plt.fill_between(xstep, ystepmin, ystepmax, 
+            color='#d62728',zorder=-10, alpha=0.5)
+        plt.errorbar(xvalues, yvalues, 
+            xerr=xerrors,yerr=yerrors,
+            marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
+            ls='None',label='bayesian blocks')
+
     
 
 def PlotSED(config,pars):
