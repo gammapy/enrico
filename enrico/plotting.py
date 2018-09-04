@@ -57,7 +57,7 @@ class Result(Loggin.Message):
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
         The count and residuals plot vs E is also made"""
-        
+
         try:
             self.decE
         except NameError:
@@ -133,7 +133,7 @@ class Result(Loggin.Message):
         src     = np.array([])
 
         # Summed Likelihood has no writeCountsSpectra
-        # but we can do it component by component 
+        # but we can do it component by component
         for comp in self.Fit.components:
             #self.Fit.writeCountsSpectra(imName)
             comp.writeCountsSpectra(imName)
@@ -170,7 +170,7 @@ class Result(Loggin.Message):
         Nbin  = len(src)
         E = np.array((emax + emin) / 2.)
         err_E = np.array((emax - emin) / 2.)
-        
+
         total = np.array(total)
         residual = np.zeros(Nbin)
         Dres = np.zeros(Nbin)
@@ -267,7 +267,7 @@ def GetDataPoints(config,pars):
         #E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/'+EbinPath+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
-        
+
         try:#read the config file of each data points
             CurConf = get_config(filename)
             mes.info("Reading "+filename)
@@ -326,47 +326,55 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
     """ plot an errorbar plot with upper limits. Optionally compute and draw bayesian blocks (bblocks) """
     # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
     uplim = np.asarray(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
-    # make sure that the arrays are numpy arrays and not lists. 
-    x = np.asarray(x) 
-    xerrm = np.asarray(xerrm) 
-    xerrp = np.asarray(xerrp) 
-    y = np.asarray(y) 
-    yerrm = np.asarray(yerrm) 
-    yerrp = np.asarray(yerrp) 
+    # make sure that the arrays are numpy arrays and not lists.
+    x = np.asarray(x)
+    xerrm = np.asarray(xerrm)
+    xerrp = np.asarray(xerrp)
+    y = np.asarray(y)
+    yerrm = np.asarray(yerrm)
+    yerrp = np.asarray(yerrp)
     # Get the strict upper limit (best fit value + error, then set the error to 0 and the lower error to 20% of the value)
     y[uplim] += yerrp[uplim]
     yerrm[uplim] = 0
     yerrp[uplim] = 0
 
+    optimal_markersize = (0.5+4./(1.+np.log10(len(y))))
+
     # Plot the significant points
-    plt.errorbar(x[~uplim], y[~uplim], 
-        xerr=[xerrm[~uplim], xerrp[~uplim]], 
+    plt.errorbar(x[~uplim], y[~uplim],
+        xerr=[xerrm[~uplim], xerrp[~uplim]],
         yerr=[yerrm[~uplim], yerrp[~uplim]],
-        fmt='o',capsize=0,color='black',ls='None',uplims=False,label='LAT data')
-    
+        fmt='o',ms=optimal_markersize,capsize=0,zorder=10,
+        color='black',ls='None',uplims=False,label='LAT data')
+
     # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
     # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
     if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
-        plt.errorbar(x[uplim], y[uplim], 
-            xerr=[xerrm[uplim], xerrp[uplim]], 
+        plt.errorbar(x[uplim], y[uplim],
+            xerr=[xerrm[uplim], xerrp[uplim]],
             yerr=[yerrm[uplim], yerrp[uplim]],
-            fmt='o',markersize=0,capsize=0,color='0.50',ls='None',lolims=False)
-        plt.errorbar(x[uplim], 0.8*y[uplim], 
+            fmt='o',markersize=0,capsize=0,zorder=-1,
+            color='0.50',ls='None',lolims=False)
+        plt.errorbar(x[uplim], 0.8*y[uplim],
             yerr=[0.2*y[uplim], 0.2*y[uplim]],
-            fmt='o',markersize=0,capsize=4,color='0.50',ls='None',lolims=True)
+            fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
+            color='0.50',ls='None',lolims=True)
     else:
-        plt.errorbar(x[uplim], y[uplim], 
-            xerr=[xerrm[uplim], xerrp[uplim]], 
+        plt.errorbar(x[uplim], y[uplim],
+            xerr=[xerrm[uplim], xerrp[uplim]],
             yerr=[yerrm[uplim], yerrp[uplim]],
-            fmt='o',markersize=0,capsize=0,color='0.50',ls='None',uplims=False)
-        plt.errorbar(x[uplim], 0.8*y[uplim], 
+            fmt='o',markersize=0,capsize=0,zorder=-1,
+            color='0.50',ls='None',uplims=False)
+        plt.errorbar(x[uplim], 0.8*y[uplim],
             yerr=[0.2*y[uplim], 0.2*y[uplim]],
-            fmt='o',markersize=0,capsize=4,color='0.50',ls='None',uplims=True)
+            fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
+            color='0.50',ls='None',uplims=True)
 
     if bblocks:
         yerr = 0.5*(yerrm+yerrp)
+        # Set the value and error for the uls.
+        yerr[uplim] = y[uplim] #min(y[yerr>0]+yerr[yerr>0])
         y[uplim] = 0
-        yerr[uplim] = min(yerr[yerr>0])
         edges = bayesian_blocks(x,y,yerr,fitness='measures',p0=0.5)
         #edges = bayesian_blocks(x[yerr>0],y[yerr>0],yerr[yerr>0],fitness='measures',p0=0.1)
         xvalues = 0.5*(edges[:-1]+edges[1:])
@@ -395,18 +403,18 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
                 ystepmax.append(yvalues[k]+yerrors[k]) # 3 values, to mark the minimum and center
             xstep.append(xvalues[k]-xerrors[k])
             xstep.append(xvalues[k]+xerrors[k])
-            
-        plt.step(xstep, ystep, 
+
+        plt.step(xstep, ystep,
             color='#d62728',zorder=-10,
             ls='solid')
-        plt.fill_between(xstep, ystepmin, ystepmax, 
+        plt.fill_between(xstep, ystepmin, ystepmax,
             color='#d62728',zorder=-10, alpha=0.5)
-        plt.errorbar(xvalues, yvalues, 
+        plt.errorbar(xvalues, yvalues,
             xerr=xerrors,yerr=yerrors,
             marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
             ls='None',label='bayesian blocks')
 
-        plt.legend(numpoints=1)
+        plt.legend(loc=0,fontsize='small',numpoints=1)
 
 def PlotSED(config,pars):
     """plot a nice SED with a butterfly and points"""
@@ -473,10 +481,10 @@ def PlotSED(config,pars):
     plt.ylim(ylim)
     # turn them into log10 scale
     #xticks = plt.xticks()[0]
-    #xticklabels = np.array(np.log10(xticks),dtype=int) 
+    #xticklabels = np.array(np.log10(xticks),dtype=int)
     #plt.xticks(xticks,xticklabels)
     #plt.xlabel('$\mathrm{\log_{10}\mathbf{(Energy)} \\ \\ [MeV]}$')
-    
+
     plt.legend(fontsize='small',ncol=1,\
                loc=3,numpoints=1)#,framealpha=0.75)
 
@@ -487,7 +495,7 @@ def PlotSED(config,pars):
     #Plt2.set_xlim(2.417990504024163e+20 *np.array(xlim))
     #Plt2.set_xticklabels(np.array(np.log10(Plt2.get_xticks()),dtype=int))
     #Plt2.set_xlabel('$\mathrm{\log_{10}\mathbf{(Frequency)} \\ \\ [Hz]}$')
-    
+
     #save the canvas
     #plt.grid()
     plt.savefig("%s.png" %filebase, dpi=150, facecolor='w', edgecolor='w',
@@ -513,7 +521,7 @@ def PlotUL(pars,config,ULFlux,Index):
         plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',lolims=[1,1])
     else:
         plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',uplims=[1,1])
- 
+
     #save the plot
     filebase = utils._SpecFileName(config)
     plt.savefig(filebase + '.png', dpi=150, facecolor='w', edgecolor='w',
