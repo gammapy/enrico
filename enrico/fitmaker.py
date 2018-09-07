@@ -66,8 +66,10 @@ class FitMaker(Loggin.Message):
             self.obs.DiffResps()#run gtdiffresp
         self._log('gtbin', 'Create a count map')
         self.obs.Gtbin()
-        self._log('gtltcube', 'Make live time cube')#run gtexpcube
+        self._log('gtltcube', 'Make live time cube')#run gtltcube
         self.obs.ExpCube()
+        self.info('Compute the psf')#run gtpsf
+        self.obs.GtPSF()
 
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
@@ -294,9 +296,9 @@ class FitMaker(Loggin.Message):
         self.obs.GtExposure()
         Exposure = np.sum(spfile[1].data.field("EXPOSURE"))
 
-        ###
-        self.info('Compute the psf')#run gtexposure
-        self.obs.GtPSF()
+        ### Run it in any case (useful for instance for the DL3)
+        #self.info('Compute the psf')#run gtpsf
+        #self.obs.GtPSF()
 
         ccube = pyfits.open(self.obs.ccube)
         psfres = pyfits.open(self.obs.psf)

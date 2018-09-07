@@ -8,6 +8,8 @@ from enrico.gtfunction import Observation
 from enrico.config import get_config
 from enrico import environ
 from enrico import utils
+import matplotlib
+matplotlib.rc('text', usetex=True)
 import matplotlib.pyplot as plt
 
 def AppLC(infile):

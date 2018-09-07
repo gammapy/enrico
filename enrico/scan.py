@@ -7,6 +7,8 @@ import RunGTlike
 import ROOT
 import numpy,os,string,array
 from enrico import Loggin
+import matplotlib
+matplotlib.rc('text', usetex=True)
 import matplotlib.pyplot as plt
 
 def MakeScan(Fit,spectrum,par,bmin,bmax,opt,N=100):

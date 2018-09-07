@@ -698,9 +698,11 @@ def XmlMaker(config):
       config["event"]["evtype"] = 512
       config["file"]["xml"] = xml.replace(".xml","_EDISP3.xml")
       WriteXml(lib, doc, srclist, config)
-      
     else :
       WriteXml(lib, doc, srclist, config)
+    
+    # Recover the old xml file.
+    config["file"]["xml"] = xml
 
     Xml_to_Reg(folder + "/Roi_model",
         srclist, Prog=sys.argv[0])
