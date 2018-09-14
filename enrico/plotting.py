@@ -181,9 +181,9 @@ class Result(Loggin.Message):
         plt.xlabel("E (MeV) ")
         plt.ylabel("Counts / bin")
         plt.errorbar(E,obs,xerr=err_E,yerr=obs_err,fmt='o',color="red",ls='None',label="Data")
-        plt.plot(E,other,'--',color="blue",label=Parameter.srcname)
-        plt.plot(E,src,'-',color="green",label="Other Sources")
-        plt.plot(E,total,'-',ls='None',label="All Sources")
+        plt.plot(E,other,ls='dashed',color="blue",label=Parameter.srcname)
+        plt.plot(E,src,ls='solid',color="green",label="Other Sources")
+        plt.plot(E,total,lw=1.5,ls='solid',label="All Sources")
         plt.legend()
         plt.savefig(filebase + "_CountsPlot.png", dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
@@ -212,8 +212,8 @@ class Result(Loggin.Message):
         plt.ylabel("(counts-model)/model")
         plt.errorbar(E,residual,xerr=err_E,yerr=Dres,fmt='o',color="red",ls='None',label="Data")
         zero = np.zeros(2)
-        Ezero = np.array([0, 1e10])
-        plt.plot(Ezero,zero,'-',color='black')
+        Ezero = np.array([1e-5, 1e10])
+        plt.plot(Ezero,zero,lw=1.5,ls='solid',color='black')
         plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inches=None, pad_inches=0.1,

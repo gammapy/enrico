@@ -33,7 +33,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     folder = config['out']
 
     # If there are no xml files, create it and print a warning
-    if (glob.glob("%s*.xml" %config['file']['xml'].replace('.xml','')) is []):
+    if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
         mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
         XmlMaker(config)
 
