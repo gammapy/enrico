@@ -1,6 +1,10 @@
 """Central place for config file handling"""
 import sys
 from os.path import join
+try:
+    import pyfits
+except:
+    import astropy.io.fits as pyfits
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.extern.validate import Validator
 from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR, USE_FULLMISSION_SPACECRAFT
@@ -41,6 +45,35 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
 def get_default_config(configspec=join(CONFIG_DIR, 'default.conf')):
     return ConfigObj(None, configspec=configspec)
 
+def get_times_from_spacecraft(scfile,target=['tmin','tmax']):
+    tset=False
+    tmin = 239557418
+    tmax = 334165418
+    if tset is False:
+        try:
+            sc = pyfits.open(scfile)
+            if 'tmin' in target:
+                tmin = sc[0].header['TSTART']
+            if 'tmax' in target:
+                tmax = sc[0].header['TSTOP']
+        except:
+            raise
+        else:
+            tset=True
+    if tset is False:
+        try:
+            with open(scfile.replace('@','')) as f:
+                if 'tmin' in target:
+                    sc1 = pyfits.open(f.readlines()[0])
+                    tmin = sc1[0].header['TSTART']
+                if 'tmax' in target:
+                    sc2 = pyfits.open(f.readlines()[-1])
+                    tmax = sc2[0].header['TSTOP']
+        except:
+            raise
+        else:
+            tset=True
+    return([tmin,tmax])
 
 def query_config():
     import os
@@ -107,16 +140,17 @@ def query_config():
 
 #    informations about the time
     config['time'] = {}
-    tmin = raw_input('Start time [239557418] : ')
-    if not(tmin=='') :
+    tmin = raw_input('Start time [-1=START] : ')
+    ft2 = config['file']['spacecraft']
+    if not(tmin=='') and float(tmin)>=0 :
       config['time']['tmin'] = tmin
     else :
-      config['time']['tmin'] = '239557418'
-    tmax = raw_input('End time [334165418] : ')
-    if not(tmax=='') :
+      config['time']['tmin'] = get_times_from_spacecraft(ft2,target=['tmin'])[0]
+    tmax = raw_input('End time [-1=END] : ')
+    if not(tmax=='') and float(tmax)>=0 :
       config['time']['tmax'] = tmax
     else :
-      config['time']['tmax'] = '334165418'
+      config['time']['tmax'] = get_times_from_spacecraft(ft2,target=['tmax'])[1]
 
 #    informations about the energy
     config['energy'] = {}

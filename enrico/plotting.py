@@ -185,6 +185,7 @@ class Result(Loggin.Message):
         plt.plot(E,src,ls='solid',color="green",label="Other Sources")
         plt.plot(E,total,lw=1.5,ls='solid',label="All Sources")
         plt.legend()
+        plt.tight_layout()
         plt.savefig(filebase + "_CountsPlot.png", dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -214,6 +215,7 @@ class Result(Loggin.Message):
         zero = np.zeros(2)
         Ezero = np.array([1e-5, 1e10])
         plt.plot(Ezero,zero,lw=1.5,ls='solid',color='black')
+        plt.tight_layout()
         plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -339,11 +341,13 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
     yerrp[uplim] = 0
 
     optimal_markersize = (0.5+4./(1.+np.log10(len(y))))
+    optimal_errorlinewidth = (0.2+2./(1.+4.*np.log10(len(y))))
 
     # Plot the significant points
     plt.errorbar(x[~uplim], y[~uplim],
         xerr=[xerrm[~uplim], xerrp[~uplim]],
         yerr=[yerrm[~uplim], yerrp[~uplim]],
+        lw=optimal_errorlinewidth,
         fmt='o',ms=optimal_markersize,capsize=0,zorder=10,
         color='black',ls='None',uplims=False,label='LAT data')
 
@@ -354,19 +358,23 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             xerr=[xerrm[uplim], xerrp[uplim]],
             yerr=[yerrm[uplim], yerrp[uplim]],
             fmt='o',markersize=0,capsize=0,zorder=-1,
+            lw=optimal_errorlinewidth,
             color='0.50',ls='None',lolims=False)
         plt.errorbar(x[uplim], 0.8*y[uplim],
             yerr=[0.2*y[uplim], 0.2*y[uplim]],
             fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
+            lw=optimal_errorlinewidth,
             color='0.50',ls='None',lolims=True)
     else:
         plt.errorbar(x[uplim], y[uplim],
             xerr=[xerrm[uplim], xerrp[uplim]],
             yerr=[yerrm[uplim], yerrp[uplim]],
+            lw=optimal_errorlinewidth,
             fmt='o',markersize=0,capsize=0,zorder=-1,
             color='0.50',ls='None',uplims=False)
         plt.errorbar(x[uplim], 0.8*y[uplim],
             yerr=[0.2*y[uplim], 0.2*y[uplim]],
+            lw=optimal_errorlinewidth,
             fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
             color='0.50',ls='None',uplims=True)
 
@@ -498,6 +506,7 @@ def PlotSED(config,pars):
 
     #save the canvas
     #plt.grid()
+    plt.tight_layout()
     plt.savefig("%s.png" %filebase, dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inch=None, pad_inches=0.1,
@@ -524,6 +533,7 @@ def PlotUL(pars,config,ULFlux,Index):
 
     #save the plot
     filebase = utils._SpecFileName(config)
+    plt.tight_layout()
     plt.savefig(filebase + '.png', dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inches=None, pad_inches=0.1,

@@ -11,7 +11,6 @@ from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model
 from GtApp import GtApp
 from enrico import utils
 
-
 class Observation:
     # init function of the Observation class.
     # folder : folder where the produced fits files will be stored.
