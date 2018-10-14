@@ -372,7 +372,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             lw=optimal_errorlinewidth,
             fmt='o',markersize=0,capsize=0,zorder=-1,
             color='0.50',ls='None',uplims=False)
-        plt.errorbar(x[uplim], 0.8*y[uplim],
+        plt.errorbar(x[uplim], y[uplim],
             yerr=[0.2*y[uplim], 0.2*y[uplim]],
             lw=optimal_errorlinewidth,
             fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
