@@ -364,7 +364,7 @@ class LightCurve(Loggin.Message):
             ax.get_yaxis().get_major_formatter().set_useOffset(False)
             offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
             if (offset_factor != 0):
-                ax.set_yticklabels(ax.get_yticks()*10**(-offset_factor))
+                ax.set_yticklabels([float(round(k,5)) for k in ax.get_yticks()*10**(-offset_factor)])
                 ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
             
             # Secondary axis with MJD
@@ -416,7 +416,7 @@ class LightCurve(Loggin.Message):
         ax.get_yaxis().get_major_formatter().set_useOffset(False)
         offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
         if (offset_factor != 0):
-            ax.set_yticklabels(ax.get_yticks()*10**(-offset_factor))
+            ax.set_yticklabels([float(round(k,5)) for k in ax.get_yticks()*10**(-offset_factor)])
             ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
         
         # Secondary axis with MJD
