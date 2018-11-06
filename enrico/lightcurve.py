@@ -303,19 +303,19 @@ class LightCurve(Loggin.Message):
 
         # #change the list into np array
         # TS = np.array(TS)
-        Npred = np.array(Npred)
-        Npred_detected = Npred[Npred_detected_indices]
-        Time = np.array(Time)
-        # TimeErr = np.array(TimeErr)
-        Flux = np.array(Flux)
-        FluxErr = np.array(FluxErr)
+        Npred = np.asarray(Npred)
+        Npred_detected = np.asarray(Npred[Npred_detected_indices])
+        Time = np.asarray(Time)
+        TimeErr = np.asarray(TimeErr)
+        Flux = np.asarray(Flux)
+        FluxErr = np.asarray(FluxErr)
         # Index = np.array(Index)
         # IndexErr = np.array(IndexErr)
         # Cutoff = np.array(Cutoff)
         # CutoffErr = np.array(CutoffErr)
-        FluxForNpred = np.array(FluxForNpred)
+        FluxForNpred = np.asarray(FluxForNpred)
         # FluxErrForNpred = np.array(FluxErrForNpred)
-
+        uplim = np.asarray(uplim,dtype=bool)
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
         #             TS vs Time
@@ -353,10 +353,26 @@ class LightCurve(Loggin.Message):
 
             #plot TS vs Time
             plt.figure()
-            plt.ylim(ymin=min(TS)*0.8,ymax=max(TS)*1.2)
             plt.xlabel(r"Time (s)")
             plt.ylabel(r"Test Statistic")
-            plt.errorbar(Time,TS,xerr=TimeErr,fmt='+',color='black',ls='None')
+            plt.errorbar(x=Time,y=TS,xerr=TimeErr,fmt='+',color='black',ls='None')
+            plt.ylim(ymin=min(TS)*0.8,ymax=max(TS)*1.2)
+            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+            
+            # Move the offset to the axis label
+            ax = plt.gca()
+            ax.get_yaxis().get_major_formatter().set_useOffset(False)
+            offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
+            if (offset_factor != 0):
+                ax.set_yticklabels([float(round(k,5)) for k in ax.get_yticks()*10**(-offset_factor)])
+                ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
+            
+            # Secondary axis with MJD
+            mjdaxis = plt.twiny()
+            mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
+            mjdaxis.set_xlabel(r"Time (MJD)")
+            plt.tight_layout()
+            
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
                     orientation='portrait', papertype=None, format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -390,11 +406,49 @@ class LightCurve(Loggin.Message):
         # plt.xlim(xmin=xmin,xmax=xmax)
         #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,fmt='o',color='black',ls='None',uplims=uplim)
         plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,uplim,bblocks=True)
-
+        plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
+                 ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
+        plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
+                 xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+        
+        # Move the offset to the axis label
+        ax = plt.gca()
+        ax.get_yaxis().get_major_formatter().set_useOffset(False)
+        offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
+        if (offset_factor != 0):
+            ax.set_yticklabels([float(round(k,5)) for k in ax.get_yticks()*10**(-offset_factor)])
+            ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
+        
+        # Secondary axis with MJD
+        mjdaxis = plt.twiny()
+        mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
+        mjdaxis.set_xlabel(r"Time (MJD)")
+        plt.tight_layout()
+ 
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
                 frameon=None)
+
+        if self.config["LightCurve"]["SpectralIndex"] == 0 :
+            plt.figure()
+            plt.xlabel(r"Time (s)")
+            plt.ylabel(r"${\rm Index}$")
+            Index = np.asarray(Index)
+            IndexErr = np.asarray(IndexErr)
+            uplimIndex = uplim + Index<0.55
+            plot_errorbar_withuls(Time[~uplimIndex],TimeErr[~uplimIndex],TimeErr[~uplimIndex],
+                                  Index[~uplimIndex],IndexErr[~uplimIndex],IndexErr[~uplimIndex],
+                                  uplimIndex[~uplimIndex],bblocks=True)
+            
+            plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
+            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+            
+            plt.savefig(LcOutPath+"_Index.png", dpi=150, facecolor='w', edgecolor='w',
+                orientation='portrait', papertype=None, format=None,
+                transparent=False, bbox_inches=None, pad_inches=0.1,
+                frameon=None)
+        
 
         # compute Fvar and probability of being cst
 

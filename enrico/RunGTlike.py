@@ -29,11 +29,10 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     mes = Loggin.Message()
     #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
-    SummedLike = config['Spectrum']['SummedLike']
     folder = config['out']
 
     # If there are no xml files, create it and print a warning
-    if (glob.glob("%s*.xml" %config['file']['xml'].replace('.xml','')) is []):
+    if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
         mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
         XmlMaker(config)
 
@@ -47,7 +46,6 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             from enrico.data import fermievtypes
             mes.info("Breaking the analysis in Front/Back events")
             # Set Summed Likelihood to True
-            config['Spectrum']['SummedLike'] = 'yes'
             oldxml = config['file']['xml']
             for k,TYPE in enumerate(["FRONT", "BACK"]):
                 configs[k] = ConfigObj(config)
