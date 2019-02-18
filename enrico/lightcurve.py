@@ -41,8 +41,9 @@ class LightCurve(Loggin.Message):
         # One point of the LC will be computed as a spectrum plot.
         # enrico_sed will be used
         # Do fits files will be generated
+        #self.config['target']['spectrum'] = 'PowerLaw' # simplify the spectrum
         self.config['Spectrum']['FitsGeneration'] = self.config['LightCurve']['FitsGeneration']
-        #Froze the Spectral index at a value of self.config['LightCurve']['SpectralIndex'] (no effect if 0)
+        #Freeze the Spectral index at a value of self.config['LightCurve']['SpectralIndex'] (no effect if 0)
         self.config['Spectrum']['FrozenSpectralIndex'] = self.config['LightCurve']['SpectralIndex']
         #TS limit. Compute an UL if the TS is below TSLightCurve
         self.config['UpperLimit']['TSlimit'] = self.config['LightCurve']['TSLightCurve']
@@ -50,9 +51,9 @@ class LightCurve(Loggin.Message):
         self.folder = self.config['out']
 
         #No plot, no bin in energy, no decE optimization, Normal UL
-        self.config['Spectrum']['ResultPlots'] = 'no'
+        self.config['Spectrum']['ResultPlots'] = 'yes' # no
         self.config['Ebin']['NumEnergyBins'] = 0
-        self.config['energy']['decorrelation_energy'] = 'no'
+        self.config['energy']['decorrelation_energy'] = 'yes' # no
         self.config['UpperLimit']['envelope'] = 'no'
         #No submition. Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
@@ -119,9 +120,14 @@ class LightCurve(Loggin.Message):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
+            self.config['target']['spectrum'] = 'PowerLaw' # simplify the spectrum
             filename = (self.config['out'] + "Config_" + str(i) + "_" +
                     str(self.config['time']['tmin']) + "_" +
                     str(self.config['time']['tmax']))#Name of the config file
+            xmlfilename = (self.config['out'] + "" + str(i) + "_" +
+                    str(self.config['time']['tmin']) + "_" +
+                    str(self.config['time']['tmax'])) + ".xml" #Name of the xml file
+            self.config['file']['xml'] = xmlfilename
 
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
@@ -245,8 +251,9 @@ class LightCurve(Loggin.Message):
         uplim = []
 
         # Find name used for index parameter
-        if (self.config['target']['spectrum'] == 'PowerLaw' or
-                self.config['target']['spectrum'] == 'PowerLaw2'):
+        if ((self.config['target']['spectrum'] == 'PowerLaw' or
+             self.config['target']['spectrum'] == 'PowerLaw2') and
+             self.config['target']['redshift'] == 0):
                 IndexName = 'Index'
                 CutoffName = None
         elif (self.config['target']['spectrum'] == 'PLExpCutoff' or
@@ -368,9 +375,11 @@ class LightCurve(Loggin.Message):
                 ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
             
             # Secondary axis with MJD
-            mjdaxis = plt.twiny()
+            mjdaxis = ax.twiny()
             mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
             mjdaxis.set_xlabel(r"Time (MJD)")
+            mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False))
+            plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
             plt.tight_layout()
             
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
@@ -404,8 +413,10 @@ class LightCurve(Loggin.Message):
         plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
         # plt.ylim(ymin=ymin,ymax=ymax)
         # plt.xlim(xmin=xmin,xmax=xmax)
-        #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,fmt='o',color='black',ls='None',uplims=uplim)
-        plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,uplim,bblocks=True)
+        #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,i
+        #             fmt='o',color='black',ls='None',uplims=uplim)
+        plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,
+                              uplim,bblocks=True)
         plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
                  ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
         plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
@@ -416,13 +427,17 @@ class LightCurve(Loggin.Message):
         ax.get_yaxis().get_major_formatter().set_useOffset(False)
         offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
         if (offset_factor != 0):
-            ax.set_yticklabels([float(round(k,5)) for k in ax.get_yticks()*10**(-offset_factor)])
-            ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
+            ax.set_yticklabels([float(round(k,5)) \
+              for k in ax.get_yticks()*10**(-offset_factor)])
+            ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
+              r" [${\times 10^{%d}}$]" %offset_factor)
         
         # Secondary axis with MJD
-        mjdaxis = plt.twiny()
+        mjdaxis = ax.twiny()
         mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
         mjdaxis.set_xlabel(r"Time (MJD)")
+        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False)) 
+        plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
         plt.tight_layout()
  
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
@@ -436,15 +451,40 @@ class LightCurve(Loggin.Message):
             plt.ylabel(r"${\rm Index}$")
             Index = np.asarray(Index)
             IndexErr = np.asarray(IndexErr)
-            uplimIndex = uplim + Index<0.55
-            plot_errorbar_withuls(Time[~uplimIndex],TimeErr[~uplimIndex],TimeErr[~uplimIndex],
-                                  Index[~uplimIndex],IndexErr[~uplimIndex],IndexErr[~uplimIndex],
-                                  uplimIndex[~uplimIndex],bblocks=True)
+            uplimIndex = uplim #+ Index<0.55
+            plot_errorbar_withuls(Time[~uplimIndex],
+                                  TimeErr[~uplimIndex],
+                                  TimeErr[~uplimIndex],
+                                  Index[~uplimIndex],
+                                  IndexErr[~uplimIndex],
+                                  IndexErr[~uplimIndex],
+                                  uplimIndex[~uplimIndex],
+                                  bblocks=True)
             
-            plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
-            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+            plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),
+                     ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
+            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
+                     xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
             
-            plt.savefig(LcOutPath+"_Index.png", dpi=150, facecolor='w', edgecolor='w',
+            # Move the offset to the axis label
+            ax = plt.gca()
+            ax.get_yaxis().get_major_formatter().set_useOffset(False)
+            offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
+            if (offset_factor != 0):
+                ax.set_yticklabels([float(round(k,5)) \
+                  for k in ax.get_yticks()*10**(-offset_factor)])
+                ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
+                   r" [${\times 10^{%d}}$]" %offset_factor)
+            
+            # Secondary axis with MJD
+            mjdaxis = ax.twiny()
+            mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
+            mjdaxis.set_xlabel(r"Time (MJD)")
+            mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False)) 
+            plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
+            plt.tight_layout()    
+            plt.savefig(LcOutPath+"_Index.png", dpi=150, 
+                facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
                 frameon=None)
@@ -477,7 +517,8 @@ class LightCurve(Loggin.Message):
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
         self.info("Write to Ascii file : "+lcfilename)
-        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,Cutoff,CutoffErr,TS,Npred,lcfilename)
+        WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,
+                     Cutoff,CutoffErr,TS,Npred,lcfilename)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
@@ -511,7 +552,7 @@ class LightCurve(Loggin.Message):
         print
 
     def VariabilityIndex(self):
-        """Compute the variability index as in the 2FLG catalogue. (see Nolan et al, 2012)"""
+        """Compute the variability index as in the 2FGL catalogue. (see Nolan et al, 2012)"""
         LcOutPath = self.LCfolder + self.config['target']['name']
 
         utils._log('Computing Variability index ')
@@ -580,6 +621,26 @@ class LightCurve(Loggin.Message):
         plt.xlabel("Time")
         plt.ylabel("Log(Like) Variability")
         plt.errorbar(Time,LogL0,fmt='o',color='black',ls='None')
+        plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
+                 xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+        
+        # Move the offset to the axis label
+        ax = plt.gca()
+        ax.get_yaxis().get_major_formatter().set_useOffset(False)
+        offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
+        if (offset_factor != 0):
+            ax.set_yticklabels([float(round(k,5)) \
+              for k in ax.get_yticks()*10**(-offset_factor)])
+            ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
+               r" [${\times 10^{%d}}$]" %offset_factor)
+        
+        # Secondary axis with MJD
+        mjdaxis = ax.twiny()
+        mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
+        mjdaxis.set_xlabel(r"Time (MJD)")
+        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False)) 
+        plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
+        plt.tight_layout()
 
         plt.savefig(LcOutPath+"_VarIndex.png", dpi=150, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
