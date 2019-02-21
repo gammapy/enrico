@@ -2,7 +2,7 @@
 import os
 import numpy as np
 import ROOT
-import pyfits
+import astropy.io.fits as fits
 from enrico.constants import  DAY_IN_SECOND, AppLCPath #met_ref, mdj_ref,
 from enrico.gtfunction import Observation
 from enrico.config import get_config
@@ -47,7 +47,7 @@ def AppLC(infile):
             print "Use a dt of %2.2e seconds"%(dt)
             Obs.GtLCbin(dt = dt)
         else:
-            spfile=pyfits.open(Obs.eventfile)
+            spfile=fits.open(Obs.eventfile)
             diff = spfile[1].data.field(9)[1:-1]-spfile[1].data.field(9)[:-2]
             dt = np.min(diff)/2.  ##Compute the delta T as being the min delta t between 2 events divided by 2
             timefile = LCoutfolder+"/Timebin.txt"
@@ -66,7 +66,7 @@ def AppLC(infile):
     PlotAppLC(Nbins,LCoutfolder,Obs.lcfile)
 
 def MakeTimebinFile(Obs,timefile):
-    spfile = pyfits.open(Obs.eventfile)
+    spfile = fits.open(Obs.eventfile)
     spfile[1].data.sort(order='TIME')
     Time = spfile[1].data.field(9)[:-1]
 
@@ -84,7 +84,7 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
 
     ROOT.gStyle.SetOptStat(0)
 
-    spfile=pyfits.open(FITSfile)
+    spfile=fits.open(FITSfile)
     spfile[1].data.sort(order='TIME')
 
     Time =  utils.met_to_MJD(spfile[1].data.field(0)[:-1])#mdj_ref+(spfile[1].data.field(0)[:-1]-met_ref)/DAY_IN_SECOND

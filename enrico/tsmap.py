@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-import pyfits
+import astropy.io.fits as fits
 from enrico.constants import TSMapPath
 from enrico import utils
 from enrico.submit import call
@@ -35,7 +35,7 @@ class TSMap(Loggin.Message):
         # Read the cmap produced before to get the grid for the TS map
         FitRunner = Observation(self.config['out'], self.config)
         try :
-             cmap = pyfits.open(FitRunner.cmapfile)
+             cmap = fits.open(FitRunner.cmapfile)
         except :
              self.error('Count map not found.')
         
@@ -153,10 +153,10 @@ class TSMap(Loggin.Message):
         # Read the cmap produced before to get the grid for the TS map
         FitRunner = Observation(folder, self.config)
         try :
-             header = pyfits.getheader(FitRunner.cmapfile)
+             header = fits.getheader(FitRunner.cmapfile)
         except :
              self.error('Count map not found.')
-        data = pyfits.getdata(FitRunner.cmapfile)*0.
+        data = fits.getdata(FitRunner.cmapfile)*0.
         npix_im = min(header['NAXIS1'],header['NAXIS2'])
         npix = min(self.config['TSMap']['npix'],npix_im)
         Xref = header['CRPIX1']
@@ -175,7 +175,7 @@ class TSMap(Loggin.Message):
                 data[Xref+ (i-npix/2.)][Yref+ (j-npix/2.)] = Value
 
         # save in a fits files
-        pyfits.writeto(folder+"/"+self.TSfits,data,header)
+        fits.writeto(folder+"/"+self.TSfits,data,header)
         self.info("TS Map saved in "+folder+"/"+self.TSfits)
 
 

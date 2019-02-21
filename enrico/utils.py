@@ -87,8 +87,8 @@ def etag(emin, emax, fmt='%07d'):
 
 def cube_to_image(cube, slicepos=None, mean=False):
     """ Make an image out of a cube.
-    Both in- and output shoud by pyfits.HDUs"""
-    from pyfits import PrimaryHDU
+    Both in- and output should by pyfits.HDUs"""
+    from  astropy.io.fits import PrimaryHDU
     header = cube.header.copy()
     header['NAXIS'] = 2
     del header['NAXIS3']
@@ -107,17 +107,17 @@ def cube_to_image(cube, slicepos=None, mean=False):
 
 def SubtractFits(infile1, infile2, config):
     """Create (absolute and relative) difference images"""
-    import pyfits
-    data1 = pyfits.getdata(infile1)
-    data2 = pyfits.getdata(infile2)
-    head = pyfits.getheader(infile2)
+    import astropy.io.fits as fits
+    data1 = fits.getdata(infile1)
+    data2 = fits.getdata(infile2)
+    head = fits.getheader(infile2)
     filebase = config['out'] + "/" + config['target']['name']
     abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
     rel_diff_file = filebase + "_Residual_Model_cmap.fits"
     os.system("rm " + abs_diff_file)
     os.system("rm " + rel_diff_file)
-    pyfits.writeto(abs_diff_file, data1 - data2, head)
-    pyfits.writeto(rel_diff_file, (data1 - data2) / data2, head)
+    fits.writeto(abs_diff_file, data1 - data2, head)
+    fits.writeto(rel_diff_file, (data1 - data2) / data2, head)
 
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):

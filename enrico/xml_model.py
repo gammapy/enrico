@@ -3,7 +3,7 @@ import os
 import sys
 import xml.dom.minidom
 import numpy as np
-import pyfits
+import astropy.io.fits as fits
 from enrico import utils
 import enrico.environ as env
 
@@ -319,7 +319,7 @@ def GetlistFromFits(config, catalog):
         model = "PowerLaw"
 
     #read the catalog file
-    cfile = pyfits.open(catalog)
+    cfile = fits.open(catalog)
     data = cfile[1].data
     names = data.field('Source_Name')
     ra = data.field('RAJ2000')

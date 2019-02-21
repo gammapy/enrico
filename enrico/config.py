@@ -1,10 +1,7 @@
 """Central place for config file handling"""
 import sys
 from os.path import join
-try:
-    import pyfits
-except:
-    import astropy.io.fits as pyfits
+import astropy.io.fits as fits
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.extern.validate import Validator
 from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR, USE_FULLMISSION_SPACECRAFT
@@ -51,7 +48,7 @@ def get_times_from_spacecraft(scfile,target=['tmin','tmax']):
     tmax = 334165418
     if tset is False:
         try:
-            sc = pyfits.open(scfile)
+            sc = fits.open(scfile)
             if 'tmin' in target:
                 tmin = sc[0].header['TSTART']
             if 'tmax' in target:
@@ -64,10 +61,10 @@ def get_times_from_spacecraft(scfile,target=['tmin','tmax']):
         try:
             with open(scfile.replace('@','')) as f:
                 if 'tmin' in target:
-                    sc1 = pyfits.open(f.readlines()[0])
+                    sc1 = fits.open(f.readlines()[0])
                     tmin = sc1[0].header['TSTART']
                 if 'tmax' in target:
-                    sc2 = pyfits.open(f.readlines()[-1])
+                    sc2 = fits.open(f.readlines()[-1])
                     tmax = sc2[0].header['TSTOP']
         except:
             raise

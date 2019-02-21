@@ -4,7 +4,7 @@ import numpy as np
 from enrico.gtfunction import Observation
 from enrico.utils import calcAngSepDeg,_log
 from enrico.config import get_config
-import pyfits
+import astropy.io.fits as fits
 from enrico import Loggin
 
 def Print(indices,config,ra,dec,proba,energy,time):
@@ -29,7 +29,7 @@ def Runsrcprob(config):
             Obs.DiffResps()
     _log("Run gtsrcprob")
     Obs.SrcProb()
-    probfile=pyfits.open(Obs.Probfile)
+    probfile=fits.open(Obs.Probfile)
     srclist = open(config['srcprob']['srclist'],"r").readlines()
     for src in srclist:
       proba = probfile[1].data.field(string.split(src)[0])
