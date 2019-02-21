@@ -331,18 +331,20 @@ def GetlistFromFits(config, catalog):
       if is8yr:
         spectype = data.field('SpectrumType')
         index = data.field('PL_Index')
-        #if spectype is 'PowerLaw':
-        #    index = data.field('PL_Index')
-        #if spectype is 'LogParabola':
-        #index = data.field('LP_Index')
-        beta  = data.field('LP_beta')
-        #if spectype is 'PLSuperExpCutoff2':
-        # From the makeFL8Yxml.py script
-        #index  = data.field('PLEC_Index')
-        #pivot  = data.field('PivotEnergy')
-        expfac = data.field('PLEC_Expfactor')
-        expind = data.field('PLEC_Exp_Index')
-        cutoff=(1./expfac)**(1./expind)
+        cutoff = np.zeros(names.size)
+        beta = np.zeros(names.size)
+        if spectype is 'PowerLaw':
+            index = data.field('PL_Index')
+        if spectype is 'LogParabola':
+            index = data.field('LP_Index')
+            beta  = data.field('LP_beta')
+        if spectype is 'PLSuperExpCutoff2':
+            # From the makeFL8Yxml.py script
+            index  = data.field('PLEC_Index')
+            pivot  = data.field('PivotEnergy')
+            expfac = data.field('PLEC_Expfactor')
+            expind = data.field('PLEC_Exp_Index')
+            cutoff=(1./expfac)**(1./expind)
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
       else:
