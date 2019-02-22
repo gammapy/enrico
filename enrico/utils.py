@@ -107,7 +107,7 @@ def cube_to_image(cube, slicepos=None, mean=False):
 
 def SubtractFits(infile1, infile2, config):
     """Create (absolute and relative) difference images"""
-    import pyfits
+    import astropy.io.fits as pyfits
     data1 = pyfits.getdata(infile1)
     data2 = pyfits.getdata(infile2)
     head = pyfits.getheader(infile2)
@@ -330,7 +330,7 @@ def GetSDC(val):
         deno += 1
     return deno
 
-def GetIRFS(evtclass,evttype):
+def GetIRFS(evtclass,evttype,addversion=True):
     from enrico import Loggin
     mes = Loggin.Message()
     classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
@@ -350,18 +350,23 @@ def GetIRFS(evtclass,evttype):
     for t in result:
         typ.append(typeirfs[t])
 
-    classirf = classirfs[evtclass]+"_V6"
+    # P8R3_SOURCE_V2 is the irf, but iso_P8R3_SOURCE_V2_()_V2.txt does not exist, 
+    # instead it is _V6_()_V2.txt. We need to get around this inconsistency.
+    if (addversion):
+        classirf = classirfs[evtclass]+"_V2"
+    else:
+        classirf = classirfs[evtclass]
     #mes.info("Using IRFS for: class %s and type %s" %(str(classirf),str(typ)))
     return classirf,typ
 
 
 def GetIso(evtclass,evttype):
-    irfs = GetIRFS(evtclass,evttype)
+    irfs = GetIRFS(evtclass,evttype,addversion=False)
     import enrico.environ as e
     if len(irfs[1])> 1:
         res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_V2.txt')
     else:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+irfs[0]+'_'+str(irfs[1][0])+'_V2.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+str(irfs[1][0])+'_V2.txt')
     return res
 
 

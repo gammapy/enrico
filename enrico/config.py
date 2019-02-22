@@ -2,7 +2,7 @@
 import sys
 from os.path import join
 try:
-    import pyfits
+    import astropy.io.fits as pyfits
 except:
     import astropy.io.fits as pyfits
 from enrico.extern.configobj import ConfigObj, flatten_errors

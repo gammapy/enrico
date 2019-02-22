@@ -4,7 +4,7 @@ import numpy as np
 from enrico.gtfunction import Observation
 from enrico.utils import calcAngSepDeg,_log
 from enrico.config import get_config
-import pyfits
+import astropy.io.fits as pyfits
 from enrico import Loggin
 
 def Print(indices,config,ra,dec,proba,energy,time):

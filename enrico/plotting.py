@@ -1,7 +1,7 @@
 import os
 from distutils.version import LooseVersion
 import numpy as np
-import pyfits
+import astropy.io.fits as pyfits
 import pyLikelihood
 import matplotlib
 matplotlib.use('Agg')

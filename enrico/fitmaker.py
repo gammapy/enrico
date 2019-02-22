@@ -10,7 +10,8 @@ begun September 2011
 #logging.basicConfig(level=logging.INFO)
 #log = logging.getLogger(__name__)
 import numpy as np
-import string,pyfits
+import string
+import astropy.io.fits as pyfits
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 from enrico import utils

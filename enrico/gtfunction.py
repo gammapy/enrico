@@ -58,7 +58,8 @@ class Observation:
         self.ra        = float(self.Configuration['space']['xref'])
         self.dec       = float(self.Configuration['space']['yref'])
         self.roi       = float(self.Configuration['space']['rad'])
-        self.irfs      = self.Configuration['event']['irfs']
+        self.irfs,_    = utils.GetIRFS(self.Configuration['event']['evclass'],self.Configuration['event']['evtype'])
+        #self.irfs      = self.irfs
         self.likelihood = self.Configuration['analysis']['likelihood']        
         
         #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST to crash)
@@ -88,7 +89,7 @@ class Observation:
         print "IRFs\t=\t",self.irfs
         print "evclass\t=\t",self.Configuration['event']['evclass']
         print "evtype\t=\t",self.Configuration['event']['evtype']
-        if  self.Configuration['event']['irfs'] == 'CALDB':
+        if  self.irfs == 'CALDB':
             print "Corresponding IRFs\t=\t",\
             utils.GetIRFS(self.Configuration['event']['evclass'],\
             self.Configuration['event']['evtype'])
@@ -130,8 +131,8 @@ class Observation:
         exposure['infile'] = self.lcfile
         exposure['scfile'] = self.ft2
         exposure['target'] = self.srcname
-        if  self.Configuration['event']['irfs'] != 'CALDB':
-            exposure['evtype']= self.Configuration['event']['evtype']
+        #if  self.irfs != 'CALDB':
+        exposure['evtype']= self.Configuration['event']['evtype']
         exposure['irfs'] = self.irfs
         exposure['srcmdl'] = "none"
         exposure['specin'] = -self.Configuration['AppLC']['index']
@@ -198,9 +199,9 @@ class Observation:
         expcube2['infile'] = self.Cubename
         expcube2['outfile'] = self.BinnedMapfile
         expcube2['cmap'] = self.ccube
-        if  self.Configuration['event']['irfs'] != 'CALDB':
-            expcube2['evtype']= self.Configuration['event']['evtype']
-        expcube2['irfs'] = self.irfs
+        #if  self.irfs != 'CALDB': 
+        expcube2['evtype']= self.Configuration['event']['evtype']
+        expcube2['irfs'] = irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
         expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
@@ -331,7 +332,7 @@ class Observation:
         diffResps['evfile']=self.mktimefile
         diffResps['scfile']=self.ft2
         diffResps['srcmdl']=self.xmlfile
-        if  self.Configuration['event']['irfs'] != 'CALDB':
+        if  self.irfs != 'CALDB':
             diffResps['evtype']= self.Configuration['event']['evtype']
             diffResps['evclass']=self.Configuration['event']['evclass']
         else :
@@ -372,11 +373,12 @@ class Observation:
         expMap['scfile'] = self.ft2
         expMap['expcube'] = self.Cubename
         expMap['outfile'] = self.Mapname
-        if  self.Configuration['event']['irfs'] != 'CALDB':
+        if  self.irfs != 'CALDB':
             expMap['evtype'] = self.Configuration['event']['evtype']
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
+        expMap['evtype']= self.Configuration['event']['evtype']
         expMap['srcrad'] = self.roi+10
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
@@ -393,10 +395,10 @@ class Observation:
         srcMaps['cmap'] = self.ccube
         srcMaps['bexpmap'] = self.BinnedMapfile
         srcMaps['srcmdl']=self.xmlfile
-        # if  self.Configuration['event']['irfs'] != 'CALDB':
-        #   srcMaps['evtype']= self.Configuration['event']['evtype']
-        # else :
-        #   srcMaps['evtype']= 'INDEF'
+        if  self.irfs != 'CALDB':
+            srcMaps['evtype']= self.Configuration['event']['evtype']
+        else :
+            srcMaps['evtype']= 'INDEF'
         srcMaps['irfs']= self.irfs
         srcMaps['outfile'] = self.srcMap
         srcMaps['emapbnds']='no'
@@ -413,10 +415,10 @@ class Observation:
         model_map['srcmaps'] = self.srcMap
         model_map['bexpmap'] = self.BinnedMapfile
         model_map['srcmdl'] = xml
-        # if  self.Configuration['event']['irfs'] != 'CALDB':
-        #   model_map['evtype']= self.Configuration['event']['evtype']
-        # else :
-        #   model_map['evtype']= 'INDEF'
+        if  self.irfs != 'CALDB':
+            model_map['evtype']= self.Configuration['event']['evtype']
+        else :
+            model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
         model_map['outfile'] = self.ModelMap
         model_map['clobber'] = self.clobber
@@ -433,7 +435,7 @@ class Observation:
         findsrc = GtApp('gtfindsrc', 'Likelihood')
         findsrc['evfile'] = self.mktimefile
         findsrc['scfile'] = self.ft2
-        if  self.Configuration['event']['irfs'] != 'CALDB':
+        if  self.irfs != 'CALDB':
             findsrc['evtype']= self.Configuration['event']['evtype']
         else :
             findsrc['evtype']= 'INDEF'
@@ -458,7 +460,7 @@ class Observation:
         srcprob = GtApp('gtsrcprob', 'Likelihood')
         srcprob['evfile'] = self.mktimefile
         srcprob['scfile'] = self.ft2
-        if  self.Configuration['event']['irfs'] != 'CALDB':
+        if  self.irfs != 'CALDB':
             srcprob['evtype']= self.Configuration['event']['evtype']
         else :
             srcprob['evtype']= 'INDEF'

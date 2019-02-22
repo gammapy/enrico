@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-import pyfits
+import astropy.io.fits as pyfits
 from enrico.constants import TSMapPath
 from enrico import utils
 from enrico.submit import call

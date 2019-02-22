@@ -21,7 +21,6 @@ FERMI_DIR = os.environ.get('FERMI_DIR', '')
 FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
 CATALOG_TEMPLATE_DIR = ''
-FERMI_CATALOG = os.environ.get('FERMI_CATALOG', '')
 
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
@@ -63,31 +62,26 @@ if CATALOG_DIR :
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 CATALOG_8yr = 'gll_psc_8year_v%s.fit' % CATALOG_8yr_VERSION
 DIFFUSE_GAL = 'gll_iem_v06.fits'
-DIFFUSE_ISO_SOURCE = 'iso_P8R3_SOURCE_V6_V2.txt'
-DIFFUSE_ISO_SOURCE = 'iso_P8R3_SOURCE_V6_V2.txt'
-DIFFUSE_ISO_SOURCEPSF0 = 'iso_P8R3_SOURCE_V6_PSF0_V2.txt'
-DIFFUSE_ISO_SOURCEPSF1 = 'iso_P8R3_SOURCE_V6_PSF1_V2.txt'
-DIFFUSE_ISO_SOURCEPSF2 = 'iso_P8R3_SOURCE_V6_PSF2_V2.txt'
-DIFFUSE_ISO_SOURCEPSF3 = 'iso_P8R3_SOURCE_V6_PSF3_V2.txt'
-DIFFUSE_ISO_SOURCEEDISP0 = 'iso_P8R3_SOURCE_V6_EDISP0_V2.txt'
-DIFFUSE_ISO_SOURCEEDISP1 = 'iso_P8R3_SOURCE_V6_EDISP1_V2.txt'
-DIFFUSE_ISO_SOURCEEDISP2 = 'iso_P8R3_SOURCE_V6_EDISP2_V2.txt'
-DIFFUSE_ISO_SOURCEEDISP3 = 'iso_P8R3_SOURCE_V6_EDISP3_V2.txt'
-DIFFUSE_ISO_CLEAN = 'iso_P8R3_CLEAN_V6_V2.txt'
-DIFFUSE_ISO_CLEANPSF0 = 'iso_P8R3_CLEAN_V6_PSF0_V2.txt'
-DIFFUSE_ISO_CLEANPSF1 = 'iso_P8R3_CLEAN_V6_PSF1_V2.txt'
-DIFFUSE_ISO_CLEANPSF2 = 'iso_P8R3_CLEAN_V6_PSF2_V2.txt'
-DIFFUSE_ISO_CLEANPSF3 = 'iso_P8R3_CLEAN_V6_PSF3_V2.txt'
-DIFFUSE_ISO_CLEANEDISP0 = 'iso_P8R3_CLEAN_V6_EDISP0_V2.txt'
-DIFFUSE_ISO_CLEANEDISP1 = 'iso_P8R3_CLEAN_V6_EDISP1_V2.txt'
-DIFFUSE_ISO_CLEANEDISP2 = 'iso_P8R3_CLEAN_V6_EDISP2_V2.txt'
-DIFFUSE_ISO_CLEANEDISP3 = 'iso_P8R3_CLEAN_V6_EDISP3_V2.txt'
+DIFFUSE_ISO_SOURCE = 'iso_P8R3_SOURCE_V2.txt'
+DIFFUSE_ISO_SOURCE = 'iso_P8R3_SOURCE_V2.txt'
+DIFFUSE_ISO_SOURCEPSF0 = 'iso_P8R3_SOURCE_PSF0_V2.txt'
+DIFFUSE_ISO_SOURCEPSF1 = 'iso_P8R3_SOURCE_PSF1_V2.txt'
+DIFFUSE_ISO_SOURCEPSF2 = 'iso_P8R3_SOURCE_PSF2_V2.txt'
+DIFFUSE_ISO_SOURCEPSF3 = 'iso_P8R3_SOURCE_PSF3_V2.txt'
+DIFFUSE_ISO_SOURCEEDISP0 = 'iso_P8R3_SOURCE_EDISP0_V2.txt'
+DIFFUSE_ISO_SOURCEEDISP1 = 'iso_P8R3_SOURCE_EDISP1_V2.txt'
+DIFFUSE_ISO_SOURCEEDISP2 = 'iso_P8R3_SOURCE_EDISP2_V2.txt'
+DIFFUSE_ISO_SOURCEEDISP3 = 'iso_P8R3_SOURCE_EDISP3_V2.txt'
+DIFFUSE_ISO_CLEAN = 'iso_P8R3_CLEAN_V2.txt'
+DIFFUSE_ISO_CLEANPSF0 = 'iso_P8R3_CLEAN_PSF0_V2.txt'
+DIFFUSE_ISO_CLEANPSF1 = 'iso_P8R3_CLEAN_PSF1_V2.txt'
+DIFFUSE_ISO_CLEANPSF2 = 'iso_P8R3_CLEAN_PSF2_V2.txt'
+DIFFUSE_ISO_CLEANPSF3 = 'iso_P8R3_CLEAN_PSF3_V2.txt'
+DIFFUSE_ISO_CLEANEDISP0 = 'iso_P8R3_CLEAN_EDISP0_V2.txt'
+DIFFUSE_ISO_CLEANEDISP1 = 'iso_P8R3_CLEAN_EDISP1_V2.txt'
+DIFFUSE_ISO_CLEANEDISP2 = 'iso_P8R3_CLEAN_EDISP2_V2.txt'
+DIFFUSE_ISO_CLEANEDISP3 = 'iso_P8R3_CLEAN_EDISP3_V2.txt'
 SPACECRAFT = 'lat_spacecraft_merged.fits'
-
-if FERMI_CATALOG not in [CATALOG, CATALOG_8yr]:
-    print("The catalog %s is still not implemented" %FERMI_CATALOG)
-    print("Try setting it to %s or %s" %(CATALOG,CATALOG_8yr))
-    FERMI_CATALOG=""
 
 def check_command_line_tools():
     """Check command line tool availability"""
@@ -104,7 +98,8 @@ def check_python_modules():
     # @todo: Use this fast method to check for python module availability:
     # http://stackoverflow.com/questions/2617704/
     # checking-for-module-availability-programmatically-in-python
-    ASTRO_PACKAGES = ['pyfits', 'kapteyn']
+    #ASTRO_PACKAGES = ['pyfits', 'kapteyn']
+    ASTRO_PACKAGES = ['astropy', 'kapteyn']
     # @todo: Here it's enough to try one of the Fermi python modules
     # and to show where they are located.
     FERMI_PACKAGES = ['gt_apps', 'UnbinnedAnalysis','BinnedAnalysis']

@@ -2,7 +2,7 @@
 import os
 import numpy as np
 import ROOT
-import pyfits
+import astropy.io.fits as pyfits
 from enrico.constants import  DAY_IN_SECOND, AppLCPath #met_ref, mdj_ref,
 from enrico.gtfunction import Observation
 from enrico.config import get_config

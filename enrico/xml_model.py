@@ -3,7 +3,7 @@ import os
 import sys
 import xml.dom.minidom
 import numpy as np
-import pyfits
+import astropy.io.fits as pyfits
 from enrico import utils
 import enrico.environ as env
 
@@ -143,7 +143,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0.0005, beta_max=5.0,extendedName=""):
+                   beta_min=0, beta_max=5.0,extendedName=""):
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
@@ -326,32 +326,33 @@ def GetlistFromFits(config, catalog):
     dec = data.field('DEJ2000')
     flux = data.field('Flux_Density')
     pivot = data.field('Pivot_Energy')
+    spectype = data.field('SpectrumType')
     is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
     try :  # valid for the 2FGH, not for the 1FHL
       if is8yr:
         spectype = data.field('SpectrumType')
-        index = data.field('PL_Index')
+        index  = np.zeros(names.size)
         cutoff = np.zeros(names.size)
-        beta = np.zeros(names.size)
-        if spectype is 'PowerLaw':
-            index = data.field('PL_Index')
-        if spectype is 'LogParabola':
-            index = data.field('LP_Index')
-            beta  = data.field('LP_beta')
-        if spectype is 'PLSuperExpCutoff2':
-            # From the makeFL8Yxml.py script
-            index  = data.field('PLEC_Index')
-            pivot  = data.field('PivotEnergy')
-            expfac = data.field('PLEC_Expfactor')
-            expind = data.field('PLEC_Exp_Index')
-            cutoff=(1./expfac)**(1./expind)
+        expfac = np.zeros(names.size)
+        beta   = np.zeros(names.size)
+        for k,spec in enumerate(spectype):
+            if spec == 'PowerLaw':
+                index[k] = data.field('PL_Index')[k]
+            if spec == 'LogParabola':
+                index[k] = data.field('LP_Index')[k]
+                beta[k]  = data.field('LP_beta')[k]
+            if spec == 'PLSuperExpCutoff2':
+                # From the makeFL8Yxml.py script
+                index[k]  = data.field('PLEC_Index')[k]
+                expfac = data.field('PLEC_Expfactor')[k]
+                expind = data.field('PLEC_Exp_Index')[k]
+                cutoff[k] =(1./expfac)**(1./expind)
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
       else:
         index = data.field('Spectral_Index')
         cutoff = data.field('Cutoff')
         beta = data.field('beta')
-        spectype = data.field('SpectrumType')
     except :
       raise
       index = data.field('Spectral_Index')
