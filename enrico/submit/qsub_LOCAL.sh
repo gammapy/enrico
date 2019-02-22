@@ -21,8 +21,7 @@
 #####################################################################
 
 export HOME=$HOME
-export PATH=$FERMI_DIR/bin:$PATH
-
+#export PATH=$FERMI_DIR/bin:$PATH
 
 echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 

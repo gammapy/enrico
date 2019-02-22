@@ -145,13 +145,14 @@ def call(cmd,
         if exec_dir:
             text += '\ncd {0}\n\n'.format(exec_dir)
 
-        text +='export FERMI_DIR='+fermiDir+'\n'
+        text +='conda activate fermi'
+        #text +='export FERMI_DIR='+fermiDir+'\n'
         #text +='export HEADAS_DIR='+fermiDir+'\n'
         text +='export ENRICO_DIR='+enricoDir+'\n'
         #text +='source $HEADAS_DIR/headas-init.sh\n'
-        text +='source $FERMI_DIR/fermi-init.sh\n'
+        #text +='source $FERMI_DIR/fermi-init.sh\n'
         text +='source $ENRICO_DIR/enrico-init.sh\n'
-        text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
+        #text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
         text +='export LATEXDIR=/tmp/aux\n'
         text +='env\n'
         text +='#PBS -o '+qsub_log+'\n'
