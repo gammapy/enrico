@@ -26,7 +26,7 @@ def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     spectrum.getParam('Prefactor').setValue(utils.fluxNorm(Pref))
     spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
     spectrum.getParam('Index').setValue(Gamma)
-    spectrum.getParam('Index').setFree(0)
+    spectrum.getParam('Index').setFree(False)
     spectrum.getParam('Scale').setValue(Eav)
     spectrum.getParam('Scale').setBounds(20,3e6)
 

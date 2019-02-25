@@ -312,10 +312,10 @@ def create_dir(path):
         os.makedirs(path)
 
 def Checkevtclass(evclass):
-    classirfs = {1:"P8R2_TRANSIENT100A",2:"P8R2_TRANSIENT100E",4:"P8R2_TRANSIENT100",8:"P8R2_TRANSIENT020E",
-			16:"P8R2_TRANSIENT020",32:"P8R2_TRANSIENT010E",64:"P8R2_TRANSIENT010",128:"P8R2_SOURCE",
-			256:"P8R2_CLEAN",521:"P8R2_ULTRACLEAN",1024:"P8R2_ULTRACLEANVETO",32768:"P8R2_TRANSIENT100S",
-			65536:"P8R2_TRANSIENT015S",16777216:"P8R2_LLE"}
+    classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
+			16:"P8R3_TRANSIENT020",32:"P8R3_TRANSIENT010E",64:"P8R3_TRANSIENT010",128:"P8R3_SOURCE",
+			256:"P8R3_CLEAN",521:"P8R3_ULTRACLEAN",1024:"P8R3_ULTRACLEANVETO",32768:"P8R3_TRANSIENT100S",
+			65536:"P8R3_TRANSIENT015S",16777216:"P8R3_LLE"}
     try :
         tmp = classirfs[evclass]
     except:
@@ -330,13 +330,13 @@ def GetSDC(val):
         deno += 1
     return deno
 
-def GetIRFS(evtclass,evttype):
+def GetIRFS(evtclass,evttype,addversion=True):
     from enrico import Loggin
     mes = Loggin.Message()
-    classirfs = {1:"P8R2_TRANSIENT100A",2:"P8R2_TRANSIENT100E",4:"P8R2_TRANSIENT100",8:"P8R2_TRANSIENT020E",
-			16:"P8R2_TRANSIENT020",32:"P8R2_TRANSIENT010E",64:"P8R2_TRANSIENT010",128:"P8R2_SOURCE",
-			256:"P8R2_CLEAN",521:"P8R2_ULTRACLEAN",1024:"P8R2_ULTRACLEANVETO",32768:"P8R2_TRANSIENT100S",
-			65536:"P8R2_TRANSIENT015S",16777216:"P8R2_LLE"}
+    classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
+			16:"P8R3_TRANSIENT020",32:"P8R3_TRANSIENT010E",64:"P8R3_TRANSIENT010",128:"P8R3_SOURCE",
+			256:"P8R3_CLEAN",521:"P8R3_ULTRACLEAN",1024:"P8R3_ULTRACLEANVETO",32768:"P8R3_TRANSIENT100S",
+			65536:"P8R3_TRANSIENT015S",16777216:"P8R3_LLE"}
 
 
     result = []
@@ -350,18 +350,23 @@ def GetIRFS(evtclass,evttype):
     for t in result:
         typ.append(typeirfs[t])
 
-    classirf = classirfs[evtclass]+"_V6"
+    # P8R3_SOURCE_V2 is the irf, but iso_P8R3_SOURCE_V2_()_V2.txt does not exist, 
+    # instead it is _V6_()_V2.txt. We need to get around this inconsistency.
+    if (addversion):
+        classirf = classirfs[evtclass]+"_V2"
+    else:
+        classirf = classirfs[evtclass]
     #mes.info("Using IRFS for: class %s and type %s" %(str(classirf),str(typ)))
     return classirf,typ
 
 
 def GetIso(evtclass,evttype):
-    irfs = GetIRFS(evtclass,evttype)
+    irfs = GetIRFS(evtclass,evttype,addversion=False)
     import enrico.environ as e
     if len(irfs[1])> 1:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_v06.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_V2.txt')
     else:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+irfs[0]+'_'+str(irfs[1][0])+'_v06.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+str(irfs[1][0])+'_V2.txt')
     return res
 
 

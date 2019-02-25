@@ -143,7 +143,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0.0005, beta_max=5.0,extendedName=""):
+                   beta_min=0, beta_max=5.0,extendedName=""):
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
@@ -326,30 +326,33 @@ def GetlistFromFits(config, catalog):
     dec = data.field('DEJ2000')
     flux = data.field('Flux_Density')
     pivot = data.field('Pivot_Energy')
+    spectype = data.field('SpectrumType')
     is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
     try :  # valid for the 2FGH, not for the 1FHL
       if is8yr:
         spectype = data.field('SpectrumType')
-        index = data.field('PL_Index')
-        #if spectype is 'PowerLaw':
-        #    index = data.field('PL_Index')
-        #if spectype is 'LogParabola':
-        #index = data.field('LP_Index')
-        beta  = data.field('LP_beta')
-        #if spectype is 'PLSuperExpCutoff2':
-        # From the makeFL8Yxml.py script
-        #index  = data.field('PLEC_Index')
-        #pivot  = data.field('PivotEnergy')
-        expfac = data.field('PLEC_Expfactor')
-        expind = data.field('PLEC_Exp_Index')
-        cutoff=(1./expfac)**(1./expind)
+        index  = np.zeros(names.size)
+        cutoff = np.zeros(names.size)
+        expfac = np.zeros(names.size)
+        beta   = np.zeros(names.size)
+        for k,spec in enumerate(spectype):
+            if spec == 'PowerLaw':
+                index[k] = data.field('PL_Index')[k]
+            if spec == 'LogParabola':
+                index[k] = data.field('LP_Index')[k]
+                beta[k]  = data.field('LP_beta')[k]
+            if spec == 'PLSuperExpCutoff2':
+                # From the makeFL8Yxml.py script
+                index[k]  = data.field('PLEC_Index')[k]
+                expfac = data.field('PLEC_Expfactor')[k]
+                expind = data.field('PLEC_Exp_Index')[k]
+                cutoff[k] =(1./expfac)**(1./expind)
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
       else:
         index = data.field('Spectral_Index')
         cutoff = data.field('Cutoff')
         beta = data.field('beta')
-        spectype = data.field('SpectrumType')
     except :
       raise
       index = data.field('Spectral_Index')
@@ -375,7 +378,6 @@ def GetlistFromFits(config, catalog):
 
 
     sigma = data.field('Signif_Avg')
-
     sources = []
     Nfree = 0
     Nextended = 0
@@ -398,6 +400,7 @@ def GetlistFromFits(config, catalog):
         # with our given coordinates
         if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
             Nfree += 1
+            mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
@@ -406,7 +409,7 @@ def GetlistFromFits(config, catalog):
         elif  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
             # if the source is close to the target : add it as a free source
             Nfree += 1
-
+            mes.info("Adding [free] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
@@ -417,6 +420,7 @@ def GetlistFromFits(config, catalog):
 
         # srcs that were kept fixed in the 3FGL: add them as fixed srcs
         elif rspace < roi and sigma[i] == -np.inf:
+            mes.info("Adding [fixed in 3FGL] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rspace,sigma[i]) )
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
@@ -428,6 +432,7 @@ def GetlistFromFits(config, catalog):
         else:
             # if the source is inside the ROI: add it as a frozen source
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
+                mes.info("Adding [fixed] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                 'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,

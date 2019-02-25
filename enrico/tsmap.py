@@ -83,7 +83,7 @@ class TSMap(Loggin.Message):
 
         for comp in Fit.components:
             for par in xrange(comp.logLike.getNumParams()): # freeze all the source parameters
-                comp[par].setFree(0)
+                comp[par].setFree(False)
             comp.addSource(src)# add a spurious source
 
         # # dump the *new* xml file

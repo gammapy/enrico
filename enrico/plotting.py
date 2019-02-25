@@ -378,7 +378,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
             color='0.50',ls='None',uplims=True)
 
-    if bblocks and len(y)>2:
+    if bblocks and len(x[~uplim])>2:
         yerr = 0.5*(yerrm+yerrp)
         # Set the value and error for the uls.
         yerr[uplim] = y[uplim] #min(y[yerr>0]+yerr[yerr>0])
