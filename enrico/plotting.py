@@ -1,7 +1,7 @@
 import os
 from distutils.version import LooseVersion
 import numpy as np
-import astropy.io.fits as pyfits
+import astropy.io.fits as fits
 import pyLikelihood
 import matplotlib
 matplotlib.use('Agg')
@@ -137,7 +137,7 @@ class Result(Loggin.Message):
         for comp in self.Fit.components:
             #self.Fit.writeCountsSpectra(imName)
             comp.writeCountsSpectra(imName)
-            image = pyfits.open(imName)
+            image = fits.open(imName)
 
             #loop on the source names to find the good one
             j = 0

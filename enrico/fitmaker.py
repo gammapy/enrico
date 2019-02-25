@@ -11,7 +11,7 @@ begun September 2011
 #log = logging.getLogger(__name__)
 import numpy as np
 import string
-import astropy.io.fits as pyfits
+import astropy.io.fits as fits
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 from enrico import utils
@@ -279,7 +279,7 @@ class FitMaker(Loggin.Message):
         self.info('Compute the exposure')#run gtexposure
 
         try :
-            spfile = pyfits.open(self.obs.lcfile)
+            spfile = fits.open(self.obs.lcfile)
         except:
             self.obs.GtLCbin(dt = self.config['time']['tmax']-self.config['time']['tmin'])
             #spfile = pyfits.open(self.obs.lcfile)
@@ -301,8 +301,8 @@ class FitMaker(Loggin.Message):
         #self.info('Compute the psf')#run gtpsf
         #self.obs.GtPSF()
 
-        ccube = pyfits.open(self.obs.ccube)
-        psfres = pyfits.open(self.obs.psf)
+        ccube = fits.open(self.obs.ccube)
+        psfres = fits.open(self.obs.psf)
 
         #read psf and get the 68% containement radius
         theta = (psfres[2].data["Theta"])

@@ -98,7 +98,6 @@ def check_python_modules():
     # @todo: Use this fast method to check for python module availability:
     # http://stackoverflow.com/questions/2617704/
     # checking-for-module-availability-programmatically-in-python
-    #ASTRO_PACKAGES = ['pyfits', 'kapteyn']
     ASTRO_PACKAGES = ['astropy', 'kapteyn']
     # @todo: Here it's enough to try one of the Fermi python modules
     # and to show where they are located.
