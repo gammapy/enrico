@@ -378,7 +378,6 @@ def GetlistFromFits(config, catalog):
 
 
     sigma = data.field('Signif_Avg')
-
     sources = []
     Nfree = 0
     Nextended = 0
@@ -401,6 +400,7 @@ def GetlistFromFits(config, catalog):
         # with our given coordinates
         if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
             Nfree += 1
+            mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
@@ -409,7 +409,7 @@ def GetlistFromFits(config, catalog):
         elif  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
             # if the source is close to the target : add it as a free source
             Nfree += 1
-
+            mes.info("Adding [free] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
@@ -420,6 +420,7 @@ def GetlistFromFits(config, catalog):
 
         # srcs that were kept fixed in the 3FGL: add them as fixed srcs
         elif rspace < roi and sigma[i] == -np.inf:
+            mes.info("Adding [fixed in 3FGL] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rspace,sigma[i]) )
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
@@ -431,6 +432,7 @@ def GetlistFromFits(config, catalog):
         else:
             # if the source is inside the ROI: add it as a frozen source
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
+                mes.info("Adding [fixed] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                 'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,

@@ -30,6 +30,7 @@ class Observation:
             inttag+="_"+self.tag
 
         self.srcname   = self.Configuration['target']['name']
+        self.modelname = self.Configuration['target']['spectrum']
         self.ft1       = self.Configuration['file']['event']
         self.ft2       = self.Configuration['file']['spacecraft']
         self.xmlfile   = self.Configuration['file']['xml']
@@ -44,11 +45,11 @@ class Observation:
         self.cmapfile  = self.folder+'/'+self.srcname+inttag+"_CountMap.fits"
         self.lcfile    = self.folder+'/'+self.srcname+inttag+"_applc.fits"
         self.ccube     = self.folder+'/'+self.srcname+inttag+"_CCUBE.fits"
-        self.srcMap    = self.folder+'/'+self.srcname+inttag+"_srcMap.fits"
-        self.ModelMap  = self.folder+'/'+self.srcname+inttag+"_ModelMap.fits"
+        self.srcMap    = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_srcMap.fits"
+        self.ModelMap  = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_ModelMap.fits"
         self.BinDef    = self.folder+'/'+self.srcname+inttag+"_BinDef.fits"
-        self.Probfile  = self.folder+'/'+self.srcname+inttag+"_prob.fits"
-        self.psf       = self.folder+'/'+self.srcname+inttag+"_psf.fits"
+        self.Probfile  = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_prob.fits"
+        self.psf       = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_psf.fits"
 
         #Variables
         self.t1        = float(self.Configuration['time']['tmin'])
@@ -201,7 +202,7 @@ class Observation:
         expcube2['cmap'] = self.ccube
         #if  self.irfs != 'CALDB': 
         expcube2['evtype']= self.Configuration['event']['evtype']
-        expcube2['irfs'] = irfs
+        expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
         expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
