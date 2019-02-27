@@ -187,12 +187,12 @@ def run(infile):
         outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
         FitRunner.ModelMap(outXml)
-        FitRunner.config['spectrum']['ResultParentPlots'] = "yes"
+        FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
         with get_config(infile) as config_to_plot:
             plot_sed_fromconfig(config_to_plot)
     
     if config['Spectrum']['ResultParentPlots'] == "yes":
-        with get_config(config['spectrum']['parent_config']) as config_to_plot:
+        with get_config(config['file']['parent_config']) as config_to_plot:
             plot_sed_fromconfig(config_to_plot)        
 
     #  Make energy bins by running a *new* analysis
