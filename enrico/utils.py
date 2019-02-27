@@ -312,13 +312,6 @@ def MJD_to_met(mjd):
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
 
-def create_dir(path):
-    import os
-    import os.path
-
-    if (not os.path.exists(path)):
-        os.makedirs(path)
-
 def Checkevtclass(evclass):
     classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
 			16:"P8R3_TRANSIENT020",32:"P8R3_TRANSIENT010E",64:"P8R3_TRANSIENT010",128:"P8R3_SOURCE",

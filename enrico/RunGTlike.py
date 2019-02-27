@@ -139,7 +139,7 @@ def run(infile):
     """Run an entire Fermi analysis (spectrum) by reading a config file"""
     config = get_config(infile)
     folder = config['out']
-    utils.create_dir(folder)
+    utils.mkdir_p(folder)
 
     FitRunner,Fit = GenAnalysisObjects(config)
     # create all the fit files and run gtlike
@@ -150,7 +150,7 @@ def run(infile):
     if float(config['UpperLimit']['TSlimit']) < Fit.Ts(config['target']['name']):
         if config['Spectrum']['ResultPlots'] == 'yes':
             from enrico.constants import SpectrumPath
-            utils.create_dir("%s/%s/" %(config['out'],SpectrumPath))
+            utils.mkdir_p("%s/%s/" %(config['out'],SpectrumPath))
             sedresult = FitRunner.ComputeSED(Fit,dump=True)
         else:
             sedresult = FitRunner.ComputeSED(Fit,dump=False)
