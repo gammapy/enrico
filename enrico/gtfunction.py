@@ -333,12 +333,8 @@ class Observation:
         diffResps['evfile']=self.mktimefile
         diffResps['scfile']=self.ft2
         diffResps['srcmdl']=self.xmlfile
-        if  self.irfs != 'CALDB':
-            diffResps['evtype']= self.Configuration['event']['evtype']
-            diffResps['evclass']=self.Configuration['event']['evclass']
-        else :
-            diffResps['evtype']= 'INDEF'
-            diffResps['evclass']= 'INDEF'
+        diffResps['evtype']= 'INDEF'
+        diffResps['evclass']= 'INDEF'
         diffResps['irfs']=self.irfs
         diffResps['convert']="no"
 

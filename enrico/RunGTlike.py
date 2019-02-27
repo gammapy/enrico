@@ -73,10 +73,13 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     # Create one obs instance for each component
     if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
         evtnum = [1, 2]
+        config['analysis']['likelihood'] = "binned"
     if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
         evtnum = [4,8,16,32]
+        config['analysis']['likelihood'] = "binned"
     if isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
         evtnum = [64,128,256,521]
+        config['analysis']['likelihood'] = "binned"
     oldxml = config['file']['xml']
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt
