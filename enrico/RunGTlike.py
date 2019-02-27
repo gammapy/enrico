@@ -3,6 +3,7 @@ import os,glob,os.path,math
 from enrico import utils
 from enrico.gtfunction import Observation
 from enrico.fitmaker import FitMaker
+from enrico.plotting import plot_sed_fromconfig
 import Loggin
 import SummedLikelihood
 from enrico.xml_model import XmlMaker
@@ -178,16 +179,24 @@ def run(infile):
     Result = FitRunner.GetAndPrintResults(Fit)
     utils.DumpResult(Result, config)
 
+    FitRunner.config['file']['parent_config'] = infile
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
         FitRunner.ModelMap(outXml)
+        FitRunner.config['spectrum']['ResultParentPlots'] = "yes"
+        with get_config(infile) as config_to_plot:
+            plot_sed_fromconfig(config_to_plot)
+    
+    if config['Spectrum']['ResultParentPlots'] == "yes":
+        with get_config(config['spectrum']['parent_config']) as config_to_plot:
+            plot_sed_fromconfig(config_to_plot)        
 
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
-
-    energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
     
+    energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
+
     del(sedresult)
     del(Result)
     del(FitRunner)

@@ -90,7 +90,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         # Make the bins equispaced in logE (standard)
         ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
-    os.system("mkdir -p " + config['out'])
+    utils.mkdir_p(config['out'])
     paramsfile = []
 
     srcname = FitRunner.config['target']['name']

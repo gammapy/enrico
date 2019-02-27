@@ -538,3 +538,23 @@ def PlotUL(pars,config,ULFlux,Index):
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inches=None, pad_inches=0.1,
             frameon=None)
+
+
+def plot_sed_fromconfig(config):
+    utils.mkdir_p(config["out"]+"/Spectrum")
+    srcname = config['target']['name']
+    Emin = config['energy']['emin']
+    Emax = config['energy']['emax']
+    filename = utils._SpecFileName(config)
+    Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
+    Result = utils.ReadResult(config)
+
+    # if the TS > ts limit plot the butterfly, if not draw UL
+    if Result["TS"]> config['UpperLimit']['TSlimit'] :
+        PlotSED(config,Param)
+    else :
+        try :
+            PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
+        except :
+            print "Not able to plot an upper limit in a SED diagram. UL computed?"
+

@@ -23,7 +23,7 @@ def AppLC(infile):
     folder = config['out']
     #Create a subfolder name LightCurve
     LCoutfolder = folder+"/"+AppLCPath
-    os.system("mkdir -p "+LCoutfolder)
+    utils.mkdir_p(LCoutfolder)
 
     #Change the ROI to the desired radius in degree, legacy 1 deg.
     try: config['space']['rad'] = config['AppLC']['rad']

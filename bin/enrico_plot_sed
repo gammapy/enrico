@@ -2,29 +2,9 @@
 """Plot a SED"""
 import sys,os
 import numpy as np
-from enrico.plotting import PlotSED,PlotUL,Params
+from enrico.plotting import plot_sed_fromconfig
 from enrico.config import get_config
 from enrico.utils import ReadResult,_SpecFileName
-
-def plot(config):
-  os.system("mkdir -p "+config["out"]+"/Spectrum")
-  srcname = config['target']['name']
-  Emin = config['energy']['emin']
-  Emax = config['energy']['emax']
-  filename = _SpecFileName(config)
-  Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
-
-  Result = ReadResult(config)
-
-# if the TS > ts limit plot the butterfly, if not draw UL
-  if Result["TS"]> config['UpperLimit']['TSlimit'] :
-    PlotSED(config,Param)
-  else :
-    try :
-      PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
-    except :
-      print "Not able to plot an upper limit in a SED diagram. UL computed?"
-
 from enrico import Loggin
 mes = Loggin.Message()
 try:
@@ -33,6 +13,9 @@ except:
     print('Usage: '+sys.argv[0]+' <config file name>')
     mes.error('Config file not found.')
 
+def plot(inf):
+    config=get_config(inf)
+    plot_sed_fromconfig(config)
 
 if len(sys.argv)==2 :
 #read an config file alone. If not working, try to read an ascii file with different conf file
@@ -40,13 +23,10 @@ if len(sys.argv)==2 :
     liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
     for inf in liste:
       mes.info("work on the config file "+inf)
-      config = get_config(inf)
-      plot(config)
+      plot(inf)
   except :
-    config = get_config(infile)
-    plot(config)
+    plot(infile)
 else:
   for inf in sys.argv[1:]:
     mes.info("work on the config file "+inf)
-    config = get_config(inf)
-    plot(config)
+    plot(inf)

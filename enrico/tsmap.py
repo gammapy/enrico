@@ -117,7 +117,7 @@ class TSMap(Loggin.Message):
     def runTSMap(self,row=-1,column=-1) :
         """ Run a TS map using the configuration file given"""
         folder = self.config['out']
-        os.system('mkdir -p ' + self.tsfolder)
+        utils.mkdir_p(self.tsfolder)
 
         # This part is used to rerun either a row or a pixel.
         if row>0:#rerun only 1 row

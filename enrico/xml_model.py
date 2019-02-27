@@ -594,7 +594,7 @@ def WriteXml(lib, doc, srclist, config):
             print('Warning!!!, unknown model %s' %spectype.strip())
 
     folder = config['out']
-    os.system('mkdir -p ' + folder)
+    utils.mkdir_p(folder)
 
     output = config['file']['xml']
 
@@ -640,7 +640,7 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
 
 def XmlMaker(config):
     folder = config['out']
-    os.system('mkdir -p ' + folder)
+    utils.mkdir_p(folder)
     # test if the user provide a catalog or not.
     #if not use the default one
     if config['environ']['FERMI_CATALOG_DIR'] == '':
