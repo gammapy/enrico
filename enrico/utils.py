@@ -1,5 +1,6 @@
 """Random collection of usefull functions"""
-import os
+import os, sys
+import errno
 from math import log10
 import numpy as np
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
@@ -223,7 +224,6 @@ def _dump_xml(config) :
                   + "_" + config['target']['spectrum'] + "_"+
                   config['file']['tag'] + "_out.xml")
 
-
 def _dump_reg(config):
     return config['out'] + "/Roi_model.reg"
 
@@ -232,6 +232,14 @@ def _dump_findsrcout(config):
     os.system("touch "+res)
     return res
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 def _dump_filename(config):
     """Give the name of the file where the results will be dumped"""
@@ -303,13 +311,6 @@ def MJD_to_met(mjd):
 
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
-
-def create_dir(path):
-    import os
-    import os.path
-
-    if (not os.path.exists(path)):
-        os.makedirs(path)
 
 def Checkevtclass(evclass):
     classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",

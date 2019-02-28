@@ -7,6 +7,7 @@ import RunGTlike
 import ROOT
 import numpy,os,string,array
 from enrico import Loggin
+from enrico import utils
 import matplotlib
 matplotlib.rc('text', usetex=True)
 import matplotlib.pyplot as plt
@@ -57,7 +58,7 @@ def Scan(config):
           plt.xlabel("Parameter: "+par)
           plt.ylabel("Log(Like)")
 
-          os.system("mkdir -p "+config["out"]+"/"+cst.ScanPath)
+          utils.mkdir_p(config["out"]+"/"+cst.ScanPath)
           savefile = open(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".txt","w")
           for i in xrange(param.size):
              savefile.write(str(param[i])+" "+str(loglike[i])+"\n")
@@ -137,7 +138,7 @@ def Contour(config):
       for j in xrange(N):
          loglike.Fill(param1[j],param2[i],ll[j])
 
-    os.system("mkdir -p "+config["out"]+"/"+cst.ScanPath)
+    utils.mkdir_p(config["out"]+"/"+cst.ScanPath)
     cres = ROOT.TCanvas("Contours")
     loglike.SetMinimum(bestloglike);
     loglike.SetMaximum(bestloglike+3);

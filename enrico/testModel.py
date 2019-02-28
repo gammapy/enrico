@@ -8,6 +8,7 @@ except:
 from enrico.fitmaker import FitMaker
 from enrico.gtfunction import Observation
 from enrico import Loggin
+from enrico import utils
 
 class ModelTester(Loggin.Message):
     """Class to est several models to check
@@ -17,7 +18,7 @@ class ModelTester(Loggin.Message):
         Loggin.Message.__init__(self)
         self.config = config
         self.folder = self.config['out']
-        os.system("mkdir -p "+self.folder+"/TestModel")
+        utils.mkdir_p(self.folder+"/TestModel")
         self.modellist = ["PowerLaw","LogParabola","PLSuperExpCutoff"]
         
         '''

@@ -181,8 +181,8 @@ class Result(Loggin.Message):
         plt.xlabel("E (MeV) ")
         plt.ylabel("Counts / bin")
         plt.errorbar(E,obs,xerr=err_E,yerr=obs_err,fmt='o',color="red",ls='None',label="Data")
-        plt.plot(E,other,ls='dashed',color="blue",label=Parameter.srcname)
-        plt.plot(E,src,ls='solid',color="green",label="Other Sources")
+        plt.plot(E,src,ls='dashed',color="blue",label=Parameter.srcname)
+        plt.plot(E,other,ls='solid',color="green",label="Other Sources")
         plt.plot(E,total,lw=1.5,ls='solid',label="All Sources")
         plt.legend()
         plt.tight_layout()
@@ -241,7 +241,7 @@ class Result(Loggin.Message):
 #     gh.SetYTitle(tag)
 #     return gh, tgraph, arrows
 
-def GetDataPoints(config,pars):
+def GetDataPoints(config,pars,ignore_missing_bins=False):
     """Collect the data points/UL and generate a TGraph for the points
     and a list of TArrow for the UL. All is SED format"""
 
@@ -275,7 +275,8 @@ def GetDataPoints(config,pars):
             mes.info("Reading "+filename)
             results = utils.ReadResult(CurConf)
         except:
-            mes.warning("cannot read the Results of energy bin "+ str(i))
+            if not ignore_missing_bins:
+                mes.warning("cannot read the Results of energy bin "+ str(i))
             continue
         #fill the energy arrays
         Epoint[i] = results.get("Scale")
@@ -424,7 +425,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
 
         plt.legend(loc=0,fontsize='small',numpoints=1)
 
-def PlotSED(config,pars):
+def PlotSED(config,pars,ignore_missing_bins=False):
     """plot a nice SED with a butterfly and points"""
 
     # Read the ascii file where the butterfly is stored
@@ -473,7 +474,7 @@ def PlotSED(config,pars):
     #Plot points
     NEbin = int(config['Ebin']['NumEnergyBins'])
     if NEbin > 0:
-        Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim = GetDataPoints(config,pars) #collect data points
+        Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim = GetDataPoints(config,pars,ignore_missing_bins) #collect data points
         plot_errorbar_withuls(Epoint,EpointErrm,EpointErrp,Fluxpoint,FluxpointErrm,FluxpointErrp,uplim)
 
     #print uplim
@@ -538,3 +539,23 @@ def PlotUL(pars,config,ULFlux,Index):
             orientation='portrait', papertype=None, format=None,
             transparent=False, bbox_inches=None, pad_inches=0.1,
             frameon=None)
+
+
+def plot_sed_fromconfig(config,ignore_missing_bins=False):
+    utils.mkdir_p(config["out"]+"/Spectrum")
+    srcname = config['target']['name']
+    Emin = config['energy']['emin']
+    Emax = config['energy']['emax']
+    filename = utils._SpecFileName(config)
+    Param = Params(srcname, Emin=Emin, Emax=Emax, PlotName=filename)
+    Result = utils.ReadResult(config)
+
+    # if the TS > ts limit plot the butterfly, if not draw UL
+    if Result["TS"]> config['UpperLimit']['TSlimit'] :
+        PlotSED(config,Param,ignore_missing_bins)
+    else :
+        try :
+            PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
+        except :
+            print "Not able to plot an upper limit in a SED diagram. UL computed?"
+

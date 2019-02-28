@@ -24,10 +24,10 @@ pol1 = lambda x,p1,p2: p1+p2*x
 
 class LightCurve(Loggin.Message):
     """Class to calculate light curves and variability indexes."""
-    def __init__(self, config):
+    def __init__(self, config, parent_filename=""):
         super(LightCurve,self).__init__()
         Loggin.Message.__init__(self)
-
+        self.parent_filename = parent_filename
         self.config        = get_config(config)
         self.generalconfig = get_config(config)
         print(self.generalconfig)
@@ -50,19 +50,18 @@ class LightCurve(Loggin.Message):
 
         self.folder = self.config['out']
 
-        #No plot, no bin in energy, no decE optimization, Normal UL
-        self.config['Spectrum']['ResultPlots'] = 'yes' # no
+        self.config['Spectrum']['ResultPlots'] = 'no' # no
         self.config['Ebin']['NumEnergyBins'] = 0
         self.config['energy']['decorrelation_energy'] = 'yes' # no
         self.config['UpperLimit']['envelope'] = 'no'
-        #No submition. Submission will be directly handle by this soft
+        # Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
-#        self.config['verbose'] ='no' #Be quiet
+        # self.config['verbose'] ='no' #Be quiet
         
-        # Try to speed-up the analysis by reusing the evt file from the main analysis
+        # Speed-up the analysis by reusing the evt file from the main analysis
         self._RecycleEvtCoarse()
 
-        self.configfile = []#All the config file in the disk are stored in a list
+        self.configfile = [] #All the config file in the disk are stored in a list
     
     def _RecycleEvtCoarse(self):
         ''' Try to guess if there's an EvtCoarse file with the events extracted, reuse it '''
@@ -110,9 +109,8 @@ class LightCurve(Loggin.Message):
         """   All files will be stored in a subfolder name path + NLCbin
         Create a subfolder"""
         self.LCfolder =  self.folder+"/LightCurve_"+str(self.Nbin)+"bins/"
-        os.system("mkdir -p "+self.LCfolder)
+        utils.mkdir_p(self.LCfolder)
         self.config['out'] = self.LCfolder
-
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
@@ -141,9 +139,9 @@ class LightCurve(Loggin.Message):
             self.configfile.append(filename)
 
     def _MakeLC(self,Path=LightcurvePath) :
-        import gc
+        #import gc
         import os
-        gc.enable()
+        #gc.enable()
         '''Main function of the Lightcurve script. Read the config file and run the gtlike analysis'''
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
@@ -151,9 +149,9 @@ class LightCurve(Loggin.Message):
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
 
         for i in xrange(self.Nbin):
-            gc.collect()
+            #gc.collect()
+            cmd = str("enrico_sed %s && enrico_plot_lc %s" %(self.configfile[i], self.parent_filename))
             if self.submit == 'yes':
-                cmd = "enrico_sed "+self.configfile[i]
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"
                 JobLog = self.LCfolder+"LC_Job_"+str(i)+".log"
                 JobName = (self.config['target']['name'] + "_" +
@@ -162,7 +160,6 @@ class LightCurve(Loggin.Message):
 
                 call(cmd,enricodir,fermidir,scriptname,JobLog,JobName)#Submit the job
             else :
-                cmd = "enrico_sed "+self.configfile[i]
                 os.system(cmd)
 
                 #run(self.configfile[i])#run in command line

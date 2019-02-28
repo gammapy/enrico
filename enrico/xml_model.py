@@ -410,36 +410,45 @@ def GetlistFromFits(config, catalog):
             # if the source is close to the target : add it as a free source
             Nfree += 1
             mes.info("Adding [free] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
+            if not(extended_fitsfilename==""):
+                if not os.path.isfile(extended_fitsfilename):
+                    mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
+                    continue
+                mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
+                Nextended+=1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
-            if not(extended_fitsfilename==""):
-                mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
-                Nextended+=1
 
         # srcs that were kept fixed in the 3FGL: add them as fixed srcs
         elif rspace < roi and sigma[i] == -np.inf:
             mes.info("Adding [fixed in 3FGL] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rspace,sigma[i]) )
+            if not(extended_fitsfilename==""):
+                if not os.path.isfile(extended_fitsfilename):
+                    mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
+                    continue
+                mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
+                Nextended+=1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
                             'SpectrumType': spectype[i],'ExtendedName': extended_fitsfilename})
-            if not(extended_fitsfilename==""):
-               mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
-               Nextended+=1
 
         else:
             # if the source is inside the ROI: add it as a frozen source
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
                 mes.info("Adding [fixed] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
+                if not(extended_fitsfilename==""):
+                    if not os.path.isfile(extended_fitsfilename):
+                        mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
+                        continue
+                    mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
+                    Nextended+=1
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                 'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
                                 'SpectrumType': spectype[i],'ExtendedName': extended_fitsfilename})
-                if not(extended_fitsfilename==""):
-                   mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
-                   Nextended+=1
 
 
     # if the target has not been added from catalog, add it now
@@ -585,7 +594,7 @@ def WriteXml(lib, doc, srclist, config):
             print('Warning!!!, unknown model %s' %spectype.strip())
 
     folder = config['out']
-    os.system('mkdir -p ' + folder)
+    utils.mkdir_p(folder)
 
     output = config['file']['xml']
 
@@ -631,7 +640,7 @@ def Xml_to_Reg(Filename, listSource, Prog=None):
 
 def XmlMaker(config):
     folder = config['out']
-    os.system('mkdir -p ' + folder)
+    utils.mkdir_p(folder)
     # test if the user provide a catalog or not.
     #if not use the default one
     if config['environ']['FERMI_CATALOG_DIR'] == '':
