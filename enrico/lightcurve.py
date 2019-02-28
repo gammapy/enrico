@@ -49,8 +49,9 @@ class LightCurve(Loggin.Message):
         self.config['UpperLimit']['TSlimit'] = self.config['LightCurve']['TSLightCurve']
 
         self.folder = self.config['out']
-
+        # Do not create plots
         self.config['Spectrum']['ResultPlots'] = 'no' # no
+        self.config['Spectrum']['ResultParentPlots'] = 'no' # no
         self.config['Ebin']['NumEnergyBins'] = 0
         self.config['energy']['decorrelation_energy'] = 'yes' # no
         self.config['UpperLimit']['envelope'] = 'no'
@@ -126,6 +127,7 @@ class LightCurve(Loggin.Message):
                     str(self.config['time']['tmin']) + "_" +
                     str(self.config['time']['tmax'])) + ".xml" #Name of the xml file
             self.config['file']['xml'] = xmlfilename
+            # Do not produce spectral plots
 
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
