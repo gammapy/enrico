@@ -188,10 +188,10 @@ def run(infile):
         # the possibility of making the model map is checked inside the function
         FitRunner.ModelMap(outXml)
         FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
-        plot_sed_fromconfig(get_config(infile))
+        plot_sed_fromconfig(get_config(infile),ignore_missing_bins=True)
     
     if config['Spectrum']['ResultParentPlots'] == "yes":
-        plot_sed_fromconfig(get_config(config['file']['parent_config'])) 
+        plot_sed_fromconfig(get_config(config['file']['parent_config']),ignore_missing_bins=True) 
 
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
