@@ -27,7 +27,7 @@ class LightCurve(Loggin.Message):
     def __init__(self, config, parent_filename=""):
         super(LightCurve,self).__init__()
         Loggin.Message.__init__(self)
-        self.parent_filename = parent_filename
+        self.parent_filename = os.path.abspath(parent_filename)
         self.config        = get_config(config)
         self.generalconfig = get_config(config)
         print(self.generalconfig)
@@ -332,7 +332,7 @@ class LightCurve(Loggin.Message):
             FdF = np.asarray(FluxForNpred) / (np.asarray(FluxErr) + 1e-20)
             plt.errorbar(NdN, FdF,fmt='+',color='black')
 
-            if len(Npred_detected)>0:
+            if len(Npred_detected)>2:
                 NdN = np.asarray(Npred_detected) /np.sqrt(Npred_detected)
                 FdF = np.asarray(FluxForNpred[Npred_detected_indices]) / (np.asarray(FluxErr[Npred_detected_indices]) + 1e-20)
                 plt.errorbar(NdN, FdF,fmt='+',color='red')
