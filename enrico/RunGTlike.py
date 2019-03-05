@@ -181,20 +181,22 @@ def run(infile):
     #Get and dump the target specific results
     Result = FitRunner.GetAndPrintResults(Fit)
     utils.DumpResult(Result, config)
-
+    
+    #  Make energy bins by running a *new* analysis
+    Nbin = config['Ebin']['NumEnergyBins']
+    
     FitRunner.config['file']['parent_config'] = infile
+    
+    if config['Spectrum']['ResultParentPlots'] == "yes":
+        plot_sed_fromconfig(get_config(config['file']['parent_config']),ignore_missing_bins=True) 
+    
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
         FitRunner.ModelMap(outXml)
-        FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
+        if Nbin>0:
+            FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
         plot_sed_fromconfig(get_config(infile),ignore_missing_bins=True)
-    
-    if config['Spectrum']['ResultParentPlots'] == "yes":
-        plot_sed_fromconfig(get_config(config['file']['parent_config']),ignore_missing_bins=True) 
-
-    #  Make energy bins by running a *new* analysis
-    Nbin = config['Ebin']['NumEnergyBins']
     
     energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
 
