@@ -31,7 +31,7 @@ if DOWNLOAD_DIR :
   WEEKLY_SC_DIR = join(DOWNLOAD_DIR, 'weekly/spacecraft')
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
-USE_FULLMISSION_SPACECRAFT = bool(os.environ.get('USE_FULLMISSION_SPACECRAFT','False')=='True')
+USE_FULLMISSION_SPACECRAFT = os.environ.get('USE_FULLMISSION_SPACECRAFT','True')#bool(os.environ.get('USE_FULLMISSION_SPACECRAFT','False')=='True')
 
 try :
     from enrico.extern.odict import OrderedDict
