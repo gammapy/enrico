@@ -205,6 +205,11 @@ class Observation:
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
+        expcube2['xref'] = "INDEF"
+        expcube2['yref'] = "INDEF"
+        expcube2['nxpix'] = "INDEF"
+        expcube2['nypix'] = "INDEF"
+        expcube2['binsz'] = "INDEF"
         expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"

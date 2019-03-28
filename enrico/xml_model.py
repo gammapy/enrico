@@ -182,12 +182,12 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
 
 
 def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
-                         ebreak_free=0, ebreak=0, ebreak_min=0, ebreak_max=0,
+                         ebreak_free=1, ebreak=1000, ebreak_min=200, ebreak_max=100000,
                          flux_free=1, flux_value=1.6, flux_scale=1e-6,
                          flux_max=1000.0, flux_min=1e-5,
                          index_lo_free=1, index_lo_value=-2.0,
                          index_lo_min=-5.0, index_lo_max=-1.0,
-                         index_hi_free=1, index_hi_value=-2.0,
+                         index_hi_free=1, index_hi_value=-4.0,
                          index_hi_min=-5.0, index_hi_max=-1.0,extendedName=""):
     """Add a source with a BROKENPOWERLAW2 model"""
     elim_min = 30
@@ -211,12 +211,12 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     try:
-        spec.setAttribute('type', 'EblAtten::BrokePowerLaw2')
+        spec.setAttribute('type', 'EblAtten::BrokenPowerLaw2')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
-        spec.setAttribute('type', 'BrokePowerLaw2')
+        spec.setAttribute('type', 'BrokenPowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index1',
@@ -563,17 +563,17 @@ def WriteXml(lib, doc, srclist, config):
         extendedName = srclist[i].get('ExtendedName')
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
-            if (ebl==None):
-                addPSPowerLaw1(lib, name, ra, dec, "None",
+#            if (ebl==None):
+             addPSPowerLaw1(lib, name, ra, dec, ebl,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
-            if (ebl!=None):
-                addPSLogparabola(lib, name, ra, dec, ebl,
-                              norm_free=free, norm_value=srclist[i].get('flux'),
-                              alpha_free=free, alpha_value=abs(srclist[i].get('index')),
-                              beta_free=0, beta_min=0, beta_max=0,
-                              beta_value=0,extendedName=extendedName)
+#            if (ebl!=None):
+#                addPSLogparabola(lib, name, ra, dec, ebl,
+#                             norm_free=free, norm_value=srclist[i].get('flux'),
+#                              alpha_free=free, alpha_value=abs(srclist[i].get('index')),
+#                              beta_free=0, beta_min=0, beta_max=0,
+#                              beta_value=0,extendedName=extendedName)
         elif spectype.strip() == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec, ebl,
                             emin=emin, emax=emax,
@@ -590,6 +590,11 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=free, index1_value=srclist[i].get('index'),
                               cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
+	elif  spectype.strip() == "BrokenPowerLaw":
+            addPSBrokenPowerLaw2(lib, name, ra, dec, ebl, 
+               		emin=emin, emax=emax,
+                        flux_value=1.6, flux_scale=1e-6, extendedName=extendedName)
+
         else:
             print('Warning!!!, unknown model %s' %spectype.strip())
 
