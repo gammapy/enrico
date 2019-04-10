@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+"""Run a fit for all energies and then in energy bins. Can submit on a cluster"""
+import os
+import sys
+import numpy as np
+from enrico.config import get_config
+from enrico import environ
+from enrico.submit import call
+from enrico.RunGTlike import run
+
+def export(config,infile):
+  if config['Submit'] == 'no':
+    run(infile)
+  else :
+
+    enricodir = environ.DIRS.get('ENRICO_DIR')
+    fermidir = environ.DIRS.get('FERMI_DIR')
+
+    GenericName = (config['target']['name'] + "_" +
+                   config['analysis']['likelihood'] +
+                   "_FitsProduction_" + config['file']['tag'])
+
+    prefix = config['out'] + "/" + GenericName
+
+    os.system("mkdir -p " + config['out'] + "\n")
+
+    cmd = enricodir+"/enrico/ExtractFits.py "+os.getcwd()+"/" + infile
+
+    scriptname = prefix + "_Script.sh"
+    JobLog = prefix + "_Job.log"
+    JobName = GenericName
+
+    call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)
+
+from enrico import Loggin
+mes = Loggin.Message()
+try:
+    infile = sys.argv[1]
+except:
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    mes.error('Config file not found.')
+
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try : 
+    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      mes.info("work on the config file "+inf)
+      config = get_config(inf)
+      export(config,inf)
+  except :
+    config = get_config(infile)
+    export(config,infile)
+else:
+  for inf in sys.argv[1:]:
+    mes.info("work on the config file "+inf)
+    config = get_config(inf)
+    export(config,inf)
+

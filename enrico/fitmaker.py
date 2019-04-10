@@ -470,4 +470,4 @@ class FitMaker(Loggin.Message):
         """Make a model Map. Valid only if the statistic is binned"""
         if self.config['analysis']['likelihood'] == 'binned':
             self._log('gtmodel', 'Make model map')#run gtmodel
-            self.obs.ModelMaps(xml)
+            #self.obs.ModelMaps(xml)

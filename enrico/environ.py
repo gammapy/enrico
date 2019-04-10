@@ -61,7 +61,7 @@ if CATALOG_DIR :
 
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 CATALOG_8yr = 'gll_psc_8year_v%s.fit' % CATALOG_8yr_VERSION
-DIFFUSE_GAL = 'gll_iem_v06.fits'
+DIFFUSE_GAL = 'gll_iem_v07.fits'
 DIFFUSE_ISO_SOURCE = 'iso_P8R3_SOURCE_V2.txt'
 DIFFUSE_ISO_SOURCE = 'iso_P8R3_SOURCE_V2.txt'
 DIFFUSE_ISO_SOURCEPSF0 = 'iso_P8R3_SOURCE_PSF0_V2.txt'
