@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import numpy as np
-import ROOT
 import astropy.io.fits as fits
 from enrico.constants import  DAY_IN_SECOND, AppLCPath #met_ref, mdj_ref,
 from enrico.gtfunction import Observation
@@ -14,7 +13,6 @@ import matplotlib.pyplot as plt
 
 def AppLC(infile):
     '''Main function of the apperture photometrie Lightcurve script. Read the config file and run the analysis'''
-    ROOT.gROOT.SetBatch(ROOT.kTRUE) #Batch mode
 
     enricodir = environ.DIRS.get('ENRICO_DIR')
     fermidir = environ.DIRS.get('FERMI_DIR')
@@ -82,8 +80,6 @@ def MakeTimebinFile(Obs,timefile):
 
 def PlotAppLC(Nbins,LCoutfolder,FITSfile):
 
-    ROOT.gStyle.SetOptStat(0)
-
     spfile=fits.open(FITSfile)
     spfile[1].data.sort(order='TIME')
 
@@ -92,20 +88,11 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     Counts = (spfile[1].data.field(2)[:-1])
     Exposure = (spfile[1].data.field(4)[:-1])
 
-    count_histo =ROOT.TH1F("count","count",Nbins,Time[0],Time[-1])
-    expo_histo =ROOT.TH1F("exposure","exposure",Nbins,Time[0],Time[-1])
-    for i in xrange(len(Time)):
-      if Counts[i]>0 and Exposure[i] :
-          count_histo.Fill(Time[i],Counts[i])
-          expo_histo.Fill(Time[i],Exposure[i])
-
-    flux_histo =ROOT.TH1F()
-    count_histo.Copy(flux_histo) #correct for exposure
-    flux_histo.Divide(expo_histo)
-
-    for i in xrange(Nbins):#Correct error for exposure
-        if expo_histo.GetBinContent(i+1)>0:
-            flux_histo.SetBinError(i+1,count_histo.GetBinError(i+1)/expo_histo.GetBinContent(i+1))
+    count_histo,count_edges = np.histogram(Time,Nbins,weights=Counts)
+    expo_histo,expo_edges = np.histogram(Time,Nbins,weights=Exposure)
+    flux_histo,flux_edges = np.histogram(Time,Nbins,weights=Counts/Exposure)
+    dCounts = np.sqrt(Counts)
+    dflux_histo,_ = np.histogram(Time,Nbins,weights=dCounts/Exposure)
 
     ######################################################################################
     #Save event time exposure and count
@@ -119,47 +106,41 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     ######################################################################################
 
     file_lc = open(LCoutfolder+'/AppLC.txt',"w")
-    for i in xrange(Nbins):
-        file_lc.write(str(flux_histo.GetBinCenter(i))+"\t"+str(flux_histo.GetBinContent(i))+"\t"+str(expo_histo.GetBinContent(i))+"\n")
+
+    for i in xrange(len(Time)):
+        file_lc.write(str(Time[i])+"\t"+str(Counts[i]/Exposure[i])+"\t"+str(dCounts[i]/Exposure[i])+"\n")
     file_lc.close()
 
-    CanvCount = ROOT.TCanvas()
-    count_histo.SetMarkerStyle(20)
-    count_histo.SetLineColor(1)
-    count_histo.SetMarkerColor(1)
-    count_histo.SetXTitle("Time (MJD)")
-    count_histo.Draw("ep")
-
+    plt.figure()
+    print count_edges
+    print count_histo
+    plt.errorbar((count_edges[:1]+count_edges[1:])/2.,count_histo,fmt="o")
+    plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
-    CanvCount.Print(LCoutfolder+'/Counts.eps')
-    CanvCount.Print(LCoutfolder+'/Counts.C')
+    plt.savefig(LCoutfolder+'/Counts.png', dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
 
-    CanvExposure = ROOT.TCanvas()
-    CanvExposure.SetGridx()
-    CanvExposure.SetGridy()
-    expo_histo.SetMarkerStyle(20)
-    expo_histo.SetLineColor(1)
-    expo_histo.SetMarkerColor(1)
-    expo_histo.SetXTitle("Time (MJD)")
-    expo_histo.Draw("ep")
 
+    plt.figure()
+    plt.errorbar((expo_edges[:1]+expo_edges[1:])/2.,expo_histo,fmt="o")
+    plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
-    CanvExposure.Print(LCoutfolder+'/Exposure.eps')
-    CanvExposure.Print(LCoutfolder+'/Exposure.C')
+    plt.savefig(LCoutfolder+'/Exposure.png', dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
 
-
-    CanvFlux = ROOT.TCanvas()
-    flux_histo.SetNameTitle("Apperture_Photometry_Flux","Apperture_Photometry_Flux")
-    flux_histo.SetYTitle("Flux")
-    flux_histo.SetXTitle("Time (MJD)")
-    flux_histo.SetMarkerStyle(20)
-    flux_histo.SetLineColor(1)
-    flux_histo.SetMarkerColor(1)
-    flux_histo.Draw("ep")
-
+    plt.figure()
+    plt.errorbar((flux_edges[:1]+flux_edges[1:])/2.,flux_histo,yerr=dflux_histo,fmt="o")
+    plt.ylabel("Flux")
+    plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
-    CanvFlux.Print(LCoutfolder+'/AppLC.eps')
-    CanvFlux.Print(LCoutfolder+'/AppLC.C')
+    plt.savefig(LCoutfolder+'/AppLC.png', dpi=150, facecolor='w', edgecolor='w',
+            orientation='portrait', papertype=None, format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1,
+            frameon=None)
 
 def _log(task='', description=''):
     print

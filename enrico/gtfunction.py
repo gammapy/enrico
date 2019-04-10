@@ -133,7 +133,7 @@ class Observation:
         exposure['scfile'] = self.ft2
         exposure['target'] = self.srcname
         #if  self.irfs != 'CALDB':
-        exposure['evtype']= self.Configuration['event']['evtype']
+        #exposure['evtype']= self.Configuration['event']['evtype']
         exposure['irfs'] = self.irfs
         exposure['srcmdl'] = "none"
         exposure['specin'] = -self.Configuration['AppLC']['index']
@@ -417,10 +417,10 @@ class Observation:
         model_map['srcmaps'] = self.srcMap
         model_map['bexpmap'] = self.BinnedMapfile
         model_map['srcmdl'] = xml
-        if  self.irfs != 'CALDB':
-            model_map['evtype']= self.Configuration['event']['evtype']
-        else :
-            model_map['evtype']= 'INDEF'
+        #if  self.irfs != 'CALDB':
+        #    model_map['evtype']= self.Configuration['event']['evtype']
+        #else :
+        #    model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
         model_map['outfile'] = self.ModelMap
         model_map['clobber'] = self.clobber
