@@ -20,7 +20,7 @@
 #export TMP_DIR=/var/spool/pbs/tmpdir
 #####################################################################
 
-export HOME=$LAPP_APP_SHARED
+export HOME=$TMPDIR
 #export PATH=$FERMI_DIR/bin:$PATH
 
 . /grid_sw/soft-dev-cta/Pipeline/anaconda3/etc/profile.d/conda.sh
@@ -39,7 +39,7 @@ echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 #export HEADASNOQUERY=1
 #setenv HEADASNOQUERY 1
 #echo HEADASNOQUERY: $HEADASNOQUERY
-#echo PYTHONPATH: $PYTHONPATH 
+#echo PYTHONPATH: $PYTHONPATH
 #echo PATH: $PATH
 export PYTHONPATH
-export PATH 
+export PATH
