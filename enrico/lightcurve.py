@@ -18,7 +18,7 @@ from enrico.RunGTlike import run, GenAnalysisObjects
 from enrico import Loggin
 from enrico.plotting import plot_errorbar_withuls
 
-pol0 = lambda x,p1: p1*x
+pol0 = lambda x,p1: p1
 pol1 = lambda x,p1,p2: p1+p2*x
 
 
@@ -58,12 +58,12 @@ class LightCurve(Loggin.Message):
         # Submission will be directly handle by this soft
         self.config['Submit'] = 'no'
         # self.config['verbose'] ='no' #Be quiet
-        
+
         # Speed-up the analysis by reusing the evt file from the main analysis
         self._RecycleEvtCoarse()
 
         self.configfile = [] #All the config file in the disk are stored in a list
-    
+
     def _RecycleEvtCoarse(self):
         ''' Try to guess if there's an EvtCoarse file with the events extracted, reuse it '''
         import os.path
@@ -77,7 +77,7 @@ class LightCurve(Loggin.Message):
         self.Nbin = 0
         self.gtifile = []
         if self.config['time']['file'] != '':
-            print "use ",self.config['time']['file'] 
+            print "use ",self.config['time']['file']
             self.gtifile.append(self.config['time']['file'])
             times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
             self.Nbin = times.size/2
@@ -98,7 +98,7 @@ class LightCurve(Loggin.Message):
         self.info("Running LC with "+str(self.Nbin)+" bins")
         for i in xrange(self.Nbin):
             print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
-        print 
+        print
 
     def _errorReading(self,message,i):
         self.warning(message+" : "+self.configfile[i])
@@ -345,7 +345,7 @@ class LightCurve(Loggin.Message):
                         self._errorReading("problem in errors calculation for",i)
                         print "Flux +/- error = ",FluxForNpred[i]," +/- ",FluxErr[i]
                         print "V(Npred) = ",sqrt(Npred[i])
-                        print 
+                        print
 
                 plt.plot(np.array([0,max(NdN)]),pol1(np.array([0,max(NdN)]),popt[0],popt[1]),'--',color='black')
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
@@ -364,7 +364,7 @@ class LightCurve(Loggin.Message):
             plt.errorbar(x=Time,y=TS,xerr=TimeErr,fmt='+',color='black',ls='None')
             plt.ylim(ymin=min(TS)*0.8,ymax=max(TS)*1.2)
             plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
-            
+
             # Move the offset to the axis label
             ax = plt.gca()
             ax.get_yaxis().get_major_formatter().set_useOffset(False)
@@ -372,15 +372,15 @@ class LightCurve(Loggin.Message):
             if (offset_factor != 0):
                 ax.set_yticklabels([float(round(k,5)) for k in ax.get_yticks()*10**(-offset_factor)])
                 ax.yaxis.set_label_text(ax.yaxis.get_label_text() + r" [${\times 10^{%d}}$]" %offset_factor)
-            
+
             # Secondary axis with MJD
             mjdaxis = ax.twiny()
             mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
             mjdaxis.set_xlabel(r"Time (MJD)")
             mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False))
-            plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
+            plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 )
             plt.tight_layout()
-            
+
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
                     orientation='portrait', papertype=None, format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -420,7 +420,7 @@ class LightCurve(Loggin.Message):
                  ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
         plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
                  xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
-        
+
         # Move the offset to the axis label
         ax = plt.gca()
         ax.get_yaxis().get_major_formatter().set_useOffset(False)
@@ -430,15 +430,15 @@ class LightCurve(Loggin.Message):
               for k in ax.get_yticks()*10**(-offset_factor)])
             ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
               r" [${\times 10^{%d}}$]" %offset_factor)
-        
+
         # Secondary axis with MJD
         mjdaxis = ax.twiny()
         mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
         mjdaxis.set_xlabel(r"Time (MJD)")
-        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False)) 
-        plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
+        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False))
+        plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 )
         plt.tight_layout()
- 
+
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -459,12 +459,12 @@ class LightCurve(Loggin.Message):
                                   IndexErr[~uplimIndex],
                                   uplimIndex[~uplimIndex],
                                   bblocks=True)
-            
+
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),
                      ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
             plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
                      xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
-            
+
             # Move the offset to the axis label
             ax = plt.gca()
             ax.get_yaxis().get_major_formatter().set_useOffset(False)
@@ -474,20 +474,20 @@ class LightCurve(Loggin.Message):
                   for k in ax.get_yticks()*10**(-offset_factor)])
                 ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
                    r" [${\times 10^{%d}}$]" %offset_factor)
-            
+
             # Secondary axis with MJD
             mjdaxis = ax.twiny()
             mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
             mjdaxis.set_xlabel(r"Time (MJD)")
-            mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False)) 
-            plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
-            plt.tight_layout()    
-            plt.savefig(LcOutPath+"_Index.png", dpi=150, 
+            mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False))
+            plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 )
+            plt.tight_layout()
+            plt.savefig(LcOutPath+"_Index.png", dpi=150,
                 facecolor='w', edgecolor='w',
                 orientation='portrait', papertype=None, format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
                 frameon=None)
-        
+
 
         # compute Fvar and probability of being cst
 
@@ -535,7 +535,7 @@ class LightCurve(Loggin.Message):
             print "\tFvar = ",fvar," +/- ",err_fvar
         except :
             print  "\tFvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
-        print 
+        print
 
     def FitWithCst(self,x,y,dy):
         """Fit the LC with a constant function an
@@ -563,7 +563,7 @@ class LightCurve(Loggin.Message):
         except :
             self.warning("No results file found; please run enrico_sed first.")
             return
-        
+
         LogL1 = []
         LogL0 = []
         Time = []
@@ -610,7 +610,7 @@ class LightCurve(Loggin.Message):
                     utils.FreezeParams(Fit,self.srcname,key, utils.fluxNorm(ResultsDicDC[key]))
                 except:
                     continue
-            
+
             LogL0.append(-Fit.fit(0,optimizer=CurConfig['fitting']['optimizer']))
 
             del Fit #Clean memory
@@ -622,7 +622,7 @@ class LightCurve(Loggin.Message):
         plt.errorbar(Time,LogL0,fmt='o',color='black',ls='None')
         plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
                  xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
-        
+
         # Move the offset to the axis label
         ax = plt.gca()
         ax.get_yaxis().get_major_formatter().set_useOffset(False)
@@ -632,13 +632,13 @@ class LightCurve(Loggin.Message):
               for k in ax.get_yticks()*10**(-offset_factor)])
             ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
                r" [${\times 10^{%d}}$]" %offset_factor)
-        
+
         # Secondary axis with MJD
         mjdaxis = ax.twiny()
         mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
         mjdaxis.set_xlabel(r"Time (MJD)")
-        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False)) 
-        plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 ) 
+        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False))
+        plt.setp( mjdaxis.xaxis.get_majorticklabels(), rotation=15 )
         plt.tight_layout()
 
         plt.savefig(LcOutPath+"_VarIndex.png", dpi=150, facecolor='w', edgecolor='w',
@@ -646,11 +646,11 @@ class LightCurve(Loggin.Message):
                 transparent=False, bbox_inches=None, pad_inches=0.1,
                 frameon=None)
 
-        self.info("Variability index calculation") 
+        self.info("Variability index calculation")
         print "\t TSvar = ",2*(sum(LogL1)-sum(LogL0))
         print "\t NDF = ",len(LogL0)-1
         print "\t Chi2 prob = ",1 - chi2.cdf(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
-        print 
+        print
 
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
@@ -673,4 +673,3 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffEr
                       str(Cutoff[i]) + "\t" + str(CutoffErr[i]) + "\t" +
                       str(TS[i]) + "\t" + str(Npred[i]) + "\n")
     flc.close()
-
