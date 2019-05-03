@@ -115,10 +115,13 @@ def SubtractFits(infile1, infile2, config):
     filebase = config['out'] + "/" + config['target']['name']
     abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
     rel_diff_file = filebase + "_Residual_Model_cmap.fits"
-    os.system("rm " + abs_diff_file)
-    os.system("rm " + rel_diff_file)
-    fits.writeto(abs_diff_file, data1 - data2, head)
-    fits.writeto(rel_diff_file, (data1 - data2) / data2, head)
+    head.remove('NAXIS3')
+    head.remove('DATASUM')
+    head.remove('CHECKSUM')
+    head.remove('CREATOR')
+    head.set('CREATOR', 'enrico')
+    fits.writeto(abs_diff_file, data1 - data2, head, overwrite=True, checksum=True)
+    fits.writeto(rel_diff_file, (data1 - data2) / data2, head, overwrite=True, checksum=True)
 
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):
@@ -351,7 +354,7 @@ def GetIRFS(evtclass,evttype,addversion=True):
     for t in result:
         typ.append(typeirfs[t])
 
-    # P8R3_SOURCE_V2 is the irf, but iso_P8R3_SOURCE_V2_()_V2.txt does not exist, 
+    # P8R3_SOURCE_V2 is the irf, but iso_P8R3_SOURCE_V2_()_V2.txt does not exist,
     # instead it is _V6_()_V2.txt. We need to get around this inconsistency.
     if (addversion):
         classirf = classirfs[evtclass]+"_V2"
