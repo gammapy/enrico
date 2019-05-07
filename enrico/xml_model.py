@@ -324,35 +324,35 @@ def GetlistFromFits(config, catalog):
     names = data.field('Source_Name')
     ra = data.field('RAJ2000')
     dec = data.field('DEJ2000')
-    flux = data.field('Flux_Density')
+    flux = data.field('PL_Flux_Density')
     pivot = data.field('Pivot_Energy')
     spectype = data.field('SpectrumType')
     is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
     try :  # valid for the 2FGH, not for the 1FHL
-      if is8yr:
-        spectype = data.field('SpectrumType')
-        index  = np.zeros(names.size)
-        cutoff = np.zeros(names.size)
-        expfac = np.zeros(names.size)
-        beta   = np.zeros(names.size)
-        for k,spec in enumerate(spectype):
-            if spec == 'PowerLaw':
-                index[k] = data.field('PL_Index')[k]
-            if spec == 'LogParabola':
-                index[k] = data.field('LP_Index')[k]
-                beta[k]  = data.field('LP_beta')[k]
-            if spec == 'PLSuperExpCutoff2':
-                # From the makeFL8Yxml.py script
-                index[k]  = data.field('PLEC_Index')[k]
-                expfac = data.field('PLEC_Expfactor')[k]
-                expind = data.field('PLEC_Exp_Index')[k]
-                cutoff[k] =(1./expfac)**(1./expind)
+      # if is8yr:
+      spectype = data.field('SpectrumType')
+      index  = np.zeros(names.size)
+      cutoff = np.zeros(names.size)
+      expfac = np.zeros(names.size)
+      beta   = np.zeros(names.size)
+      for k,spec in enumerate(spectype):
+          if spec == 'PowerLaw':
+              index[k] = data.field('PL_Index')[k]
+          if spec == 'LogParabola':
+              index[k] = data.field('LP_Index')[k]
+              beta[k]  = data.field('LP_beta')[k]
+          if spec == 'PLSuperExpCutoff2':
+              # From the makeFL8Yxml.py script
+              index[k]  = data.field('PLEC_Index')[k]
+              expfac = data.field('PLEC_Expfactor')[k]
+              expind = data.field('PLEC_Exp_Index')[k]
+              cutoff[k] =(1./expfac)**(1./expind)
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
-      else:
-        index = data.field('Spectral_Index')
-        cutoff = data.field('Cutoff')
-        beta = data.field('beta')
+      # else:
+      #   index = data.field('Spectral_Index')
+      #   cutoff = data.field('Cutoff')
+      #   beta = data.field('beta')
     except :
       raise
       index = data.field('Spectral_Index')
@@ -364,12 +364,12 @@ def GetlistFromFits(config, catalog):
 
     try :
       extendedName    = data.field('Extended_Source_Name')
-      if is8yr:
-        extendedfits    = cfile[2].data.field('Spatial_Filename')
-        extendedsrcname = cfile[2].data.field('Source_Name')
-      else:
-        extendedfits    = cfile[5].data.field('Spatial_Filename')
-        extendedsrcname = cfile[5].data.field('Source_Name')
+      # if is8yr:
+      extendedfits    = cfile[2].data.field('Spatial_Filename')
+      extendedsrcname = cfile[2].data.field('Source_Name')
+      # else:
+      #   extendedfits    = cfile[5].data.field('Spatial_Filename')
+      #   extendedsrcname = cfile[5].data.field('Source_Name')
     except:
       raise
       mes.warning("Cannot find the extended source list: please check the xml")

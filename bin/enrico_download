@@ -59,19 +59,19 @@ if options.download_data:
     weekly_dir = join(DOWNLOAD_DIR+'/weekly/photon')
     os.system('ls '+weekly_dir+'/*fits > '+join(weekly_dir,'evt.lis'))
     liste    = [l.strip() for l in open(join(weekly_dir,'evt.lis'),'r').readlines()]
-    saved    = open(join(DOWNLOAD_DIR,'events.lis'),"w")
-    for evt in liste:
-        if 'p302' in evt:
-            saved.write(join(weekly_dir,evt)+'\n')
-    saved.close()
+    # saved    = open(join(DOWNLOAD_DIR,'events.lis'),"w")
+    # for evt in liste:
+      # saved.write(join(weekly_dir,evt)+'\n')
+    # saved.close()
+    os.system("mv "+join(weekly_dir,'evt.lis')+" "+join(DOWNLOAD_DIR,'events.lis'))
     if not USE_FULLMISSION_SPACECRAFT:
         weekly_sc_dir = join(DOWNLOAD_DIR+'/weekly/spacecraft')
         os.system('ls '+weekly_sc_dir+'/*fits > '+join(weekly_sc_dir,'sc.lis'))
         liste_sc = [l.strip() for l in open(join(weekly_sc_dir,'sc.lis'),'r').readlines()]
         saved = open(join(DOWNLOAD_DIR,'spacecraft.lis'),"w")
         for sc in liste_sc:
-            if 'p202' in sc:
-                saved.write(join(weekly_sc_dir,sc)+'\n')
+            # if 'p202' in sc:
+          saved.write(join(weekly_sc_dir,sc)+'\n')
         saved.close()
 
 if options.download_spacecraft:
