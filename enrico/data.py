@@ -167,7 +167,7 @@ class Data(object):
             filename = join(CATALOG_TEMPLATE_DIR, 'CenALobes.fits')
             if not os.path.isfile(filename):
                 # Now we know that we want to download
-                filename = 'LAT_extended_sources_v%s.tgz' % TEMPLATE_VERSION
+                filename = 'LAT_extended_sources_%s.tgz' % TEMPLATE_VERSION
                 url = join(CATALOG_URL, filename)
                 path = join(CATALOG_DIR, filename)
                 print('Downloading %s' % path)
