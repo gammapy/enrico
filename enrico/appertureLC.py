@@ -32,6 +32,11 @@ def AppLC(infile):
         if config['AppLC']['emin'] != -1:
             config['energy']['emin'] = config['AppLC']['emin']
     except NameError: pass
+    #Change the maximum energy, legacy std high energy cut.
+    try:
+        if config['AppLC']['emax'] != -1:
+            config['energy']['emin'] = config['AppLC']['emax']
+    except NameError: pass
 
     Nbins = config['AppLC']['NLCbin']#Number of bins
     #Get The time bin
