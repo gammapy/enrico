@@ -27,6 +27,17 @@ def AppLC(infile):
     try: config['space']['rad'] = config['AppLC']['rad']
     except NameError: config['space']['rad'] = 1
 
+    #Change the minimum energy, legacy std low energy cut.
+    try:
+        if config['AppLC']['emin'] != -1:
+            config['energy']['emin'] = config['AppLC']['emin']
+    except NameError: pass
+    #Change the maximum energy, legacy std high energy cut.
+    try:
+        if config['AppLC']['emax'] != -1:
+            config['energy']['emin'] = config['AppLC']['emax']
+    except NameError: pass
+
     Nbins = config['AppLC']['NLCbin']#Number of bins
     #Get The time bin
     dt = (config['time']['tmax']-config['time']['tmin'])/Nbins #sec
@@ -161,4 +172,3 @@ if __name__ == '__main__':
         mes = Loggin.Message()
         mes.error('Config file not found.')
     AppLC(infile)
-
