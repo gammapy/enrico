@@ -425,6 +425,38 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
 
         plt.legend(loc=0,fontsize='small',numpoints=1)
 
+def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
+    # Set the value and error for the uls.
+    yerrm[uplim] = y[uplim]
+    yerrp[uplim] = y[uplim]
+    y[uplim] = 0.
+
+    xvalues = 0.5*(xmax+tstart)
+    xerrors = 0.5*(xmax-xmin)
+
+    # Plot the significant points
+    ystep = []
+    ystepmin = []
+    ystepmax = []
+    xstep = []
+    for k in xrange(len(xvalues)):
+        for _ in xrange(2):
+            ystep.append(y[k]) # 3 values, to mark the minimum and center
+            ystepmin.append(y[k]-yerrm[k]) # 3 values, to mark the minimum and center
+            ystepmax.append(y[k]+yerrp[k]) # 3 values, to mark the minimum and center
+        xstep.append(xmin[k])
+        xstep.append(xmax[k])
+
+    plt.step(xstep, ystep,
+        color='#d62728',zorder=-10,
+        ls='solid')
+    plt.fill_between(xstep, ystepmin, ystepmax,
+        color='#d62728',zorder=-10, alpha=0.5)
+    plt.errorbar(xvalues, yvalues,
+        xerr=xerrors,yerr=yerrors,
+        marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
+        ls='None')
+
 def PlotSED(config,pars,ignore_missing_bins=False):
     """plot a nice SED with a butterfly and points"""
 
@@ -558,4 +590,3 @@ def plot_sed_fromconfig(config,ignore_missing_bins=False):
             PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
         except :
             print "Not able to plot an upper limit in a SED diagram. UL computed?"
-
