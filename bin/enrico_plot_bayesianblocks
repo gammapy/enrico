@@ -3,7 +3,7 @@
 import sys
 import logging
 import numpy as np
-import enrico.lightcurve  as lc
+import enrico.bayesianblocks as bb
 from enrico.config import get_config
 
 from enrico import Loggin
@@ -22,15 +22,15 @@ if len(sys.argv)==2 :
     for inf in liste:
       mes.info("work on the config file "+inf)
       config = get_config(inf)
-      lcobject = lc.LightCurve(config)
-      lcobject.PlotLC()
+      bbobject = bb.LightCurve(config)
+      bbobject.PlotLC()
   except :
     config = get_config(infile)
-    lcobject = lc.LightCurve(config)
-    lcobject.PlotLC()
+    bbobject = bb.LightCurve(config)
+    bbobject.PlotLC()
 else:
   for inf in sys.argv[1:]:
     mes.info("work on the config file "+inf)
     config = get_config(inf)
-    lcobject = lc.LightCurve(config)
-    lcobject.PlotLC()
+    bbobject = bb.LightCurve(config)
+    bbobject.PlotLC()
