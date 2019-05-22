@@ -35,7 +35,7 @@ def AppLC(infile):
     #Change the maximum energy, legacy std high energy cut.
     try:
         if config['AppLC']['emax'] != -1:
-            config['energy']['emin'] = config['AppLC']['emax']
+            config['energy']['emax'] = config['AppLC']['emax']
     except NameError: pass
 
     Nbins = config['AppLC']['NLCbin']#Number of bins
