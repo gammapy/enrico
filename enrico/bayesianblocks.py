@@ -52,7 +52,8 @@ class BayesianBlocks(lightcurve.LightCurve):
         ''' Check the existance of apperture light curve file (the selected evt list with good gti)'''
         import os.path
         evtfile = str("%s/AppertureLightCurve/%s_%s_MkTime.fits"%(self.folder,self.srcname,self.Tag))
-        if not os.path.isfile(evtfile):
+	expfile = str("%s/AppertureLightCurve/%s_%s_applc.fits"%(self.folder,self.srcname,self.Tag))
+        if not os.path.isfile(evtfile) or not os.path.isfile(expfile):
             raise Exception('The apperture photometry events list doesn\'t exist\nPlease run enrico_applc first')
 
     def _MakeTimeBins(self):
