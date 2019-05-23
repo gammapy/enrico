@@ -76,7 +76,7 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         # Calculate relative exposure time and time correction associated for each exposure bins
         j=0
-        surfaceFermi = 1000 # in cm^2
+        surfaceFermi = 10000 # in cm^2
         timeCorrection = np.zeros((len(expbins)+1,2))
         exposure = np.zeros(len(expbins))
         timeCorrection[j, 0] = expbins['TIME'][j]-0.5*expbins['TIMEDEL'][j]
