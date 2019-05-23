@@ -431,7 +431,7 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
     yerrp[uplim] = y[uplim]
     y[uplim] = 0.
 
-    xvalues = 0.5*(xmax+tstart)
+    xvalues = 0.5*(xmax+xmin)
     xerrors = 0.5*(xmax-xmin)
 
     # Plot the significant points
@@ -452,8 +452,8 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
         ls='solid')
     plt.fill_between(xstep, ystepmin, ystepmax,
         color='#d62728',zorder=-10, alpha=0.5)
-    plt.errorbar(xvalues, yvalues,
-        xerr=xerrors,yerr=yerrors,
+    plt.errorbar(xvalues, y,
+        xerr=xerrors,yerr=[yerrm, yerrp],
         marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
         ls='None')
 

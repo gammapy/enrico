@@ -16,6 +16,7 @@ except:
 
 
 def run_over_conffile(conffile):
+    print conffile
     config = get_config(conffile)
     bb = bayesianblocks.BayesianBlocks(config,parent_filename=conffile)
     bb.MakeLC()
