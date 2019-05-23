@@ -52,7 +52,7 @@ class BayesianBlocks(lightcurve.LightCurve):
         ''' Check the existance of apperture light curve file (the selected evt list with good gti)'''
         import os.path
         evtfile = str("%s/AppertureLightCurve/%s_%s_MkTime.fits"%(self.folder,self.srcname,self.Tag))
-	expfile = str("%s/AppertureLightCurve/%s_%s_applc.fits"%(self.folder,self.srcname,self.Tag))
+        expfile = str("%s/AppertureLightCurve/%s_%s_applc.fits"%(self.folder,self.srcname,self.Tag))
         if not os.path.isfile(evtfile) or not os.path.isfile(expfile):
             raise Exception('The apperture photometry events list doesn\'t exist\nPlease run enrico_applc first')
 
@@ -61,13 +61,44 @@ class BayesianBlocks(lightcurve.LightCurve):
         from astropy.table import Table
 
         evtfile = str("%s/AppertureLightCurve/%s_%s_MkTime.fits"%(self.folder,self.srcname,self.Tag))
-        evtlist = Table.read(evtfile, hdu='EVENTS')
+        evtlist = Table.read(evtfile, hdu='EVENTS')['TIME'].data
+        expfile = str("%s/AppertureLightCurve/%s_%s_applc.fits"%(self.folder,self.srcname,self.Tag))
+        expbins = Table.read(expfile, hdu='RATE')
 
         meanRate = float(len(evtlist))/float(self.tmax-self.tmin)
         print("Mean photon rate %s s^-1" %meanRate)
         print("Mean photon rate %s day^-1" %(meanRate*3600.*24))
 
-        edges = bayesian_blocks(evtlist['TIME'], fitness='events', p0=self.p0)
+        #Sort table in function of time just to be sure
+        evtlist.sort()
+        evtlistExpCorrected = np.empty_like(evtlist)
+        expbins[expbins.argsort('TIME')]
+
+        # Calculate relative exposure time and time correction associated for each exposure bins
+        j=0
+        surfaceFermi = 1000 # in cm^2
+        timeCorrection = np.zeros((len(expbins)+1,2))
+        exposure = np.zeros(len(expbins))
+        timeCorrection[j, 0] = expbins['TIME'][j]-0.5*expbins['TIMEDEL'][j]
+        timeCorrection[j, 1] = 0.
+        exposure[j] = expbins['EXPOSURE'][j]/(expbins['TIMEDEL'][j]*surfaceFermi)
+        for j in range(1, len(expbins)):
+            exposure[j] = expbins['EXPOSURE'][j]/(expbins['TIMEDEL'][j]*surfaceFermi)
+            timeCorrection[j, 0] = expbins['TIME'][j]-0.5*expbins['TIMEDEL'][j]
+            timeCorrection[j, 1] = timeCorrection[j-1, 1]+exposure[j-1]*expbins['TIMEDEL'][j-1]
+        timeCorrection[j+1, 0] = expbins['TIME'][j]+0.5*expbins['TIMEDEL'][j]
+        timeCorrection[j+1, 1] = timeCorrection[j, 1]+exposure[j]*expbins['TIMEDEL'][j]
+
+        #Apply exposure time correction
+        evtlistcorrected = np.interp(evtlist, timeCorrection[:, 0], timeCorrection[:, 1])
+        meanRateCorrected = float(len(evtlistcorrected))/float(timeCorrection[-1, 1]-timeCorrection[0, 1])
+        print("Mean photon rate %s s^-1" %meanRateCorrected)
+        print("Mean photon rate %s day^-1" %(meanRateCorrected*3600.*24))
+
+        edges = bayesian_blocks(evtlistcorrected, fitness='events', p0=self.p0)
+        edgesCorrected = np.interp(edges, timeCorrection[:, 1], timeCorrection[:, 0])
+        edgesCorrected[0] = self.tmin
+        edgesCorrected[-1] = self.tmax
 
         self.Nbin = len(edges)-1
         self.time_array = np.zeros(self.Nbin*2)
@@ -307,7 +338,7 @@ class BayesianBlocks(lightcurve.LightCurve):
         else:
             print "[BayesianBlocks] Warning : No valid data"
 
-        
+
 
         if self.config["BayesianBlocks"]["SpectralIndex"] == 0 :
             if len(Time[~uplimIndex]) > 0:
@@ -353,8 +384,8 @@ class BayesianBlocks(lightcurve.LightCurve):
                     frameon=None)
             else:
                print "[BayesianBlocks] Warning : No valid data"
-  
-            
+
+
 
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
