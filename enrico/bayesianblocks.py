@@ -92,8 +92,8 @@ class BayesianBlocks(lightcurve.LightCurve):
         #Apply exposure time correction
         evtlistcorrected = np.interp(evtlist, timeCorrection[:, 0], timeCorrection[:, 1])
         meanRateCorrected = float(len(evtlistcorrected))/float(timeCorrection[-1, 1]-timeCorrection[0, 1])
-        print("Mean photon rate %s s^-1" %meanRateCorrected)
-        print("Mean photon rate %s day^-1" %(meanRateCorrected*3600.*24))
+        print("Mean photon rate exposure corrected %s s^-1" %meanRateCorrected)
+        print("Mean photon rate exposure corrected %s day^-1" %(meanRateCorrected*3600.*24))
 
         edges = bayesian_blocks(evtlistcorrected, fitness='events', p0=self.p0)
         edgesCorrected = np.interp(edges, timeCorrection[:, 1], timeCorrection[:, 0])
