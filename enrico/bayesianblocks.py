@@ -28,6 +28,9 @@ class BayesianBlocks(lightcurve.LightCurve):
     def __init__(self, config, parent_filename=""):
         super(BayesianBlocks, self).__init__(config, parent_filename)
 
+	self.LCfolder =  self.folder+"/BayesianBlocks/"
+	utils.mkdir_p(self.LCfolder)
+
         # Convert time if necessary
         if self.config['time']['type']=='MJD':
              self.config['time']['tmin'] = utils.MJD_to_met(self.config['time']['tmin'])
@@ -111,8 +114,8 @@ class BayesianBlocks(lightcurve.LightCurve):
         edges[-1] = self.tmax
 
         #Calculate apperture phtometry flux
-        flux = np.array(count[i]/(edgesCorrected[i+1]-edgesCorrected[i]))
-        errflux = np.array(errcount[i]/(edgesCorrected[i+1]-edgesCorrected[i]))
+        flux = np.array(count/(edgesCorrected[1:]-edgesCorrected[:-1]))
+        errflux = np.array(errcount/(edgesCorrected[1:]-edgesCorrected[:-1]))
 
         self.Nbin = len(edges)-1
         self.time_array = np.zeros(self.Nbin*2)
@@ -132,17 +135,17 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         #Load apperture flux point
         time_pt, dTime_pt, flux_pt, errflux_pt = self.readApperturePhotometryPoint()
-
+        
         plt.figure()
         plt.xlabel(r"Time (s)")
         plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
+        plt.errorbar(time_pt, flux_pt/surfaceFermi, yerr=errflux_pt/surfaceFermi, xerr=dTime_pt/2., color='k', ls='None')
         plot_bayesianblocks(np.array(edges[:-1]), np.array(edges[1:]),
-                            flux, errflux, errflux,
-                            np.zeros(flux.shape)).astype(np.bool))
-        plt.errorbar(time_pt, flux_pt, yerr=dTime_pt, xerr=errflux_pt, color='k')
+                            flux/surfaceFermi, errflux/surfaceFermi, errflux/surfaceFermi,
+                            np.zeros(flux.shape).astype(np.bool))
 
-        plt.ylim(ymin=max(plt.ylim()[0],np.percentile(flux,1)*0.1),
-                 ymax=min(plt.ylim()[1],np.percentile(flux,99)*2.0))
+        plt.ylim(ymin=max(plt.ylim()[0],np.percentile(flux/surfaceFermi,1)*0.1),
+                 ymax=min(plt.ylim()[1],np.percentile(flux/surfaceFermi,99)*2.0))
         plt.xlim(xmin=max(plt.xlim()[0],1.02*min(np.array(edges[:-1]))-0.02*max(np.array(edges[1:]))),
                  xmax=min(plt.xlim()[1],1.02*max(np.array(edges[1:]))-0.02*min(np.array(edges[:-1]))))
         # Move the offset to the axis label
@@ -163,7 +166,7 @@ class BayesianBlocks(lightcurve.LightCurve):
         plt.setp(mjdaxis.xaxis.get_majorticklabels(), rotation=15)
         plt.tight_layout()
 
-        LcOutPath = self.LCfolder + self.config['target']['name
+        LcOutPath = self.LCfolder + self.config['target']['name']
         plt.savefig(LcOutPath+"_AP.png", dpi=150, facecolor='w', edgecolor='w',
                     orientation='portrait', papertype=None, format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
@@ -172,8 +175,6 @@ class BayesianBlocks(lightcurve.LightCurve):
     def _ManageFolder(self,path):
         """   All files will be stored in a subfolder name path + NLCbin
         Create a subfolder"""
-        self.LCfolder =  self.folder+"/BayesianBlocks/"
-        utils.mkdir_p(self.LCfolder)
         self.config['out'] = self.LCfolder
 
     def _MakeLC(self,Path=LightcurvePath) :
@@ -453,8 +454,41 @@ class BayesianBlocks(lightcurve.LightCurve):
     def readApperturePhotometryPoint(self):
         apfile = str("%s/AppertureLightCurve/TimeExposureCount.txt"%(self.folder))
         time, dTime, exposure, counts = np.loadtxt(apfile, skiprows=1, unpack=True)
+        time, dTime, exposure, counts = resampleCount(time, dTime, exposure, counts)
         errcounts = np.sqrt(counts)
         surfaceFermi = 10000 # in cm^2
         flux = counts*surfaceFermi/(exposure)
         errflux = errcounts*surfaceFermi/(exposure)
+        time = utils.MJD_to_met(time)
+        dTime = utils.MJD_to_met(dTime)-utils.MJD_to_met(0.)
         return time, dTime, flux, errflux
+
+#Functions in order to resample counts on apperture photometry to achieve a given error
+def resampleCount(time, dTime, exposure, counts, errorObj=0.25):
+    i=1        
+    while i < len(time):
+        if np.sqrt(float(counts[i-1]))/float(counts[i-1]) > errorObj:
+            counts[i-1] += counts[i]
+            time[i-1] -= dTime[i-1]/2.
+            dTime[i-1] += dTime[i]
+            time[i-1] += dTime[i-1]/2.
+            exposure[i-1] += exposure[i]
+            counts = np.delete(counts, (i), axis=0)
+            time = np.delete(time, (i), axis=0)
+            dTime = np.delete(dTime, (i), axis=0)
+            exposure = np.delete(exposure, (i), axis=0)
+        else:
+            i += 1
+    i = len(time)-1
+    if len(time) > 1 and np.sqrt(float(counts[i]))/float(counts[i]) > errorObj:
+        counts[i-1] += counts[i]
+        time[i-1] -= dTime[i-1]/2.
+        dTime[i-1] += dTime[i]
+        time[i-1] += dTime[i-1]/2.
+        exposure[i-1] += exposure[i]
+        counts = np.delete(counts, (i), axis=0)
+        time = np.delete(time, (i), axis=0)
+        dTime = np.delete(dTime, (i), axis=0)
+        exposure = np.delete(exposure, (i), axis=0)
+    return time, dTime, exposure, counts
+            
