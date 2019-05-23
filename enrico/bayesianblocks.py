@@ -97,6 +97,8 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         #Calculate bayesian block
         edgesCorrected = bayesian_blocks(evtlistcorrected, fitness='events', p0=self.p0)
+        edgesCorrected[0] = timeCorrection[0, 1]
+        edgesCorrected[-1] = timeCorrection[-1, 1]
 
         #Calculate bin event for apperture photometry
         count, tmp = np.histogram(evtlistcorrected, bins=edgesCorrected)
