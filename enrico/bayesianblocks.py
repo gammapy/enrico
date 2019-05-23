@@ -163,6 +163,7 @@ class BayesianBlocks(lightcurve.LightCurve):
         plt.setp(mjdaxis.xaxis.get_majorticklabels(), rotation=15)
         plt.tight_layout()
 
+        LcOutPath = self.LCfolder + self.config['target']['name
         plt.savefig(LcOutPath+"_AP.png", dpi=150, facecolor='w', edgecolor='w',
                     orientation='portrait', papertype=None, format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
