@@ -95,10 +95,17 @@ class BayesianBlocks(lightcurve.LightCurve):
         print("Mean photon rate exposure corrected %s s^-1" %meanRateCorrected)
         print("Mean photon rate exposure corrected %s day^-1" %(meanRateCorrected*3600.*24))
 
-        edges = bayesian_blocks(evtlistcorrected, fitness='events', p0=self.p0)
-        edgesCorrected = np.interp(edges, timeCorrection[:, 1], timeCorrection[:, 0])
-        edgesCorrected[0] = self.tmin
-        edgesCorrected[-1] = self.tmax
+        #Calculate bayesian block
+        edgesCorrected = bayesian_blocks(evtlistcorrected, fitness='events', p0=self.p0)
+
+        #Calculate bin event for apperture photometry
+        count, tmp = numpy.histogram(evtlistcorrected, bins=edgesCorrected)
+        errcount = np.sqrt(count)
+
+        #Correct edges from exposure
+        edges = np.interp(edgesCorrected, timeCorrection[:, 1], timeCorrection[:, 0])
+        edges[0] = self.tmin
+        edges[-1] = self.tmax
 
         self.Nbin = len(edges)-1
         self.time_array = np.zeros(self.Nbin*2)
@@ -109,8 +116,13 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         self.info("Running LC with "+str(self.Nbin)+" bins")
         for i in xrange(self.Nbin):
-            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
-        print
+            print("Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1],
+                  'Apperture Photometry=', count[i]/(edgesCorrected[i+1]-edgesCorrected[i]), '+/-', errcount[i]/(edgesCorrected[i+1]-edgesCorrected[i]), 'ph.s^-1')
+
+        #Dump into ascii
+        bbfile = str("%s/BayesianBlocks/%s_bb.dat"%(self.folder,self.srcname))
+        np.savetxt(bbfile, np,array([edges[-1], edges[1:], edgesCorrected[1:]-edgesCorrected[:-1], exposure, count]),
+                   header='tstart tend dt_exposure_corrected exposure count')
 
     def _ManageFolder(self,path):
         """   All files will be stored in a subfolder name path + NLCbin
