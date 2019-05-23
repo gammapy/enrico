@@ -53,7 +53,8 @@ class BayesianBlocks(lightcurve.LightCurve):
         import os.path
         evtfile = str("%s/AppertureLightCurve/%s_%s_MkTime.fits"%(self.folder,self.srcname,self.Tag))
         expfile = str("%s/AppertureLightCurve/%s_%s_applc.fits"%(self.folder,self.srcname,self.Tag))
-        if not os.path.isfile(evtfile) or not os.path.isfile(expfile):
+        apfile = str("%s/AppertureLightCurve/TimeExposureCount.txt"%(self.folder))
+        if not os.path.isfile(evtfile) or not os.path.isfile(expfile) or not os.path.isfile(apfile):
             raise Exception('The apperture photometry events list doesn\'t exist\nPlease run enrico_applc first')
 
     def _MakeTimeBins(self):
@@ -109,6 +110,10 @@ class BayesianBlocks(lightcurve.LightCurve):
         edges[0] = self.tmin
         edges[-1] = self.tmax
 
+        #Calculate apperture phtometry flux
+        flux = np.array(count[i]/(edgesCorrected[i+1]-edgesCorrected[i]))
+        errflux = np.array(errcount[i]/(edgesCorrected[i+1]-edgesCorrected[i]))
+
         self.Nbin = len(edges)-1
         self.time_array = np.zeros(self.Nbin*2)
         self.gtifile = []
@@ -118,12 +123,50 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         self.info("Running LC with "+str(self.Nbin)+" bins")
         for i in xrange(self.Nbin):
-            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1], 'Apperture Photometry=', count[i]/(edgesCorrected[i+1]-edgesCorrected[i]), '+/-', errcount[i]/(edgesCorrected[i+1]-edgesCorrected[i]), 'ph.s^-1'
+            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1], 'Apperture Photometry=', flux[i], '+/-', errflux[i], 'ph.s^-1'
 
         #Dump into ascii
         bbfile = str("%s/BayesianBlocks/%s_bb.dat"%(self.folder,self.srcname))
         np.savetxt(bbfile, np.transpose(np.array([np.array(edges[:-1]), np.array(edges[1:]), np.array(edgesCorrected[1:]-edgesCorrected[:-1]), np.array(count)])),
                    header='tstart tend dt_exposure_corrected count')
+
+        #Load apperture flux point
+        time_pt, dTime_pt, flux_pt, errflux_pt = self.readApperturePhotometryPoint()
+
+        plt.figure()
+        plt.xlabel(r"Time (s)")
+        plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
+        plot_bayesianblocks(np.array(edges[:-1]), np.array(edges[1:]),
+                            flux, errflux, errflux,
+                            np.zeros(flux.shape)).astype(np.bool))
+        plt.errorbar(time_pt, flux_pt, yerr=dTime_pt, xerr=errflux_pt, color='k')
+
+        plt.ylim(ymin=max(plt.ylim()[0],np.percentile(flux,1)*0.1),
+                 ymax=min(plt.ylim()[1],np.percentile(flux,99)*2.0))
+        plt.xlim(xmin=max(plt.xlim()[0],1.02*min(np.array(edges[:-1]))-0.02*max(np.array(edges[1:]))),
+                 xmax=min(plt.xlim()[1],1.02*max(np.array(edges[1:]))-0.02*min(np.array(edges[:-1]))))
+        # Move the offset to the axis label
+        ax = plt.gca()
+        ax.get_yaxis().get_major_formatter().set_useOffset(False)
+        offset_factor = int(np.mean(np.log10(np.abs(ax.get_ylim()))))
+        if (offset_factor != 0):
+            ax.set_yticklabels([float(round(k,5)) \
+              for k in ax.get_yticks()*10**(-offset_factor)])
+            ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
+              r" [${\times 10^{%d}}$]" %offset_factor)
+
+        # Secondary axis with MJD
+        mjdaxis = ax.twiny()
+        mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
+        mjdaxis.set_xlabel(r"Time (MJD)")
+        mjdaxis.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter(useOffset=False))
+        plt.setp(mjdaxis.xaxis.get_majorticklabels(), rotation=15)
+        plt.tight_layout()
+
+        plt.savefig(LcOutPath+"_AP.png", dpi=150, facecolor='w', edgecolor='w',
+                    orientation='portrait', papertype=None, format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1,
+                    frameon=None)
 
     def _ManageFolder(self,path):
         """   All files will be stored in a subfolder name path + NLCbin
@@ -405,3 +448,12 @@ class BayesianBlocks(lightcurve.LightCurve):
         self.info("Write to Ascii file : "+lcfilename)
         lightcurve.WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,
                      Cutoff,CutoffErr,TS,Npred,lcfilename)
+
+    def readApperturePhotometryPoint(self):
+        apfile = str("%s/AppertureLightCurve/TimeExposureCount.txt"%(self.folder))
+        time, dTime, exposure, counts = np.loadtxt(apfile, skiprows=1, unpack=True)
+        errcounts = np.sqrt(counts)
+        surfaceFermi = 10000 # in cm^2
+        flux = counts*surfaceFermi/(exposure)
+        errflux = errcounts*surfaceFermi/(exposure)
+        return time, dTime, flux, errflux

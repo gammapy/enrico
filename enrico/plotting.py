@@ -448,14 +448,14 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
         xstep.append(xmax[k])
 
     plt.step(xstep, ystep,
-        color='#d62728',zorder=-10,
-        ls='solid')
+             color='#d62728',zorder=-10,
+             ls='solid')
     plt.fill_between(xstep, ystepmin, ystepmax,
-        color='#d62728',zorder=-10, alpha=0.5)
+                     color='#d62728',zorder=-10, alpha=0.5)
     plt.errorbar(xvalues, y,
-        xerr=xerrors,yerr=[yerrm, yerrp],
-        marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
-        ls='None')
+                 xerr=xerrors,yerr=[yerrm, yerrp],
+                 marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
+                 ls='None')
 
 def PlotSED(config,pars,ignore_missing_bins=False):
     """plot a nice SED with a butterfly and points"""
