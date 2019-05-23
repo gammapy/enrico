@@ -279,8 +279,8 @@ class BayesianBlocks(lightcurve.LightCurve):
             plot_bayesianblocks(Time-TimeErr, Time+TimeErr, Flux, FluxErr, FluxErr, uplim)
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
                      ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
-            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
-                     xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time-TimeErr)-0.02*max(Time+TimeErr)),
+                     xmax=min(plt.xlim()[1],1.02*max(Time+TimeErr)-0.02*min(Time-TimeErr)))
             # Move the offset to the axis label
             ax = plt.gca()
             ax.get_yaxis().get_major_formatter().set_useOffset(False)
@@ -325,8 +325,8 @@ class BayesianBlocks(lightcurve.LightCurve):
 
                 plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),
                          ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
-                plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
-                         xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+                plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time-TimeErr)-0.02*max(Time+TimeErr)),
+                     	 xmax=min(plt.xlim()[1],1.02*max(Time+TimeErr)-0.02*min(Time-TimeErr)))
 
                 # Move the offset to the axis label
                 ax = plt.gca()
