@@ -139,10 +139,11 @@ class BayesianBlocks(lightcurve.LightCurve):
         plt.figure()
         plt.xlabel(r"Time (s)")
         plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
-        plt.errorbar(time_pt, flux_pt/surfaceFermi, yerr=errflux_pt/surfaceFermi, xerr=dTime_pt/2., color='k', ls='None')
+        
         plot_bayesianblocks(np.array(edges[:-1]), np.array(edges[1:]),
                             flux/surfaceFermi, errflux/surfaceFermi, errflux/surfaceFermi,
                             np.zeros(flux.shape).astype(np.bool))
+        plt.errorbar(time_pt, flux_pt/surfaceFermi, yerr=errflux_pt/surfaceFermi, xerr=dTime_pt/2., color='k', ls='None')
 
         plt.ylim(ymin=max(plt.ylim()[0],np.percentile(flux/surfaceFermi,1)*0.1),
                  ymax=min(plt.ylim()[1],np.percentile(flux/surfaceFermi,99)*2.0))
