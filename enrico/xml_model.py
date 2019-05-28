@@ -467,7 +467,7 @@ def GetlistFromFits(config, catalog):
 
 
     mes.info("Summary of the XML model generation")
-    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
+    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+", roi-config['space']['rad'],") degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
 
