@@ -309,10 +309,15 @@ def GetlistFromFits(config, catalog):
     ra_space = config['space']['xref']
     dec_space = config['space']['yref']
     emin = config['energy']['emin']
-    roi = config['space']['rad']+2
     max_radius = config['model']['max_radius']
     min_significance = config['model']['min_significance']
     model = config['target']['spectrum']
+
+    #Change the roi, legacy std roi
+    try:
+        roi = config['space']['rad']+config['model']['max_roi']
+    except NameError:
+        roi = config['space']['rad']+2
 
     if model == "Generic":
         mes.warning("Generic model found. Will turn it to PowerLaw")
@@ -462,7 +467,7 @@ def GetlistFromFits(config, catalog):
 
 
     mes.info("Summary of the XML model generation")
-    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
+    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+", roi-config['space']['rad'],") degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
 
@@ -591,7 +596,7 @@ def WriteXml(lib, doc, srclist, config):
                               index1_free=free, index1_value=srclist[i].get('index'),
                               cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
 	elif  spectype.strip() == "BrokenPowerLaw":
-            addPSBrokenPowerLaw2(lib, name, ra, dec, ebl, 
+            addPSBrokenPowerLaw2(lib, name, ra, dec, ebl,
                		emin=emin, emax=emax,
                         flux_value=1.6, flux_scale=1e-6, extendedName=extendedName)
 
@@ -672,7 +677,7 @@ def XmlMaker(config):
       config["event"]["evtype"] = 1
       config["file"]["xml"] = xml.replace(".xml","_FRONT.xml")
       WriteXml(lib, doc, srclist, config)
-    
+
       lib, doc = CreateLib()
       config["event"]["evtype"] = 2
       config["file"]["xml"] = xml.replace(".xml","_BACK.xml")
@@ -682,7 +687,7 @@ def XmlMaker(config):
       config["event"]["evtype"] = 4
       config["file"]["xml"] = xml.replace(".xml","_PSF0.xml")
       WriteXml(lib, doc, srclist, config)
-    
+
       lib, doc = CreateLib()
       config["event"]["evtype"] = 8
       config["file"]["xml"] = xml.replace(".xml","_PSF1.xml")
@@ -702,7 +707,7 @@ def XmlMaker(config):
       config["event"]["evtype"] = 64
       config["file"]["xml"] = xml.replace(".xml","_EDISP0.xml")
       WriteXml(lib, doc, srclist, config)
-    
+
       lib, doc = CreateLib()
       config["event"]["evtype"] = 128
       config["file"]["xml"] = xml.replace(".xml","_EDISP1.xml")
@@ -719,7 +724,7 @@ def XmlMaker(config):
       WriteXml(lib, doc, srclist, config)
     else :
       WriteXml(lib, doc, srclist, config)
-    
+
     # Recover the old xml file.
     config["file"]["xml"] = xml
 
