@@ -465,7 +465,7 @@ class BayesianBlocks(lightcurve.LightCurve):
         return time, dTime, flux, errflux
 
 #Functions in order to resample counts on apperture photometry to achieve a given error
-def resampleCount(time, dTime, exposure, counts, errorObj=0.25):
+def resampleCount(time, dTime, exposure, counts, errorObj=0.1):
     i=1        
     while i < len(time):
         if np.sqrt(float(counts[i-1]))/float(counts[i-1]) > errorObj:
