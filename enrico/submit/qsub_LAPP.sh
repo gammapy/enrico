@@ -23,6 +23,9 @@
 export HOME=$TMPDIR
 #export PATH=$FERMI_DIR/bin:$PATH
 
+unset LD_LIBRARY_PATH
+unset PYTHONPATH
+
 . /grid_sw/soft-dev-cta/Pipeline/anaconda3/etc/profile.d/conda.sh
 conda deactivate
 if [ "${PFILES}" != "" ]; then
