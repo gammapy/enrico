@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+"""Plot a bayesian block analysis"""
+import sys
+import logging
+import numpy as np
+import enrico.bayesianblocks as bb
+from enrico.config import get_config
+
+from enrico import Loggin
+mes = Loggin.Message()
+try:
+    infile = sys.argv[1]
+except:
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    mes.error('Config file not found.')
+
+
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+  try :
+    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+    for inf in liste:
+      mes.info("work on the config file "+inf)
+      config = get_config(inf)
+      bbobject = bb.BayesianBlocks(config)
+      bbobject.PlotLC()
+  except :
+    config = get_config(infile)
+    bbobject = bb.BayesianBlocks(config)
+    bbobject.PlotLC()
+else:
+  for inf in sys.argv[1:]:
+    mes.info("work on the config file "+inf)
+    config = get_config(inf)
+    bbobject = bb.BayesianBlocks(config)
+    bbobject.PlotLC()
