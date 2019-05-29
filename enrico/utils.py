@@ -368,9 +368,9 @@ def GetIso(evtclass,evttype):
     irfs = GetIRFS(evtclass,evttype,addversion=False)
     import enrico.environ as e
     if len(irfs[1])> 1:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_V2.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+e.TAG_ISO+'.txt')
     else:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+str(irfs[1][0])+'_V2.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+str(irfs[1][0])+'_'+e.TAG_ISO+'.txt')
     return res
 
 

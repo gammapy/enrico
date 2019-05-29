@@ -6,7 +6,8 @@ import numpy as np
 import astropy.io.fits as fits
 from enrico import utils
 import enrico.environ as env
-
+from environ import CATALOG_TEMPLATE_DIR
+from os.path import join
 
 def addParameter(el, name, free, value, scale, min, max):
     """Add a parameter to a source"""
@@ -287,8 +288,6 @@ def AddSpatial(doc,ra,dec,extendedName=""):
       addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
       addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
     else :
-      from environ import CATALOG_TEMPLATE_DIR
-      from os.path import join
       spatialModel = join(CATALOG_TEMPLATE_DIR, extendedName)
       spatial.setAttribute('type', 'SpatialMap')
       spatial.setAttribute('file', spatialModel)
@@ -398,8 +397,11 @@ def GetlistFromFits(config, catalog):
         # if the source has a separation less than 0.1deg to the target and has
         # the same model type as the one we want to use, insert as our target
         # with our given coordinates
-        if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
+
+        if rsrc < .1 and sigma[i] > min_significance and extended_fitsfilename=="":
+        # if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
             Nfree += 1
+            spectype[i] = model
             mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
@@ -421,7 +423,7 @@ def GetlistFromFits(config, catalog):
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
 
-        # srcs that were kept fixed in the 3FGL: add them as fixed srcs
+        # srcs that were kept fixed in the CALATALOG: add them as fixed srcs
         elif rspace < roi and sigma[i] == -np.inf:
             mes.info("Adding [fixed in 3FGL] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rspace,sigma[i]) )
             if not(extended_fitsfilename==""):
@@ -440,7 +442,7 @@ def GetlistFromFits(config, catalog):
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
                 mes.info("Adding [fixed] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                 if not(extended_fitsfilename==""):
-                    if not os.path.isfile(extended_fitsfilename):
+                    if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
                         mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
                         continue
                     mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
@@ -517,10 +519,8 @@ def WriteXml(lib, doc, srclist, config):
         except:
             mes.warning("Cannot find Iso file %s, please have a look. Switching to default one" %Iso)
             Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
-
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
-
 
     #add diffuse sources
     addDiffusePL(lib, Iso, free=1, value=1.0,
