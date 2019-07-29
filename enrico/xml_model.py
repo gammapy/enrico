@@ -327,9 +327,9 @@ def GetlistFromFits(config, catalog):
     flux = data.field('Flux_Density')
     pivot = data.field('Pivot_Energy')
     spectype = data.field('SpectrumType')
-    is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
-    try :  # valid for the 2FGH, not for the 1FHL
-      if is8yr:
+    is4fgl = cfile[1].header['CDS-NAME'] in ['FL8Y','4FGL']:
+    try :  # valid for the 2FGH, not for the 1FHL (jump to the except in that case)
+      if is4fgl:
         spectype = data.field('SpectrumType')
         index  = np.zeros(names.size)
         cutoff = np.zeros(names.size)
@@ -364,7 +364,7 @@ def GetlistFromFits(config, catalog):
 
     try :
       extendedName    = data.field('Extended_Source_Name')
-      if is8yr:
+      if is4fgl:
         extendedfits    = cfile[2].data.field('Spatial_Filename')
         extendedsrcname = cfile[2].data.field('Source_Name')
       else:

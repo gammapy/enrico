@@ -24,7 +24,9 @@ def sed(config,infile):
 
     os.system("mkdir -p " + config['out'] + "\n")
 
-    cmd = enricodir+"/enrico/RunGTlike.py "+os.getcwd()+"/" + infile
+    infile = os.path.abspath(infile)
+    cmd = enricodir+"/enrico/RunGTlike.py " + infile    
+    #cmd = enricodir+"/enrico/RunGTlike.py " + os.getcwd()+"/" + infile
 
     scriptname = prefix + "_Script.sh"
     JobLog = prefix + "_Job.log"
