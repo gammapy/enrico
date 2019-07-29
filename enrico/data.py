@@ -23,6 +23,7 @@ FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
 HEASARC_FTP = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 WEEKLY_DIFFUSE_URL = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 CATALOG_URL = join(FSSC_URL, 'data/access/lat/4yr_catalog')
+CATALOG_URL_EXTENDED = join(FSSC_URL, 'data/access/lat/8yr_catalog/')
 CATALOG_URL_8yr = join(FSSC_URL, 'data/access/lat/fl8y/')
 DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
 WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
@@ -168,7 +169,7 @@ class Data(object):
             if not os.path.isfile(filename):
                 # Now we know that we want to download
                 filename = 'LAT_extended_sources_%s.tgz' % TEMPLATE_VERSION
-                url = join(CATALOG_URL, filename)
+                url = join(CATALOG_URL_EXTENDED, filename)
                 path = join(CATALOG_DIR, filename)
                 print('Downloading %s' % path)
                 urlretrieve(url, path)
