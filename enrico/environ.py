@@ -49,7 +49,7 @@ except :
     DIRS = {}
 
 # File names
-CATALOG_VERSION = '18'
+CATALOG_VERSION = '19'
 CATALOG_8yr_VERSION = '6'
 TEMPLATE_VERSION = '8years' #v15
 if CATALOG_DIR :

@@ -324,10 +324,10 @@ def GetlistFromFits(config, catalog):
     names = data.field('Source_Name')
     ra = data.field('RAJ2000')
     dec = data.field('DEJ2000')
-    flux = data.field('Flux_Density')
+    flux = data.field('PL_Flux_Density')
     pivot = data.field('Pivot_Energy')
     spectype = data.field('SpectrumType')
-    is4fgl = cfile[1].header['CDS-NAME'] in ['FL8Y','4FGL']:
+    is4fgl = cfile[1].header['CDS-NAME'] in ['FL8Y','4FGL']
     try :  # valid for the 2FGH, not for the 1FHL (jump to the except in that case)
       if is4fgl:
         spectype = data.field('SpectrumType')
