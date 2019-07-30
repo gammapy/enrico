@@ -21,10 +21,10 @@ class Observation:
         self.tag = tag
         self.folder = folder
         self.LoadConfiguration()
-        
+
     def LoadConfiguration(self):
         #Read the configuration object and init all the variable
-        filetag = self.Configuration['file']['tag'] 
+        filetag = self.Configuration['file']['tag']
         inttag  = "_"+filetag
         if not(self.tag==""):
             inttag+="_"+self.tag
@@ -35,7 +35,7 @@ class Observation:
         self.ft2       = self.Configuration['file']['spacecraft']
         self.xmlfile   = self.Configuration['file']['xml']
 
-        #Fits files 
+        #Fits files
         self.eventcoarse = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
         self.eventfile   = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
         self.mktimefile  = self.folder+'/'+self.srcname+inttag+"_MkTime.fits"
@@ -61,8 +61,8 @@ class Observation:
         self.roi       = float(self.Configuration['space']['rad'])
         self.irfs,_    = utils.GetIRFS(self.Configuration['event']['evclass'],self.Configuration['event']['evtype'])
         #self.irfs      = self.irfs
-        self.likelihood = self.Configuration['analysis']['likelihood']        
-        
+        self.likelihood = self.Configuration['analysis']['likelihood']
+
         #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST to crash)
         self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
         self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
@@ -73,6 +73,7 @@ class Observation:
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
         self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
+        self.npixCntMp = int(2*self.roi/self.binsz)
 
         #tool options
         self.clobber = self.Configuration['clobber']
@@ -104,8 +105,8 @@ class Observation:
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.cmapfile
         evtbin['algorithm'] = "CMAP"
-        evtbin['nxpix'] = self.npix
-        evtbin['nypix'] = self.npix
+        evtbin['nxpix'] = self.npixCntMp
+        evtbin['nypix'] = self.npixCntMp
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = self.Configuration['space']['coordsys']
         evtbin["emin"] = self.Emin
@@ -133,7 +134,7 @@ class Observation:
         exposure['scfile'] = self.ft2
         exposure['target'] = self.srcname
         #if  self.irfs != 'CALDB':
-        exposure['evtype']= self.Configuration['event']['evtype']
+        #exposure['evtype']= self.Configuration['event']['evtype']
         exposure['irfs'] = self.irfs
         exposure['srcmdl'] = "none"
         exposure['specin'] = -self.Configuration['AppLC']['index']
@@ -184,7 +185,7 @@ class Observation:
         evtbin['ebinalg'] = "LOG"
         evtbin['axisrot'] = 0
         evtbin['proj'] = self.Configuration['space']['proj'] #"AIT"
-        #The number of bin is the number of decade * the number of bin 
+        #The number of bin is the number of decade * the number of bin
         #per decade (given by the users). The +0.5 rounds it properly
         evtbin["enumbins"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         evtbin['clobber'] = self.clobber
@@ -200,17 +201,22 @@ class Observation:
         expcube2['infile'] = self.Cubename
         expcube2['outfile'] = self.BinnedMapfile
         expcube2['cmap'] = self.ccube
-        #if  self.irfs != 'CALDB': 
+        #if  self.irfs != 'CALDB':
         expcube2['evtype']= self.Configuration['event']['evtype']
         expcube2['irfs'] = self.irfs
         expcube2['emin'] = self.Emin
         expcube2['emax'] = self.Emax
+        expcube2['xref'] = "INDEF"
+        expcube2['yref'] = "INDEF"
+        expcube2['nxpix'] = "INDEF"
+        expcube2['nypix'] = "INDEF"
+        expcube2['binsz'] = "INDEF"
         expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
         expcube2.run()
-    
+
     def FirstCut(self):
         """Run gtselect tool"""
         if (self.clobber=="no" and os.path.isfile(self.eventcoarse)):
@@ -412,10 +418,10 @@ class Observation:
         model_map['srcmaps'] = self.srcMap
         model_map['bexpmap'] = self.BinnedMapfile
         model_map['srcmdl'] = xml
-        if  self.irfs != 'CALDB':
-            model_map['evtype']= self.Configuration['event']['evtype']
-        else :
-            model_map['evtype']= 'INDEF'
+        #if  self.irfs != 'CALDB':
+        #    model_map['evtype']= self.Configuration['event']['evtype']
+        #else :
+        #    model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
         model_map['outfile'] = self.ModelMap
         model_map['clobber'] = self.clobber
@@ -486,4 +492,3 @@ class Observation:
         psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         psf.run()
-

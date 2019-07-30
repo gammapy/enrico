@@ -6,7 +6,8 @@ import numpy as np
 import astropy.io.fits as fits
 from enrico import utils
 import enrico.environ as env
-
+from environ import CATALOG_TEMPLATE_DIR
+from os.path import join
 
 def addParameter(el, name, free, value, scale, min, max):
     """Add a parameter to a source"""
@@ -182,12 +183,12 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
 
 
 def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
-                         ebreak_free=0, ebreak=0, ebreak_min=0, ebreak_max=0,
+                         ebreak_free=1, ebreak=1000, ebreak_min=200, ebreak_max=100000,
                          flux_free=1, flux_value=1.6, flux_scale=1e-6,
                          flux_max=1000.0, flux_min=1e-5,
                          index_lo_free=1, index_lo_value=-2.0,
                          index_lo_min=-5.0, index_lo_max=-1.0,
-                         index_hi_free=1, index_hi_value=-2.0,
+                         index_hi_free=1, index_hi_value=-4.0,
                          index_hi_min=-5.0, index_hi_max=-1.0,extendedName=""):
     """Add a source with a BROKENPOWERLAW2 model"""
     elim_min = 30
@@ -211,12 +212,12 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
       src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     try:
-        spec.setAttribute('type', 'EblAtten::BrokePowerLaw2')
+        spec.setAttribute('type', 'EblAtten::BrokenPowerLaw2')
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
     except TypeError,NameError:
-        spec.setAttribute('type', 'BrokePowerLaw2')
+        spec.setAttribute('type', 'BrokenPowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
     addParameter(spec, 'Index1',
@@ -287,8 +288,6 @@ def AddSpatial(doc,ra,dec,extendedName=""):
       addParameter(spatial, 'RA', 0, ra, 1.0, -360.0, 360.0)
       addParameter(spatial, 'DEC', 0, dec, 1.0, -90.0, 90.0)
     else :
-      from environ import CATALOG_TEMPLATE_DIR
-      from os.path import join
       spatialModel = join(CATALOG_TEMPLATE_DIR, extendedName)
       spatial.setAttribute('type', 'SpatialMap')
       spatial.setAttribute('file', spatialModel)
@@ -309,10 +308,15 @@ def GetlistFromFits(config, catalog):
     ra_space = config['space']['xref']
     dec_space = config['space']['yref']
     emin = config['energy']['emin']
-    roi = config['space']['rad']+2
     max_radius = config['model']['max_radius']
     min_significance = config['model']['min_significance']
     model = config['target']['spectrum']
+
+    #Change the roi, legacy std roi
+    try:
+        roi = config['space']['rad']+config['model']['max_roi']
+    except NameError:
+        roi = config['space']['rad']+2
 
     if model == "Generic":
         mes.warning("Generic model found. Will turn it to PowerLaw")
@@ -327,32 +331,32 @@ def GetlistFromFits(config, catalog):
     flux = data.field('PL_Flux_Density')
     pivot = data.field('Pivot_Energy')
     spectype = data.field('SpectrumType')
-    is4fgl = cfile[1].header['CDS-NAME'] in ['FL8Y','4FGL']
-    try :  # valid for the 2FGH, not for the 1FHL (jump to the except in that case)
-      if is4fgl:
-        spectype = data.field('SpectrumType')
-        index  = np.zeros(names.size)
-        cutoff = np.zeros(names.size)
-        expfac = np.zeros(names.size)
-        beta   = np.zeros(names.size)
-        for k,spec in enumerate(spectype):
-            if spec == 'PowerLaw':
-                index[k] = data.field('PL_Index')[k]
-            if spec == 'LogParabola':
-                index[k] = data.field('LP_Index')[k]
-                beta[k]  = data.field('LP_beta')[k]
-            if spec == 'PLSuperExpCutoff2':
-                # From the makeFL8Yxml.py script
-                index[k]  = data.field('PLEC_Index')[k]
-                expfac = data.field('PLEC_Expfactor')[k]
-                expind = data.field('PLEC_Exp_Index')[k]
-                cutoff[k] =(1./expfac)**(1./expind)
+    is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
+    try :  # valid for the 2FGH, not for the 1FHL
+      # if is8yr:
+      spectype = data.field('SpectrumType')
+      index  = np.zeros(names.size)
+      cutoff = np.zeros(names.size)
+      expfac = np.zeros(names.size)
+      beta   = np.zeros(names.size)
+      for k,spec in enumerate(spectype):
+          if spec == 'PowerLaw':
+              index[k] = data.field('PL_Index')[k]
+          if spec == 'LogParabola':
+              index[k] = data.field('LP_Index')[k]
+              beta[k]  = data.field('LP_beta')[k]
+          if spec == 'PLSuperExpCutoff2':
+              # From the makeFL8Yxml.py script
+              index[k]  = data.field('PLEC_Index')[k]
+              expfac = data.field('PLEC_Expfactor')[k]
+              expind = data.field('PLEC_Exp_Index')[k]
+              cutoff[k] =(1./expfac)**(1./expind)
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
-      else:
-        index = data.field('Spectral_Index')
-        cutoff = data.field('Cutoff')
-        beta = data.field('beta')
+      # else:
+      #   index = data.field('Spectral_Index')
+      #   cutoff = data.field('Cutoff')
+      #   beta = data.field('beta')
     except :
       raise
       index = data.field('Spectral_Index')
@@ -364,12 +368,12 @@ def GetlistFromFits(config, catalog):
 
     try :
       extendedName    = data.field('Extended_Source_Name')
-      if is4fgl:
-        extendedfits    = cfile[2].data.field('Spatial_Filename')
-        extendedsrcname = cfile[2].data.field('Source_Name')
-      else:
-        extendedfits    = cfile[5].data.field('Spatial_Filename')
-        extendedsrcname = cfile[5].data.field('Source_Name')
+      # if is8yr:
+      extendedfits    = cfile[2].data.field('Spatial_Filename')
+      extendedsrcname = cfile[2].data.field('Source_Name')
+      # else:
+      #   extendedfits    = cfile[5].data.field('Spatial_Filename')
+      #   extendedsrcname = cfile[5].data.field('Source_Name')
     except:
       raise
       mes.warning("Cannot find the extended source list: please check the xml")
@@ -398,8 +402,11 @@ def GetlistFromFits(config, catalog):
         # if the source has a separation less than 0.1deg to the target and has
         # the same model type as the one we want to use, insert as our target
         # with our given coordinates
-        if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
+
+        if rsrc < .1 and sigma[i] > min_significance and extended_fitsfilename=="":
+        # if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
             Nfree += 1
+            spectype[i] = model
             mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
@@ -421,7 +428,7 @@ def GetlistFromFits(config, catalog):
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
 
-        # srcs that were kept fixed in the 3FGL: add them as fixed srcs
+        # srcs that were kept fixed in the CALATALOG: add them as fixed srcs
         elif rspace < roi and sigma[i] == -np.inf:
             mes.info("Adding [fixed in 3FGL] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rspace,sigma[i]) )
             if not(extended_fitsfilename==""):
@@ -440,7 +447,7 @@ def GetlistFromFits(config, catalog):
             if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
                 mes.info("Adding [fixed] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                 if not(extended_fitsfilename==""):
-                    if not os.path.isfile(extended_fitsfilename):
+                    if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
                         mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
                         continue
                     mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
@@ -462,7 +469,7 @@ def GetlistFromFits(config, catalog):
 
 
     mes.info("Summary of the XML model generation")
-    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+ 2 ) degrees"
+    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+", roi-config['space']['rad'],") degrees"
     print Nfree, " sources have free parameters inside ", max_radius, " degrees"
     print Nextended, " source(s) is (are) extended"
 
@@ -517,10 +524,8 @@ def WriteXml(lib, doc, srclist, config):
         except:
             mes.warning("Cannot find Iso file %s, please have a look. Switching to default one" %Iso)
             Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
-
     else:
         Iso = Iso_dir + "/" + config['model']['diffuse_iso']
-
 
     #add diffuse sources
     addDiffusePL(lib, Iso, free=1, value=1.0,
@@ -590,6 +595,11 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=free, index1_value=srclist[i].get('index'),
                               cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
+	elif  spectype.strip() == "BrokenPowerLaw":
+            addPSBrokenPowerLaw2(lib, name, ra, dec, ebl,
+               		emin=emin, emax=emax,
+                        flux_value=1.6, flux_scale=1e-6, extendedName=extendedName)
+
         else:
             print('Warning!!!, unknown model %s' %spectype.strip())
 
@@ -667,7 +677,7 @@ def XmlMaker(config):
       config["event"]["evtype"] = 1
       config["file"]["xml"] = xml.replace(".xml","_FRONT.xml")
       WriteXml(lib, doc, srclist, config)
-    
+
       lib, doc = CreateLib()
       config["event"]["evtype"] = 2
       config["file"]["xml"] = xml.replace(".xml","_BACK.xml")
@@ -677,7 +687,7 @@ def XmlMaker(config):
       config["event"]["evtype"] = 4
       config["file"]["xml"] = xml.replace(".xml","_PSF0.xml")
       WriteXml(lib, doc, srclist, config)
-    
+
       lib, doc = CreateLib()
       config["event"]["evtype"] = 8
       config["file"]["xml"] = xml.replace(".xml","_PSF1.xml")
@@ -697,7 +707,7 @@ def XmlMaker(config):
       config["event"]["evtype"] = 64
       config["file"]["xml"] = xml.replace(".xml","_EDISP0.xml")
       WriteXml(lib, doc, srclist, config)
-    
+
       lib, doc = CreateLib()
       config["event"]["evtype"] = 128
       config["file"]["xml"] = xml.replace(".xml","_EDISP1.xml")
@@ -714,7 +724,7 @@ def XmlMaker(config):
       WriteXml(lib, doc, srclist, config)
     else :
       WriteXml(lib, doc, srclist, config)
-    
+
     # Recover the old xml file.
     config["file"]["xml"] = xml
 

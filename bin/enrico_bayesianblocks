@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+"""Make a bayesian blocks analysis"""
+import sys
+import logging
+import numpy as np
+import enrico.lightcurve as lightcurve
+import enrico.bayesianblocks as bayesianblocks
+from enrico.config import get_config
+from enrico import Loggin
+mes = Loggin.Message()
+try:
+    infile = sys.argv[1]
+except:
+    print('Usage: '+sys.argv[0]+' <config file name>')
+    mes.error('Config file not found.')
+
+
+def run_over_conffile(conffile):
+    print conffile
+    config = get_config(conffile)
+    bb = bayesianblocks.BayesianBlocks(config,parent_filename=conffile)
+    bb.MakeLC()
+
+if len(sys.argv)==2 :
+#read an config file alone. If not working, try to read an ascii file with different conf file
+    try :
+        liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
+        for inf in liste:
+            mes.info("work on the config file "+inf)
+            run_over_conffile(inf)
+    except:
+        mes.info("work on the config file "+sys.argv[1])
+        run_over_conffile(sys.argv[1])
+else:
+    for inf in sys.argv[1:]:
+        mes.info("work on the config file "+inf)
+        run_over_conffile(inf)

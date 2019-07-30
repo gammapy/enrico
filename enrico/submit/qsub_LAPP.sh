@@ -20,10 +20,14 @@
 #export TMP_DIR=/var/spool/pbs/tmpdir
 #####################################################################
 
-export HOME=$LAPP_APP_SHARED
-export PATH=$FERMI_DIR/bin:$PATH
+export HOME=$TMPDIR
+#export PATH=$FERMI_DIR/bin:$PATH
 
+unset LD_LIBRARY_PATH
+unset PYTHONPATH
 
+. /grid_sw/soft-dev-cta/Pipeline/anaconda3/etc/profile.d/conda.sh
+conda deactivate
 if [ "${PFILES}" != "" ]; then
     if [ ! -d "${PFILES}" ]; then
         mkdir ${PFILES}
@@ -35,8 +39,10 @@ echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 
 # This will allow FTOOLS to run on the cluster, whereas if this is not
 # set you get an error about '/dev/tty' e.g. when running ftcopy
-export HEADASNOQUERY=1
+#export HEADASNOQUERY=1
 #setenv HEADASNOQUERY 1
-echo HEADASNOQUERY: $HEADASNOQUERY
-echo PYTHONPATH: $PYTHONPATH 
-echo PATH: $PATH
+#echo HEADASNOQUERY: $HEADASNOQUERY
+#echo PYTHONPATH: $PYTHONPATH
+#echo PATH: $PATH
+export PYTHONPATH
+export PATH

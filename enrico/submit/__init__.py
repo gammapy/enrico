@@ -46,7 +46,7 @@ def jobs_in_queue():
                 raise
         else:
             break
-        
+
     njobs = len(fh.stdout.readlines())
     # If there are no jobs we will get 0 lines.
     # If there are jobs there will be two extra header lines.
@@ -67,7 +67,7 @@ def wait_for_slot(max_jobs):
 def GetSubCmd():
   queuetext = ""
   if [ environ.QUEUE != "" ]:
-      queueoptions = "%s " %(environ.TORQUE_RESOURCES) 
+      queueoptions = "%s " %(environ.TORQUE_RESOURCES)
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
@@ -87,7 +87,7 @@ def GetSubOutput(qsub_log):
 
 
 def call(cmd,
-         enricoDir, 
+         enricoDir,
          fermiDir,
          scriptfile=None,
          qsub_log=None,
@@ -134,7 +134,7 @@ def call(cmd,
 
         # Note that qsub needs a shell script which sets
         # up the environment and then executes cmd.
-        template = join(dirname(__file__), 
+        template = join(dirname(__file__),
                         'qsub_'+environ.FARM+'.sh')
         fh = file(template)
         text = fh.read()
@@ -145,7 +145,7 @@ def call(cmd,
         if exec_dir:
             text += '\ncd {0}\n\n'.format(exec_dir)
 
-        text +='conda activate fermi'
+        text +='conda activate fermi'+'\n'
         #text +='export FERMI_DIR='+fermiDir+'\n'
         #text +='export HEADAS_DIR='+fermiDir+'\n'
         text +='export ENRICO_DIR='+enricoDir+'\n'
@@ -154,9 +154,19 @@ def call(cmd,
         text +='source $ENRICO_DIR/enrico-init.sh\n'
         #text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
         text +='export LATEXDIR=/tmp/aux\n'
-        text +='env\n'
+        #text +='env\n'
         text +='#PBS -o '+qsub_log+'\n'
+
+        if environ.FARM == 'LAPP':
+            text += 'cp -R $FERMI_DIR/syspfiles/* $TMPDIR/.\n'
+            text += 'export PFILES=$TMPDIR\n'
+            text += 'cd $TMPDIR\n'
+
         text += cmd
+
+        if environ.FARM == 'LAPP':
+            text += '\ncd ..\n'
+            text += 'rm -fr $TMPDIR\n'
 
         # Now reset cmd to be the qsub command
         cmd = GetSubCmd()
@@ -165,7 +175,7 @@ def call(cmd,
                 if jobname[0].isdigit():
                     jobname='_'+jobname
             cmd += ['-N', jobname]
-        
+
         if scriptfile == None:
             # Note that mkstemp() returns an int,
             # which represents an open file handle,
@@ -182,7 +192,7 @@ def call(cmd,
             outsock=os.fdopen(outfd,'w')
             outsock.close()
             del outfd
-            
+
         cmd += GetSubOutput(qsub_log)
         #if environ.FARM in ["DESY"]:
         #    cmd += ['/usr/bin/singularity','exec','/project/singularity/images/SL6.img','sh']

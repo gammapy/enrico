@@ -20,7 +20,7 @@ ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
 FERMI_DIR = os.environ.get('FERMI_DIR', '')
 FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
-CATALOG_TEMPLATE_DIR = ''
+CATALOG_TEMPLATE_DIR =  join(os.environ.get('CATALOG_TEMPLATE_DIR', ''),'Templates')
 
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')
@@ -31,7 +31,7 @@ if DOWNLOAD_DIR :
   WEEKLY_SC_DIR = join(DOWNLOAD_DIR, 'weekly/spacecraft')
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
-USE_FULLMISSION_SPACECRAFT = bool(os.environ.get('USE_FULLMISSION_SPACECRAFT','False')=='True')
+USE_FULLMISSION_SPACECRAFT = os.environ.get('USE_FULLMISSION_SPACECRAFT','True')#bool(os.environ.get('USE_FULLMISSION_SPACECRAFT','False')=='True')
 
 try :
     from enrico.extern.odict import OrderedDict
@@ -49,15 +49,15 @@ except :
     DIRS = {}
 
 # File names
-CATALOG_VERSION = '19'
-CATALOG_8yr_VERSION = '6'
-TEMPLATE_VERSION = '8years' #v15
-if CATALOG_DIR :
-  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_%s/Templates'% TEMPLATE_VERSION)
-  try :
-    os.mkdir(join(CATALOG_DIR, 'Extended_archive_%s'% TEMPLATE_VERSION))
-  except:
-    pass
+CATALOG_VERSION = '18'
+# CATALOG_8yr_VERSION = '6'
+TEMPLATE_VERSION = '8years'
+#if CATALOG_DIR :
+#  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_%s/Templates'% TEMPLATE_VERSION)
+#  try :
+#    os.mkdir(join(CATALOG_DIR, 'Extended_archive_%s'% TEMPLATE_VERSION))
+#  except:
+#    pass
 
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION
 CATALOG_8yr = 'gll_psc_8year_v%s.fit' % CATALOG_8yr_VERSION
