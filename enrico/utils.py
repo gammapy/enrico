@@ -370,7 +370,7 @@ def GetIso(evtclass,evttype):
     if len(irfs[1])> 1:
         res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+e.TAG_ISO+'.txt')
     else:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+str(irfs[1][0])+'_'+e.TAG_ISO+'.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+e.ISO_MAJOR+'_'+str(irfs[1][0])+'_'+e.ISO_MINOR+'.txt')
     return res
 
 

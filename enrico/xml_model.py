@@ -6,7 +6,7 @@ import numpy as np
 import astropy.io.fits as fits
 from enrico import utils
 import enrico.environ as env
-from environ import CATALOG_TEMPLATE_DIR
+from environ import CATALOG_TEMPLATE_DIR, TAG_ISO
 from os.path import join
 
 def addParameter(el, name, free, value, scale, min, max):
@@ -339,13 +339,14 @@ def GetlistFromFits(config, catalog):
       cutoff = np.zeros(names.size)
       expfac = np.zeros(names.size)
       beta   = np.zeros(names.size)
-      for k,spec in enumerate(spectype):
+      # iterate over each source, check the selected spectrum and get the params.
+      for k,spec in enumerate(names):
           if spec == 'PowerLaw':
               index[k] = data.field('PL_Index')[k]
           if spec == 'LogParabola':
               index[k] = data.field('LP_Index')[k]
               beta[k]  = data.field('LP_beta')[k]
-          if spec == 'PLSuperExpCutoff2':
+          if spec == 'PLSuperExpCutoff':
               # From the makeFL8Yxml.py script
               index[k]  = data.field('PLEC_Index')[k]
               expfac = data.field('PLEC_Expfactor')[k]
@@ -517,11 +518,11 @@ def WriteXml(lib, doc, srclist, config):
         Gal = Gal_dir + "/" + config['model']['diffuse_gal']
 
     if config['model']['diffuse_iso'] == "":
+        Iso = utils.GetIso(config["event"]["evclass"],config["event"]["evtype"])
         try :
-            Iso = utils.GetIso(config["event"]["evclass"],config["event"]["evtype"])
             if not(os.path.isfile(Iso)):
-                raise RuntimeError
-        except:
+                raise IOError
+        except IOError:
             mes.warning("Cannot find Iso file %s, please have a look. Switching to default one" %Iso)
             Iso = Iso_dir + "/" + env.DIFFUSE_ISO_SOURCE
     else:
