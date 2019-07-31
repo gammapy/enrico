@@ -340,7 +340,7 @@ def GetlistFromFits(config, catalog):
       expfac = np.zeros(names.size)
       beta   = np.zeros(names.size)
       # iterate over each source, check the selected spectrum and get the params.
-      for k,spec in enumerate(names):
+      for k,spec in enumerate(spectype):
           if spec == 'PowerLaw':
               index[k] = data.field('PL_Index')[k]
           if spec == 'LogParabola':
