@@ -78,7 +78,8 @@ class Observation:
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
-        self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
+        #self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
+        self.npix      = int(2*self.roi/self.binsz)
         self.npixCntMp = int(2*self.roi/self.binsz)
 
         #tool options
@@ -415,7 +416,7 @@ class Observation:
         srcMaps.run()
 
     def ModelMaps(self,xml):
-        """Run gtmodelmap tool for binned analysis and make a subtraction of the produced map
+        """Run gtmodel tool for binned analysis and make a subtraction of the produced map
          with the count map to produce a residual map"""
         if (self.clobber=="no" and os.path.isfile(self.ModelMap)):
             #print("File exists and clobber is False")

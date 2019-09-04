@@ -109,25 +109,24 @@ class FitMaker(Loggin.Message):
                                    optimizer=self.config['fitting']['optimizer'])
 	
 	# Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, we may want to allow fixed shape for that case
-        if float(self.config['Spectrum']['FrozenSpectralIndex']>0) and self.config['target']['spectrum'] == "PowerLaw":
+        if float(self.config['Spectrum']['FrozenSpectralIndex']!=0): # and self.config['target']['spectrum'] == "PowerLaw":
             parameters = dict()
             parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-            # parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
-            # parameters['Index1'] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
-            # parameters['beta']   = 0
-            # parameters['Index2'] = 2.
-            # parameters['Cutoff'] = 30000. # set the cutoff to be high
+            parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
+            parameters['Index1'] = -float(self.config['Spectrum']['FrozenSpectralIndex'])
+            parameters['beta']   = 0
+            parameters['Index2'] = 2.
+            parameters['Cutoff'] = 30000. # set the cutoff to be high
 
             for key in parameters.keys():
-                try:
-                    IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
-                    Fit[IdGamma] = parameters[key] # set the parameter
-                    Fit[IdGamma].setFree(0)#the variable index is frozen to compute the UL
-                except:
+                IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
+                if (IdGamma == -1):
                     continue
                 else:
-                    self.info("Freezing %s at %s"\
-                            %(key,str(self.config['Spectrum']['FrozenSpectralIndex'])))
+                    self.info("Freezing %s = %s" %(str(key),str(parameters[key])))
+                    Fit[IdGamma] = parameters[key] # set the parameter
+                    Fit[IdGamma].setFree(False)#the variable index is frozen to compute the UL
+                     
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
     def PerformFit(self, Fit, writeXml = True):
@@ -387,19 +386,28 @@ class FitMaker(Loggin.Message):
         if self.config['UpperLimit']['Method'] == "Profile": #The method is Profile
             if Fit.Ts(self.obs.srcname)<2 :
                 self.warning("TS of the source is very low, better to use Integral method")
-            import UpperLimits
-            ulobject = UpperLimits.UpperLimits(Fit)
-            ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
-                                      emax=self.obs.Emax,delta=delta)
-                                      #delta=2.71 / 2)
-            self.info("Upper limit using Profile method: ")
-            print ulobject[self.obs.srcname].results
-            self.warning("Be sure to have enough photons to validate the gaussian assumption")
+            try:
+                import UpperLimits
+                ulobject = UpperLimits.UpperLimits(Fit)
+                ul, _ = ulobject[self.obs.srcname].compute(emin=self.obs.Emin,
+                                          emax=self.obs.Emax,delta=delta)
+                                          #delta=2.71 / 2)
+                self.info("Upper limit using Profile method: ")
+                #print ulobject[self.obs.srcname].results
+                self.warning("Be sure to have enough photons to validate the gaussian assumption")
+            except RuntimeError:
+                self.warning("ST UpperLimits returned RuntimeError, trying Integral")
+                self.config['UpperLimit']['Method'] = 'Integral'
         if self.config['UpperLimit']['Method'] == "Integral": #The method is Integral
             import IntegralUpperLimit
-            ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname, cl=cl,
-                                                verbosity=0,emin=self.obs.Emin,
-                                                emax=self.obs.Emax)
+            try:
+                ul, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname, cl=cl,
+                                                    verbosity=0,emin=self.obs.Emin,
+                                                    emax=self.obs.Emax)
+            except RuntimeError:
+                self.warning("ST UpperLimits returned RuntimeError, trying Poisson")
+                self.config['UpperLimit']['Method'] = 'Poisson'
+                
             print "Upper limit using Integral method: ", ul
             self.warning("Be sure to have enough photons to validate the gaussian assumption")
 
