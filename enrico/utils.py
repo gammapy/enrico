@@ -115,10 +115,14 @@ def SubtractFits(infile1, infile2, config):
     filebase = config['out'] + "/" + config['target']['name']
     abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
     rel_diff_file = filebase + "_Residual_Model_cmap.fits"
-    head.remove('NAXIS3')
-    head.remove('DATASUM')
-    head.remove('CHECKSUM')
-    head.remove('CREATOR')
+    if 'NAXIS3' in head:
+        head.remove('NAXIS3')
+    if 'DATASUM' in head:
+        head.remove('DATASUM')
+    if 'CHECKSUM' in head:
+        head.remove('CHECKSUM')
+    if 'CREATOR' in head:
+        head.remove('CREATOR')
     head.set('CREATOR', 'enrico')
     fits.writeto(abs_diff_file, data1 - data2, head, overwrite=True, checksum=True)
     fits.writeto(rel_diff_file, (data1 - data2) / data2, head, overwrite=True, checksum=True)
@@ -370,7 +374,7 @@ def GetIso(evtclass,evttype):
     if len(irfs[1])> 1:
         res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+e.TAG_ISO+'.txt')
     else:
-        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+str(irfs[1][0])+'_'+e.TAG_ISO+'.txt')
+        res = os.path.join(e.DIFFUSE_DIR,'iso_'+str(irfs[0])+'_'+e.ISO_MAJOR+'_'+str(irfs[1][0])+'_'+e.ISO_MINOR+'.txt')
     return res
 
 

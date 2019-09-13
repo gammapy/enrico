@@ -45,6 +45,8 @@ class LightCurve(Loggin.Message):
         self.config['Spectrum']['FitsGeneration'] = self.config['LightCurve']['FitsGeneration']
         #Freeze the Spectral index at a value of self.config['LightCurve']['SpectralIndex'] (no effect if 0)
         self.config['Spectrum']['FrozenSpectralIndex'] = self.config['LightCurve']['SpectralIndex']
+        if (self.config['LightCurve']['SpectralIndex'] != 0):
+            self.config['UpperLimit']['SpectralIndex'] = self.config['LightCurve']['SpectralIndex']
         #TS limit. Compute an UL if the TS is below TSLightCurve
         self.config['UpperLimit']['TSlimit'] = self.config['LightCurve']['TSLightCurve']
 

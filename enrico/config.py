@@ -19,7 +19,6 @@ def get_config(infile, configspec=join(CONFIG_DIR, 'default.conf')):
     results = config.validate(validator, copy=True)
     mes = Loggin.Message()
 
-
     utils.Checkevtclass(config['event']['evclass'])
 
     if results != True:

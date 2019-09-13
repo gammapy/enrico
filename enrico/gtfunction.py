@@ -52,8 +52,14 @@ class Observation:
         self.psf       = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_psf.fits"
 
         #Variables
-        self.t1        = float(self.Configuration['time']['tmin'])
-        self.t2        = float(self.Configuration['time']['tmax'])
+        if ('MJD' in self.Configuration['time']['type']):
+            get_met = lambda t: utils.MJD_to_met(float(t))
+        elif ('JD' in self.Configuration['time']['type']):
+            get_met = lambda t: utils.JD_to_met(float(t))
+        else:
+            get_met = lambda t: float(t)
+        self.t1        = get_met(self.Configuration['time']['tmin'])
+        self.t2        = get_met(self.Configuration['time']['tmax'])
         self.Emin      = float(self.Configuration['energy']['emin'])
         self.Emax      = float(self.Configuration['energy']['emax'])
         self.ra        = float(self.Configuration['space']['xref'])
@@ -72,7 +78,8 @@ class Observation:
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
-        self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
+        #self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
+        self.npix      = int(2*self.roi/self.binsz)
         self.npixCntMp = int(2*self.roi/self.binsz)
 
         #tool options
@@ -409,7 +416,7 @@ class Observation:
         srcMaps.run()
 
     def ModelMaps(self,xml):
-        """Run gtmodelmap tool for binned analysis and make a subtraction of the produced map
+        """Run gtmodel tool for binned analysis and make a subtraction of the produced map
          with the count map to produce a residual map"""
         if (self.clobber=="no" and os.path.isfile(self.ModelMap)):
             #print("File exists and clobber is False")

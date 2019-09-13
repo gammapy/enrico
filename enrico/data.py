@@ -7,6 +7,7 @@ log = logging.getLogger(__name__)
 
 # @todo: use config file for this?
 from enrico.environ import CATALOG_DIR, CATALOG, DIFFUSE_DIR, DIFFUSE_GAL, DIFFUSE_ISO_SOURCE, DIFFUSE_ISO_CLEAN
+from enrico.environ import DIFFUSE_ISO_SOURCEFRONT, DIFFUSE_ISO_SOURCEBACK, DIFFUSE_ISO_CLEANFRONT, DIFFUSE_ISO_CLEANBACK
 from enrico.environ import DIFFUSE_ISO_SOURCEPSF0, DIFFUSE_ISO_SOURCEPSF1, DIFFUSE_ISO_SOURCEPSF2, DIFFUSE_ISO_SOURCEPSF3
 from enrico.environ import DIFFUSE_ISO_SOURCEEDISP0, DIFFUSE_ISO_SOURCEEDISP1, DIFFUSE_ISO_SOURCEEDISP2, DIFFUSE_ISO_SOURCEEDISP3
 from enrico.environ import DIFFUSE_ISO_CLEANPSF0, DIFFUSE_ISO_CLEANPSF1, DIFFUSE_ISO_CLEANPSF2, DIFFUSE_ISO_CLEANPSF3
@@ -24,7 +25,7 @@ HEASARC_FTP = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 WEEKLY_DIFFUSE_URL = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 CATALOG_URL = join(FSSC_URL, 'data/access/lat/8yr_catalog')
 # CATALOG_URL_8yr = join(FSSC_URL, 'data/access/lat/fl8y/')
-DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux')
+DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux/4fgl/')
 WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
 WEEKLY_SC_URL = join(FSSC_FTP_URL, 'weekly/spacecraft')
 WEEKLY_DIFFRSP_URL = join(HEASARC_FTP, 'weekly/diffuse')
@@ -35,10 +36,14 @@ FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
          # ('CATALOG',            CATALOG_URL_8yr, CATALOG_DIR, CATALOG_8yr),
          ('DIFFUSE_GAL',        DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_GAL),
          ('DIFFUSE_ISO_SOURCE', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCE),
+         ('DIFFUSE_ISO_SOURCEFRONT', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEFRONT),
+         ('DIFFUSE_ISO_SOURCEBACK', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEBACK),
          ('DIFFUSE_ISO_SOURCEPSF0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF0),
          ('DIFFUSE_ISO_SOURCEPSF1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF1),
          ('DIFFUSE_ISO_SOURCEPSF2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF2),
          ('DIFFUSE_ISO_SOURCEPSF3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF3),
+         ('DIFFUSE_ISO_CLEANFRONT', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANFRONT),
+         ('DIFFUSE_ISO_CLEANBACK', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANBACK),
          ('DIFFUSE_ISO_CLEANPSF0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF0),
          ('DIFFUSE_ISO_CLEANPSF1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF1),
          ('DIFFUSE_ISO_CLEANPSF2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF2),
@@ -127,7 +132,7 @@ class Data(object):
         os.chdir(DOWNLOAD_DIR)
         if spacecraft:
             # -m --mirror
-            if USE_FULLMISSION_SPACECRAFT:
+            if USE_FULLMISSION_SPACECRAFT==True:
                 cmd = 'wget -N ' + SPACECRAFT_URL
             else:
                 cmd = 'wget -m -P weekly -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
@@ -237,8 +242,7 @@ class Data(object):
         files = files[:weeks]
         log.debug('Writing weeks.lis with %04d lines.' % len(files))
         open('weeks.lis', 'w').writelines(files)
-        
-        if not USE_FULLMISSION_SPACECRAFT:
+        if USE_FULLMISSION_SPACECRAFT==False:
             """Produce lists of weekly spacecraft list files."""
             files = os.listdir(WEEKLY_SC_DIR)
             # Select only fits files
