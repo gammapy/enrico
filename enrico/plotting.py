@@ -553,7 +553,7 @@ def PlotUL(pars,config,ULFlux,Index):
 
     #Actually make the plot
     plt.xlabel(r"E [MeV]")
-    plt.ylabel(r"$E^{2}dN/dE [ erg.cm^{-2}.s^{-1} ]$")
+    plt.ylabel(r"$\mathrm{E^2\ dN/dE}\ \mathrm{(erg\ cm^{-2} s^{-1})}$")
     plt.loglog()
     plt.plot(E,SED,"-",color='black')
 

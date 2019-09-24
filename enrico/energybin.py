@@ -41,7 +41,7 @@ def string_to_list(string):
             string = string.replace(delim,"")
         list_of_floats = [ float(item) for item in string.split(",") ]
         assert(len(string)>=2)
-    except ValueError,AssertionError:
+    except (ValueError, AssertionError), e:
         # The conversion failed, return a None.
         return(None)
     else:
@@ -113,7 +113,12 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     paramsfile = []
 
     srcname = FitRunner.config['target']['name']
-    if config['UpperLimit']['TSlimit']>Fit.Ts(srcname) :
+    try:
+        TSsrc = Fit.Ts(srcname)
+    except RuntimeError:
+        TSsrc = 0
+
+    if config['UpperLimit']['TSlimit']>TSsrc:
         utils._log('Re-optimize', False)
         print "An upper limit has been computed. The fit need to be re-optmized"
         Fit.optimize(0)
