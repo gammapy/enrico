@@ -71,7 +71,7 @@ def GetSubCmd():
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'DESY' :    ['qsub','-js 99999 -R y -V -terse -l h_rss=16G -V %s %s'%(queueoptions,queuetext)],
+         'DESY' :    ['qsub','-js 99999 -R y -V -terse -l h_rss=48G -V %s %s'%(queueoptions,queuetext)],
          'LOCAL' :   ['qsub','-V %s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
