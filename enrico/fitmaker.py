@@ -97,6 +97,8 @@ class FitMaker(Loggin.Message):
                             irfs=self.obs.irfs)
             Fit = BinnedAnalysis(Obs, self.obs.xmlfile,
                                  optimizer=self.config['fitting']['optimizer'])
+            # Enable energy dispersion globally
+            Fit.logLike.set_edisp_flag(True)
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':

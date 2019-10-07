@@ -31,6 +31,7 @@ def addDiffusePL(lib, file, free=1, value=1.0, max=10.0, min=1.0,
     spec = doc.createElement('spectrum')
     spec.setAttribute('file', file)
     spec.setAttribute('type', 'FileFunction')
+    spec.setAttribute('apply_edisp', 'false')
     addParameter(spec, 'Normalization', free, 1, 1, 0.001, 1000)
     src.appendChild(spec)
     spatial = doc.createElement('spatialModel')
@@ -48,6 +49,7 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
     src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'ConstantValue')
+    spec.setAttribute('apply_edisp', 'false')
     addParameter(spec, 'Value', free, value, scale, min, max)
     src.appendChild(spec)
     spatial = doc.createElement('spatialModel')
@@ -336,8 +338,8 @@ def GetlistFromFits(config, catalog):
       # if is8yr:
       spectype = data.field('SpectrumType')
       index  = np.zeros(names.size)
-      cutoff = np.zeros(names.size)
-      expfac = np.zeros(names.size)
+      cutoff = 1e5 * np.ones(names.size)
+      expfac = np.ones(names.size)
       beta   = np.zeros(names.size)
       # iterate over each source, check the selected spectrum and get the params.
       for k,spec in enumerate(spectype):

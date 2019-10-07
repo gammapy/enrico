@@ -77,6 +77,75 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
         evtnum = [4,8,16,32]
         config['analysis']['likelihood'] = "binned"
+    if isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
+        # Special case, we make up to 15 components following 4FGL prescription in page 8.
+        evtnum = [4,8,16,32,3]
+        energybins = {1: [50,1e2],
+                      2: [1e2,3e2],
+                      3: [3e2,1e3],
+                      4: [1e3,3e3],
+                      5: [3e3,1e4],
+                      6: [1e4,1e6]}
+        nbinsbins = {1:3, 2:5, 3:6, 4:5, 5:6, 6:10}
+        zmaxbins = {1:80, 2:90, 3:100, 4:105, 5:105, 6:105}
+        ringwidths = {1:7, 2:7, 3:5, 4:4, 5:3, 6:2}
+        pixelsizes = {1: [  -1,   -1,   -1,  0.6,   -1],
+                      2: [  -1,   -1,  0.6,  0.6,   -1],
+                      3: [  -1,  0.4,  0.3,  0.2,   -1],
+                      4: [ 0.4, 0.15,  0.1,  0.1,   -1],
+                      5: [0.25,  0.1, 0.05, 0.04,   -1],
+                      6: [  -1,   -1,   -1,   -1, 0.04]}
+
+        oldxml = config['file']['xml']
+        config['analysis']['likelihood'] = "binned"
+
+        bin_i = 0
+        for ebin_i in energybins:
+            # Restrict the analysis to the specified energy range in all cases.
+            if emintotal>=energybins[ebin_i][1]:
+                continue
+            if emaxtotal<energybins[ebin_i][0]:
+                continue
+            
+            for k,evt in enumerate(evtnum):
+                pixel_size = pixelsizes[ebin_i][k]
+                if pixel_size<0: continue
+                tag     = "PSF{0}_EBin{1}".format(k,ebin_i)
+                # Approximation, in the 4FGL the core radius changes from src to src!
+                roi     = 2.*ringwidths[ebin_i]+4.
+                zmax    = zmaxbins[ebin_i]
+                nbinsE  = nbinsbins[ebin_i]
+                energybin = energybins[ebin_i]
+                mes.info("Breaking the analysis in bins ~ 4FGL")
+                config['event']['evtype'] = evt
+                config["file"]["xml"] = oldxml.replace(".xml","_")+typeirfs[evt]+"_"+\
+                                        "energy_{0}.xml".format(ebin_i)
+                config["energy"]["emin"] = energybin[0]
+                config["energy"]["emax"] = energybin[1]
+                config["analysis"]["likelihood"] = "binned"
+                config["analysis"]["ComputeDiffrsp"] = "no"
+                config["analysis"]["enumbins_per_decade"] = \
+                    int(1.*nbinsE/math.log10(energybin[1]/energybin[0])+0.5)
+                config["space"]["rad"] = roi
+                config["analysis"]["zmax"] = zmax
+                
+                Analyse = Analysis(folder, config, \
+                    configgeneric=config,\
+                    tag=tag, verbose=verbose)
+                
+                if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+                Fit_component = Analyse.CreateLikeObject()
+                Fit.addComponent(Fit_component)
+            
+        FitRunner = Analyse
+        FitRunner.obs.Emin = emintotal
+        FitRunner.obs.Emax = emaxtotal
+
+        config["event"]["evtype"] = evtold
+        FitRunner.config = config
+
+        return FitRunner,Fit
+
     if isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
         evtnum = [64,128,256,521]
         config['analysis']['likelihood'] = "binned"

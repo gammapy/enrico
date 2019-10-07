@@ -601,7 +601,7 @@ class LightCurve(Loggin.Message):
             parameters['Index1'] = -2.
             parameters['beta']   = 0
             parameters['Index2'] = 2.
-            parameters['Cutoff'] = 30000. # set the cutoff to be high
+            parameters['Cutoff'] = 100000. # set the cutoff to be high
 
             for key in parameters.keys():
                 try:

@@ -20,9 +20,10 @@ default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
 
 # Download URLs
 FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
-FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
-HEASARC_FTP = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
-WEEKLY_DIFFUSE_URL = 'ftp://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
+#FSSC_FTP_URL = 'ftp://legacy.gsfc.nasa.gov/fermi/data/lat'
+FSSC_FTP_URL = 'https://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat/'
+HEASARC_FTP = 'http://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
+WEEKLY_DIFFUSE_URL = 'http://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 CATALOG_URL = join(FSSC_URL, 'data/access/lat/8yr_catalog')
 # CATALOG_URL_8yr = join(FSSC_URL, 'data/access/lat/fl8y/')
 DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux/4fgl/')
@@ -135,7 +136,7 @@ class Data(object):
             if USE_FULLMISSION_SPACECRAFT=="True":
                 cmd = 'wget -N ' + SPACECRAFT_URL
             else:
-                cmd = 'wget -m -P weekly -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
+                cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
             print('EXEC: ', cmd)
             os.system(cmd)
         if photon:
@@ -143,7 +144,8 @@ class Data(object):
             # -P --directory-prefix, in this case put in sub-directory weekly
             # -nH --no-host-directories
             # -np --no-parent
-            cmd = 'wget -m -P weekly -nH --cut-dirs=4 -np ' + WEEKLY_URL
+            print(WEEKLY_URL)
+            cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_URL
             print('EXEC: ', cmd)
             os.system(cmd)
 
