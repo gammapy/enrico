@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-"""Command line tool to make xml files from the 2FGL catalog
-including diffuse models."""
+"""Command line tool to make xml files from the 4FGL catalog
+including diffuse models. In general it is not advised to run this macro
+directly, particularly if there are several analysis components involved. """
 import logging
 import sys
 import numpy as np

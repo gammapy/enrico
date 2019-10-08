@@ -14,6 +14,11 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
 
     mes = Loggin.Message()
     """ run an analysis"""
+    # If there are no xml files, create it and print a warning <--- This should be here?
+    if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
+        mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
+        XmlMaker(config)
+    
     Obs = Observation(folder, config, tag=tag)
     if verbose:
         utils._log('SUMMARY: ' + tag)
@@ -32,17 +37,19 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
     folder = config['out']
 
-    # If there are no xml files, create it and print a warning
-    if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
-        mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
-        XmlMaker(config)
+    # If there are no xml files, create it and print a warning <--- Not sure if this is needed here.
+    #if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
+    #    mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
+    #    XmlMaker(config)
 
     Fit = SummedLikelihood.SummedLikelihood()
+    '''
+    #### TODO: Old code??? Is it needed? Does it work??
     if hasKey(config,'ComponentAnalysis') == True:
         # Create one obs instance for each component
-        configs  = [None]*4
-        Fits     = [None]*4
-        Analyses = [None]*4
+        configs  = [None]*16
+        Fits     = [None]*16
+        Analyses = [None]*16
         if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
             from enrico.data import fermievtypes
             mes.info("Breaking the analysis in Front/Back events")
@@ -62,7 +69,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     if 'RuntimeError: gtltcube execution failed' in str(e):
                         mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
             FitRunner = Analyses[0]
-
+    '''
     EUnBinned = config['ComponentAnalysis']['EUnBinned']
     emintotal = float(config['energy']['emin'])
     emaxtotal = float(config['energy']['emax'])
@@ -70,16 +77,24 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     evtnum = [config["event"]["evtype"]] #for std analysis
     evtold = evtnum[0] #for std analysis
  
-    # Create one obs instance for each component
+    # Create one obs instance for each component. 
+    # The first 3 can be combined with splitting in energy. The 4th tries to mimick 4FGL.
     if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
         evtnum = [1, 2]
         config['analysis']['likelihood'] = "binned"
-    if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
+    elif isKey(config['ComponentAnalysis'],'PSF') == 'yes':
         evtnum = [4,8,16,32]
         config['analysis']['likelihood'] = "binned"
-    if isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
-        # Special case, we make up to 15 components following 4FGL prescription in page 8.
+    elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
+        evtnum = [64,128,256,521]
+        config['analysis']['likelihood'] = "binned"
+    elif isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
+        # Special case of the PSF component analysis, 
+        # where up to 15 components (energy+PSF) are created following 
+        # 4FGL prescription.
         evtnum = [4,8,16,32,3]
+        config['analysis']['likelihood'] = "binned"
+        
         energybins = {1: [50,1e2],
                       2: [1e2,3e2],
                       3: [3e2,1e3],
@@ -97,7 +112,6 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                       6: [  -1,   -1,   -1,   -1, 0.04]}
 
         oldxml = config['file']['xml']
-        config['analysis']['likelihood'] = "binned"
 
         bin_i = 0
         for ebin_i in energybins:
@@ -110,7 +124,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             for k,evt in enumerate(evtnum):
                 pixel_size = pixelsizes[ebin_i][k]
                 if pixel_size<0: continue
-                tag     = "PSF{0}_EBin{1}".format(k,ebin_i)
+                tag     = "PSF{0}_En{1}".format(k,ebin_i)
                 # Approximation, in the 4FGL the core radius changes from src to src!
                 roi     = 2.*ringwidths[ebin_i]+4.
                 zmax    = zmaxbins[ebin_i]
@@ -119,7 +133,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 mes.info("Breaking the analysis in bins ~ 4FGL")
                 config['event']['evtype'] = evt
                 config["file"]["xml"] = oldxml.replace(".xml","_")+typeirfs[evt]+"_"+\
-                                        "energy_{0}.xml".format(ebin_i)
+                                        "En{0}.xml".format(ebin_i)
                 config["energy"]["emin"] = energybin[0]
                 config["energy"]["emax"] = energybin[1]
                 config["analysis"]["likelihood"] = "binned"
@@ -146,13 +160,12 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
 
         return FitRunner,Fit
 
-    if isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
-        evtnum = [64,128,256,521]
-        config['analysis']['likelihood'] = "binned"
     oldxml = config['file']['xml']
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt
-        config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml").replace("_.xml",".xml")
+        
+        if typeirf[evt] != "":
+            config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml")
 
         if EUnBinned>emintotal and EUnBinned<emaxtotal:
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
@@ -161,6 +174,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             for k,TYPE in enumerate(analysestorun):
                 tag = TYPE
                 if typeirfs[evt] != "" : tag += "_"+typeirfs[evt]# handle name of fits file
+                config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
 
                 # Tune parameters
                 if TYPE is "lowE":
@@ -176,9 +190,8 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
 
                 Analyse = Analysis(folder, config, \
                     configgeneric=config,\
-                    tag=TYPE,\
+                    tag=tag,\
                     verbose=verbose)
-
 
                 Fit_component = Analyse.CreateLikeObject()
                 Fit.addComponent(Fit_component)

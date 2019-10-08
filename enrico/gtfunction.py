@@ -12,9 +12,11 @@ from GtApp import GtApp
 from enrico import utils
 
 def run_retry(macro,tries=5):
-    # The Fermi LAT sometimes fail with annoying Runtime errors,
-    # try to catch them and re-run the macro. 
-    # Do that up to 5 times with random waitings.
+    """
+    The Fermi LAT sometimes fail with annoying Runtime errors,
+    try to catch them and re-run the macro that failed. 
+    Do that up to 5 times with random waiting times.
+    """
     from time import sleep
     from random import random
     for retry in range(tries):
@@ -30,7 +32,7 @@ def run_retry(macro,tries=5):
 class Observation:
     # init function of the Observation class.
     # folder : folder where the produced fits files will be stored.
-    # configuration is the confi of enrico (contains the variable)
+    # configuration is the config of enrico (contains the variable)
 
     def __init__(self,folder,Configuration,tag=""):
         self.Configuration = Configuration
