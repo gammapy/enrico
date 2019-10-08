@@ -32,6 +32,23 @@ def ChangeModel(comp, E1, E2, name, Pref, Gamma):
 
     return comp
 
+def string_to_list(string):
+    """
+    Try to convert string to array, returns None if it is not possible
+    """
+    try:
+        for delim in [ "[", "]", "(", ")" ]:
+            string = string.replace(delim,"")
+        list_of_floats = [ float(item) for item in string.split(",") ]
+        assert(len(string)>=2)
+    except (ValueError, AssertionError), e:
+        # The conversion failed, return a None.
+        return(None)
+    else:
+        return(list_of_floats)
+
+    return(None)
+
 def PrepareEbin(Fit, FitRunner,sedresult=None):
     """ Prepare the computation of spectral point in energy bins by
     i) removing the weak sources (TS<1) # not true
@@ -68,37 +85,43 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
           " Emax = ", float(FitRunner.config['energy']['emax']),
           " Nbins = ", NEbin)
 
-    if config['Ebin']['DistEbins'] in ['TS','mix'] and sedresult!=None:
-        # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
-        ipo = 0
-        iTS = sedresult.SED/sedresult.Err
-        TScumula = 0
-        TSperbin = 1.*sum(iTS)/NEbin
-        ener = [10**lEmin]
-        while ipo<len(sedresult.E)-1:
-            TScumula += iTS[ipo]
-            if TScumula/TSperbin > 1:
-                ener.append(sedresult.E[ipo])
-                TScumula -= TSperbin
-            ipo += 1
-        ener.append(10**lEmax)
-        ener = np.array(ener)
-        # intermediate approach (between both TS-spaced and logE spaced)
-        if config['Ebin']['DistEbins'] == 'mix':
-            ener = 0.5*(ener + np.logspace(lEmin, lEmax, NEbin + 1))
-    else:
-        # Make the bins equispaced in logE (standard)
-        ener = np.logspace(lEmin, lEmax, NEbin + 1)
+    ener = string_to_list(config['Ebin']['DistEbins'])
+    if ener is None:
+        if config['Ebin']['DistEbins'] in ['TS','mix'] and sedresult!=None:
+            # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
+            ipo = 0
+            iTS = sedresult.SED/sedresult.Err
+            TScumula = 0
+            TSperbin = 1.*sum(iTS)/NEbin
+            ener = [10**lEmin]
+            while ipo<len(sedresult.E)-1:
+                TScumula += iTS[ipo]
+                if TScumula/TSperbin > 1:
+                    ener.append(sedresult.E[ipo])
+                    TScumula -= TSperbin
+                ipo += 1
+            ener.append(10**lEmax)
+            ener = np.array(ener)
+            # intermediate approach (between both TS-spaced and logE spaced)
+            if config['Ebin']['DistEbins'] == 'mix':
+                ener = 0.5*(ener + np.logspace(lEmin, lEmax, NEbin + 1))
+        else:
+            # Make the bins equispaced in logE (standard)
+            ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
     utils.mkdir_p(config['out'])
     paramsfile = []
 
     srcname = FitRunner.config['target']['name']
-    if config['UpperLimit']['TSlimit']>Fit.Ts(srcname) :
+    try:
+        TSsrc = Fit.Ts(srcname)
+    except RuntimeError:
+        TSsrc = 0
+
+    if config['UpperLimit']['TSlimit']>TSsrc:
         utils._log('Re-optimize', False)
         print "An upper limit has been computed. The fit need to be re-optmized"
         Fit.optimize(0)
-
 
     Pref = utils.ApproxPref(Fit, ener, srcname)
     Gamma = utils.ApproxGamma(Fit, ener, srcname)

@@ -418,10 +418,14 @@ class LightCurve(Loggin.Message):
         #             fmt='o',color='black',ls='None',uplims=uplim)
         plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,
                               uplim,bblocks=True)
-        plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
-                 ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
-        plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
-                 xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+        
+        try:
+            plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
+                     ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
+            plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time)-0.02*max(Time)),
+                     xmax=min(plt.xlim()[1],1.02*max(Time)-0.02*min(Time)))
+        except IndexError:
+            pass
 
         # Move the offset to the axis label
         ax = plt.gca()
@@ -597,7 +601,7 @@ class LightCurve(Loggin.Message):
             parameters['Index1'] = -2.
             parameters['beta']   = 0
             parameters['Index2'] = 2.
-            parameters['Cutoff'] = 30000. # set the cutoff to be high
+            parameters['Cutoff'] = 100000. # set the cutoff to be high
 
             for key in parameters.keys():
                 try:

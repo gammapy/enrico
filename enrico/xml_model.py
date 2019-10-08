@@ -31,6 +31,7 @@ def addDiffusePL(lib, file, free=1, value=1.0, max=10.0, min=1.0,
     spec = doc.createElement('spectrum')
     spec.setAttribute('file', file)
     spec.setAttribute('type', 'FileFunction')
+    spec.setAttribute('apply_edisp', 'false')
     addParameter(spec, 'Normalization', free, 1, 1, 0.001, 1000)
     src.appendChild(spec)
     spatial = doc.createElement('spatialModel')
@@ -48,6 +49,7 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
     src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'ConstantValue')
+    spec.setAttribute('apply_edisp', 'false')
     addParameter(spec, 'Value', free, value, scale, min, max)
     src.appendChild(spec)
     spatial = doc.createElement('spatialModel')
@@ -59,7 +61,7 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
 
 def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
-                   flux_max=1000.0, flux_min=1e-5,
+                   flux_max=10000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
                    index_min=-6.0, index_max=-0.5,extendedName=""):
     """Add a source with a POWERLAW1 model"""
@@ -98,7 +100,7 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
 
 def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
                    flux_free=1, flux_value=1.6e-8, flux_scale=0,
-                   flux_max=1000.0, flux_min=1e-5,
+                   flux_max=10000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
                    index_min=-5.0, index_max=-0.5,extendedName=""):
     """Add a source with a POWERLAW2 model"""
@@ -140,7 +142,7 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
 
 def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
                    norm_free=1, norm_value=1e-9, norm_scale=0,
-                   norm_max=1000.0, norm_min=1e-5,
+                   norm_max=10000.0, norm_min=1e-5,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
@@ -185,7 +187,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
 def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
                          ebreak_free=1, ebreak=1000, ebreak_min=200, ebreak_max=100000,
                          flux_free=1, flux_value=1.6, flux_scale=1e-6,
-                         flux_max=1000.0, flux_min=1e-5,
+                         flux_max=10000.0, flux_min=1e-5,
                          index_lo_free=1, index_lo_value=-2.0,
                          index_lo_min=-5.0, index_lo_max=-1.0,
                          index_hi_free=1, index_hi_value=-4.0,
@@ -238,7 +240,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
 
 def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
-                   flux_max=1000.0, flux_min=1e-5,
+                   flux_max=10000.0, flux_min=1e-5,
                    index1_free=1, index1_value=-2.0,
                    index1_min=-10.0, index1_max=-0.,
                    cutoff_free=1, cutoff_value=1e4,
@@ -336,8 +338,8 @@ def GetlistFromFits(config, catalog):
       # if is8yr:
       spectype = data.field('SpectrumType')
       index  = np.zeros(names.size)
-      cutoff = np.zeros(names.size)
-      expfac = np.zeros(names.size)
+      cutoff = 1e5 * np.ones(names.size)
+      expfac = np.ones(names.size)
       beta   = np.zeros(names.size)
       # iterate over each source, check the selected spectrum and get the params.
       for k,spec in enumerate(spectype):

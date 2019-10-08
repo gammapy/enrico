@@ -11,6 +11,22 @@ from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model
 from GtApp import GtApp
 from enrico import utils
 
+def run_retry(macro,tries=5):
+    # The Fermi LAT sometimes fail with annoying Runtime errors,
+    # try to catch them and re-run the macro. 
+    # Do that up to 5 times with random waitings.
+    from time import sleep
+    from random import random
+    for retry in range(tries):
+        try:
+            macro.run()
+        except RuntimeError:
+            sleep(2.*random()+1.)
+            continue
+        else:
+            break
+    return(macro)
+
 class Observation:
     # init function of the Observation class.
     # folder : folder where the produced fits files will be stored.
@@ -123,7 +139,8 @@ class Observation:
         evtbin['axisrot'] = 0
         evtbin['proj'] = self.Configuration['space']['proj']
         evtbin['clobber'] = self.clobber
-        evtbin.run()
+        #evtbin.run()
+        run_retry(evtbin)
 
     def GtBinDef(self,filename):
         if (self.clobber=="no" and os.path.isfile(self.BinDef)):
@@ -133,7 +150,8 @@ class Observation:
         bindef['bintype'] = 'T'
         bindef['binfile'] = filename
         bindef['outfile'] = self.BinDef
-        bindef.run()
+        #bindef.run()
+        run_retry(bindef)
 
     def GtExposure(self):
         exposure = GtApp('gtexposure', 'Likelihood')
@@ -146,7 +164,8 @@ class Observation:
         exposure['srcmdl'] = "none"
         exposure['specin'] = -self.Configuration['AppLC']['index']
         exposure['clobber'] = self.clobber
-        exposure.run()
+        #exposure.run()
+        run_retry(exposure)
 
     def GtLCbin(self,dt=60):
         """Run gtbin with the LC option. the default dt is 60 sec and data can be rebinned after.
@@ -167,7 +186,8 @@ class Observation:
             evtbin["tbinalg"] = "FILE"
             evtbin["tbinfile"] = self.BinDef
         evtbin['clobber'] = self.clobber
-        evtbin.run()
+        #evtbin.run()
+        run_retry(evtbin)
 
     def GtCcube(self):
         """Run gtbin with the CCUBE option"""
@@ -196,7 +216,8 @@ class Observation:
         #per decade (given by the users). The +0.5 rounds it properly
         evtbin["enumbins"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         evtbin['clobber'] = self.clobber
-        evtbin.run()
+        #evtbin.run()
+        run_retry(evtbin)
 
     def GtBinnedMap(self):
         """Run the gtexpcube2 tool for binned analysis"""
@@ -222,7 +243,8 @@ class Observation:
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
-        expcube2.run()
+        #expcube2.run()
+        run_retry(expcube2)
 
     def FirstCut(self):
         """Run gtselect tool"""
@@ -245,13 +267,14 @@ class Observation:
         else:
             filter['tmin'] = "INDEF"
             filter['tmax'] = "INDEF"
-        filter['emin'] = self.Emin
-        filter['emax'] = self.Emax
+        filter['emin'] = 0        #self.Emin Do not cut based on energy for now
+        filter['emax'] = 10000000 #self.Emax
         filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = "INDEF"
         filter['clobber'] = self.clobber
-        filter.run()
+        #filter.run()
+        run_retry(filter)
 
     def SelectEvents(self):
         """Run gtselect tool"""
@@ -271,7 +294,8 @@ class Observation:
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = self.Configuration['event']['evtype']
         filter['clobber'] = self.clobber
-        filter.run()
+        #filter.run()
+        run_retry(filter)
 
     def time_selection(self):
         """
@@ -336,7 +360,8 @@ class Observation:
         maketime['evfile']  = self.eventfile
         maketime['outfile'] = outfile
         maketime['clobber'] = self.clobber
-        maketime.run()
+        #maketime.run()
+        run_retry(maketime)
 
     def DiffResps(self):
         """run gtdiffresp"""
@@ -352,7 +377,8 @@ class Observation:
         diffResps['convert']="no"
 
         diffResps['clobber'] = self.clobber
-        diffResps.run()
+        #diffResps.run()
+        run_retry(diffResps)
         with open(self.diffrspflag,"w") as diffrspflag:
             diffrspflag.write("")
 
@@ -371,7 +397,8 @@ class Observation:
         expCube['zmax']=self.Configuration['analysis']['zmax']
         expCube['phibins']=self.Configuration['space']['phibins']
         expCube['clobber'] = self.clobber
-        expCube.run()
+        #expCube.run()
+        run_retry(expCube)
 
     def ExpMap(self):
         "Run gtexpmap for unbinned analysis"
@@ -393,7 +420,8 @@ class Observation:
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
-        expMap.run()
+        #expMap.run()
+        run_retry(expMap)
 
     def SrcMap(self):
         """Run gtsrcmap tool for binned analysis"""
@@ -413,7 +441,8 @@ class Observation:
         srcMaps['outfile'] = self.srcMap
         srcMaps['emapbnds']='no'
         srcMaps['clobber'] = self.clobber
-        srcMaps.run()
+        #srcMaps.run()
+        run_retry(srcMaps)
 
     def ModelMaps(self,xml):
         """Run gtmodel tool for binned analysis and make a subtraction of the produced map
@@ -432,7 +461,8 @@ class Observation:
         model_map["irfs"]=self.irfs
         model_map['outfile'] = self.ModelMap
         model_map['clobber'] = self.clobber
-        model_map.run()
+        #model_map.run()
+        run_retry(model_map)
         #Compute the residual map
         utils.SubtractFits(self.cmapfile,self.ModelMap,self.Configuration)
 
@@ -460,7 +490,8 @@ class Observation:
         findsrc['clobber'] = self.clobber
         findsrc['reopt'] = self.Configuration["findsrc"]["Refit"]
         findsrc['outfile'] = outfile
-        findsrc.run()
+        #findsrc.run()
+        run_retry(findsrc)
 
     def SrcProb(self):
         """Run the gtsrcprob tool"""
@@ -479,7 +510,8 @@ class Observation:
         srcprob['outfile'] = self.Probfile
         srcprob['srclist'] = self.Configuration['srcprob']['srclist']
         srcprob['clobber'] = self.clobber
-        srcprob.run()
+        #srcprob.run()
+        run_retry(srcprob)
 
     def GtPSF(self):
         if (self.clobber=="no" and os.path.isfile(self.psf)):
@@ -498,4 +530,5 @@ class Observation:
         psf["emax"]    = self.Emax
         psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
-        psf.run()
+        #psf.run()
+        run_retry(psf)
