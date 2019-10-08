@@ -164,7 +164,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt
         
-        if typeirf[evt] != "":
+        if typeirfs[evt] != "":
             config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml")
 
         if EUnBinned>emintotal and EUnBinned<emaxtotal:
