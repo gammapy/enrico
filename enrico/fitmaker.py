@@ -110,8 +110,9 @@ class FitMaker(Loggin.Message):
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
 	
-	# Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, we may want to allow fixed shape for that case
-        if float(self.config['Spectrum']['FrozenSpectralIndex']!=0): # and self.config['target']['spectrum'] == "PowerLaw":
+	# Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, 
+        # we may want to allow fixed shape for that case
+        if float(self.config['Spectrum']['FrozenSpectralIndex']!=0): 
             parameters = dict()
             parameters['Index']  = -float(self.config['Spectrum']['FrozenSpectralIndex'])
             parameters['alpha']  = +float(self.config['Spectrum']['FrozenSpectralIndex'])
@@ -148,12 +149,15 @@ class FitMaker(Loggin.Message):
             # except:
                 # self.warning("First FIT did not converge with DRMNFB either")
 
-        # Now the precise fit will be done
-        #change the fit tolerance to the one given by the user
+        # Change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
-        #fit with the user optimizer and ask gtlike to compute the covariance matrix
-        self.log_like = Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
-        #fit with the user optimizer and ask gtlike to compute the covariance matrix
+        # Fit with DRMNGB (as recommended in gtlike fhelp) optimizer to obtain initial 
+        # carameters close to the minimum.
+        self.log_like = Fit.fit(verbosity=0,covar=False, optimizer='DRMNGB')
+        print('Fit output with DRMNGB: {0}'.format(self.log_like)) 
+        # 2nd precise fit with the user optimizer and ask gtlike to compute the covariance matrix
+        self.log_like = Fit.fit(verbosity=0,covar=True, optimizer=self.config['fitting']['optimizer'])
+        print('Fit output with {1}: {0}'.format(self.log_like,self.config['fitting']['optimizer'])) 
 
         # remove source with TS<min_source_TS (default=1)
         # to be sure that MINUIT will converge
@@ -176,25 +180,23 @@ class FitMaker(Loggin.Message):
         # NoWeakSrcLeft = True
         SrcToRemove = []
         SrcTsTable = []
+        SrcTsDict = dict()
+
         for src in Fit.model.srcNames:
-            ts = Fit.Ts(src)
-            if  (ts<minTS) and not(src == self.obs.srcname):
-                SrcToRemove.append(src)
-                SrcTsTable.append(ts)
-                #and Fit.logLike.getSource(src).getType() == 'Point':
-        i = 0
-        for src in SrcToRemove:
-            ts = Fit.Ts(src)
-            for comp in Fit.components:
-                if comp.logLike.getSource(src).getType() == 'Point':
-                    if self.config['verbose'] == 'yes' :
-                        self.info("deleting source "+src+" with TS = "+str(SrcTsTable[i])+" from the model")
-                    # NoWeakSrcLeft = False
-                    comp.deleteSource(src)
-            i+=1
-        # if not(NoWeakSrcLeft):
-            # print NoWeakSrcLeft
-            # print Fit
+            SrcTsDict[src] = Fit.Ts(src)
+            if  (SrcTsDict[src]<minTS) and not(src == self.obs.srcname):
+                for comp in Fit.components:
+                    if comp.logLike.getSource(src).getType() == 'Point':
+                        if self.config['verbose'] == 'yes' :
+                            self.info("deleting source "+src+" with TS = "+\
+                                      str(SrcTsTable[i])+" from the model")
+                        # NoWeakSrcLeft = False
+                        comp.deleteSource(src)
+
+        for src in Fit.model.srcNames:
+            if (SrcTsDict[src]>=minTS):
+                print('Keeping {0} with TS={1:.2e}'.format(src,SrcTsDict[src]))
+        
         self._log('Re-optimize', '')
         Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
         print

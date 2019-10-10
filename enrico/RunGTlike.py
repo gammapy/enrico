@@ -15,7 +15,8 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
     mes = Loggin.Message()
     """ run an analysis"""
     # If there are no xml files, create it and print a warning <--- This should be here?
-    if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
+    #if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
+    if len(glob.glob(config['file']['xml']))==0: #.replace('.xml','*.xml')))==0:
         mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
         XmlMaker(config)
     
@@ -38,38 +39,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     folder = config['out']
 
     # If there are no xml files, create it and print a warning <--- Not sure if this is needed here.
-    #if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
-    #    mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
-    #    XmlMaker(config)
-
     Fit = SummedLikelihood.SummedLikelihood()
-    '''
-    #### TODO: Old code??? Is it needed? Does it work??
-    if hasKey(config,'ComponentAnalysis') == True:
-        # Create one obs instance for each component
-        configs  = [None]*16
-        Fits     = [None]*16
-        Analyses = [None]*16
-        if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
-            from enrico.data import fermievtypes
-            mes.info("Breaking the analysis in Front/Back events")
-            # Set Summed Likelihood to True
-            oldxml = config['file']['xml']
-            for k,TYPE in enumerate(["FRONT", "BACK"]):
-                configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes[TYPE]
-                try:
-                    Analyses[k] = Analysis(folder, configs[k], \
-                        configgeneric=config,\
-                        tag=TYPE, verbose = verbose)
-                    if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
-                    Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addComponent(Fits[k])
-                except RuntimeError,e:
-                    if 'RuntimeError: gtltcube execution failed' in str(e):
-                        mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
-            FitRunner = Analyses[0]
-    '''
     EUnBinned = config['ComponentAnalysis']['EUnBinned']
     emintotal = float(config['energy']['emin'])
     emaxtotal = float(config['energy']['emax'])
@@ -114,6 +84,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         oldxml = config['file']['xml']
 
         bin_i = 0
+        roi = 0
         for ebin_i in energybins:
             # Restrict the analysis to the specified energy range in all cases.
             if emintotal>=energybins[ebin_i][1]:
@@ -121,15 +92,16 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             if emaxtotal<energybins[ebin_i][0]:
                 continue
             
+            if (roi==0): roi = 2.*ringwidths[ebin_i]+4.
+            zmax    = zmaxbins[ebin_i]
+            nbinsE  = nbinsbins[ebin_i]
+            energybin = energybins[ebin_i]
+            
             for k,evt in enumerate(evtnum):
                 pixel_size = pixelsizes[ebin_i][k]
                 if pixel_size<0: continue
                 tag     = "PSF{0}_En{1}".format(k,ebin_i)
                 # Approximation, in the 4FGL the core radius changes from src to src!
-                roi     = 2.*ringwidths[ebin_i]+4.
-                zmax    = zmaxbins[ebin_i]
-                nbinsE  = nbinsbins[ebin_i]
-                energybin = energybins[ebin_i]
                 mes.info("Breaking the analysis in bins ~ 4FGL")
                 config['event']['evtype'] = evt
                 config["file"]["xml"] = oldxml.replace(".xml","_")+typeirfs[evt]+"_"+\
@@ -160,6 +132,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
 
         return FitRunner,Fit
 
+    # Standard (non-4FGL) analysis components
     oldxml = config['file']['xml']
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt

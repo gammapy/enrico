@@ -42,26 +42,24 @@ def get_default_config(configspec=join(CONFIG_DIR, 'default.conf')):
     return ConfigObj(None, configspec=configspec)
 
 def get_times_from_spacecraft(scfile,target=['tmin','tmax']):
-    tset=False
     tmin = 239557418
     tmax = 334165418
-    if tset is False:
-        try:
-            sc = fits.open(scfile)
-            if 'tmin' in target:
-                tmin = sc[0].header['TSTART']
-            if 'tmax' in target:
-                tmax = sc[0].header['TSTOP']
-        except:
-            raise
-        else:
-            tset=True
+    try:
+        sc = fits.open(scfile)
+        if 'tmin' in target:
+            tmin = max(tmin,sc[0].header['TSTART'])
+        if 'tmax' in target:
+            tmax = sc[0].header['TSTOP']
+    except:
+        tset=False
+    else:
+        tset=True
     if tset is False:
         try:
             with open(scfile.replace('@','')) as f:
                 if 'tmin' in target:
                     sc1 = fits.open(f.readlines()[0])
-                    tmin = sc1[0].header['TSTART']
+                    tmin = max(tmin,sc1[0].header['TSTART'])
                 if 'tmax' in target:
                     sc2 = fits.open(f.readlines()[-1])
                     tmax = sc2[0].header['TSTOP']

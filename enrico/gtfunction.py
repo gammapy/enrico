@@ -6,6 +6,10 @@ The Observation class contains all the variables needed  to run the ST like file
 begun October 2010
 """
 import os
+import sys
+import Loggin
+from time import sleep
+from random import random
 from math import sqrt, log10
 from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
 from GtApp import GtApp
@@ -17,17 +21,18 @@ def run_retry(macro,tries=5):
     try to catch them and re-run the macro that failed. 
     Do that up to 5 times with random waiting times.
     """
-    from time import sleep
-    from random import random
+    mes = Loggin.Message()
     for retry in range(tries):
         try:
             macro.run()
         except RuntimeError:
+            mes.warning("An error ocurred, retrying ...")
             sleep(2.*random()+1.)
             continue
         else:
-            break
-    return(macro)
+            return(macro)
+    mes.error("An error ocurred and could not be recovered. Exiting!")
+    sys.exit(1)    
 
 class Observation:
     # init function of the Observation class.
@@ -87,7 +92,7 @@ class Observation:
         #self.irfs      = self.irfs
         self.likelihood = self.Configuration['analysis']['likelihood']
 
-        #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST to crash)
+        #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST crash)
         self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
         self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
 

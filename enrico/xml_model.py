@@ -388,6 +388,7 @@ def GetlistFromFits(config, catalog):
     sources = []
     Nfree = 0
     Nextended = 0
+
     #loop over all the sources of the catalog
     for i in xrange(len(names)):
         #distance from the center of the maps
@@ -669,67 +670,13 @@ def XmlMaker(config):
         catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
 
     print "Use the catalog : ", catalog
+    print "Use the extended directory : ", CATALOG_TEMPLATE_DIR
 
     lib, doc = CreateLib()
     srclist = GetlistFromFits(config, catalog)
 
+    WriteXml(lib, doc, srclist, config)
 
-    # deal with the summedlike analysis
-    xml = config["file"]["xml"]
-    if config['ComponentAnalysis']['FrontBack'] == "yes":
-      config["event"]["evtype"] = 1
-      config["file"]["xml"] = xml.replace(".xml","_FRONT.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 2
-      config["file"]["xml"] = xml.replace(".xml","_BACK.xml")
-      WriteXml(lib, doc, srclist, config)
-
-    elif config['ComponentAnalysis']['PSF'] == "yes":
-      config["event"]["evtype"] = 4
-      config["file"]["xml"] = xml.replace(".xml","_PSF0.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 8
-      config["file"]["xml"] = xml.replace(".xml","_PSF1.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 16
-      config["file"]["xml"] = xml.replace(".xml","_PSF2.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 32
-      config["file"]["xml"] = xml.replace(".xml","_PSF3.xml")
-      WriteXml(lib, doc, srclist, config)
-
-    elif config['ComponentAnalysis']['EDISP'] == "yes":
-      config["event"]["evtype"] = 64
-      config["file"]["xml"] = xml.replace(".xml","_EDISP0.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 128
-      config["file"]["xml"] = xml.replace(".xml","_EDISP1.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 256
-      config["file"]["xml"] = xml.replace(".xml","_EDISP2.xml")
-      WriteXml(lib, doc, srclist, config)
-
-      lib, doc = CreateLib()
-      config["event"]["evtype"] = 512
-      config["file"]["xml"] = xml.replace(".xml","_EDISP3.xml")
-      WriteXml(lib, doc, srclist, config)
-    else :
-      WriteXml(lib, doc, srclist, config)
-
-    # Recover the old xml file.
-    config["file"]["xml"] = xml
 
     Xml_to_Reg(folder + "/Roi_model",
         srclist, Prog=sys.argv[0])
