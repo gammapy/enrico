@@ -88,9 +88,9 @@ class FitMaker(Loggin.Message):
 
     def CreateLikeObject(self):
         """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it."""
-
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
+            self.info('Calling BinnedObs/Analysis with srcMap: {0}, expCube: {1}, binnedExpMap: {2}, irfs={3}, XML: {4} and optimizer: {5}'.format(self.obs.srcMap,self.obs.Cubename,self.obs.BinnedMapfile, self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
             Obs = BinnedObs(srcMaps=self.obs.srcMap,
                             expCube=self.obs.Cubename,
                             binnedExpMap=self.obs.BinnedMapfile,
@@ -102,6 +102,7 @@ class FitMaker(Loggin.Message):
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
+            self.info('Calling UnbinnedObs/Analysis with Evts: {0}, FT2: {1}, expMap: {2}, expCube={3}, irfs={4}, XML: {5} and optimizer: {6}'.format(self.obs.mktimefile, self.obs.ft2, self.obs.Mapname, self.obs.Cubename,self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
             Obs = UnbinnedObs(self.obs.mktimefile,
                               self.obs.ft2,
                               expMap=self.obs.Mapname,
@@ -153,8 +154,16 @@ class FitMaker(Loggin.Message):
         Fit.ftol = float(self.config['fitting']['ftol'])
         # Fit with DRMNGB (as recommended in gtlike fhelp) optimizer to obtain initial 
         # carameters close to the minimum.
-        self.log_like = Fit.fit(verbosity=0,covar=False, optimizer='DRMNGB')
-        print('Fit output with DRMNGB: {0}'.format(self.log_like)) 
+        try:
+            self.log_like = Fit.fit(verbosity=0,covar=False, optimizer='DRMNGB', optObject=None)
+        except Exception as exc:
+            self.warning('Exception while running DRMNGB, {0}'.format(str(e)))
+            try:
+                self.log_like = Fit.fit(verbosity=0,covar=False, optimizer='DRMNFB', optObject=None)
+            except:
+                self.warning('Exception while running DRMNFB, {0}'.format(str(e)))
+            
+        print('Fit output with DRMNGB/DRMNFB: {0}'.format(self.log_like)) 
         # 2nd precise fit with the user optimizer and ask gtlike to compute the covariance matrix
         self.log_like = Fit.fit(verbosity=0,covar=True, optimizer=self.config['fitting']['optimizer'])
         print('Fit output with {1}: {0}'.format(self.log_like,self.config['fitting']['optimizer'])) 
@@ -175,9 +184,6 @@ class FitMaker(Loggin.Message):
         """Remove the weak source after a fit and reoptimized
          weak mens TS<1"""
         self._log('','Remove all the weak (TS<%.2f) sources' %minTS)
-        NoWeakSrcLeft = False
-        # while not(NoWeakSrcLeft):
-        # NoWeakSrcLeft = True
         SrcToRemove = []
         SrcTsTable = []
         SrcTsDict = dict()
@@ -190,7 +196,6 @@ class FitMaker(Loggin.Message):
                         if self.config['verbose'] == 'yes' :
                             self.info("deleting source "+src+" with TS = "+\
                                       str(SrcTsTable[i])+" from the model")
-                        # NoWeakSrcLeft = False
                         comp.deleteSource(src)
 
         for src in Fit.model.srcNames:

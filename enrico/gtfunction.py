@@ -447,6 +447,13 @@ class Observation:
         srcMaps['irfs']= self.irfs
         srcMaps['outfile'] = self.srcMap
         srcMaps['emapbnds']='no'
+        if (self.Configuration['analysis']['keep_all_srcmaps'] == 'yes'):
+            # should speed up future re-fitting, at the cost of disk space
+            srcMaps['copyall']='yes' 
+        else:
+            # default behavior, compute them on the fly.
+            srcMaps['copyall']='no' 
+        ### TODO: test this flag to see if we can speed up the analysis, it is disabled by default.
         srcMaps['clobber'] = self.clobber
         #srcMaps.run()
         run_retry(srcMaps)

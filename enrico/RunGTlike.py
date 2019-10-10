@@ -120,7 +120,9 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     tag=tag, verbose=verbose)
                 
                 if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+                mes.info('Creating Likelihood object for component.')
                 Fit_component = Analyse.CreateLikeObject()
+                mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
             
         FitRunner = Analyse
@@ -166,7 +168,9 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     tag=tag,\
                     verbose=verbose)
 
+                mes.info('Creating Likelihood object for component.')
                 Fit_component = Analyse.CreateLikeObject()
+                mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
             FitRunner = Analyse
             FitRunner.obs.Emin = emintotal
@@ -178,10 +182,12 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 tag=typeirfs[evt], verbose = verbose)
 
             if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+            mes.info('Creating Likelihood object for component.')
             Fit_component = Analyse.CreateLikeObject()
+            mes.info('Adding component to the summed likelihood.')
             Fit.addComponent(Fit_component)
+   
     FitRunner = Analyse
-
     config["event"]["evtype"] = evtold
     FitRunner.config = config
 
