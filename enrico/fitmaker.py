@@ -11,7 +11,10 @@ begun September 2011
 #log = logging.getLogger(__name__)
 import numpy as np
 import string
-import astropy.io.fits as fits
+try:
+    import astropy.io.fits as fits
+except ImportError:
+    import pyfits as fits
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
 from BinnedAnalysis import BinnedAnalysis, BinnedObs
 from enrico import utils
@@ -90,7 +93,7 @@ class FitMaker(Loggin.Message):
         """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it."""
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
-            self.info('Calling BinnedObs/Analysis with srcMap: {0}, expCube: {1}, binnedExpMap: {2}, irfs={3}, XML: {4} and optimizer: {5}'.format(self.obs.srcMap,self.obs.Cubename,self.obs.BinnedMapfile, self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
+            #self.info('Calling BinnedObs/Analysis with srcMap: {0}, expCube: {1}, binnedExpMap: {2}, irfs={3}, XML: {4} and optimizer: {5}'.format(self.obs.srcMap,self.obs.Cubename,self.obs.BinnedMapfile, self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
             Obs = BinnedObs(srcMaps=self.obs.srcMap,
                             expCube=self.obs.Cubename,
                             binnedExpMap=self.obs.BinnedMapfile,
@@ -98,11 +101,12 @@ class FitMaker(Loggin.Message):
             Fit = BinnedAnalysis(Obs, self.obs.xmlfile,
                                  optimizer=self.config['fitting']['optimizer'])
             # Enable energy dispersion globally
-            Fit.logLike.set_edisp_flag(True)
+            if self.config['analysis']['EnergyDispersion'] == 'yes':
+                Fit.logLike.set_edisp_flag(True)
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
-            self.info('Calling UnbinnedObs/Analysis with Evts: {0}, FT2: {1}, expMap: {2}, expCube={3}, irfs={4}, XML: {5} and optimizer: {6}'.format(self.obs.mktimefile, self.obs.ft2, self.obs.Mapname, self.obs.Cubename,self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
+            #self.info('Calling UnbinnedObs/Analysis with Evts: {0}, FT2: {1}, expMap: {2}, expCube={3}, irfs={4}, XML: {5} and optimizer: {6}'.format(self.obs.mktimefile, self.obs.ft2, self.obs.Mapname, self.obs.Cubename,self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
             Obs = UnbinnedObs(self.obs.mktimefile,
                               self.obs.ft2,
                               expMap=self.obs.Mapname,
@@ -141,32 +145,28 @@ class FitMaker(Loggin.Message):
         self._log('gtlike', 'Run likelihood analysis')
         # TODO fix this part
 
-        # try:
-        # Fit.fit(0,covar=False, optimizer="DRMNGB") #first try to run gtlike to approche the minimum
-        # except:
-            # self.warning("First FIT did not converge with DRMNGB, trying DRMNFB")
-            # try:
-                # Fit.fit(0, optimizer="DRMNFB")
-            # except:
-                # self.warning("First FIT did not converge with DRMNFB either")
-
         # Change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
-        # Fit with DRMNGB (as recommended in gtlike fhelp) optimizer to obtain initial 
-        # carameters close to the minimum.
+        
+        
+        # Fit with DRMNGB/DRMNFB (as recommended in gtlike fhelp) optimizer to 
+        # obtain initial parameters close to the minimum. Then switch optimizer.
         try:
-            self.log_like = Fit.fit(verbosity=0,covar=False, optimizer='DRMNGB', optObject=None)
+            self.log_like = Fit.fit(verbosity=0, covar=False, optimizer='DRMNGB', optObject=None)
         except Exception as exc:
-            self.warning('Exception while running DRMNGB, {0}'.format(str(e)))
+            self.warning('Exception while running DRMNGB, {0}'.format(str(exc)))
             try:
-                self.log_like = Fit.fit(verbosity=0,covar=False, optimizer='DRMNFB', optObject=None)
+                self.log_like = Fit.fit(verbosity=0, covar=False, optimizer='DRMNFB', optObject=None)
             except:
-                self.warning('Exception while running DRMNFB, {0}'.format(str(e)))
-            
-        print('Fit output with DRMNGB/DRMNFB: {0}'.format(self.log_like)) 
+                self.warning('Exception while running DRMNFB, {0}'.format(str(exc)))
+        
+        if self.config['verbose'] == 'yes' :    
+            print('Fit output with DRMNGB/DRMNFB: {0}'.format(self.log_like)) 
         # 2nd precise fit with the user optimizer and ask gtlike to compute the covariance matrix
+        
         self.log_like = Fit.fit(verbosity=0,covar=True, optimizer=self.config['fitting']['optimizer'])
-        print('Fit output with {1}: {0}'.format(self.log_like,self.config['fitting']['optimizer'])) 
+        if self.config['verbose'] == 'yes' :
+            print('Fit output with {1}: {0}'.format(self.log_like,self.config['fitting']['optimizer'])) 
 
         # remove source with TS<min_source_TS (default=1)
         # to be sure that MINUIT will converge
@@ -181,29 +181,27 @@ class FitMaker(Loggin.Message):
         self.success("Fit with gtlike preformed")
 
     def RemoveWeakSources(self,Fit,minTS=1.0):
-        """Remove the weak source after a fit and reoptimized
-         weak mens TS<1"""
+        """Remove weak sources and re-optimize to get a better minimum."""
         self._log('','Remove all the weak (TS<%.2f) sources' %minTS)
-        SrcToRemove = []
-        SrcTsTable = []
         SrcTsDict = dict()
 
         for src in Fit.model.srcNames:
             SrcTsDict[src] = Fit.Ts(src)
-            if  (SrcTsDict[src]<minTS) and not(src == self.obs.srcname):
+            if (SrcTsDict[src]<minTS) and not(src == self.obs.srcname):
                 for comp in Fit.components:
                     if comp.logLike.getSource(src).getType() == 'Point':
                         if self.config['verbose'] == 'yes' :
                             self.info("deleting source "+src+" with TS = "+\
-                                      str(SrcTsTable[i])+" from the model")
+                                      str(SrcTsDict[src])+" from the model")
                         comp.deleteSource(src)
 
         for src in Fit.model.srcNames:
             if (SrcTsDict[src]>=minTS):
-                print('Keeping {0} with TS={1:.2e}'.format(src,SrcTsDict[src]))
+                if self.config['verbose'] == 'yes' :
+                    self.info('keeping source {0} with TS={1:.2e}'.format(src,SrcTsDict[src]))
         
         self._log('Re-optimize', '')
-        Fit.fit(0,covar=True, optimizer=self.config['fitting']['optimizer'])
+        Fit.fit(verbosity=1, covar=True, optimizer=self.config['fitting']['optimizer'])
         print
         return Fit
 
@@ -248,7 +246,9 @@ class FitMaker(Loggin.Message):
         Result['SrcName'] = self.obs.srcname
         Result['Flux'] = Fit.flux(self.obs.srcname,self.obs.Emin,self.obs.Emax)
         Result['dFlux'] = Fit.fluxError(self.obs.srcname,self.obs.Emin,self.obs.Emax)
-
+        Result['EFlux'] = Fit.energyFlux(self.obs.srcname,self.obs.Emin,self.obs.Emax)
+        Result['dEFlux'] = Fit.energyFluxError(self.obs.srcname,self.obs.Emin,self.obs.Emax)
+        
         for par in ParName : #Loop over the parameters and get value, error and scale
             ParValue = spectrum.getParam(par).value()
             ParError = spectrum.getParam(par).error()

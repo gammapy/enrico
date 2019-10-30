@@ -1,7 +1,10 @@
 """Central place for config file handling"""
 import sys
 from os.path import join
-import astropy.io.fits as fits
+try:
+    import astropy.io.fits as fits
+except:
+    import pyfits as fits
 from enrico.extern.configobj import ConfigObj, flatten_errors
 from enrico.extern.validate import Validator
 from enrico.environ import CONFIG_DIR, DOWNLOAD_DIR, USE_FULLMISSION_SPACECRAFT

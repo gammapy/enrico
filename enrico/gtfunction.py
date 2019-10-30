@@ -26,8 +26,9 @@ def run_retry(macro,tries=5):
         try:
             macro.run()
         except RuntimeError:
+            # Wait between 10 and 20 seconds to try again
             mes.warning("An error ocurred, retrying ...")
-            sleep(2.*random()+1.)
+            sleep(10.*random()+10.)
             continue
         else:
             return(macro)

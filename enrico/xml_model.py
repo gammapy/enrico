@@ -3,7 +3,10 @@ import os
 import sys
 import xml.dom.minidom
 import numpy as np
-import astropy.io.fits as fits
+try:
+    import astropy.io.fits as fits
+except ImportError:
+    import pyfits as fits
 from enrico import utils
 import enrico.environ as env
 from environ import CATALOG_TEMPLATE_DIR, TAG_ISO
@@ -16,6 +19,13 @@ def addParameter(el, name, free, value, scale, min, max):
     param.setAttribute('name', name)
     param.setAttribute('free', '%d' % free)
     param.setAttribute('scale', '%g' % scale)
+    # if value outside limits, set it to the closest limit
+    if value>max: 
+        print('Parameter value outside limits, clipping.')
+        value=max
+    if value<min: 
+        print('Parameter value outside limits, clipping.')
+        value=min
     param.setAttribute('value', '%g' % value)
     param.setAttribute('max', '%g' % max)
     param.setAttribute('min', '%g' % min)
@@ -311,10 +321,12 @@ def GetlistFromFits(config, catalog):
     dec_space = config['space']['yref']
     emin = config['energy']['emin']
     max_radius = config['model']['max_radius']
-    min_significance = config['model']['min_significance']
+    min_significance_free = config['model']['min_significance_free']
+    min_significance_catalog = config['model']['min_significance_catalog']
     model = config['target']['spectrum']
 
     #Change the roi, legacy std roi
+    original_roi = config['space']['rad']
     try:
         roi = config['space']['rad']+config['model']['max_roi']
     except NameError:
@@ -383,17 +395,18 @@ def GetlistFromFits(config, catalog):
       extendedName = np.array(names.size*[""])
       extendedsrcname = []
 
-
     sigma = data.field('Signif_Avg')
     sources = []
     Nfree = 0
     Nextended = 0
+    
+    parameter_noise = config['model']['parameters_noise']
 
     #loop over all the sources of the catalog
     for i in xrange(len(names)):
-        #distance from the center of the maps
+        #distance from the center of the maps to the given source
         rspace = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_space, dec_space)
-        #distance for the target
+        #distance for the target to the given source
         rsrc = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_src, dec_src)
 
         j=0
@@ -403,22 +416,33 @@ def GetlistFromFits(config, catalog):
                 extended_fitsfilename = extendedfits[j]
             j+=1
 
-        # if the source has a separation less than 0.1deg to the target and has
-        # the same model type as the one we want to use, insert as our target
-        # with our given coordinates
+        if rsrc < .1 and sigma[i] > min_significance_free and extended_fitsfilename=="":
+            # if the source has a separation less than 0.1deg to the target and has
+            # the same model type as the one we want to use, assume it is our target
+            # with our given coordinates and do not add it.
+            # NOTE: How do we deal with extended sources as target sources ??? 
+            # add gaussian noise
+            flux[i]   *= np.random.normal(1,parameter_noise)
+            index[i]  += np.random.normal(0,parameter_noise)
+            beta[i]   += np.random.normal(0,parameter_noise)
+            cutoff[i] *= np.random.normal(1,parameter_noise)
 
-        if rsrc < .1 and sigma[i] > min_significance and extended_fitsfilename=="":
-        # if rsrc < .1 and sigma[i] > min_significance and spectype[i] == model and extended_fitsfilename=="":
             Nfree += 1
             spectype[i] = model
             mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
+                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape' : 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
 
-        elif  rsrc < max_radius and rsrc > .1 and  sigma[i] > min_significance:
-            # if the source is close to the target : add it as a free source
+        elif rsrc < max_radius and rsrc >= .1 and sigma[i] > min_significance_free:
+            # if the source is close to the target and is bright : add it as a free source
+            # add gaussian noise
+            flux[i]   *= np.random.normal(1,parameter_noise)
+            index[i]  += np.random.normal(0,parameter_noise)
+            beta[i]   += np.random.normal(0,parameter_noise)
+            cutoff[i] *= np.random.normal(1,parameter_noise)
+            
             Nfree += 1
             mes.info("Adding [free] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             if not(extended_fitsfilename==""):
@@ -429,12 +453,14 @@ def GetlistFromFits(config, catalog):
                 Nextended+=1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1,
+                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
-
-        # srcs that were kept fixed in the CALATALOG: add them as fixed srcs
-        elif rspace < roi and sigma[i] == -np.inf:
-            mes.info("Adding [fixed in 3FGL] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rspace,sigma[i]) )
+        elif (rsrc < 2*max_radius and rsrc >= .1 and sigma[i] > min_significance_free) or (sigma[i] > 100 and rspace < original_roi):
+            # if the source is within 2 radius or it is very bright : add it with only the norm free
+            # add gaussian noise
+            flux[i]   *= np.random.normal(1,parameter_noise)
+            Nfree += 1
+            mes.info("Adding [free norm/fixed shape] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             if not(extended_fitsfilename==""):
                 if not os.path.isfile(extended_fitsfilename):
                     mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
@@ -443,12 +469,12 @@ def GetlistFromFits(config, catalog):
                 Nextended+=1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
-                            'SpectrumType': spectype[i],'ExtendedName': extended_fitsfilename})
-
-        else:
-            # if the source is inside the ROI: add it as a frozen source
-            if  rspace < roi and rsrc > .1  and  sigma[i] > min_significance:
+                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape': 0,
+                            'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+        
+        elif (sigma[i] > min_significance_catalog):
+            # if the source is inside the extended ROI: add them as a frozen source
+            if  rspace < roi and rsrc > .1: #  and sigma[i] > min_significance:
                 mes.info("Adding [fixed] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                 if not(extended_fitsfilename==""):
                     if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
@@ -458,17 +484,22 @@ def GetlistFromFits(config, catalog):
                     Nextended+=1
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                                'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0,
+                                'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0, 'IsFreeShape': 0,
                                 'SpectrumType': spectype[i],'ExtendedName': extended_fitsfilename})
 
 
     # if the target has not been added from catalog, add it now
     if sources[0]['name']!=srcname:
+        # add gaussian noise
+        flux[i]   *= np.random.normal(1,parameter_noise)
+        index[i]  += np.random.normal(0,parameter_noise)
+        beta[i]   += np.random.normal(0,parameter_noise)
+        cutoff[i] *= np.random.normal(1,parameter_noise)
         Nfree += 1
         #add the target to the list of sources in first position
         sources.insert(0,{'name':srcname, 'ra': ra_src, 'dec': dec_src,
                        'flux': 1e-9, 'index':-2, 'scale': emin,
-                       'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1,
+                       'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1, 'IsFreeShape': 1,
                        'SpectrumType': model,'ExtendedName': ""})
 
 
@@ -567,8 +598,9 @@ def WriteXml(lib, doc, srclist, config):
             ebl = None
         ra = srclist[i].get('ra')
         dec = srclist[i].get('dec')
-        free = srclist[i].get('IsFree')
-        spectype = srclist[i].get('SpectrumType')
+        free      = srclist[i].get('IsFree')
+        freeshape = srclist[i].get('IsFreeShape')
+        spectype  = srclist[i].get('SpectrumType')
         extendedName = srclist[i].get('ExtendedName')
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
@@ -576,29 +608,29 @@ def WriteXml(lib, doc, srclist, config):
                 addPSPowerLaw1(lib, name, ra, dec, "None",
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
-                              index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
+                              index_free=freeshape, index_value=srclist[i].get('index'),extendedName=extendedName)
             if (ebl!=None):
                 addPSLogparabola(lib, name, ra, dec, ebl,
                               norm_free=free, norm_value=srclist[i].get('flux'),
-                              alpha_free=free, alpha_value=abs(srclist[i].get('index')),
+                              alpha_free=freeshape, alpha_value=abs(srclist[i].get('index')),
                               beta_free=0, beta_min=0, beta_max=0,
                               beta_value=0,extendedName=extendedName)
         elif spectype.strip() == "PowerLaw2":
             addPSPowerLaw2(lib, name, ra, dec, ebl,
                             emin=emin, emax=emax,
                             flux_free=free, flux_value=srclist[i].get('flux'),
-                            index_free=free, index_value=srclist[i].get('index'),extendedName=extendedName)
+                            index_free=freeshape, index_value=srclist[i].get('index'),extendedName=extendedName)
         elif spectype.strip() == "LogParabola":
             addPSLogparabola(lib, name, ra, dec, ebl, enorm=srclist[i].get('scale'),
                               norm_free=free, norm_value=srclist[i].get('flux'),
-                              alpha_free=free, alpha_value=abs(srclist[i].get('index')),
-                              beta_free=free, beta_value=srclist[i].get('beta'),extendedName=extendedName)
+                              alpha_free=freeshape, alpha_value=abs(srclist[i].get('index')),
+                              beta_free=freeshape, beta_value=srclist[i].get('beta'),extendedName=extendedName)
         elif spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff" or spectype == "PLSuperExpCutoff2":
             addPSPLSuperExpCutoff(lib, name, ra, dec, ebl,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
-                              index1_free=free, index1_value=srclist[i].get('index'),
-                              cutoff_free=free, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
+                              index1_free=freeshape, index1_value=srclist[i].get('index'),
+                              cutoff_free=freeshape, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
 	elif  spectype.strip() == "BrokenPowerLaw":
             addPSBrokenPowerLaw2(lib, name, ra, dec, ebl,
                		emin=emin, emax=emax,
