@@ -68,7 +68,7 @@ class FitMaker(Loggin.Message):
         if (self.config["analysis"]["ComputeDiffrsp"] == "yes" and self.config["analysis"]["likelihood"] == "unbinned"):
             self._log('gtdiffrsp', 'Compute Diffuse response')
             self.obs.DiffResps()#run gtdiffresp
-        self._log('gtbin', 'Create a count map')
+        self._log('gtbin', 'Create count maps (square fully embed in the ROI circle)')
         self.obs.Gtbin()
         self._log('gtltcube', 'Make live time cube')#run gtltcube
         self.obs.ExpCube()
@@ -94,20 +94,19 @@ class FitMaker(Loggin.Message):
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
             use_edisp  = self.config['analysis']['EnergyDispersion'] == 'yes'
-            edisp_bins = -2 if use_edisp else 0
+            edisp_bins = -2 if use_edisp==True else 0
             Obs = BinnedObs(srcMaps=self.obs.srcMap,
                             expCube=self.obs.Cubename,
                             binnedExpMap=self.obs.BinnedMapfile,
                             irfs=self.obs.irfs)
-            Cfg = BinnedConfig(edisp_bins=edisp_bins)
+            Cfg = BinnedConfig(use_edisp=use_edisp, 
+                               edisp_bins=edisp_bins)
             Fit = BinnedAnalysis(Obs, self.obs.xmlfile, config=Cfg,
                                  optimizer=self.config['fitting']['optimizer'])
-            if use_edisp:
-                print('Enabling energy dispersion corrections. This will add extra bins in the analysis')
-                Fit.setEnergyRange(self.obs.Emin,self.obs.Emax)
-                Fit.logLike.set_edisp_flag(True)
+            
+            Fit.setEnergyRange(self.obs.Emin,self.obs.Emax)
             print("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp())))
-
+            
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
             Obs = UnbinnedObs(self.obs.mktimefile,

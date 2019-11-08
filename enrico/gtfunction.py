@@ -60,20 +60,20 @@ class Observation:
         self.xmlfile   = self.Configuration['file']['xml']
 
         #Fits files
-        self.eventcoarse = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
-        self.eventfile   = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
-        self.mktimefile  = self.folder+'/'+self.srcname+inttag+"_MkTime.fits"
-        self.Cubename  = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
-        self.Mapname   = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
+        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
+        self.eventfile     = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
+        self.mktimefile    = self.folder+'/'+self.srcname+inttag+"_MkTime.fits"
+        self.Cubename      = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
+        self.Mapname       = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
         self.BinnedMapfile = self.folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
-        self.cmapfile  = self.folder+'/'+self.srcname+inttag+"_CountMap.fits"
-        self.lcfile    = self.folder+'/'+self.srcname+inttag+"_applc.fits"
-        self.ccube     = self.folder+'/'+self.srcname+inttag+"_CCUBE.fits"
-        self.srcMap    = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_srcMap.fits"
-        self.ModelMap  = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_ModelMap.fits"
-        self.BinDef    = self.folder+'/'+self.srcname+inttag+"_BinDef.fits"
-        self.Probfile  = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_prob.fits"
-        self.psf       = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_psf.fits"
+        self.cmapfile      = self.folder+'/'+self.srcname+inttag+"_CountMap.fits"
+        self.lcfile        = self.folder+'/'+self.srcname+inttag+"_applc.fits"
+        self.ccube         = self.folder+'/'+self.srcname+inttag+"_CCUBE.fits"
+        self.srcMap        = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_srcMap.fits"
+        self.ModelMap      = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_ModelMap.fits"
+        self.BinDef        = self.folder+'/'+self.srcname+inttag+"_BinDef.fits"
+        self.Probfile      = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_prob.fits"
+        self.psf           = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_psf.fits"
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -104,7 +104,8 @@ class Observation:
         #self.irfs      = self.irfs
         self.likelihood = self.Configuration['analysis']['likelihood']
 
-        #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST crash)
+        #Apply cuts in event selections? 
+        # (roicuts should not be applied twice, it makes ST crash)
         self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
         self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
 
@@ -114,9 +115,8 @@ class Observation:
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
-        #self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
         self.npix      = int(2*self.roi/self.binsz)
-        self.npixCntMp = int(2*self.roi/self.binsz)
+        self.npixCntMp = int(sqrt(2.)*self.roi/self.binsz)
 
         #tool options
         self.clobber = self.Configuration['clobber']
@@ -142,7 +142,7 @@ class Observation:
             self.Configuration['event']['evtype'])
 
     def Gtbin(self):
-        """Run gtbin with the CMAP option. A count map is produced"""
+        """Run gtbin with the CMAP option. A square count map is produced enclosed inside the roi"""
         if (self.clobber=="no" and os.path.isfile(self.cmapfile)):
             #print("File exists and clobber is False")
             return(0)
@@ -163,7 +163,7 @@ class Observation:
         evtbin['clobber'] = self.clobber
         #evtbin.run()
         run_retry(evtbin)
-
+    
     def GtBinDef(self,filename):
         if (self.clobber=="no" and os.path.isfile(self.BinDef)):
             #print("File exists and clobber is False")
@@ -221,8 +221,8 @@ class Observation:
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.ccube
         evtbin['algorithm'] = "CCUBE"
-        evtbin['nxpix'] = self.npix
-        evtbin['nypix'] = self.npix
+        evtbin['nxpix'] = self.npixCntMp
+        evtbin['nypix'] = self.npixCntMp
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = self.Configuration['space']['coordsys']
         evtbin['xref'] = self.ra
@@ -446,8 +446,8 @@ class Observation:
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
-        expMap['evtype']= self.Configuration['event']['evtype']
-        expMap['srcrad'] = self.roi+10
+        expMap['evtype'] = self.Configuration['event']['evtype']
+        expMap['srcrad'] = self.roi+15
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
@@ -476,7 +476,8 @@ class Observation:
         app = srcMaps
         if 'edisp_bins' in app.pars.keys():
             if self.use_edisp:
-                app['edisp_bins'] = -min(3,int(Nbdecade*0.2+0.5))
+                #app['edisp_ebins'] = -min(3,int(Nbdecade*0.2+0.5)) # adaptative.
+                app['edisp_bins'] = -2 # lets keep it simple
             else:
                 app['edisp_bins'] = 0
         elif 'edisp' in app.pars.keys():
