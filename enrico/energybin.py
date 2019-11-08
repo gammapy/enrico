@@ -17,15 +17,15 @@ def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     Gamma_min=-5
     Gamma_max=0
     Gamma=max(min(Gamma_max,Gamma),Gamma_min)
-    
+
     Eav = utils.GetE0(E1, E2)
 
     spectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
-    spectrum.getParam('Prefactor').setBounds(1e-5,1e5)
     spectrum.getParam('Prefactor').setScale(utils.fluxScale(Pref))
     spectrum.getParam('Prefactor').setValue(utils.fluxNorm(Pref))
-    spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
+    spectrum.getParam('Prefactor').setBounds(1e-5,1e5)
     spectrum.getParam('Index').setValue(Gamma)
+    spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
     spectrum.getParam('Index').setFree(False)
     spectrum.getParam('Scale').setValue(Eav)
     spectrum.getParam('Scale').setBounds(20,3e6)

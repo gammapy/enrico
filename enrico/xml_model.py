@@ -59,7 +59,6 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
     src.setAttribute('type', 'DiffuseSource')
     spec = doc.createElement('spectrum')
     spec.setAttribute('type', 'ConstantValue')
-    spec.setAttribute('apply_edisp', 'false')
     addParameter(spec, 'Value', free, value, scale, min, max)
     src.appendChild(spec)
     spatial = doc.createElement('spatialModel')

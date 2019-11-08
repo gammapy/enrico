@@ -16,7 +16,7 @@ try:
 except ImportError:
     import pyfits as fits
 from UnbinnedAnalysis import UnbinnedAnalysis, UnbinnedObs
-from BinnedAnalysis import BinnedAnalysis, BinnedObs
+from BinnedAnalysis import BinnedAnalysis, BinnedObs, BinnedConfig
 from enrico import utils
 from enrico import Loggin
 from enrico import environ
@@ -93,20 +93,23 @@ class FitMaker(Loggin.Message):
         """Create an UnbinnedAnalysis or a BinnedAnalysis and retrun it."""
         #create binnedAnalysis object
         if self.config['analysis']['likelihood'] == 'binned':
-            #self.info('Calling BinnedObs/Analysis with srcMap: {0}, expCube: {1}, binnedExpMap: {2}, irfs={3}, XML: {4} and optimizer: {5}'.format(self.obs.srcMap,self.obs.Cubename,self.obs.BinnedMapfile, self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
+            use_edisp  = self.config['analysis']['EnergyDispersion'] == 'yes'
+            edisp_bins = -2 if use_edisp else 0
             Obs = BinnedObs(srcMaps=self.obs.srcMap,
                             expCube=self.obs.Cubename,
                             binnedExpMap=self.obs.BinnedMapfile,
                             irfs=self.obs.irfs)
-            Fit = BinnedAnalysis(Obs, self.obs.xmlfile,
+            Cfg = BinnedConfig(edisp_bins=edisp_bins)
+            Fit = BinnedAnalysis(Obs, self.obs.xmlfile, config=Cfg,
                                  optimizer=self.config['fitting']['optimizer'])
-            # Enable energy dispersion globally
-            if self.config['analysis']['EnergyDispersion'] == 'yes':
+            if use_edisp:
+                print('Enabling energy dispersion corrections. This will add extra bins in the analysis')
+                Fit.setEnergyRange(self.obs.Emin,self.obs.Emax)
                 Fit.logLike.set_edisp_flag(True)
+            print("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp())))
 
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
-            #self.info('Calling UnbinnedObs/Analysis with Evts: {0}, FT2: {1}, expMap: {2}, expCube={3}, irfs={4}, XML: {5} and optimizer: {6}'.format(self.obs.mktimefile, self.obs.ft2, self.obs.Mapname, self.obs.Cubename,self.obs.irfs, self.obs.xmlfile, self.config['fitting']['optimizer']))
             Obs = UnbinnedObs(self.obs.mktimefile,
                               self.obs.ft2,
                               expMap=self.obs.Mapname,
