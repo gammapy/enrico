@@ -46,7 +46,7 @@ def string_to_list(string):
         return(None)
     else:
         return(list_of_floats)
-
+    
     return(None)
 
 def PrepareEbin(Fit, FitRunner,sedresult=None):
@@ -109,6 +109,15 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
             # Make the bins equispaced in logE (standard)
             ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
+    if (config['ComponentAnalysis']['FGL4'] == 'yes'):
+        ener = [50,1e2,3e2,1e3,3e3,1e4,1e6]
+
+    # Remove bins that are outside the general range
+    while(ener[0]<config['energy']['emin']):
+        ener = ener[1:]
+    while(ener[-1]>config['energy']['emax']):
+        ener = ener[:-1]
+
     utils.mkdir_p(config['out'])
     paramsfile = []
 
@@ -120,7 +129,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
 
     if config['UpperLimit']['TSlimit']>TSsrc:
         utils._log('Re-optimize', False)
-        print "An upper limit has been computed. The fit need to be re-optmized"
+        print "An upper limit has been computed. The fit need to be re-optimized"
         Fit.optimize(0)
 
     Pref = utils.ApproxPref(Fit, ener, srcname)
@@ -143,6 +152,13 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     elif config['ComponentAnalysis']['EDISP'] == "yes":
         xmltag_list = ["_EDISP0","_EDISP1","_EDISP2","_EDISP3"]
         mes.info("Splitting EDISP events")
+    elif config['ComponentAnalysis']['FGL4'] == "yes":
+        from catalogComponents import evtnum, energybins, pixelsizes
+        xmltag_list = []
+        for ebin_i in energybins:
+            for k,evt in enumerate(evtnum):
+                if pixelsizes[ebin_i][k] > 0:
+                    xmltag_list.append("_PSF{0}_En{1}".format(k,ebin_i))
 
 
     for ibin in xrange(NEbin):#Loop over the energy bins

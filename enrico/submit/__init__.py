@@ -71,7 +71,8 @@ def GetSubCmd():
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'DESY' :    ['qsub','-js 99999 -R y -V -terse -l h_rss=48G -V %s %s'%(queueoptions,queuetext)],
+         'DESY' :    ['qsub','-R y -V -terse -l h_rss=48G -V %s %s'%(queueoptions,queuetext)],
+         'DESY_quick' : ['qsub','-js 10 -R y -V -terse -l h_rss=4G -l s_cpu=01:00:00 -l h_cpu=02:00:00 -V %s %s'%(queueoptions,queuetext)],
          'LOCAL' :   ['qsub','-V %s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
@@ -81,6 +82,7 @@ def GetSubOutput(qsub_log):
          'MPIK' :    ['-o', qsub_log, '-j', 'y'],
          'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
          'DESY' :    ['-o', qsub_log, '-j', 'y'],
+         'DESY_quick' :  ['-o', qsub_log, '-j', 'y'],
          'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes']}
   return cmd[environ.FARM]
 ###
@@ -121,7 +123,7 @@ def call(cmd,
     max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
-    elif environ.FARM=="DESY":
+    elif environ.FARM in ["DESY", "DESY_quick"]:
         max_jobs = 1000
     elif environ.FARM=="LOCAL":
         max_jobs = 100
@@ -171,7 +173,7 @@ def call(cmd,
         # Now reset cmd to be the qsub command
         cmd = GetSubCmd()
         if jobname:
-            if environ.FARM in ["CCIN2P3","DESY"]:
+            if environ.FARM in ["CCIN2P3","DESY","DESY_quick"]:
                 if jobname[0].isdigit():
                     jobname='_'+jobname
             cmd += ['-N', jobname]

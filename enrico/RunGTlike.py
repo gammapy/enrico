@@ -62,25 +62,8 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         # Special case of the PSF component analysis, 
         # where up to 15 components (energy+PSF) are created following 
         # 4FGL prescription.
-        evtnum = [4,8,16,32,3]
+        from catalogComponents import evtnum, energybins, nbinsbins, zmaxbins, ringwidths, pixelsizes
         config['analysis']['likelihood'] = "binned"
-        
-        energybins = {1: [50,1e2],
-                      2: [1e2,3e2],
-                      3: [3e2,1e3],
-                      4: [1e3,3e3],
-                      5: [3e3,1e4],
-                      6: [1e4,1e6]}
-        nbinsbins = {1:3, 2:5, 3:6, 4:5, 5:6, 6:10}
-        zmaxbins = {1:80, 2:90, 3:100, 4:105, 5:105, 6:105}
-        ringwidths = {1:7, 2:7, 3:5, 4:4, 5:3, 6:2}
-        pixelsizes = {1: [  -1,   -1,   -1,  0.6,   -1],
-                      2: [  -1,   -1,  0.6,  0.6,   -1],
-                      3: [  -1,  0.4,  0.3,  0.2,   -1],
-                      4: [ 0.4, 0.15,  0.1,  0.1,   -1],
-                      5: [0.25,  0.1, 0.05, 0.04,   -1],
-                      6: [  -1,   -1,   -1,   -1, 0.04]}
-
         oldxml = config['file']['xml']
 
         bin_i = 0
@@ -128,7 +111,8 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         FitRunner = Analyse
         FitRunner.obs.Emin = emintotal
         FitRunner.obs.Emax = emaxtotal
-
+        config["energy"]["emin"] = emintotal
+        config["energy"]["emax"] = emaxtotal
         config["event"]["evtype"] = evtold
         FitRunner.config = config
 
@@ -175,6 +159,8 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             FitRunner = Analyse
             FitRunner.obs.Emin = emintotal
             FitRunner.obs.Emax = emaxtotal
+            config["energy"]["emin"] = emintotal
+            config["energy"]["emax"] = emaxtotal
 
         else:
             Analyse = Analysis(folder, config, \
