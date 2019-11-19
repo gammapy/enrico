@@ -78,11 +78,13 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration']
     config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
     tag = FitRunner.config['file']['tag']
-    lEmax = np.log10(float(FitRunner.config['energy']['emax']))
-    lEmin = np.log10(float(FitRunner.config['energy']['emin']))
+    Emax = float(FitRunner.config['energy']['emax'])
+    Emin = float(FitRunner.config['energy']['emin'])
+    lEmax = np.log10(Emax)
+    lEmin = np.log10(Emin)
     utils._log("Preparing submission of fit into energy bins")
-    print(" Emin = ", float(FitRunner.config['energy']['emin']),
-          " Emax = ", float(FitRunner.config['energy']['emax']),
+    print(" Emin = ", float(Emin),
+          " Emax = ", float(Emax),
           " Nbins = ", NEbin)
 
     ener = string_to_list(config['Ebin']['DistEbins'])
@@ -110,14 +112,11 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
             ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
     if (config['ComponentAnalysis']['FGL4'] == 'yes'):
-        ener = [50,1e2,3e2,1e3,3e3,1e4,1e6]
+        ener = np.asarray([50,1e2,3e2,1e3,3e3,1e4,1e6])
 
     # Remove bins that are outside the general range
-    while(ener[0]<config['energy']['emin']):
-        ener = ener[1:]
-    while(ener[-1]>config['energy']['emax']):
-        ener = ener[:-1]
-
+    #ener = ener[(ener>=Emin)*(ener<=Emax)]
+    
     utils.mkdir_p(config['out'])
     paramsfile = []
 
@@ -158,11 +157,14 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         for ebin_i in energybins:
             for k,evt in enumerate(evtnum):
                 if pixelsizes[ebin_i][k] > 0:
-                    xmltag_list.append("_PSF{0}_En{1}".format(k,ebin_i))
+                    xmltag_list.append("_{0}_En{1}".format(utils.typeirfs[k],ebin_i))
 
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
+        if ener[ibin]<Emin: continue
+        if ener[ibin+1]>Emax: continue
+
         mes.info("Submitting # "+str(ibin)+" at energy "+str(E))
         #Update the model for the bin
         for comp,xmltag in zip(Fit.components, xmltag_list):

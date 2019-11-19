@@ -5,7 +5,7 @@ from math import log10
 import numpy as np
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
-typeirfs={1:"FRONT",2:"BACK",3:"",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
+typeirfs={1:"FRONT",2:"BACK",3:"FRONTBACK",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
         128:"EDISP1",256:"EDISP2",512:"EDISP3"}
 
 def hasKey(dictionary,key):
@@ -63,7 +63,7 @@ def meanEnergy(emin, emax, index_value):
 
 def GetE0(a,b):
     """"Get the center of a bin in log space"""
-    return int(pow(10, (np.log10(a) + np.log10(b)) / 2))
+    return int(pow(10, (np.log10(a) + np.log10(b)) / 2.))
 
 def calcAngSepDeg(ra0, dec0, ra1, dec1):
     '''Return the angular separation between two objects. Use the

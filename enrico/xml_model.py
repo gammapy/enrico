@@ -68,7 +68,7 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
     src.appendChild(spatial)
     lib.appendChild(src)
 
-def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
+def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
                    flux_max=10000.0, flux_min=1e-5,
                    index_free=1, index_value=-2.0,
@@ -76,6 +76,10 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0,
     """Add a source with a POWERLAW1 model"""
     elim_min = 30
     elim_max = 300000
+    if emin < elim_min:
+        elim_min = emin
+    if emax > elim_max:
+        elim_max = emax
     if flux_scale == 0:
         flux_scale = utils.fluxScale(flux_value)
     flux_value /= flux_scale
@@ -149,7 +153,7 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
     lib.appendChild(src)
 
 
-def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
+def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300, emin=200, emax=3e5,
                    norm_free=1, norm_value=1e-9, norm_scale=0,
                    norm_max=10000.0, norm_min=1e-5,
                    alpha_free=1, alpha_value=1.0,
@@ -159,6 +163,10 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300,
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
+    if emin < elim_min:
+        elim_min = emin
+    if emax > elim_max:
+        elim_max = emax
 
     if enorm == 0:
         enorm = 2e5  # meanEnergy(emin,emax,index_value)
@@ -247,7 +255,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
     lib.appendChild(src)
 
 
-def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
+def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
                    flux_max=10000.0, flux_min=1e-5,
                    index1_free=1, index1_value=-2.0,
@@ -259,6 +267,10 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0,
     """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000
+    if emin < elim_min:
+        elim_min = emin
+    if emax > elim_max:
+        elim_max = emax
     if flux_scale == 0:
         flux_scale = utils.fluxScale(flux_value)
     flux_value /= flux_scale
@@ -531,6 +543,9 @@ def WriteXml(lib, doc, srclist, config):
     emin = config['energy']['emin']
     emax = config['energy']['emax']
 
+    # Check if it is an energy bin, so we won't take the pivot energy from the catalog
+    is_energy_bin = 1 if 'Ebin' in config['file']['tag'] else 0
+
     Galname = "GalDiffModel"
     Isoname = "IsoDiffModel"
 
@@ -604,12 +619,15 @@ def WriteXml(lib, doc, srclist, config):
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
             if (ebl==None):
+                energyscale = utils.GetE0(emin,emax) if is_energy_bin else srclist[i].get('scale')
                 addPSPowerLaw1(lib, name, ra, dec, "None",
-                              eflux=srclist[i].get('scale'),
+                              emin=emin, emax=emax,
+                              eflux=energyscale,
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index_free=freeshape, index_value=srclist[i].get('index'),extendedName=extendedName)
             if (ebl!=None):
                 addPSLogparabola(lib, name, ra, dec, ebl,
+                              emin=emin, emax=emax,
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=freeshape, alpha_value=abs(srclist[i].get('index')),
                               beta_free=0, beta_min=0, beta_max=0,
@@ -621,11 +639,13 @@ def WriteXml(lib, doc, srclist, config):
                             index_free=freeshape, index_value=srclist[i].get('index'),extendedName=extendedName)
         elif spectype.strip() == "LogParabola":
             addPSLogparabola(lib, name, ra, dec, ebl, enorm=srclist[i].get('scale'),
+                              emin=emin, emax=emax,
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=freeshape, alpha_value=abs(srclist[i].get('index')),
                               beta_free=freeshape, beta_value=srclist[i].get('beta'),extendedName=extendedName)
         elif spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff" or spectype == "PLSuperExpCutoff2":
             addPSPLSuperExpCutoff(lib, name, ra, dec, ebl,
+                              emin=emin, emax=emax,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=freeshape, index1_value=srclist[i].get('index'),

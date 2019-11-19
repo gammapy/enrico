@@ -577,6 +577,7 @@ def PlotUL(pars,config,ULFlux,Index):
 
 
 def plot_sed_fromconfig(config,ignore_missing_bins=False):
+    config = get_config(config)
     utils.mkdir_p(config["out"]+"/Spectrum")
     srcname = config['target']['name']
     Emin = config['energy']['emin']

@@ -70,9 +70,9 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         roi = 0
         for ebin_i in energybins:
             # Restrict the analysis to the specified energy range in all cases.
-            if emintotal>=energybins[ebin_i][1]:
+            if emintotal>energybins[ebin_i][0]:
                 continue
-            if emaxtotal<energybins[ebin_i][0]:
+            if emaxtotal<energybins[ebin_i][1]:
                 continue
             
             if (roi==0): roi = 2.*ringwidths[ebin_i]+4.
@@ -83,7 +83,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             for k,evt in enumerate(evtnum):
                 pixel_size = pixelsizes[ebin_i][k]
                 if pixel_size<0: continue
-                tag     = "PSF{0}_En{1}".format(k,ebin_i)
+                tag     = "{0}_En{1}".format(typeirfs[evt],ebin_i)
                 # Approximation, in the 4FGL the core radius changes from src to src!
                 mes.info("Breaking the analysis in bins ~ 4FGL")
                 config['event']['evtype'] = evt
@@ -130,7 +130,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
             analysestorun = ["lowE","highE"]
 
-            for k,TYPE in enumerate(analysestorun):
+            for j,TYPE in enumerate(analysestorun):
                 tag = TYPE
                 if typeirfs[evt] != "" : tag += "_"+typeirfs[evt]# handle name of fits file
                 config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
@@ -232,10 +232,12 @@ def run(infile):
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
     
-    FitRunner.config['file']['parent_config'] = infile
+    if (FitRunner.config['file']['parent_config']==""):
+        FitRunner.config['file']['parent_config'] = infile
     
     if config['Spectrum']['ResultParentPlots'] == "yes":
-        plot_sed_fromconfig(get_config(config['file']['parent_config']),ignore_missing_bins=True) 
+        print(config['file']['parent_config'])
+        plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
         outXml = utils._dump_xml(config)
@@ -243,7 +245,7 @@ def run(infile):
         FitRunner.ModelMap(outXml)
         if Nbin>0:
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
-        plot_sed_fromconfig(get_config(infile),ignore_missing_bins=True)
+        plot_sed_fromconfig(infile,ignore_missing_bins=True)
     
     energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
 
