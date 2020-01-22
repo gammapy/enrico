@@ -13,10 +13,12 @@ def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     if not the model is change to PowerLaw.
     The index is frozen in all cases"""
     
-    # if approximated Gamma is outside of bounds set it to limit
+    # if approximated Gamma is outside of bounds set it to limit.
+    # Same for the prefix, do not allow crazy values (>1 or <1e-25, e.g. 0.)
     Gamma_min=-5
     Gamma_max=0
     Gamma=max(min(Gamma_max,Gamma),Gamma_min)
+    Pref =max(min(1,Pref),1e-25)
 
     Eav = utils.GetE0(E1, E2)
 
@@ -156,8 +158,11 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         xmltag_list = []
         for ebin_i in energybins:
             for k,evt in enumerate(evtnum):
-                if pixelsizes[ebin_i][k] > 0:
+                #if pixelsizes[ebin_i][k] > 0:
+                try:
                     xmltag_list.append("_{0}_En{1}".format(utils.typeirfs[k],ebin_i))
+                except KeyError:
+                    continue
 
 
     for ibin in xrange(NEbin):#Loop over the energy bins
@@ -188,7 +193,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
-        config.write(open(config['out'] + '/' +paramsfile[ibin], 'w')) #save the config file in a ascii file
+        config.write(open(config['out'] + '/' +filename, 'w')) #save the config file in a ascii file
 
     return paramsfile
 

@@ -139,7 +139,10 @@ class Result(Loggin.Message):
         # but we can do it component by component
         for comp in self.Fit.components:
             #self.Fit.writeCountsSpectra(imName)
-            comp.writeCountsSpectra(imName)
+            try:
+                comp.writeCountsSpectra(imName)
+            except RuntimeError:
+                break
             image = fits.open(imName)
 
             #loop on the source names to find the good one
