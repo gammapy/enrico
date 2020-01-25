@@ -70,11 +70,11 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         roi = 0
         for ebin_i in energybins:
             # Restrict the analysis to the specified energy range in all cases.
-            if emintotal>energybins[ebin_i][0]:
+            if emintotal>=energybins[ebin_i][1]:
                 continue
-            if emaxtotal<energybins[ebin_i][1]:
+            if emaxtotal<=energybins[ebin_i][0]:
                 continue
-            
+           
             if (roi==0): roi = 2.*ringwidths[ebin_i]+4.
             zmax    = zmaxbins[ebin_i]
             nbinsE  = nbinsbins[ebin_i]

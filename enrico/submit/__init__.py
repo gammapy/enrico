@@ -124,7 +124,7 @@ def call(cmd,
     if environ.FARM=="LAPP":
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
-        max_jobs = 1000
+        max_jobs = 5000
     elif environ.FARM=="LOCAL":
         max_jobs = 100
     elif environ.FARM=="CCIN2P3":

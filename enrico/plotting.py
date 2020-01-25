@@ -285,10 +285,12 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
                 mes.warning("cannot read the Results of energy bin "+ str(i))
             continue
         #fill the energy arrays
-        Epoint[i] = results.get("Scale")
-        if Epoint[i] in [results.get("Emin"),results.get("Emax")]:
+        #Epoint[i] = results.get("Scale") 
+        #if Epoint[i] in [results.get("Emin"),results.get("Emax")]: #### <---- is this a mistake?? does not make much sense to me
             Epoint[i] = 10**((np.log10(results.get("Emin"))+np.log10(results.get("Emax")))/2.)
             #Epoint[i] = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
+        
+        Epoint[i] = 10**((np.log10(results.get("Emin"))+np.log10(results.get("Emax")))/2.)
 
         EpointErrm[i] = Epoint[i] - results.get("Emin")
         EpointErrp[i] = results.get("Emax") - Epoint[i]

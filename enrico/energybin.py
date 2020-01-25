@@ -114,7 +114,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
             ener = np.logspace(lEmin, lEmax, NEbin + 1)
 
     if (config['ComponentAnalysis']['FGL4'] == 'yes'):
-        ener = np.asarray([50,1e2,3e2,1e3,3e3,1e4,1e6])
+        ener = np.asarray([50,1e2,3e2,1e3,3e3,1e4,3e4,3e5])
 
     # Remove bins that are outside the general range
     #ener = ener[(ener>=Emin)*(ener<=Emax)]
