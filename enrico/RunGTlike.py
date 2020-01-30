@@ -68,6 +68,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
 
         bin_i = 0
         roi = 0
+        # energybins is a dictionary containing an index and a pair of energies
         for ebin_i in energybins:
             # Restrict the analysis to the specified energy range in all cases.
             if emintotal>=energybins[ebin_i][1]:
@@ -89,8 +90,8 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config['event']['evtype'] = evt
                 config["file"]["xml"] = oldxml.replace(".xml","_")+typeirfs[evt]+"_"+\
                                         "En{0}.xml".format(ebin_i)
-                config["energy"]["emin"] = energybin[0]
-                config["energy"]["emax"] = energybin[1]
+                config["energy"]["emin"] = max(emintotal,energybin[0])
+                config["energy"]["emax"] = min(emaxtotal,energybin[1])
                 config["analysis"]["likelihood"] = "binned"
                 config["analysis"]["ComputeDiffrsp"] = "no"
                 config["analysis"]["enumbins_per_decade"] = \

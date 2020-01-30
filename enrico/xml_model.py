@@ -520,7 +520,8 @@ def GetlistFromFits(config, catalog):
     print Nextended, " source(s) is (are) extended"
 
     #save log of the generation of the xml
-    save = "catalog: "+catalog+"\n"
+    save =  "\n"
+    save += "catalog: "+catalog+"\n"
     save += "Add "+str(len(sources))+" sources in the ROI of "+str(roi)+ "("+str(config['space']['rad'])+"+ 2 ) degrees\n"
     save += " sources have free parameters inside "+str(max_radius)+" degrees\n"
     save += str(Nextended)+" source(s) is (are) extended\n"

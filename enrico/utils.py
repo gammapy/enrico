@@ -319,6 +319,24 @@ def MJD_to_met(mjd):
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
 
+def string_to_list(string):
+    """ 
+    Try to convert string to array, returns None if it is not possible
+    """
+    try:
+        for delim in [ "[", "]", "(", ")" ]:
+            string = string.replace(delim,"")
+        print("Debug: read energy bins: {0}".format(string))
+        list_of_floats = [ float(item) for item in string.split(",") ]
+        assert(len(list_of_floats)>=2)
+    except (ValueError, AssertionError), e:
+        # The conversion failed, return a None.
+        return(None)
+    else:
+        return(np.asarray(list_of_floats).flatten())
+    
+    return(None)
+
 def Checkevtclass(evclass):
     classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
 			16:"P8R3_TRANSIENT020",32:"P8R3_TRANSIENT010E",64:"P8R3_TRANSIENT010",128:"P8R3_SOURCE",

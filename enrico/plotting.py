@@ -74,8 +74,12 @@ class Result(Loggin.Message):
 
         try:
             self.CountsPlot(par)
-        except:
-            raise
+        except Exception as e:
+            print(type(e))    # the exception instance
+            print(e.args)     # arguments stored in .args
+            print(e)          # __str__ allows args to be printed directly,
+            #raise
+        
         # Save all in ascii file
         # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
         save_file = open(par.PlotName + '.dat', 'w')
@@ -141,36 +145,47 @@ class Result(Loggin.Message):
             #self.Fit.writeCountsSpectra(imName)
             try:
                 comp.writeCountsSpectra(imName)
-            except RuntimeError:
+                image = fits.open(imName)
+
+                #loop on the source names to find the good one
+                j = 0
+                for ID in image[1].data.names:
+                    if ID == Parameter.srcname:
+                        indice = j
+                    j += 1
+
+                for jn in xrange(len(image[3].data.field(0))):
+                    energymin = image[3].data.field(1)[jn]
+                    energymax = image[3].data.field(0)[jn]
+                    if energymax in emax and energymin in emin:
+                        k = np.where(energymax==emax)
+                        obs[k]     = obs[k] + image[1].data.field(0)[jn]
+                        obs_err[k] = np.sqrt(obs[k])
+                        src[k]     = src[k] + image[1].data.field(indice)[jn]
+                        for i in xrange(len(image[1].data.names) - 1):
+                            total[k] = total[k] + image[1].data.field(i + 1)[jn]
+                    else:
+                        emax    = np.append(emax, energymax)
+                        emin    = np.append(emin, energymin)
+                        obs     = np.append(obs,image[1].data.field(0)[jn])
+                        obs_err = np.append(obs_err,\
+                                            np.sqrt(image[1].data.field(0)[jn]))
+                        src     = np.append(src, image[1].data.field(indice)[jn])
+                        total   = np.append(total,0)
+                        for i in xrange(len(image[1].data.names) - 1):
+                            total[-1] = total[-1] + image[1].data.field(i + 1)[jn]
+            except RuntimeError as e:
+                print("Exception RuntimeError ocurred: ")
+                print(type(e))
+                print(e.args)
+                print(e)
                 break
-            image = fits.open(imName)
-
-            #loop on the source names to find the good one
-            j = 0
-            for ID in image[1].data.names:
-                if ID == Parameter.srcname:
-                    indice = j
-                j += 1
-
-            for jn in xrange(len(image[3].data.field(0))):
-                energymin = image[3].data.field(1)[jn]
-                energymax = image[3].data.field(0)[jn]
-                if energymax in emax and energymin in emin:
-                    k = np.where(energymax==emax)
-                    obs[k]     = obs[k] + image[1].data.field(0)[jn]
-                    obs_err[k] = np.sqrt(obs[k])
-                    src[k]     = src[k] + image[1].data.field(indice)[jn]
-                    for i in xrange(len(image[1].data.names) - 1):
-                        total[k] = total[k] + image[1].data.field(i + 1)[jn]
-                else:
-                    emax    = np.append(emax, energymax)
-                    emin    = np.append(emin, energymin)
-                    obs     = np.append(obs,image[1].data.field(0)[jn])
-                    obs_err = np.append(obs_err, np.sqrt(image[1].data.field(0)[jn]))
-                    src     = np.append(src, image[1].data.field(indice)[jn])
-                    total   = np.append(total,0)
-                    for i in xrange(len(image[1].data.names) - 1):
-                        total[-1] = total[-1] + image[1].data.field(i + 1)[jn]
+            except IndexError:
+                print("Exception IndexError ocurred (component unavailable): ")
+                print(type(e))
+                print(e.args)
+                print(e)
+                continue
 
         other = np.array(total - src)
         Nbin  = len(src)
