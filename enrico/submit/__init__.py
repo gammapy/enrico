@@ -124,7 +124,7 @@ def call(cmd,
     if environ.FARM=="LAPP":
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
-        max_jobs = 5000
+        max_jobs = 50000
     elif environ.FARM=="LOCAL":
         max_jobs = 100
     elif environ.FARM=="CCIN2P3":
@@ -159,14 +159,17 @@ def call(cmd,
         #text +='env\n'
         text +='#PBS -o '+qsub_log+'\n'
 
-        if environ.FARM == 'LAPP':
+        if environ.FARM in ['DESY','DESY_quick']:
+            text += 'export TMPDIR=/tmp/pfiles/$(date +"%s"); mkdir -p $TMPDIR\n'
+
+        if environ.FARM in ['LAPP','DESY','DESY_quick']:
             text += 'cp -R $FERMI_DIR/syspfiles/* $TMPDIR/.\n'
             text += 'export PFILES=$TMPDIR\n'
             text += 'cd $TMPDIR\n'
 
         text += cmd
 
-        if environ.FARM == 'LAPP':
+        if environ.FARM in ['LAPP','DESY','DESY_quick']:
             text += '\ncd ..\n'
             text += 'rm -fr $TMPDIR\n'
 

@@ -16,7 +16,7 @@ def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     # if approximated Gamma is outside of bounds set it to limit.
     # Same for the prefix, do not allow crazy values (>1 or <1e-25, e.g. 0.)
     Gamma_min=-5
-    Gamma_max=0
+    Gamma_max=-0.501
     Gamma=max(min(Gamma_max,Gamma),Gamma_min)
     Pref =max(min(1,Pref),1e-25)
 
@@ -191,7 +191,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         # Change the spectral index to follow the Estimated Gamma 
         # if approximated Gamma is outside of bounds set it to limit
         Gamma_min=-5
-        Gamma_max=0
+        Gamma_max=-0.501
         Gamma_bin=-max(min(Gamma_max,Gamma[ibin]),Gamma_min)
         config['Spectrum']['FrozenSpectralIndex'] = Gamma_bin
         config['UpperLimit']['SpectralIndex'] = Gamma_bin

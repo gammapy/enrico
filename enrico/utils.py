@@ -106,15 +106,19 @@ def cube_to_image(cube, slicepos=None, mean=False):
     return PrimaryHDU(data, header)
 
 
-def SubtractFits(infile1, infile2, config):
+def SubtractFits(infile1, infile2, config, tag="", abs_diff_file="", rel_diff_file=""):
     """Create (absolute and relative) difference images"""
     import astropy.io.fits as fits
     data1 = fits.getdata(infile1)
     data2 = fits.getdata(infile2)
     head = fits.getheader(infile2)
     filebase = config['out'] + "/" + config['target']['name']
-    abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
-    rel_diff_file = filebase + "_Residual_Model_cmap.fits"
+    if ( tag != "" ):
+        tag = "_"+tag
+    if ( abs_diff_file == "" ):
+        abs_diff_file = filebase + tag + "_Subtract_Model_cmap.fits"
+    if ( rel_diff_file == "" ):
+        rel_diff_file = filebase + tag + "_Residual_Model_cmap.fits"
     if 'NAXIS3' in head:
         head.remove('NAXIS3')
     if 'DATASUM' in head:
@@ -126,7 +130,6 @@ def SubtractFits(infile1, infile2, config):
     head.set('CREATOR', 'enrico')
     fits.writeto(abs_diff_file, data1 - data2, head, overwrite=True, checksum=True)
     fits.writeto(rel_diff_file, (data1 - data2) / data2, head, overwrite=True, checksum=True)
-
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):
     """Print the integral flux and error for all the sources"""

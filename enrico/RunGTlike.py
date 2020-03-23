@@ -10,6 +10,7 @@ from enrico.xml_model import XmlMaker
 from enrico.extern.configobj import ConfigObj
 from utils import hasKey, isKey, typeirfs
 
+# Called per component
 def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
 
     mes = Loggin.Message()
@@ -31,8 +32,10 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
         FitRunner.GenerateFits() #Generates fits files for the rest of the products
     return FitRunner
 
+# Called once
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
-
+    # Array containing the list of analysis objects (needed to produce the individual residual maps)
+    ListOfAnalysisObjects = []
     mes = Loggin.Message()
     #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
@@ -102,6 +105,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 Analyse = Analysis(folder, config, \
                     configgeneric=config,\
                     tag=tag, verbose=verbose)
+                ListOfAnalysisObjects.append(Analyse)
                 
                 if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
                 mes.info('Creating Likelihood object for component.')
@@ -117,7 +121,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         config["event"]["evtype"] = evtold
         FitRunner.config = config
 
-        return FitRunner,Fit
+        return FitRunner,Fit,ListOfAnalysisObjects
 
     # Standard (non-4FGL) analysis components
     oldxml = config['file']['xml']
@@ -152,6 +156,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                     configgeneric=config,\
                     tag=tag,\
                     verbose=verbose)
+                ListOfAnalysisObjects.append(Analyse)
 
                 mes.info('Creating Likelihood object for component.')
                 Fit_component = Analyse.CreateLikeObject()
@@ -167,7 +172,8 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
             Analyse = Analysis(folder, config, \
                 configgeneric=config,\
                 tag=typeirfs[evt], verbose = verbose)
-
+            
+            ListOfAnalysisObjects.append(Analyse)
             if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
             mes.info('Creating Likelihood object for component.')
             Fit_component = Analyse.CreateLikeObject()
@@ -178,7 +184,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     config["event"]["evtype"] = evtold
     FitRunner.config = config
 
-    return FitRunner,Fit
+    return FitRunner,Fit,ListOfAnalysisObjects
 
 def run(infile):
     from enrico import utils
@@ -192,7 +198,7 @@ def run(infile):
     folder = config['out']
     utils.mkdir_p(folder)
 
-    FitRunner,Fit = GenAnalysisObjects(config)
+    FitRunner,Fit,ListOfAnalysisObjects = GenAnalysisObjects(config)
     # create all the fit files and run gtlike
     FitRunner.PerformFit(Fit)
     sedresult = None
@@ -241,9 +247,10 @@ def run(infile):
         plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
-        outXml = utils._dump_xml(config)
+        #outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
-        FitRunner.ModelMap(outXml)
+        for AnalysisComponent in ListOfAnalysisObjects:
+            AnalysisComponent.ModelMap(outXml) 
         if Nbin>0:
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
         plot_sed_fromconfig(infile,ignore_missing_bins=True)

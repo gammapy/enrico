@@ -49,9 +49,9 @@ class Observation:
     def LoadConfiguration(self):
         #Read the configuration object and init all the variable
         filetag = self.Configuration['file']['tag']
-        inttag  = "_"+filetag
+        self.inttag  = "_"+filetag
         if not(self.tag==""):
-            inttag+="_"+self.tag
+            self.inttag+="_"+self.tag
 
         self.srcname   = self.Configuration['target']['name']
         self.modelname = self.Configuration['target']['spectrum']
@@ -61,19 +61,21 @@ class Observation:
 
         #Fits files
         self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
-        self.eventfile     = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
-        self.mktimefile    = self.folder+'/'+self.srcname+inttag+"_MkTime.fits"
-        self.Cubename      = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
-        self.Mapname       = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
-        self.BinnedMapfile = self.folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
-        self.cmapfile      = self.folder+'/'+self.srcname+inttag+"_CountMap.fits"
-        self.lcfile        = self.folder+'/'+self.srcname+inttag+"_applc.fits"
-        self.ccube         = self.folder+'/'+self.srcname+inttag+"_CCUBE.fits"
-        self.srcMap        = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_srcMap.fits"
-        self.ModelMap      = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_ModelMap.fits"
-        self.BinDef        = self.folder+'/'+self.srcname+inttag+"_BinDef.fits"
-        self.Probfile      = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_prob.fits"
-        self.psf           = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_psf.fits"
+        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"
+        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"
+        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"
+        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"
+        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"
+        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"
+        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"
+        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"
+        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"
+        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"
+        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"
+        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"
+        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"
+        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"
+        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -111,7 +113,7 @@ class Observation:
 
 
         #diffuse Response
-        self.diffrspflag = self.folder+'/'+self.srcname+inttag+"_diffrsp.flag"
+        self.diffrspflag = self.folder+'/'+self.srcname+self.inttag+"_diffrsp.flag"
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
@@ -495,10 +497,10 @@ class Observation:
         #srcMaps.run()
         run_retry(srcMaps)
 
-    def ModelMaps(self,xml):
+    def ModelMap(self,xml):
         """Run gtmodel tool for binned analysis and make a subtraction of the produced map
          with the count map to produce a residual map"""
-        if (self.clobber=="no" and os.path.isfile(self.ModelMap)):
+        if (self.clobber=="no" and os.path.isfile(self.ModelMapFile)):
             #print("File exists and clobber is False")
             return(0)
         model_map['expcube'] = self.Cubename
@@ -510,12 +512,17 @@ class Observation:
         #else :
         #    model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
-        model_map['outfile'] = self.ModelMap
+        model_map['outfile'] = self.ModelMapFile
         model_map['clobber'] = self.clobber
         #model_map.run()
         run_retry(model_map)
         #Compute the residual map
-        utils.SubtractFits(self.cmapfile,self.ModelMap,self.Configuration)
+        utils.SubtractFits(self.cmapfile,
+                           self.ModelMapFile,
+                           self.Configuration,
+                           tag=self.inttag,
+                           rel_diff_file=self.rel_diff_file,
+                           abs_diff_file=self.abs_diff_file)
 
     def FindSource(self):
         """Run the gtfindsrc tool"""

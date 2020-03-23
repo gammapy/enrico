@@ -540,7 +540,7 @@ def PlotSED(config,pars,ignore_missing_bins=False):
     xlim = plt.xlim()
     ylim = plt.ylim()
     xlim = (max([20,xlim[0]]),min([2e6,xlim[1]]))
-    ylim = (max([1e-13,ylim[0]]),min([1e-8,ylim[1]]))
+    ylim = (max([1e-14,ylim[0]]),min([1e-8,ylim[1]]))
     plt.xlim(xlim)
     plt.ylim(ylim)
     # turn them into log10 scale

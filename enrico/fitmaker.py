@@ -83,6 +83,8 @@ class FitMaker(Loggin.Message):
             self.obs.GtBinnedMap()
             self._log('gtsrcmap', 'Make a source map')#run gtsrcmap
             self.obs.SrcMap()
+            self._log('gtmodel', 'Make a model map')#run gtsrcmap
+            self.obs.ModelMap(self.config["file"]["xml"])
 
         if self.config['analysis']['likelihood'] == 'unbinned': #unbinned analysis chain
             self._log('gtexpmap', 'Make an exposure map')
@@ -180,7 +182,7 @@ class FitMaker(Loggin.Message):
         if writeXml :
             Fit.writeXml(utils._dump_xml(self.config))
 
-        self.success("Fit with gtlike preformed")
+        self.success("Fit with gtlike performed")
 
     def RemoveWeakSources(self,Fit,minTS=1.0):
         """Remove weak sources and re-optimize to get a better minimum."""
@@ -446,7 +448,7 @@ class FitMaker(Loggin.Message):
         for i in xrange(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
             utils.FreezeParams(Fit,self.srcname,PhIndex,indx)
-            #Use either the profile or the integral method
+        r    #Use either the profile or the integral method
             self.info("Methode used: "+self.config['UpperLimit']['Method'])
             if self.config['UpperLimit']['Method'] == "Profile":
                 ul = UpperLimits.UpperLimits(Fit)

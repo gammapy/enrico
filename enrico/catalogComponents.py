@@ -1,12 +1,12 @@
-# 4FGL catalog analysis components
+# 4FGL-like catalog analysis components.
 evtnum = [4,8,16,32,3]
 energybins = {1: [50,1e2],
           2: [1e2,3e2],
           3: [3e2,1e3],
           4: [1e3,3e3],
           5: [3e3,1e4],
-          6: [1e4,1e6]}
-nbinsbins = {1:3, 2:5, 3:6, 4:5, 5:6, 6:10}
+          6: [1e4,15e5]}
+nbinsbins = {1:3, 2:5, 3:6, 4:5, 5:6, 6:20}
 zmaxbins = {1:80, 2:90, 3:100, 4:105, 5:105, 6:105}
 ringwidths = {1:7, 2:7, 3:5, 4:4, 5:3, 6:2}
 pixelsizes = {1: [  -1,   -1,   -1,  0.6,   -1],
