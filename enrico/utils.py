@@ -5,7 +5,7 @@ from math import log10
 import numpy as np
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
-typeirfs={1:"FRONT",2:"BACK",3:"",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
+typeirfs={1:"FRONT",2:"BACK",3:"FRONTBACK",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
         128:"EDISP1",256:"EDISP2",512:"EDISP3"}
 
 def hasKey(dictionary,key):
@@ -63,7 +63,7 @@ def meanEnergy(emin, emax, index_value):
 
 def GetE0(a,b):
     """"Get the center of a bin in log space"""
-    return int(pow(10, (np.log10(a) + np.log10(b)) / 2))
+    return int(pow(10, (np.log10(a) + np.log10(b)) / 2.))
 
 def calcAngSepDeg(ra0, dec0, ra1, dec1):
     '''Return the angular separation between two objects. Use the
@@ -106,15 +106,19 @@ def cube_to_image(cube, slicepos=None, mean=False):
     return PrimaryHDU(data, header)
 
 
-def SubtractFits(infile1, infile2, config):
+def SubtractFits(infile1, infile2, config, tag="", abs_diff_file="", rel_diff_file=""):
     """Create (absolute and relative) difference images"""
     import astropy.io.fits as fits
     data1 = fits.getdata(infile1)
     data2 = fits.getdata(infile2)
     head = fits.getheader(infile2)
     filebase = config['out'] + "/" + config['target']['name']
-    abs_diff_file = filebase + "_Subtract_Model_cmap.fits"
-    rel_diff_file = filebase + "_Residual_Model_cmap.fits"
+    if ( tag != "" ):
+        tag = "_"+tag
+    if ( abs_diff_file == "" ):
+        abs_diff_file = filebase + tag + "_Subtract_Model_cmap.fits"
+    if ( rel_diff_file == "" ):
+        rel_diff_file = filebase + tag + "_Residual_Model_cmap.fits"
     if 'NAXIS3' in head:
         head.remove('NAXIS3')
     if 'DATASUM' in head:
@@ -126,7 +130,6 @@ def SubtractFits(infile1, infile2, config):
     head.set('CREATOR', 'enrico')
     fits.writeto(abs_diff_file, data1 - data2, head, overwrite=True, checksum=True)
     fits.writeto(rel_diff_file, (data1 - data2) / data2, head, overwrite=True, checksum=True)
-
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):
     """Print the integral flux and error for all the sources"""
@@ -318,6 +321,24 @@ def MJD_to_met(mjd):
 
 def JD_to_met(jd):
   return MJD_to_met(mjd)+2400000.5
+
+def string_to_list(string):
+    """ 
+    Try to convert string to array, returns None if it is not possible
+    """
+    try:
+        for delim in [ "[", "]", "(", ")" ]:
+            string = string.replace(delim,"")
+        print("Debug: read energy bins: {0}".format(string))
+        list_of_floats = [ float(item) for item in string.split(",") ]
+        assert(len(list_of_floats)>=2)
+    except (ValueError, AssertionError), e:
+        # The conversion failed, return a None.
+        return(None)
+    else:
+        return(np.asarray(list_of_floats).flatten())
+    
+    return(None)
 
 def Checkevtclass(evclass):
     classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",

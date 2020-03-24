@@ -13,41 +13,26 @@ def ChangeModel(comp, E1, E2, name, Pref, Gamma):
     if not the model is change to PowerLaw.
     The index is frozen in all cases"""
     
-    # if approximated Gamma is outside of bounds set it to limit
+    # if approximated Gamma is outside of bounds set it to limit.
+    # Same for the prefix, do not allow crazy values (>1 or <1e-25, e.g. 0.)
     Gamma_min=-5
-    Gamma_max=0
+    Gamma_max=-0.501
     Gamma=max(min(Gamma_max,Gamma),Gamma_min)
-    
+    Pref =max(min(1,Pref),1e-25)
+
     Eav = utils.GetE0(E1, E2)
 
     spectrum = comp.logLike.getSource(name).getSrcFuncs()['Spectrum']
-    spectrum.getParam('Prefactor').setBounds(1e-5,1e5)
     spectrum.getParam('Prefactor').setScale(utils.fluxScale(Pref))
     spectrum.getParam('Prefactor').setValue(utils.fluxNorm(Pref))
-    spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
+    spectrum.getParam('Prefactor').setBounds(1e-5,1e5)
     spectrum.getParam('Index').setValue(Gamma)
+    spectrum.getParam('Index').setBounds(Gamma_min,Gamma_max)
     spectrum.getParam('Index').setFree(False)
     spectrum.getParam('Scale').setValue(Eav)
     spectrum.getParam('Scale').setBounds(20,3e6)
 
     return comp
-
-def string_to_list(string):
-    """
-    Try to convert string to array, returns None if it is not possible
-    """
-    try:
-        for delim in [ "[", "]", "(", ")" ]:
-            string = string.replace(delim,"")
-        list_of_floats = [ float(item) for item in string.split(",") ]
-        assert(len(string)>=2)
-    except (ValueError, AssertionError), e:
-        # The conversion failed, return a None.
-        return(None)
-    else:
-        return(list_of_floats)
-
-    return(None)
 
 def PrepareEbin(Fit, FitRunner,sedresult=None):
     """ Prepare the computation of spectral point in energy bins by
@@ -78,16 +63,21 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration']
     config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
     tag = FitRunner.config['file']['tag']
-    lEmax = np.log10(float(FitRunner.config['energy']['emax']))
-    lEmin = np.log10(float(FitRunner.config['energy']['emin']))
+    Emax = float(FitRunner.config['energy']['emax'])
+    Emin = float(FitRunner.config['energy']['emin'])
+    lEmax = np.log10(Emax)
+    lEmin = np.log10(Emin)
     utils._log("Preparing submission of fit into energy bins")
-    print(" Emin = ", float(FitRunner.config['energy']['emin']),
-          " Emax = ", float(FitRunner.config['energy']['emax']),
-          " Nbins = ", NEbin)
+    print("Emin = {0} MeV".format(Emin),
+          "Emax = {0} MeV".format(Emax),
+          "Nbins = {0}".format(NEbin))
 
-    ener = string_to_list(config['Ebin']['DistEbins'])
+    ener = utils.string_to_list(config['Ebin']['DistEbins'])
     if ener is None:
-        if config['Ebin']['DistEbins'] in ['TS','mix'] and sedresult!=None:
+        if (config['ComponentAnalysis']['FGL4'] == 'yes' or config['Ebin']['DistEbins']=='FGL4'):
+            ener  = np.asarray([50,1e2,3e2,1e3,3e3,1e4,3e4,3e5])
+            NEbin = len(ener)-1
+        elif config['Ebin']['DistEbins'] in ['TS','mix'] and sedresult!=None:
             # Make the bins equispaced in sum(SED/SEDerr) - using the butterfly
             ipo = 0
             iTS = sedresult.SED/sedresult.Err
@@ -108,6 +98,36 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         else:
             # Make the bins equispaced in logE (standard)
             ener = np.logspace(lEmin, lEmax, NEbin + 1)
+    
+    # 1. Remove bins that are out of the range covered by the data
+    # 2. Limit the bin extend to the range covered by the data. 
+    # Get elements strictly above threshold +1 element to the left for the left side
+    # Get elements strictly below limit +1 element to the right side.
+    # example. [1,2,3,4,5] -> if Emin=3.4, Emax=3.9 we want to keep [3.4,3.9].
+    ener = np.asarray(ener)
+    print("Energy bins (before energy cuts): {0}".format(str(ener)))
+    if len(ener)==0: 
+        print("** Warning: energy bin array is empty")
+        return(None)
+    available_left = ener>Emin              # In the example FFFTT -> [4,5]
+    for k,use in enumerate(available_left[:-1]):
+        if not use and available_left[k+1]: 
+            available_left[k] = True        # In the example FFTTT -> [3,5]
+    available_right = ener<Emax             # In the example TTTFF -> [1,3]
+    for k,use in enumerate(available_right[1:]):
+        if not use and available_right[k]:
+            available_right[k+1] = True     # In the example TTTTF -> [1,4]
+    available = available_left*available_right
+    ener  = ener[available]                 # In the example FFTTF -> [3,4]
+    # Limit the range to the real energies that are covered by our data
+    # If the energy bins are well placed this should not do anything.
+    ener[0]  = np.max([Emin,ener[0]])
+    ener[-1] = np.min([Emax,ener[-1]])
+    NEbin = len(ener)-1
+    print("Energy bins (after energy cuts): {0}".format(str(ener)))
+    if len(ener)==0: 
+        print("** Warning: energy bin array is empty")
+        return(None)
 
     utils.mkdir_p(config['out'])
     paramsfile = []
@@ -120,9 +140,9 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
 
     if config['UpperLimit']['TSlimit']>TSsrc:
         utils._log('Re-optimize', False)
-        print "An upper limit has been computed. The fit need to be re-optmized"
+        print "An upper limit has been computed. The fit need to be re-optimized"
         Fit.optimize(0)
-
+    
     Pref = utils.ApproxPref(Fit, ener, srcname)
     Gamma = utils.ApproxGamma(Fit, ener, srcname)
 
@@ -133,7 +153,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
             comp.logLike.getSource(srcname).setSpectrum("PowerLaw") #Change model
         config['target']['spectrum'] = "PowerLaw"
 
-    xmltag_list = [""]#handle summed like analysis
+    xmltag_list = [""] #handle summed like analysis
     if config['ComponentAnalysis']['FrontBack'] == "yes":
         xmltag_list = ["_FRONT","_BACK"]
         mes.info("Splitting Front/Back events")
@@ -143,7 +163,16 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     elif config['ComponentAnalysis']['EDISP'] == "yes":
         xmltag_list = ["_EDISP0","_EDISP1","_EDISP2","_EDISP3"]
         mes.info("Splitting EDISP events")
-
+    elif config['ComponentAnalysis']['FGL4'] == "yes":
+        from catalogComponents import evtnum, energybins, pixelsizes
+        xmltag_list = []
+        for ebin_i in energybins:
+            for k,evt in enumerate(evtnum):
+                #if pixelsizes[ebin_i][k] > 0:
+                try:
+                    xmltag_list.append("_{0}_En{1}".format(utils.typeirfs[k],ebin_i))
+                except KeyError:
+                    continue
 
     for ibin in xrange(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
@@ -162,7 +191,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         # Change the spectral index to follow the Estimated Gamma 
         # if approximated Gamma is outside of bounds set it to limit
         Gamma_min=-5
-        Gamma_max=0
+        Gamma_max=-0.501
         Gamma_bin=-max(min(Gamma_max,Gamma[ibin]),Gamma_min)
         config['Spectrum']['FrozenSpectralIndex'] = Gamma_bin
         config['UpperLimit']['SpectralIndex'] = Gamma_bin
@@ -170,7 +199,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
-        config.write(open(config['out'] + '/' +paramsfile[ibin], 'w')) #save the config file in a ascii file
+        config.write(open(config['out'] + '/' +filename, 'w')) #save the config file in a ascii file
 
     return paramsfile
 

@@ -20,7 +20,7 @@ ENRICO_DIR = os.environ.get('ENRICO_DIR', '')
 FERMI_DIR = os.environ.get('FERMI_DIR', '')
 FERMI_DATA_DIR = os.environ.get('FERMI_DATA_DIR', '')
 CATALOG_DIR = os.environ.get('FERMI_CATALOG_DIR', '')
-CATALOG_TEMPLATE_DIR =  join(os.environ.get('CATALOG_TEMPLATE_DIR', ''),'Templates')
+CATALOG_TEMPLATE_DIR =  join(CATALOG_DIR,'Templates')
 
 DIFFUSE_DIR = os.environ.get('FERMI_DIFFUSE_DIR', '')
 DOWNLOAD_DIR = os.environ.get('FERMI_DOWNLOAD_DIR', '')

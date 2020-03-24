@@ -10,10 +10,17 @@ from enrico.xml_model import XmlMaker
 from enrico.extern.configobj import ConfigObj
 from utils import hasKey, isKey, typeirfs
 
+# Called per component
 def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
 
     mes = Loggin.Message()
     """ run an analysis"""
+    # If there are no xml files, create it and print a warning <--- This should be here?
+    #if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
+    if len(glob.glob(config['file']['xml']))==0: #.replace('.xml','*.xml')))==0:
+        mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
+        XmlMaker(config)
+    
     Obs = Observation(folder, config, tag=tag)
     if verbose:
         utils._log('SUMMARY: ' + tag)
@@ -25,44 +32,17 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
         FitRunner.GenerateFits() #Generates fits files for the rest of the products
     return FitRunner
 
+# Called once
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
-
+    # Array containing the list of analysis objects (needed to produce the individual residual maps)
+    ListOfAnalysisObjects = []
     mes = Loggin.Message()
     #check is the summed likelihood method should be used and get the
     #Analysis objects (observation and (Un)BinnedAnalysis objects)
     folder = config['out']
 
-    # If there are no xml files, create it and print a warning
-    if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
-        mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
-        XmlMaker(config)
-
+    # If there are no xml files, create it and print a warning <--- Not sure if this is needed here.
     Fit = SummedLikelihood.SummedLikelihood()
-    if hasKey(config,'ComponentAnalysis') == True:
-        # Create one obs instance for each component
-        configs  = [None]*4
-        Fits     = [None]*4
-        Analyses = [None]*4
-        if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
-            from enrico.data import fermievtypes
-            mes.info("Breaking the analysis in Front/Back events")
-            # Set Summed Likelihood to True
-            oldxml = config['file']['xml']
-            for k,TYPE in enumerate(["FRONT", "BACK"]):
-                configs[k] = ConfigObj(config)
-                configs[k]['event']['evtype'] = fermievtypes[TYPE]
-                try:
-                    Analyses[k] = Analysis(folder, configs[k], \
-                        configgeneric=config,\
-                        tag=TYPE, verbose = verbose)
-                    if not(xmlfile ==""): Analyses[k].obs.xmlfile = xmlfile
-                    Fits[k] = Analyses[k].CreateLikeObject()
-                    Fit.addComponent(Fits[k])
-                except RuntimeError,e:
-                    if 'RuntimeError: gtltcube execution failed' in str(e):
-                        mes.warning("Event type %s is empty! Error is %s" %(TYPE,str(e)))
-            FitRunner = Analyses[0]
-
     EUnBinned = config['ComponentAnalysis']['EUnBinned']
     emintotal = float(config['energy']['emin'])
     emaxtotal = float(config['energy']['emax'])
@@ -70,58 +50,51 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     evtnum = [config["event"]["evtype"]] #for std analysis
     evtold = evtnum[0] #for std analysis
  
-    # Create one obs instance for each component
+    # Create one obs instance for each component. 
+    # The first 3 can be combined with splitting in energy. The 4th tries to mimick 4FGL.
     if isKey(config['ComponentAnalysis'],'FrontBack') == 'yes':
         evtnum = [1, 2]
         config['analysis']['likelihood'] = "binned"
-    if isKey(config['ComponentAnalysis'],'PSF') == 'yes':
+    elif isKey(config['ComponentAnalysis'],'PSF') == 'yes':
         evtnum = [4,8,16,32]
         config['analysis']['likelihood'] = "binned"
-    if isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
-        # Special case, we make up to 15 components following 4FGL prescription in page 8.
-        evtnum = [4,8,16,32,3]
-        energybins = {1: [50,1e2],
-                      2: [1e2,3e2],
-                      3: [3e2,1e3],
-                      4: [1e3,3e3],
-                      5: [3e3,1e4],
-                      6: [1e4,1e6]}
-        nbinsbins = {1:3, 2:5, 3:6, 4:5, 5:6, 6:10}
-        zmaxbins = {1:80, 2:90, 3:100, 4:105, 5:105, 6:105}
-        ringwidths = {1:7, 2:7, 3:5, 4:4, 5:3, 6:2}
-        pixelsizes = {1: [  -1,   -1,   -1,  0.6,   -1],
-                      2: [  -1,   -1,  0.6,  0.6,   -1],
-                      3: [  -1,  0.4,  0.3,  0.2,   -1],
-                      4: [ 0.4, 0.15,  0.1,  0.1,   -1],
-                      5: [0.25,  0.1, 0.05, 0.04,   -1],
-                      6: [  -1,   -1,   -1,   -1, 0.04]}
-
-        oldxml = config['file']['xml']
+    elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
+        evtnum = [64,128,256,521]
         config['analysis']['likelihood'] = "binned"
+    elif isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
+        # Special case of the PSF component analysis, 
+        # where up to 15 components (energy+PSF) are created following 
+        # 4FGL prescription.
+        from catalogComponents import evtnum, energybins, nbinsbins, zmaxbins, ringwidths, pixelsizes
+        config['analysis']['likelihood'] = "binned"
+        oldxml = config['file']['xml']
 
         bin_i = 0
+        roi = 0
+        # energybins is a dictionary containing an index and a pair of energies
         for ebin_i in energybins:
             # Restrict the analysis to the specified energy range in all cases.
             if emintotal>=energybins[ebin_i][1]:
                 continue
-            if emaxtotal<energybins[ebin_i][0]:
+            if emaxtotal<=energybins[ebin_i][0]:
                 continue
+           
+            if (roi==0): roi = 2.*ringwidths[ebin_i]+4.
+            zmax    = zmaxbins[ebin_i]
+            nbinsE  = nbinsbins[ebin_i]
+            energybin = energybins[ebin_i]
             
             for k,evt in enumerate(evtnum):
                 pixel_size = pixelsizes[ebin_i][k]
                 if pixel_size<0: continue
-                tag     = "PSF{0}_EBin{1}".format(k,ebin_i)
+                tag     = "{0}_En{1}".format(typeirfs[evt],ebin_i)
                 # Approximation, in the 4FGL the core radius changes from src to src!
-                roi     = 2.*ringwidths[ebin_i]+4.
-                zmax    = zmaxbins[ebin_i]
-                nbinsE  = nbinsbins[ebin_i]
-                energybin = energybins[ebin_i]
                 mes.info("Breaking the analysis in bins ~ 4FGL")
                 config['event']['evtype'] = evt
                 config["file"]["xml"] = oldxml.replace(".xml","_")+typeirfs[evt]+"_"+\
-                                        "energy_{0}.xml".format(ebin_i)
-                config["energy"]["emin"] = energybin[0]
-                config["energy"]["emax"] = energybin[1]
+                                        "En{0}.xml".format(ebin_i)
+                config["energy"]["emin"] = max(emintotal,energybin[0])
+                config["energy"]["emax"] = min(emaxtotal,energybin[1])
                 config["analysis"]["likelihood"] = "binned"
                 config["analysis"]["ComputeDiffrsp"] = "no"
                 config["analysis"]["enumbins_per_decade"] = \
@@ -132,35 +105,40 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 Analyse = Analysis(folder, config, \
                     configgeneric=config,\
                     tag=tag, verbose=verbose)
+                ListOfAnalysisObjects.append(Analyse)
                 
                 if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+                mes.info('Creating Likelihood object for component.')
                 Fit_component = Analyse.CreateLikeObject()
+                mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
             
         FitRunner = Analyse
         FitRunner.obs.Emin = emintotal
         FitRunner.obs.Emax = emaxtotal
-
+        config["energy"]["emin"] = emintotal
+        config["energy"]["emax"] = emaxtotal
         config["event"]["evtype"] = evtold
         FitRunner.config = config
 
-        return FitRunner,Fit
+        return FitRunner,Fit,ListOfAnalysisObjects
 
-    if isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
-        evtnum = [64,128,256,521]
-        config['analysis']['likelihood'] = "binned"
+    # Standard (non-4FGL) analysis components
     oldxml = config['file']['xml']
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt
-        config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml").replace("_.xml",".xml")
+        
+        if typeirfs[evt] != "":
+            config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml")
 
         if EUnBinned>emintotal and EUnBinned<emaxtotal:
             mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
             analysestorun = ["lowE","highE"]
 
-            for k,TYPE in enumerate(analysestorun):
+            for j,TYPE in enumerate(analysestorun):
                 tag = TYPE
                 if typeirfs[evt] != "" : tag += "_"+typeirfs[evt]# handle name of fits file
+                config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
 
                 # Tune parameters
                 if TYPE is "lowE":
@@ -176,30 +154,37 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
 
                 Analyse = Analysis(folder, config, \
                     configgeneric=config,\
-                    tag=TYPE,\
+                    tag=tag,\
                     verbose=verbose)
+                ListOfAnalysisObjects.append(Analyse)
 
-
+                mes.info('Creating Likelihood object for component.')
                 Fit_component = Analyse.CreateLikeObject()
+                mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
             FitRunner = Analyse
             FitRunner.obs.Emin = emintotal
             FitRunner.obs.Emax = emaxtotal
+            config["energy"]["emin"] = emintotal
+            config["energy"]["emax"] = emaxtotal
 
         else:
             Analyse = Analysis(folder, config, \
                 configgeneric=config,\
                 tag=typeirfs[evt], verbose = verbose)
-
+            
+            ListOfAnalysisObjects.append(Analyse)
             if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
+            mes.info('Creating Likelihood object for component.')
             Fit_component = Analyse.CreateLikeObject()
+            mes.info('Adding component to the summed likelihood.')
             Fit.addComponent(Fit_component)
+   
     FitRunner = Analyse
-
     config["event"]["evtype"] = evtold
     FitRunner.config = config
 
-    return FitRunner,Fit
+    return FitRunner,Fit,ListOfAnalysisObjects
 
 def run(infile):
     from enrico import utils
@@ -213,7 +198,7 @@ def run(infile):
     folder = config['out']
     utils.mkdir_p(folder)
 
-    FitRunner,Fit = GenAnalysisObjects(config)
+    FitRunner,Fit,ListOfAnalysisObjects = GenAnalysisObjects(config)
     # create all the fit files and run gtlike
     FitRunner.PerformFit(Fit)
     sedresult = None
@@ -254,18 +239,21 @@ def run(infile):
     #  Make energy bins by running a *new* analysis
     Nbin = config['Ebin']['NumEnergyBins']
     
-    FitRunner.config['file']['parent_config'] = infile
+    if (FitRunner.config['file']['parent_config']==""):
+        FitRunner.config['file']['parent_config'] = infile
     
     if config['Spectrum']['ResultParentPlots'] == "yes":
-        plot_sed_fromconfig(get_config(config['file']['parent_config']),ignore_missing_bins=True) 
+        print(config['file']['parent_config'])
+        plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
-        outXml = utils._dump_xml(config)
+        #outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
-        FitRunner.ModelMap(outXml)
+        for AnalysisComponent in ListOfAnalysisObjects:
+            AnalysisComponent.ModelMap(outXml) 
         if Nbin>0:
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
-        plot_sed_fromconfig(get_config(infile),ignore_missing_bins=True)
+        plot_sed_fromconfig(infile,ignore_missing_bins=True)
     
     energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
 

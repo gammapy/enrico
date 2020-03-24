@@ -6,31 +6,39 @@ The Observation class contains all the variables needed  to run the ST like file
 begun October 2010
 """
 import os
+import sys
+import Loggin
+from time import sleep
+from random import random
 from math import sqrt, log10
 from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
 from GtApp import GtApp
 from enrico import utils
 
 def run_retry(macro,tries=5):
-    # The Fermi LAT sometimes fail with annoying Runtime errors,
-    # try to catch them and re-run the macro. 
-    # Do that up to 5 times with random waitings.
-    from time import sleep
-    from random import random
+    """
+    The Fermi LAT sometimes fail with annoying Runtime errors,
+    try to catch them and re-run the macro that failed. 
+    Do that up to 5 times with random waiting times.
+    """
+    mes = Loggin.Message()
     for retry in range(tries):
         try:
             macro.run()
         except RuntimeError:
-            sleep(2.*random()+1.)
+            # Wait between 10 and 20 seconds to try again
+            mes.warning("An error ocurred, retrying ...")
+            sleep(10.*random()+10.)
             continue
         else:
-            break
-    return(macro)
+            return(macro)
+    mes.error("An error ocurred and could not be recovered. Exiting!")
+    sys.exit(1)    
 
 class Observation:
     # init function of the Observation class.
     # folder : folder where the produced fits files will be stored.
-    # configuration is the confi of enrico (contains the variable)
+    # configuration is the config of enrico (contains the variable)
 
     def __init__(self,folder,Configuration,tag=""):
         self.Configuration = Configuration
@@ -41,9 +49,9 @@ class Observation:
     def LoadConfiguration(self):
         #Read the configuration object and init all the variable
         filetag = self.Configuration['file']['tag']
-        inttag  = "_"+filetag
+        self.inttag  = "_"+filetag
         if not(self.tag==""):
-            inttag+="_"+self.tag
+            self.inttag+="_"+self.tag
 
         self.srcname   = self.Configuration['target']['name']
         self.modelname = self.Configuration['target']['spectrum']
@@ -52,20 +60,22 @@ class Observation:
         self.xmlfile   = self.Configuration['file']['xml']
 
         #Fits files
-        self.eventcoarse = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
-        self.eventfile   = self.folder+'/'+self.srcname+inttag+"_Evt.fits"
-        self.mktimefile  = self.folder+'/'+self.srcname+inttag+"_MkTime.fits"
-        self.Cubename  = self.folder+'/'+self.srcname+inttag+"_ltCube.fits"
-        self.Mapname   = self.folder+'/'+self.srcname+inttag+"_ExpMap.fits"
-        self.BinnedMapfile = self.folder+'/'+self.srcname+inttag+"_BinnedMap.fits"
-        self.cmapfile  = self.folder+'/'+self.srcname+inttag+"_CountMap.fits"
-        self.lcfile    = self.folder+'/'+self.srcname+inttag+"_applc.fits"
-        self.ccube     = self.folder+'/'+self.srcname+inttag+"_CCUBE.fits"
-        self.srcMap    = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_srcMap.fits"
-        self.ModelMap  = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_ModelMap.fits"
-        self.BinDef    = self.folder+'/'+self.srcname+inttag+"_BinDef.fits"
-        self.Probfile  = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_prob.fits"
-        self.psf       = self.folder+'/'+self.srcname+inttag+"_"+self.modelname+"_psf.fits"
+        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
+        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"
+        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"
+        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"
+        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"
+        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"
+        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"
+        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"
+        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"
+        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"
+        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"
+        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"
+        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"
+        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"
+        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"
+        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -74,10 +84,21 @@ class Observation:
             get_met = lambda t: utils.JD_to_met(float(t))
         else:
             get_met = lambda t: float(t)
+        
+        #use energy dispersion corrections? This will extend Emin and Emax
+        self.use_edisp = bool(self.Configuration['analysis']['EnergyDispersion']=='yes' and self.Configuration["analysis"]["likelihood"]=="binned")
+        
         self.t1        = get_met(self.Configuration['time']['tmin'])
         self.t2        = get_met(self.Configuration['time']['tmax'])
         self.Emin      = float(self.Configuration['energy']['emin'])
         self.Emax      = float(self.Configuration['energy']['emax'])
+        if (self.use_edisp):
+            self.Emin_ext  = 10**(log10(self.Emin)-0.3)
+            self.Emax_ext  = 10**(log10(self.Emax)+0.3)
+        else:
+            self.Emin_ext  = self.Emin
+            self.Emax_ext  = self.Emax
+
         self.ra        = float(self.Configuration['space']['xref'])
         self.dec       = float(self.Configuration['space']['yref'])
         self.roi       = float(self.Configuration['space']['rad'])
@@ -85,18 +106,19 @@ class Observation:
         #self.irfs      = self.irfs
         self.likelihood = self.Configuration['analysis']['likelihood']
 
-        #Apply cuts in event selections? (roicuts should not be applied twice, it makes ST to crash)
+        #Apply cuts in event selections? 
+        # (roicuts should not be applied twice, it makes ST crash)
         self.roicuts   = bool(self.Configuration['analysis']['evtroicuts']=='yes')
         self.timecuts  = bool(self.Configuration['analysis']['evttimecuts']=='yes')
 
+
         #diffuse Response
-        self.diffrspflag = self.folder+'/'+self.srcname+inttag+"_diffrsp.flag"
+        self.diffrspflag = self.folder+'/'+self.srcname+self.inttag+"_diffrsp.flag"
 
         #Maps binning
         self.binsz     = self.Configuration['space']['binsz']
-        #self.npix      = int(2*self.roi/sqrt(2.)/self.binsz)
         self.npix      = int(2*self.roi/self.binsz)
-        self.npixCntMp = int(2*self.roi/self.binsz)
+        self.npixCntMp = int(sqrt(2.)*self.roi/self.binsz)
 
         #tool options
         self.clobber = self.Configuration['clobber']
@@ -111,6 +133,8 @@ class Observation:
         print "ROI\t=\t",self.roi," degrees"
         print "E min\t=\t",self.Emin," MeV"
         print "E max\t=\t",self.Emax," MeV"
+        print "E min ext\t=\t",self.Emin_ext," MeV"
+        print "E max ext\t=\t",self.Emax_ext," MeV"
         print "IRFs\t=\t",self.irfs
         print "evclass\t=\t",self.Configuration['event']['evclass']
         print "evtype\t=\t",self.Configuration['event']['evtype']
@@ -120,7 +144,7 @@ class Observation:
             self.Configuration['event']['evtype'])
 
     def Gtbin(self):
-        """Run gtbin with the CMAP option. A count map is produced"""
+        """Run gtbin with the CMAP option. A square count map is produced enclosed inside the roi"""
         if (self.clobber=="no" and os.path.isfile(self.cmapfile)):
             #print("File exists and clobber is False")
             return(0)
@@ -132,8 +156,8 @@ class Observation:
         evtbin['nypix'] = self.npixCntMp
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = self.Configuration['space']['coordsys']
-        evtbin["emin"] = self.Emin
-        evtbin["emax"] = self.Emax
+        evtbin["emin"] = self.Emin_ext
+        evtbin["emax"] = self.Emax_ext
         evtbin['xref'] = self.ra
         evtbin['yref'] = self.dec
         evtbin['axisrot'] = 0
@@ -141,7 +165,7 @@ class Observation:
         evtbin['clobber'] = self.clobber
         #evtbin.run()
         run_retry(evtbin)
-
+    
     def GtBinDef(self,filename):
         if (self.clobber=="no" and os.path.isfile(self.BinDef)):
             #print("File exists and clobber is False")
@@ -194,19 +218,19 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.ccube)):
             #print("File exists and clobber is False")
             return(0)
-        Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
+        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)#Compute the number of decade
         evtbin['evfile'] = self.mktimefile
         evtbin['scfile'] = self.ft2
         evtbin['outfile'] = self.ccube
         evtbin['algorithm'] = "CCUBE"
-        evtbin['nxpix'] = self.npix
-        evtbin['nypix'] = self.npix
+        evtbin['nxpix'] = self.npixCntMp
+        evtbin['nypix'] = self.npixCntMp
         evtbin['binsz'] = self.binsz
         evtbin['coordsys'] = self.Configuration['space']['coordsys']
         evtbin['xref'] = self.ra
         evtbin['yref'] = self.dec
-        evtbin["emin"] = self.Emin
-        evtbin["emax"] = self.Emax
+        evtbin["emin"] = self.Emin_ext
+        evtbin["emax"] = self.Emax_ext
         evtbin["tstart"] = self.t1
         evtbin["tstop"] = self.t2
         evtbin['ebinalg'] = "LOG"
@@ -224,7 +248,7 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.BinnedMapfile)):
             #print("File exists and clobber is False")
             return(0)
-        Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
+        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)#Compute the number of decade
         expcube2 = GtApp('gtexpcube2', 'Likelihood')
         expcube2['infile'] = self.Cubename
         expcube2['outfile'] = self.BinnedMapfile
@@ -232,13 +256,22 @@ class Observation:
         #if  self.irfs != 'CALDB':
         expcube2['evtype']= self.Configuration['event']['evtype']
         expcube2['irfs'] = self.irfs
-        expcube2['emin'] = self.Emin
-        expcube2['emax'] = self.Emax
+        expcube2['emin'] = self.Emin_ext
+        expcube2['emax'] = self.Emax_ext
         expcube2['xref'] = "INDEF"
         expcube2['yref'] = "INDEF"
         expcube2['nxpix'] = "INDEF"
         expcube2['nypix'] = "INDEF"
         expcube2['binsz'] = "INDEF"
+        app = expcube2
+        if 'edisp_bins' in app.pars.keys():
+            if self.use_edisp:
+                app['edisp_bins'] = -min(3,int(Nbdecade*0.2+0.5))
+            else:
+                app['edisp_bins'] = 0
+        elif 'edisp' in app.pars.keys():
+            app['edisp'] = True
+                
         expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expcube2['coordsys'] = self.Configuration['space']['coordsys']
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
@@ -288,8 +321,8 @@ class Observation:
         filter['rad'] =  180          #self.roi
         filter['tmin'] = "INDEF"      #self.t1
         filter['tmax'] = "INDEF"      #self.t2
-        filter['emin'] = self.Emin
-        filter['emax'] = self.Emax
+        filter['emin'] = self.Emin_ext
+        filter['emax'] = self.Emax_ext
         filter['zmax'] = self.Configuration['analysis']['zmax']
         filter['evclass'] = self.Configuration['event']['evclass']
         filter['evtype'] = self.Configuration['event']['evtype']
@@ -405,7 +438,7 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.Mapname)):
             #print("File exists and clobber is False")
             return(0)
-        Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
+        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)#Compute the number of decade
         expMap['evfile'] = self.mktimefile
         expMap['scfile'] = self.ft2
         expMap['expcube'] = self.Cubename
@@ -415,8 +448,8 @@ class Observation:
         else :
             expMap['evtype']= 'INDEF'
         expMap['irfs'] = self.irfs
-        expMap['evtype']= self.Configuration['event']['evtype']
-        expMap['srcrad'] = self.roi+10
+        expMap['evtype'] = self.Configuration['event']['evtype']
+        expMap['srcrad'] = self.roi+15
         #The number of bin is the number of decade * the number of bin per decade (given by the users)
         expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
@@ -428,6 +461,7 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.srcMap)):
             #print("File exists and clobber is False")
             return(0)
+        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)#Compute the number of decade
         srcMaps['scfile'] = self.ft2
         srcMaps['expcube'] = self.Cubename
         srcMaps['cmap'] = self.ccube
@@ -439,15 +473,34 @@ class Observation:
             srcMaps['evtype']= 'INDEF'
         srcMaps['irfs']= self.irfs
         srcMaps['outfile'] = self.srcMap
+        
+        # energy dispersion correction
+        app = srcMaps
+        if 'edisp_bins' in app.pars.keys():
+            if self.use_edisp:
+                #app['edisp_ebins'] = -min(3,int(Nbdecade*0.2+0.5)) # adaptative.
+                app['edisp_bins'] = -2 # lets keep it simple
+            else:
+                app['edisp_bins'] = 0
+        elif 'edisp' in app.pars.keys():
+            app['edisp'] = True
+        
         srcMaps['emapbnds']='no'
+        if (self.Configuration['analysis']['keep_all_srcmaps'] == 'yes'):
+            # should speed up future re-fitting, at the cost of disk space
+            srcMaps['copyall']='yes' 
+        else:
+            # default behavior, compute them on the fly.
+            srcMaps['copyall']='no' 
+        ### TODO: test this flag to see, speed up? (default: disabled)
         srcMaps['clobber'] = self.clobber
         #srcMaps.run()
         run_retry(srcMaps)
 
-    def ModelMaps(self,xml):
+    def ModelMap(self,xml):
         """Run gtmodel tool for binned analysis and make a subtraction of the produced map
          with the count map to produce a residual map"""
-        if (self.clobber=="no" and os.path.isfile(self.ModelMap)):
+        if (self.clobber=="no" and os.path.isfile(self.ModelMapFile)):
             #print("File exists and clobber is False")
             return(0)
         model_map['expcube'] = self.Cubename
@@ -459,12 +512,17 @@ class Observation:
         #else :
         #    model_map['evtype']= 'INDEF'
         model_map["irfs"]=self.irfs
-        model_map['outfile'] = self.ModelMap
+        model_map['outfile'] = self.ModelMapFile
         model_map['clobber'] = self.clobber
         #model_map.run()
         run_retry(model_map)
         #Compute the residual map
-        utils.SubtractFits(self.cmapfile,self.ModelMap,self.Configuration)
+        utils.SubtractFits(self.cmapfile,
+                           self.ModelMapFile,
+                           self.Configuration,
+                           tag=self.inttag,
+                           rel_diff_file=self.rel_diff_file,
+                           abs_diff_file=self.abs_diff_file)
 
     def FindSource(self):
         """Run the gtfindsrc tool"""
@@ -517,7 +575,7 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.psf)):
             #print("File exists and clobber is False")
             return(0)
-        Nbdecade = log10(self.Emax)-log10(self.Emin)#Compute the number of decade
+        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)#Compute the number of decade
         irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],self.Configuration['event']['evtype'])
         psf = GtApp('gtpsf', 'Likelihood')
         psf["expcube"] = self.Cubename
@@ -526,8 +584,8 @@ class Observation:
         psf["evtype"]  = self.Configuration['event']['evtype']
         psf["ra"]      = self.ra
         psf["dec"]     = self.dec
-        psf["emin"]    = self.Emin
-        psf["emax"]    = self.Emax
+        psf["emin"]    = self.Emin_ext
+        psf["emax"]    = self.Emax_ext
         psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         #psf.run()
