@@ -457,7 +457,7 @@ def GetlistFromFits(config, catalog):
             Nfree += 1
             mes.info("Adding [free] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             if not(extended_fitsfilename==""):
-                if not os.path.isfile(extended_fitsfilename):
+                if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
                     mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
                     continue
                 mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
@@ -473,7 +473,7 @@ def GetlistFromFits(config, catalog):
             Nfree += 1
             mes.info("Adding [free norm/fixed shape] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             if not(extended_fitsfilename==""):
-                if not os.path.isfile(extended_fitsfilename):
+                if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
                     mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
                     continue
                 mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])

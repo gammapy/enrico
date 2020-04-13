@@ -118,8 +118,8 @@ class FitMaker(Loggin.Message):
                               irfs=self.obs.irfs)
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
-	
-	# Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, 
+    
+    # Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, 
         # we may want to allow fixed shape for that case
         if float(self.config['Spectrum']['FrozenSpectralIndex']!=0): 
             parameters = dict()
@@ -448,8 +448,8 @@ class FitMaker(Loggin.Message):
         for i in xrange(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
             utils.FreezeParams(Fit,self.srcname,PhIndex,indx)
-        r    #Use either the profile or the integral method
-            self.info("Methode used: "+self.config['UpperLimit']['Method'])
+            #Use either the profile or the integral method
+            self.info("Method used: "+self.config['UpperLimit']['Method'])
             if self.config['UpperLimit']['Method'] == "Profile":
                 ul = UpperLimits.UpperLimits(Fit)
                 source_ul = ul[self.obs.srcname]
@@ -501,4 +501,4 @@ class FitMaker(Loggin.Message):
         """Make a model Map. Valid only if the statistic is binned"""
         if self.config['analysis']['likelihood'] == 'binned':
             self._log('gtmodel', 'Make model map')#run gtmodel
-            self.obs.ModelMaps(xml)
+            self.obs.ModelMap(xml)

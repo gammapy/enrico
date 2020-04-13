@@ -229,8 +229,12 @@ def run(infile):
                 varscale = "Eb"
 
             if varscale is not None:
-                spectrum.getParam(varscale).setValue(sedresult.decE)
-                FitRunner.PerformFit(Fit)
+                try:
+                    spectrum.getParam(varscale).setBounds(20,3e6)
+                    spectrum.getParam(varscale).setValue(sedresult.decE)
+                    FitRunner.PerformFit(Fit)
+                except RuntimeError:
+                    mes.warning("Error occurred while setting decorrelation energy.") 
             
     #Get and dump the target specific results
     Result = FitRunner.GetAndPrintResults(Fit)
@@ -247,9 +251,10 @@ def run(infile):
         plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
-        #outXml = utils._dump_xml(config)
+        outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
         for AnalysisComponent in ListOfAnalysisObjects:
+            #AnalysisComponent.ModelMap(AnalysisComponent.config["file"]["xml"]) 
             AnalysisComponent.ModelMap(outXml) 
         if Nbin>0:
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
