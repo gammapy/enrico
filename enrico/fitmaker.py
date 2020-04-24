@@ -83,8 +83,8 @@ class FitMaker(Loggin.Message):
             self.obs.GtBinnedMap()
             self._log('gtsrcmap', 'Make a source map')#run gtsrcmap
             self.obs.SrcMap()
-            self._log('gtmodel', 'Make a model map')#run gtsrcmap
-            self.obs.ModelMap(self.config["file"]["xml"])
+            #self._log('gtmodel', 'Make a model map')#run gtmodel
+            #self.obs.ModelMap(self.config["file"]["xml"])
 
         if self.config['analysis']['likelihood'] == 'unbinned': #unbinned analysis chain
             self._log('gtexpmap', 'Make an exposure map')
@@ -179,8 +179,11 @@ class FitMaker(Loggin.Message):
 
         self.RemoveWeakSources(Fit,\
             self.config['fitting']['min_source_TS'])
+        
+        self.outXml = None
         if writeXml :
-            Fit.writeXml(utils._dump_xml(self.config))
+            self.outXml = utils._dump_xml(self.config)
+            Fit.writeXml(self.outXml)
 
         self.success("Fit with gtlike performed")
 
@@ -497,8 +500,11 @@ class FitMaker(Loggin.Message):
 
         return(result)
 
-    def ModelMap(self, xml):
+    def ModelMap(self, xml=None):
         """Make a model Map. Valid only if the statistic is binned"""
         if self.config['analysis']['likelihood'] == 'binned':
             self._log('gtmodel', 'Make model map')#run gtmodel
+            if xml==None:
+                xml = self.outXml 
+
             self.obs.ModelMap(xml)

@@ -7,6 +7,7 @@ begun October 2010
 """
 import os
 import sys
+import shutil
 import Loggin
 from time import sleep
 from random import random
@@ -22,6 +23,16 @@ def run_retry(macro,tries=5):
     Do that up to 5 times with random waiting times.
     """
     mes = Loggin.Message()
+
+    # Try to write the temporary output to a temporary file and then move it, to avoid broken files
+    try:
+        orig_name = str(macro['output'])
+        macro['output'] = macro['output']+".tmpout"
+    except:
+        is_out_in_tmp = False
+    else:
+        is_out_in_tmp = True
+
     for retry in range(tries):
         try:
             macro.run()
@@ -31,6 +42,9 @@ def run_retry(macro,tries=5):
             sleep(10.*random()+10.)
             continue
         else:
+            if is_out_in_tmp:
+                shutil.move(macro['output'],orig_name)
+
             return(macro)
     mes.error("An error ocurred and could not be recovered. Exiting!")
     sys.exit(1)    
@@ -511,7 +525,7 @@ class Observation:
         #    model_map['evtype']= self.Configuration['event']['evtype']
         #else :
         #    model_map['evtype']= 'INDEF'
-        model_map["irfs"]=self.irfs
+        model_map["irfs"] = self.irfs
         model_map['outfile'] = self.ModelMapFile
         model_map['clobber'] = self.clobber
         #model_map.run()
