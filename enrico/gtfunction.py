@@ -497,27 +497,27 @@ class Observation:
         #srcMaps.run()
         run_retry(srcMaps)
 
-    def ModelMap(self,xml):
+    def ModelMap(self,xml,substract=True):
         """Run gtmodel tool for binned analysis and make a subtraction of the produced map
-         with the count map to produce a residual map"""
-        if (self.clobber=="no" and os.path.isfile(self.ModelMapFile)):
+         with the count map to produce a residual map is asked"""
+        if not(self.clobber=="no" and os.path.isfile(self.ModelMapFile)):
             #print("File exists and clobber is False")
-            return(0)
-        model_map['expcube'] = self.Cubename
-        model_map['srcmaps'] = self.srcMap
-        model_map['bexpmap'] = self.BinnedMapfile
-        model_map['srcmdl'] = xml
-        #if  self.irfs != 'CALDB':
-        #    model_map['evtype']= self.Configuration['event']['evtype']
-        #else :
-        #    model_map['evtype']= 'INDEF'
-        model_map["irfs"]=self.irfs
-        model_map['outfile'] = self.ModelMapFile
-        model_map['clobber'] = self.clobber
-        #model_map.run()
-        run_retry(model_map)
+            model_map['expcube'] = self.Cubename
+            model_map['srcmaps'] = self.srcMap
+            model_map['bexpmap'] = self.BinnedMapfile
+            model_map['srcmdl'] = xml
+            #if  self.irfs != 'CALDB':
+            #    model_map['evtype']= self.Configuration['event']['evtype']
+            #else :
+            #    model_map['evtype']= 'INDEF'
+            model_map["irfs"]=self.irfs
+            model_map['outfile'] = self.ModelMapFile
+            model_map['clobber'] = self.clobber
+            #model_map.run()
+            run_retry(model_map)
         #Compute the residual map
-        utils.SubtractFits(self.cmapfile,
+        if substract:
+            utils.SubtractFits(self.cmapfile,
                            self.ModelMapFile,
                            self.Configuration,
                            tag=self.inttag,

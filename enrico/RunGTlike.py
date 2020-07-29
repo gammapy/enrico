@@ -127,8 +127,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     oldxml = config['file']['xml']
     for k,evt in enumerate(evtnum):
         config['event']['evtype'] = evt
-        
-        if typeirfs[evt] != "":
+        if typeirfs[evt] != "" and typeirfs[evt]!="FRONTBACK":
             config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml")
 
         if EUnBinned>emintotal and EUnBinned<emaxtotal:
@@ -247,10 +246,10 @@ def run(infile):
         plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
-        #outXml = utils._dump_xml(config)
+        outXml = utils._dump_xml(config)
         # the possibility of making the model map is checked inside the function
         for AnalysisComponent in ListOfAnalysisObjects:
-            AnalysisComponent.ModelMap(outXml) 
+            AnalysisComponent.obs.ModelMap(outXml) 
         if Nbin>0:
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
         plot_sed_fromconfig(infile,ignore_missing_bins=True)

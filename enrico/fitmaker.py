@@ -84,7 +84,7 @@ class FitMaker(Loggin.Message):
             self._log('gtsrcmap', 'Make a source map')#run gtsrcmap
             self.obs.SrcMap()
             self._log('gtmodel', 'Make a model map')#run gtsrcmap
-            self.obs.ModelMap(self.config["file"]["xml"])
+            self.obs.ModelMap(self.config["file"]["xml"],substract=False)
 
         if self.config['analysis']['likelihood'] == 'unbinned': #unbinned analysis chain
             self._log('gtexpmap', 'Make an exposure map')
@@ -448,7 +448,7 @@ class FitMaker(Loggin.Message):
         for i in xrange(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
             utils.FreezeParams(Fit,self.srcname,PhIndex,indx)
-        r    #Use either the profile or the integral method
+            #Use either the profile or the integral method
             self.info("Methode used: "+self.config['UpperLimit']['Method'])
             if self.config['UpperLimit']['Method'] == "Profile":
                 ul = UpperLimits.UpperLimits(Fit)
@@ -497,8 +497,8 @@ class FitMaker(Loggin.Message):
 
         return(result)
 
-    def ModelMap(self, xml):
-        """Make a model Map. Valid only if the statistic is binned"""
-        if self.config['analysis']['likelihood'] == 'binned':
-            self._log('gtmodel', 'Make model map')#run gtmodel
-            self.obs.ModelMaps(xml)
+    # def ModelMap(self, xml):
+    #     """Make a model Map. Valid only if the statistic is binned"""
+    #     if self.config['analysis']['likelihood'] == 'binned':
+    #         self._log('gtmodel', 'Make model map')#run gtmodel
+    #         self.obs.ModelMap(xml)
