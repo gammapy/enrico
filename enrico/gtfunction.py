@@ -353,12 +353,48 @@ class Observation:
         more than ~30 time spans covered) we split the gtmktime calls into
         chunks of ~20 time spans.
         """
+
+        
+        
+
         eventlist = []
         last = False
         numbin = None
         while not last:
             selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            # Do not create an insanely big amount of files in the same directory.
+            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
+            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
+            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
+            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
+            self._RunMktime(selstr,outfile,'no')
+            eventlist.append(outfile+'\n')
+
+        evlist_filename = self.eventfile.replace('.fits','.list')
+        with open(evlist_filename,'w') as evlistfile:
+            evlistfile.writelines(eventlist)
+    
+    def time_selection_old(self):
+        """
+        Do a GTI selection based on a file of time spans
+
+        CFITSIO won't allow filenames (including filter expression) longer than
+        ~1100 chars, so for selections that require very long filters (i.e.,
+        more than ~30 time spans covered) we split the gtmktime calls into
+        chunks of ~20 time spans.
+        """
+        eventlist = []
+        last = False
+        numbin = None
+        while not last:
+            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
+            # Do not create an insanely big amount of files in the same directory.
+            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
+            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
+            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
+            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
             self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
 
@@ -387,9 +423,10 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
             return(0)
 
-        if self.Configuration['time']['file'] != '':
-            self.time_selection()
         selstr = self.Configuration['analysis']['filter']
+        if self.Configuration['time']['file'] != '':
+            #self.time_selection()
+            selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
         outfile = self.mktimefile+".tmp"
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
         os.system("mv "+outfile+" "+self.mktimefile)

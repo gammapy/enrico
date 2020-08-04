@@ -171,6 +171,13 @@ class Data(object):
                 print('Creating directory %s' % CATALOG_TEMPLATE_DIR)
                 os.mkdir(CATALOG_TEMPLATE_DIR)
             # Use any one of the templates to check if they are installed
+            filename = join(CATALOG_DIR, CATALOG)
+            if not os.path.isfile(filename):
+                url = join(CATALOG_URL, filename)
+                path = join(CATALOG_DIR, filename)
+                print('Downloading %s' % path)
+                urlretrieve(url, path)
+                
             filename = join(CATALOG_TEMPLATE_DIR, 'CenALobes.fits')
             if not os.path.isfile(filename):
                 # Now we know that we want to download

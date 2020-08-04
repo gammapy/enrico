@@ -20,6 +20,7 @@ from BinnedAnalysis import BinnedAnalysis, BinnedObs, BinnedConfig
 from enrico import utils
 from enrico import Loggin
 from enrico import environ
+import pyLikelihood as pyLike
 
 class FitMaker(Loggin.Message):
     """Collection of functions to prepare/run the GTLIKE fit
@@ -141,6 +142,50 @@ class FitMaker(Loggin.Message):
                      
         return Fit #return the BinnedAnalysis or UnbinnedAnalysis object.
 
+    def GetOptObject(self,Fit,method):
+        if method == 'MINUIT':
+            optObject = pyLike.Minuit(Fit.logLike)
+        elif method == 'NEWMINUIT':
+            optObject = pyLike.NewMinuit(Fit.logLike)
+        else:
+            optFactory = pyLike.OptimizerFactory_instance()
+            optObject = optFactory.create(str(method), Fit.logLike)
+        return optObject
+
+    def GetStatus(self,Fit,optObject):
+        status = optObject.getRetCode()
+        if isinstance(optObject, pyLike.Minuit) == 'MINUIT':
+            edm     = optObject.getDistance()
+            quality = optObject.getQuality() if status==0 else 2
+        elif isinstance(optObject, pyLike.NewMinuit):
+            edm     = optObject.getDistance()
+            check   = np.bitwise_and(np.bitwise_not(156), status)
+            quality = 3 if check==0 else 0
+        else:
+            edm     = optObject.getDistance()
+            quality = 3 if status==0 else 0
+        
+        loglike = optObject.stat().value()
+        
+        return(edm,quality,loglike)
+
+    def _PerformFit(self, Fit, methods=["MINUIT"], covar=False):
+        """Perform a fit with the selected methods and extract the edm, quality of fit, etc."""
+        for method in methods:
+            try:
+                optObject = self.GetOptObject(Fit,self.config['fitting']['optimizer'])
+                self.log_like = Fit.fit(verbosity=0, covar=True, optimizer=method, optObject=optObject)
+                edm,quality,loglike = self.GetStatus(Fit,optObject)
+                if self.config['verbose'] == 'yes' :
+                    print('Fit output with {1}: {0} [quality: {2}]'.format(
+                        self.log_like,self.config['fitting']['optimizer'],quality)) 
+            except Exception as exc:
+                self.warning('Exception while running {0}, {1}'.format(method,str(exc)))
+            else:
+                break
+
+        return(Fit)
+
     def PerformFit(self, Fit, writeXml = True):
         """Run gtlile tool. First it run gtlike with the DRNMGB optimizer
         and the user optimizer after. A dictionnay is return with all
@@ -155,30 +200,25 @@ class FitMaker(Loggin.Message):
         
         # Fit with DRMNGB/DRMNFB (as recommended in gtlike fhelp) optimizer to 
         # obtain initial parameters close to the minimum. Then switch optimizer.
-        try:
-            self.log_like = Fit.fit(verbosity=0, covar=False, optimizer='DRMNGB', optObject=None)
-        except Exception as exc:
-            self.warning('Exception while running DRMNGB, {0}'.format(str(exc)))
-            try:
-                self.log_like = Fit.fit(verbosity=0, covar=False, optimizer='DRMNFB', optObject=None)
-            except:
-                self.warning('Exception while running DRMNFB, {0}'.format(str(exc)))
+        list_of_methods = ['DRMNFB','DRMNGB']
+        Fit = self._PerformFit(Fit, list_of_methods, covar=False)
         
-        if self.config['verbose'] == 'yes' :    
-            print('Fit output with DRMNGB/DRMNFB: {0}'.format(self.log_like)) 
         # 2nd precise fit with the user optimizer and ask gtlike to compute the covariance matrix
-        
-        self.log_like = Fit.fit(verbosity=0,covar=True, optimizer=self.config['fitting']['optimizer'])
-        if self.config['verbose'] == 'yes' :
-            print('Fit output with {1}: {0}'.format(self.log_like,self.config['fitting']['optimizer'])) 
+        if self.config['fitting']['optimizer'] in ["MINUIT","NEWMINUIT"]:
+            list_of_methods = ["NEWMINUIT","MINUIT"]
+        else:
+            list_of_methods = [self.config['fitting']['optimizer']]
+       
+        Fit = self._PerformFit(Fit, list_of_methods, covar=True) 
 
         # remove source with TS<min_source_TS (default=1)
-        # to be sure that MINUIT will converge
+        # to improve convergence and re-fit
         try:             self.config['fitting']['min_source_TS']
         except KeyError: self.config['fitting']['min_source_TS'] = 1.
 
-        self.RemoveWeakSources(Fit,\
-            self.config['fitting']['min_source_TS'])
+        Fit = self.RemoveWeakSources(Fit, self.config['fitting']['min_source_TS'])
+        self._log('Re-optimize', '')
+        self._PerformFit(Fit, list_of_methods, covar=True) 
         
         self.outXml = None
         if writeXml :
@@ -207,9 +247,7 @@ class FitMaker(Loggin.Message):
                 if self.config['verbose'] == 'yes' :
                     self.info('keeping source {0} with TS={1:.2e}'.format(src,SrcTsDict[src]))
         
-        self._log('Re-optimize', '')
-        Fit.fit(verbosity=1, covar=True, optimizer=self.config['fitting']['optimizer'])
-        print
+
         return Fit
 
     def GetAndPrintResults(self, Fit):
@@ -505,6 +543,9 @@ class FitMaker(Loggin.Message):
         if self.config['analysis']['likelihood'] == 'binned':
             self._log('gtmodel', 'Make model map')#run gtmodel
             if xml==None:
-                xml = self.outXml 
+                try:
+                    xml = self.outXml 
+                except AttributeError:
+                    xml = utils._dump_xml(self.config)
 
             self.obs.ModelMap(xml)
