@@ -7,6 +7,7 @@ begun October 2010
 """
 import os
 import sys
+import shutil
 import Loggin
 from time import sleep
 from random import random
@@ -22,6 +23,16 @@ def run_retry(macro,tries=5):
     Do that up to 5 times with random waiting times.
     """
     mes = Loggin.Message()
+
+    # Try to write the temporary output to a temporary file and then move it, to avoid broken files
+    try:
+        orig_name = str(macro['output'])
+        macro['output'] = macro['output']+".tmpout"
+    except:
+        is_out_in_tmp = False
+    else:
+        is_out_in_tmp = True
+
     for retry in range(tries):
         try:
             macro.run()
@@ -31,6 +42,9 @@ def run_retry(macro,tries=5):
             sleep(10.*random()+10.)
             continue
         else:
+            if is_out_in_tmp:
+                shutil.move(macro['output'],orig_name)
+
             return(macro)
     mes.error("An error ocurred and could not be recovered. Exiting!")
     sys.exit(1)    
@@ -344,7 +358,39 @@ class Observation:
         numbin = None
         while not last:
             selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            # Do not create an insanely large amount of files in the same directory.
+            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
+            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
+            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
+            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
+            self._RunMktime(selstr,outfile,'no')
+            eventlist.append(outfile+'\n')
+
+        evlist_filename = self.eventfile.replace('.fits','.list')
+        with open(evlist_filename,'w') as evlistfile:
+            evlistfile.writelines(eventlist)
+    
+    def time_selection_listofgtis(self):
+        """
+        Do a GTI selection based on a file of time spans
+
+        CFITSIO won't allow filenames (including filter expression) longer than
+        ~1100 chars, so for selections that require very long filters (i.e.,
+        more than ~30 time spans covered) we split the gtmktime calls into
+        chunks of ~20 time spans.
+        """
+        eventlist = []
+        last = False
+        numbin = None
+        while not last:
+            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
+            # Do not create an insanely big amount of files in the same directory.
+            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
+            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
+            outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
+            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
+            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
             self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
 
@@ -373,9 +419,13 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.mktimefile)):
             return(0)
 
-        if self.Configuration['time']['file'] != '':
-            self.time_selection()
         selstr = self.Configuration['analysis']['filter']
+        if self.Configuration['time']['file'] != '':
+            if '.fits' not in self.Configuration['time']['file']:
+                selstr = self.Configuration['analysis']['filter']
+                self.time_selection_listofgtis()
+            else:
+                selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
         outfile = self.mktimefile+".tmp"
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
         os.system("mv "+outfile+" "+self.mktimefile)
@@ -497,27 +547,22 @@ class Observation:
         #srcMaps.run()
         run_retry(srcMaps)
 
-    def ModelMap(self,xml,substract=True):
+    def ModelMap(self,xml):
         """Run gtmodel tool for binned analysis and make a subtraction of the produced map
-         with the count map to produce a residual map is asked"""
-        if not(self.clobber=="no" and os.path.isfile(self.ModelMapFile)):
+         with the count map to produce a residual map"""
+        if (self.clobber=="no" and os.path.isfile(self.ModelMapFile)):
             #print("File exists and clobber is False")
-            model_map['expcube'] = self.Cubename
-            model_map['srcmaps'] = self.srcMap
-            model_map['bexpmap'] = self.BinnedMapfile
-            model_map['srcmdl'] = xml
-            #if  self.irfs != 'CALDB':
-            #    model_map['evtype']= self.Configuration['event']['evtype']
-            #else :
-            #    model_map['evtype']= 'INDEF'
-            model_map["irfs"]=self.irfs
-            model_map['outfile'] = self.ModelMapFile
-            model_map['clobber'] = self.clobber
-            #model_map.run()
-            run_retry(model_map)
+            return(0)
+        model_map['expcube'] = self.Cubename
+        model_map['srcmaps'] = self.srcMap
+        model_map['bexpmap'] = self.BinnedMapfile
+        model_map['srcmdl'] = xml
+        model_map["irfs"] = self.irfs
+        model_map['outfile'] = self.ModelMapFile
+        model_map['clobber'] = self.clobber
+        run_retry(model_map)
         #Compute the residual map
-        if substract:
-            utils.SubtractFits(self.cmapfile,
+        utils.SubtractFits(self.cmapfile,
                            self.ModelMapFile,
                            self.Configuration,
                            tag=self.inttag,

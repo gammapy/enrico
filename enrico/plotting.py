@@ -187,6 +187,15 @@ class Result(Loggin.Message):
                 print(e)
                 continue
 
+        # Sort by energy 
+        energy_order = np.argsort(emin)
+        src     = src[energy_order]
+        obs     = obs[energy_order]
+        obs_err = obs_err[energy_order]
+        total   = total[energy_order]
+        emin    = emin[energy_order]
+        emax    = emax[energy_order]
+
         other = np.array(total - src)
         Nbin  = len(src)
         E = np.array((emax + emin) / 2.)
@@ -301,7 +310,8 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
             continue
         #fill the energy arrays
         #Epoint[i] = results.get("Scale") 
-        #if Epoint[i] in [results.get("Emin"),results.get("Emax")]: #### <---- is this a mistake?? does not make much sense to me
+        #if Epoint[i] in [results.get("Emin"),results.get("Emax")]: 
+            #### <---- is this a mistake?? does not make much sense to me
             Epoint[i] = 10**((np.log10(results.get("Emin"))+np.log10(results.get("Emax")))/2.)
             #Epoint[i] = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         

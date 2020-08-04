@@ -17,6 +17,7 @@ from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
 from enrico import Loggin
 from enrico.plotting import plot_errorbar_withuls
+import astropy.io.fits as pyfits
 
 pol0 = lambda x,p1: p1
 pol1 = lambda x,p1,p2: p1+p2*x
@@ -78,16 +79,33 @@ class LightCurve(Loggin.Message):
         self.time_array = np.zeros(0)
         self.Nbin = 0
         self.gtifile = []
-        if self.config['time']['file'] != '':
-            print "use ",self.config['time']['file']
-            self.gtifile.append(self.config['time']['file'])
-            times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
-            self.Nbin = times.size/2
-            self.time_array=np.reshape(times,times.size,'F')
-            if self.config['time']['type']=='MJD':
-                 self.time_array = utils.MJD_to_met(self.time_array)
-            elif self.config['time']['type']=='JD':
-                 self.time_array = utils.JD_to_met(self.time_array)
+        if self.config['time']['file'] != '': 
+            if ".fit" not in self.config['time']['file']:
+                # Assume it is a text file
+                print "use ",self.config['time']['file']
+                self.gtifile.append(self.config['time']['file'])
+                times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
+                self.Nbin = times.size/2
+                self.time_array=np.reshape(times,times.size,'F')
+                    
+                if self.config['time']['type']=='MJD':
+                     self.time_array = utils.MJD_to_met(self.time_array)
+                elif self.config['time']['type']=='JD':
+                     self.time_array = utils.JD_to_met(self.time_array)
+            else:
+                # Assume it is a catalog.fits file
+                # get from the header the BEGIN and END time 
+                with pyfits.open(self.config['time']['file']) as catfile:
+                    self.tmin = catfile[1].header['TSTART']
+                    self.tmax = catfile[1].header['TSTOP']
+                    self.Nbin = self.config['LightCurve']['NLCbin']
+                    self.time_array = np.zeros(self.Nbin*2)
+                    t = np.arange(self.tmin,self.tmax+1e-5,\
+                        (self.tmax - self.tmin) / self.Nbin)
+                    for i in xrange(self.Nbin):
+                        self.time_array[2*i] = t[i]
+                        self.time_array[2*i+1]= t[i+1]
+        
         else:
             self.Nbin = self.config['LightCurve']['NLCbin']
             self.time_array = np.zeros(self.Nbin*2)

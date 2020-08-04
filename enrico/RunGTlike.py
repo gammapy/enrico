@@ -228,8 +228,12 @@ def run(infile):
                 varscale = "Eb"
 
             if varscale is not None:
-                spectrum.getParam(varscale).setValue(sedresult.decE)
-                FitRunner.PerformFit(Fit)
+                try:
+                    spectrum.getParam(varscale).setBounds(20,3e6)
+                    spectrum.getParam(varscale).setValue(sedresult.decE)
+                    FitRunner.PerformFit(Fit)
+                except RuntimeError:
+                    mes.warning("Error occurred while setting decorrelation energy.") 
             
     #Get and dump the target specific results
     Result = FitRunner.GetAndPrintResults(Fit)

@@ -13,6 +13,13 @@ echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 # set you get an error about '/dev/tty' e.g. when running ftcopy
 export HEADASNOQUERY=1
 echo HEADASNOQUERY: $HEADASNOQUERY
+
+if [ "$PFILES" != "" ]; then
+    export PFILES="$HOME/pfiles/$(date +%s)"
+fi
+mkdir -p $PFILES
+    
+
 #PBS -q std.q
 
 

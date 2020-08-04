@@ -124,7 +124,7 @@ def call(cmd,
     if environ.FARM=="LAPP":
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
-        max_jobs = 50000
+        max_jobs = 90000
     elif environ.FARM=="LOCAL":
         max_jobs = 100
     elif environ.FARM=="CCIN2P3":
@@ -159,6 +159,7 @@ def call(cmd,
         #text +='env\n'
         text +='#PBS -o '+qsub_log+'\n'
 
+        ''' # Trying to move it to the qsub job template
         if environ.FARM in ['DESY','DESY_quick']:
             text += 'export TMPDIR=/tmp/pfiles/$(date +"%s"); mkdir -p $TMPDIR\n'
 
@@ -172,6 +173,12 @@ def call(cmd,
         if environ.FARM in ['LAPP','DESY','DESY_quick']:
             text += '\ncd ..\n'
             text += 'rm -fr $TMPDIR\n'
+        '''
+        
+        if environ.FARM in ['LAPP','DESY','DESY_quick']:
+            text += 'if [ "$PFILES" != "" ]; then cp -R $FERMI_DIR/syspfiles/* ${PFILES}/; fi\n'
+        
+        text += cmd
 
         # Now reset cmd to be the qsub command
         cmd = GetSubCmd()

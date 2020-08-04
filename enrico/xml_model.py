@@ -21,10 +21,10 @@ def addParameter(el, name, free, value, scale, min, max):
     param.setAttribute('scale', '%g' % scale)
     # if value outside limits, set it to the closest limit
     if value>max: 
-        print('Parameter value outside limits, clipping.')
+        print('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name))
         value=max
     if value<min: 
-        print('Parameter value outside limits, clipping.')
+        print('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name))
         value=min
     param.setAttribute('value', '%g' % value)
     param.setAttribute('max', '%g' % max)
@@ -70,7 +70,7 @@ def addGalprop(lib, file, free=1, value=1.0, scale=1.0, max=10.0, min=.010,
 
 def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
-                   flux_max=10000.0, flux_min=1e-5,
+                   flux_max=10000.0, flux_min=0,
                    index_free=1, index_value=-2.0,
                    index_min=-6.0, index_max=-0.5,extendedName=""):
     """Add a source with a POWERLAW1 model"""
@@ -113,7 +113,7 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
 
 def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
                    flux_free=1, flux_value=1.6e-8, flux_scale=0,
-                   flux_max=10000.0, flux_min=1e-5,
+                   flux_max=10000.0, flux_min=0,
                    index_free=1, index_value=-2.0,
                    index_min=-5.0, index_max=-0.5,extendedName=""):
     """Add a source with a POWERLAW2 model"""
@@ -153,9 +153,9 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
     lib.appendChild(src)
 
 
-def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300, emin=200, emax=3e5,
+def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e5,
                    norm_free=1, norm_value=1e-9, norm_scale=0,
-                   norm_max=10000.0, norm_min=1e-5,
+                   norm_max=10000.0, norm_min=0,
                    alpha_free=1, alpha_value=1.0,
                    alpha_min=.5, alpha_max=5.,
                    beta_free=1, beta_value=1.0,
@@ -204,7 +204,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=300, emin=200, emax=3e5
 def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
                          ebreak_free=1, ebreak=1000, ebreak_min=200, ebreak_max=100000,
                          flux_free=1, flux_value=1.6, flux_scale=1e-6,
-                         flux_max=10000.0, flux_min=1e-5,
+                         flux_max=10000.0, flux_min=0,
                          index_lo_free=1, index_lo_value=-2.0,
                          index_lo_min=-5.0, index_lo_max=-1.0,
                          index_hi_free=1, index_hi_value=-4.0,
@@ -257,13 +257,13 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
 
 def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
                    flux_free=1, flux_value=1e-9, flux_scale=0,
-                   flux_max=10000.0, flux_min=1e-5,
+                   flux_max=10000.0, flux_min=0,
                    index1_free=1, index1_value=-2.0,
-                   index1_min=-10.0, index1_max=-0.,
+                   index1_min=-5.0, index1_max=-0.,
                    cutoff_free=1, cutoff_value=1e4,
-                   cutoff_min=20, cutoff_max=3e5,
+                   cutoff_min=20, cutoff_max=3.1e5,
                    index2_free=0, index2_value=1.0,
-                   index2_min=0.0, index2_max=10.0,extendedName=""):
+                   index2_min=0.0, index2_max=5.0,extendedName=""):
     """Add a source with a SUPEREXPCUTOFF model"""
     elim_min = 30
     elim_max = 300000
@@ -362,21 +362,21 @@ def GetlistFromFits(config, catalog):
       spectype = data.field('SpectrumType')
       index  = np.zeros(names.size)
       cutoff = 1e5 * np.ones(names.size)
-      expfac = np.ones(names.size)
       beta   = np.zeros(names.size)
       # iterate over each source, check the selected spectrum and get the params.
       for k,spec in enumerate(spectype):
           if spec == 'PowerLaw':
               index[k] = data.field('PL_Index')[k]
-          if spec == 'LogParabola':
+          elif spec == 'LogParabola':
               index[k] = data.field('LP_Index')[k]
               beta[k]  = data.field('LP_beta')[k]
-          if spec == 'PLSuperExpCutoff':
+          elif spec == 'PLSuperExpCutoff':
               # From the makeFL8Yxml.py script
               index[k]  = data.field('PLEC_Index')[k]
               expfac = data.field('PLEC_Expfactor')[k]
               expind = data.field('PLEC_Exp_Index')[k]
-              cutoff[k] =(1./expfac)**(1./expind)
+              if (expfac!=0 and expind!=0): cutoff[k] =(1./expfac)**(1./expind)
+        
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
       # else:
@@ -426,38 +426,56 @@ def GetlistFromFits(config, catalog):
             if extname == extendedName[i]:
                 extended_fitsfilename = extendedfits[j]
             j+=1
-
-        if rsrc < .1 and sigma[i] > min_significance_free and extended_fitsfilename=="":
-            # if the source has a separation less than 0.1deg to the target and has
-            # the same model type as the one we want to use, assume it is our target
-            # with our given coordinates and do not add it.
-            # NOTE: How do we deal with extended sources as target sources ??? 
-            # add gaussian noise
-            flux[i]   *= np.random.normal(1,parameter_noise)
-            index[i]  += np.random.normal(0,parameter_noise)
-            beta[i]   += np.random.normal(0,parameter_noise)
-            cutoff[i] *= np.random.normal(1,parameter_noise)
+        
+        if (rsrc < 0.04) or (rsrc<.1 and sigma[i] > min_significance_free): # and extended_fitsfilename=="":
+            # if the source has a separation less than 0.1deg to the target and has a reasonable TS
+            # or if it is very close (0.04deg, similar to the PSF) regardless of the TS, assume it is our target
+            # with our given coordinates and add it with the 4FGL spectral parameters.
+            # NOTE: Extended sources as targets are not tested. 
+            # possibly add gaussian noise to the parameter values
 
             Nfree += 1
             spectype[i] = model
+
+            if model == 'PowerLaw':
+                index[i] = data.field('PL_Index')[i]
+            elif model == 'LogParabola':
+                index[i] = data.field('LP_Index')[i]
+                beta[i]  = data.field('LP_beta')[i]
+            elif model == 'PLSuperExpCutoff':
+                # From the makeFL8Yxml.py script
+                index[i]  = data.field('PLEC_Index')[i]
+                expfac = data.field('PLEC_Expfactor')[i]
+                expind = data.field('PLEC_Exp_Index')[i]
+                if (expfac!=0 and expind!=0): cutoff[i] =(1./expfac)**(1./expind)
+                else: cutoff[i] = 2.99e5
+            
+            flux[i]   = (flux[i])*(np.random.normal(1,parameter_noise))
+            index[i]  *= np.random.normal(1,parameter_noise)
+            beta[i]   *= np.random.normal(1,parameter_noise)
+            cutoff[i] = cutoff[i]*(np.random.normal(1,parameter_noise))
+
             mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
-            sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
-                            'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape' : 1,
-                            'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+        
+            if len(sources)>0:
+                if (sources[0]['name'] != srcname):
+                    sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
+                                      'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                                      'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape' : 1,
+                                      'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
 
         elif rsrc < max_radius and rsrc >= .1 and sigma[i] > min_significance_free:
             # if the source is close to the target and is bright : add it as a free source
             # add gaussian noise
-            flux[i]   *= np.random.normal(1,parameter_noise)
-            index[i]  += np.random.normal(0,parameter_noise)
-            beta[i]   += np.random.normal(0,parameter_noise)
-            cutoff[i] *= np.random.normal(1,parameter_noise)
+            flux[i]   = (flux[i])*(np.random.normal(1,parameter_noise))
+            index[i]  *= np.random.normal(1,parameter_noise)
+            beta[i]   *= np.random.normal(1,parameter_noise)
+            cutoff[i] = cutoff[i]*(np.random.normal(1,parameter_noise))
             
             Nfree += 1
             mes.info("Adding [free] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             if not(extended_fitsfilename==""):
-                if not os.path.isfile(extended_fitsfilename):
+                if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
                     mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
                     continue
                 mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
@@ -467,13 +485,13 @@ def GetlistFromFits(config, catalog):
                             'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
         elif (rsrc < 2*max_radius and rsrc >= .1 and sigma[i] > min_significance_free) or (sigma[i] > 100 and rspace < original_roi):
+            flux[i]   = (flux[i])*(np.random.normal(1,parameter_noise))
             # if the source is within 2 radius or it is very bright : add it with only the norm free
             # add gaussian noise
-            flux[i]   *= np.random.normal(1,parameter_noise)
             Nfree += 1
             mes.info("Adding [free norm/fixed shape] source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
             if not(extended_fitsfilename==""):
-                if not os.path.isfile(extended_fitsfilename):
+                if not os.path.isfile(join(CATALOG_TEMPLATE_DIR, extended_fitsfilename)):
                     mes.warning("Filename %s for extended source %s does not exist. Skipping." %(extended_fitsfilename,extendedName[i]))
                     continue
                 mes.info("Adding extended source "+extendedName[i]+", Catalogue name is "+names[i])
@@ -502,15 +520,22 @@ def GetlistFromFits(config, catalog):
     # if the target has not been added from catalog, add it now
     if sources[0]['name']!=srcname:
         # add gaussian noise
-        flux[i]   *= np.random.normal(1,parameter_noise)
-        index[i]  += np.random.normal(0,parameter_noise)
-        beta[i]   += np.random.normal(0,parameter_noise)
-        cutoff[i] *= np.random.normal(1,parameter_noise)
         Nfree += 1
         #add the target to the list of sources in first position
+        emin = config['energy']['emin']
+        emax = config['energy']['emax']
+        scale_failback = 10**((2*np.log10(emin)+np.log10(emax))/3.)
+        if model == 'LogParabola':
+            index_failback = 1.8
+        elif model == 'PLSuperExpCutoff':
+            index_failback = 1.8
+        else:
+            index_failback = 2.0
+
         sources.insert(0,{'name':srcname, 'ra': ra_src, 'dec': dec_src,
-                       'flux': 1e-9, 'index':-2, 'scale': emin,
-                       'cutoff': 1e4, 'beta': 0.1, 'IsFree': 1, 'IsFreeShape': 1,
+                       'flux': 1e-9, 'index': index_failback, 
+                       'scale': scale_failback,
+                       'cutoff': 1e4, 'beta': 0.03, 'IsFree': 1, 'IsFreeShape': 1,
                        'SpectrumType': model,'ExtendedName': ""})
 
 
@@ -627,6 +652,7 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index_free=freeshape, index_value=srclist[i].get('index'),extendedName=extendedName)
             if (ebl!=None):
+                # EblAtten::Powerlaw used to not exist, so we use instead a LogParabola with fixed b=0.
                 addPSLogparabola(lib, name, ra, dec, ebl,
                               emin=emin, emax=emax,
                               norm_free=free, norm_value=srclist[i].get('flux'),
