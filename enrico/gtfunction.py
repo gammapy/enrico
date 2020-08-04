@@ -353,10 +353,6 @@ class Observation:
         more than ~30 time spans covered) we split the gtmktime calls into
         chunks of ~20 time spans.
         """
-
-        
-        
-
         eventlist = []
         last = False
         numbin = None
@@ -375,7 +371,7 @@ class Observation:
         with open(evlist_filename,'w') as evlistfile:
             evlistfile.writelines(eventlist)
     
-    def time_selection_old(self):
+    def time_selection_listofgtis(self):
         """
         Do a GTI selection based on a file of time spans
 
@@ -425,8 +421,11 @@ class Observation:
 
         selstr = self.Configuration['analysis']['filter']
         if self.Configuration['time']['file'] != '':
-            #self.time_selection()
-            selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
+            if '.fits' not in self.Configuration['time']['file']:
+                selstr = self.Configuration['analysis']['filter']
+                self.time_selection_listofgtis()
+            else:
+                selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
         outfile = self.mktimefile+".tmp"
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
         os.system("mv "+outfile+" "+self.mktimefile)
