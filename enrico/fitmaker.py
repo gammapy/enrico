@@ -84,6 +84,7 @@ class FitMaker(Loggin.Message):
             self.obs.GtBinnedMap()
             self._log('gtsrcmap', 'Make a source map')#run gtsrcmap
             self.obs.SrcMap()
+            # the model should be generated for each component after optimizing.
             #self._log('gtmodel', 'Make a model map')#run gtmodel
             #self.obs.ModelMap(self.config["file"]["xml"])
 
@@ -119,8 +120,8 @@ class FitMaker(Loggin.Message):
                               irfs=self.obs.irfs)
             Fit = UnbinnedAnalysis(Obs, self.obs.xmlfile,
                                    optimizer=self.config['fitting']['optimizer'])
-    
-    # Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, 
+        
+        # Fix this, EBL absorbed models use LogParabola with b=0 instead of PowerLaw, 
         # we may want to allow fixed shape for that case
         if float(self.config['Spectrum']['FrozenSpectralIndex']!=0): 
             parameters = dict()
@@ -196,7 +197,6 @@ class FitMaker(Loggin.Message):
 
         # Change the fit tolerance to the one given by the user
         Fit.ftol = float(self.config['fitting']['ftol'])
-        
         
         # Fit with DRMNGB/DRMNFB (as recommended in gtlike fhelp) optimizer to 
         # obtain initial parameters close to the minimum. Then switch optimizer.

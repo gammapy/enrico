@@ -358,7 +358,7 @@ class Observation:
         numbin = None
         while not last:
             selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            # Do not create an insanely big amount of files in the same directory.
+            # Do not create an insanely large amount of files in the same directory.
             outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
             #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
             outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
@@ -557,14 +557,9 @@ class Observation:
         model_map['srcmaps'] = self.srcMap
         model_map['bexpmap'] = self.BinnedMapfile
         model_map['srcmdl'] = xml
-        #if  self.irfs != 'CALDB':
-        #    model_map['evtype']= self.Configuration['event']['evtype']
-        #else :
-        #    model_map['evtype']= 'INDEF'
         model_map["irfs"] = self.irfs
         model_map['outfile'] = self.ModelMapFile
         model_map['clobber'] = self.clobber
-        #model_map.run()
         run_retry(model_map)
         #Compute the residual map
         utils.SubtractFits(self.cmapfile,

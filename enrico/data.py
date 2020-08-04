@@ -14,6 +14,8 @@ from enrico.environ import DIFFUSE_ISO_CLEANPSF0, DIFFUSE_ISO_CLEANPSF1, DIFFUSE
 from enrico.environ import DIFFUSE_ISO_CLEANEDISP0, DIFFUSE_ISO_CLEANEDISP1, DIFFUSE_ISO_CLEANEDISP2, DIFFUSE_ISO_CLEANEDISP3
 from enrico.environ import DIRS, DOWNLOAD_DIR, CATALOG_TEMPLATE_DIR, TEMPLATE_VERSION, PREPROCESSED_DIR
 from enrico.environ import WEEKLY_DIR, SPACECRAFT, USE_FULLMISSION_SPACECRAFT
+#check platform
+from sys import platform 
 
 #TODO: Read from default config
 default_filter = 'DATA_QUAL==1&&LAT_CONFIG==1&&ABS(ROCK_ANGLE)<52'
@@ -130,13 +132,21 @@ class Data(object):
         the Fermi LAT data server.
         For info on wget options see
         http://www.gnu.org/software/wget/manual/wget.html"""
+        os.system("mkdir -p "+DOWNLOAD_DIR)
         os.chdir(DOWNLOAD_DIR)
         if spacecraft:
             # -m --mirror
             if USE_FULLMISSION_SPACECRAFT=="True":
-                cmd = 'wget -N ' + SPACECRAFT_URL
+                if platform == "linux" or platform == "linux2": # linux 
+                    cmd = 'wget -N ' + SPACECRAFT_URL
+                elif platform == "darwin": 
+                    cmd = 'curl -O -N ' + SPACECRAFT_URL
             else:
-                cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
+                if platform == "linux" or platform == "linux2": # linux 
+                    cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
+                elif platform == "darwin": 
+                    cmd = 'curl -O  -c  -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
+                
             print('EXEC: ', cmd)
             os.system(cmd)
         if photon:
@@ -155,6 +165,7 @@ class Data(object):
         from subprocess import call
         # Catalog and diffuse files
         for _tag, _url, _dir, _file in FILES:
+            os.system("mkdir -p "+_dir)
             path = join(_dir, _file)
             url = join(_url, _file)
             if _dir:
