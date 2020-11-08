@@ -44,18 +44,18 @@ def MeTToMJD(met):
   return (met-met_ref)/3600/24.+mjd_ref
 
 def Print(date,mjd,met,jd):
-  print "ISO date : ",date
-  print "MJD : ",mjd
-  print "JD : ",jd
-  print "MET : ",met
+  print(("ISO date : ",date))
+  print(("MJD : ",mjd))
+  print(("JD : ",jd))
+  print(("MET : ",met))
 
 def _log_():
-    print "Usage: ",sys.argv[0]," Type Date"
-    print "Type can be : MJD, JD, MET or ISO"
-    print "Data is the date to convert"
-    print "exemple:\n\tpython ",sys.argv[0]," MJD 56101"
-    print "\tpython ",sys.argv[0]," ISO 2012-02-05"
-    print "\tpython ",sys.argv[0]," ISO 2012-02-05 16:15:18"
+    print(("Usage: ",sys.argv[0]," Type Date"))
+    print("Type can be : MJD, JD, MET or ISO")
+    print("Data is the date to convert")
+    print(("exemple:\n\tpython ",sys.argv[0]," MJD 56101"))
+    print(("\tpython ",sys.argv[0]," ISO 2012-02-05"))
+    print(("\tpython ",sys.argv[0]," ISO 2012-02-05 16:15:18"))
 if __name__=="__main__":
 
   try :

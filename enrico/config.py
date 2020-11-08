@@ -79,21 +79,21 @@ def query_config():
     mes = Loggin.Message()
     mes.info('Please provide the following required options [default] :')
     config['out'] = os.getcwd()
-    out = raw_input('Output directory ['+config['out']+'] : ')
-    if not(out=='') :
+    out = input('Output directory ['+config['out']+'] : ')
+    if not(out==''):
       config['out'] = out
 
-#    Informations about the source
+    # Informations about the source
     config['target'] = {}
-    config['target']['name'] = raw_input('Target Name : ')
-    config['target']['ra'] = raw_input('Right Ascension: ')
-    config['target']['dec'] = raw_input('Declination: ')
+    config['target']['name'] = input('Target Name : ')
+    config['target']['ra'] = input('Right Ascension: ')
+    config['target']['dec'] = input('Declination: ')
 
     config['target']['redshift'] = '0'
-    redshift = raw_input('redshift, no effect if null [0] : ')
+    redshift = input('redshift, no effect if null [0] : ')
     if not(redshift=='') :
         config['target']['redshift'] = redshift
-        config['target']['ebl_model'] = raw_input('ebl model to used\n'
+        config['target']['ebl_model'] = input('ebl model to used\n'
                                                    '0=Kneiske, 1=Primack05, 2=Kneiske_HighUV, 3=Stecker05, ' 
                                                    '4=Franceschini, 5=Finke, 6=Gilmore : ')
         
@@ -102,7 +102,7 @@ def query_config():
                 'EBL absorption can be added for PowerLaw2, LogParabola, PLExpCutoff\n'
                 'Spectral Model [PowerLaw] : ')
     config['target']['spectrum'] = 'PowerLaw'
-    model = raw_input(message)
+    model = input(message)
     if not(model=='') :
       config['target']['spectrum'] = model
 
@@ -111,7 +111,7 @@ def query_config():
     config['space']['xref'] = config['target']['ra']
     config['space']['yref'] = config['target']['dec']
     config['space']['rad'] = '15'
-    roi = raw_input('ROI Size [15] : ')
+    roi = input('ROI Size [15] : ')
     if not(roi=='') :
       config['space']['rad'] = roi
 
@@ -121,15 +121,15 @@ def query_config():
         config['file']['spacecraft'] = DOWNLOAD_DIR+'/lat_spacecraft_merged.fits'
     else:
         config['file']['spacecraft'] = '@'+DOWNLOAD_DIR+'/spacecraft.lis'
-    ft2 = raw_input('FT2 file ['+config['file']['spacecraft']+'] : ')
+    ft2 = input('FT2 file ['+config['file']['spacecraft']+'] : ')
     if not(ft2=='') :
       config['file']['spacecraft'] = ft2
     config['file']['event'] = DOWNLOAD_DIR+'/events.lis'
-    ft1list = raw_input('FT1 list of files ['+config['file']['event']+'] : ')
+    ft1list = input('FT1 list of files ['+config['file']['event']+'] : ')
     if not(ft1list=='') :
       config['file']['event'] = ft1list
     config['file']['xml'] = config['out']+'/'+config['target']['name']+'_'+config['target']['spectrum']+'_model.xml'
-    tag = raw_input('tag [LAT_Analysis] : ')
+    tag = input('tag [LAT_Analysis] : ')
     if not(tag=='') :
       config['file']['tag'] = tag
     else :
@@ -137,13 +137,13 @@ def query_config():
 
 #    informations about the time
     config['time'] = {}
-    tmin = raw_input('Start time [-1=START] : ')
+    tmin = input('Start time [-1=START] : ')
     ft2 = config['file']['spacecraft']
     if not(tmin=='') and float(tmin)>=0 :
       config['time']['tmin'] = tmin
     else :
       config['time']['tmin'] = get_times_from_spacecraft(ft2,target=['tmin'])[0]
-    tmax = raw_input('End time [-1=END] : ')
+    tmax = input('End time [-1=END] : ')
     if not(tmax=='') and float(tmax)>=0 :
       config['time']['tmax'] = tmax
     else :
@@ -151,12 +151,12 @@ def query_config():
 
 #    informations about the energy
     config['energy'] = {}
-    emin = raw_input('Emin [100] : ')
+    emin = input('Emin [100] : ')
     if not(emin=='') :
       config['energy']['emin'] = emin
     else :
       config['energy']['emin'] = '100'
-    emax = raw_input('Emax [300000] : ')
+    emax = input('Emax [300000] : ')
     if not(emax=='') :
       config['energy']['emax'] = emax
     else :
@@ -164,7 +164,7 @@ def query_config():
 
 #    informations about the event class
     config['event'] = {}
-    irfs = raw_input('IRFs [CALDB] : ')
+    irfs = input('IRFs [CALDB] : ')
     if not(irfs=='') :
       config['event']['irfs'] = irfs
     else :
@@ -173,25 +173,25 @@ def query_config():
     if irfs=='' :
       ok = False
       while not(ok):
-        evclass = raw_input('evclass [128] : ')
+        evclass = input('evclass [128] : ')
         if not(evclass=='') :
           config['event']['evclass'] = evclass
         else :
           config['event']['evclass'] = '128'
 
-        evtype = raw_input('evtype [3] : ')
+        evtype = input('evtype [3] : ')
         if not(evtype=='') :
           config['event']['evtype'] = evtype
         else :
           config['event']['evtype'] = '3'
-        print "Corresponding IRFs\t=\t",utils.GetIRFS(float(config['event']['evclass']),float(config['event']['evtype']))
-        ans = raw_input('Is this ok? [y] : ')
+        print(("Corresponding IRFs\t=\t",utils.GetIRFS(float(config['event']['evclass']),float(config['event']['evtype']))))
+        ans = input('Is this ok? [y] : ')
         if ans == "y" or ans == '':
            ok = True
 
     config['analysis'] = {}
     zmax = utils.GetZenithCut(float(config['event']['evclass']),float(config['event']['evtype']),float(config['energy']['emin']))
-    print "Corresponding zmax = ",zmax
+    print(("Corresponding zmax = ",zmax))
     config["analysis"]["zmax"] = zmax
 
 

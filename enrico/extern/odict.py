@@ -17,12 +17,12 @@ except ImportError:
 
     from collections import MutableMapping
     from operator import eq as _eq
-    from itertools import imap as _imap
+    
 
     try:
-        from thread import get_ident
+        from _thread import get_ident
     except ImportError:
-        from dummy_thread import get_ident
+        from _dummy_thread import get_ident
 
 
     def _recursive_repr(user_function):
@@ -129,7 +129,7 @@ except ImportError:
         def clear(self):
             'od.clear() -> None.  Remove all items from od.'
             try:
-                for node in self.__map.itervalues():
+                for node in list(self.__map.values()):
                     del node[:]
                 self.__root[:] = [self.__root, self.__root, None]
                 self.__map.clear()
@@ -164,7 +164,7 @@ except ImportError:
             'od.__repr__() <==> repr(od)'
             if not self:
                 return '%s()' % (self.__class__.__name__,)
-            return '%s(%r)' % (self.__class__.__name__, self.items())
+            return '%s(%r)' % (self.__class__.__name__, list(self.items()))
 
         def copy(self):
             'od.copy() -> a shallow copy of od'
@@ -188,5 +188,5 @@ except ImportError:
             '''
             if isinstance(other, OrderedDict):
                 return len(self)==len(other) and \
-                       all(_imap(_eq, self.iteritems(), other.iteritems()))
+                       all(_imap(_eq, iter(list(self.items())), iter(list(other.items()))))
             return dict.__eq__(self, other)

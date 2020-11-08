@@ -53,7 +53,7 @@ def AppLC(infile):
         #Binning from data or using a fix bin size
         if config['AppLC']['binsFromData'] == "no":
             _log('gtbin', 'bin the data into a light-curve using fixe time bin')#run gtbin
-            print "Use a dt of %2.2e seconds"%(dt)
+            print(("Use a dt of %2.2e seconds"%(dt)))
             Obs.GtLCbin(dt = dt)
         else:
             spfile=fits.open(Obs.eventfile)
@@ -83,9 +83,9 @@ def MakeTimebinFile(Obs,timefile):
     bounds.insert(0,Obs.t1)
     bounds.append(Obs.t2)
 
-    print len(Time)
+    print((len(Time)))
     fil = open(timefile,"w")
-    for i in xrange(len(bounds)-1):
+    for i in range(len(bounds)-1):
         fil.write(str(bounds[i])+'\t'+str(bounds[i+1])+'\n')
     fil.close()
 
@@ -111,20 +111,20 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
 
     #Write into file
     file_evt.write("Time\tdTime\tExposure\tCounts\n")
-    for i in xrange(len(Time)):
+    for i in range(len(Time)):
        file_evt.write(str(Time[i])+"\t"+str(dTime[i])+"\t"+str(Exposure[i])+"\t"+str(Counts[i])+"\n")
     file_evt.close()
     ######################################################################################
 
     file_lc = open(LCoutfolder+'/AppLC.txt',"w")
 
-    for i in xrange(len(Time)):
+    for i in range(len(Time)):
         file_lc.write(str(Time[i])+"\t"+str(Counts[i]/Exposure[i])+"\t"+str(dCounts[i]/Exposure[i])+"\n")
     file_lc.close()
 
     plt.figure()
-    print count_edges
-    print count_histo
+    print(count_edges)
+    print(count_histo)
     plt.errorbar((count_edges[:1]+count_edges[1:])/2.,count_histo,fmt="o")
     plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
@@ -154,13 +154,13 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
             frameon=None)
 
 def _log(task='', description=''):
-    print
-    print("\033[34m"+'# ' + '*' * 60)
+    print()
+    print(("\033[34m"+'# ' + '*' * 60))
     if task:
         task = '%10s --- ' % task
-    print("\033[34m"+'# *** %s%s' %
-        ( task, description))
-    print "\033[34m"+'# ' + '*' * 60+"\033[0m"
+    print(("\033[34m"+'# *** %s%s' %
+        ( task, description)))
+    print(("\033[34m"+'# ' + '*' * 60+"\033[0m"))
 
 
 if __name__ == '__main__':

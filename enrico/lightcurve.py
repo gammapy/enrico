@@ -31,7 +31,7 @@ class LightCurve(Loggin.Message):
         self.parent_filename = os.path.abspath(parent_filename)
         self.config        = get_config(config)
         self.generalconfig = get_config(config)
-        print(self.generalconfig)
+        print((self.generalconfig))
         #Read the config
         self.srcname = self.config['target']['name'] #src name
         self.Tag = self.config['file']['tag']
@@ -72,7 +72,7 @@ class LightCurve(Loggin.Message):
         import os.path
         evtcoarsefile = str("%s/%s_%s_EvtCoarse.fits"%(self.folder,self.srcname,self.Tag))
         if os.path.isfile(evtcoarsefile):
-            print("reusing %s as event file to speed-up the analysis" %evtcoarsefile)
+            print(("reusing %s as event file to speed-up the analysis" %evtcoarsefile))
             self.config['file']['event'] = evtcoarsefile
 
     def _MakeTimeBins(self):
@@ -82,7 +82,7 @@ class LightCurve(Loggin.Message):
         if self.config['time']['file'] != '': 
             if ".fit" not in self.config['time']['file']:
                 # Assume it is a text file
-                print "use ",self.config['time']['file']
+                print(("use "+self.config['time']['file']))
                 self.gtifile.append(self.config['time']['file'])
                 times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
                 self.Nbin = times.size/2
@@ -102,7 +102,7 @@ class LightCurve(Loggin.Message):
                     self.time_array = np.zeros(self.Nbin*2)
                     t = np.arange(self.tmin,self.tmax+1e-5,\
                         (self.tmax - self.tmin) / self.Nbin)
-                    for i in xrange(self.Nbin):
+                    for i in range(self.Nbin):
                         self.time_array[2*i] = t[i]
                         self.time_array[2*i+1]= t[i+1]
         
@@ -111,18 +111,18 @@ class LightCurve(Loggin.Message):
             self.time_array = np.zeros(self.Nbin*2)
 #            self.dt = (self.tmax - self.tmin) / self.Nbin
             t = np.arange(self.tmin,self.tmax+0.000001,(self.tmax - self.tmin) / self.Nbin)
-            for i in xrange(self.Nbin):
+            for i in range(self.Nbin):
                 self.time_array[2*i] = t[i]
                 self.time_array[2*i+1]= t[i+1]
 
         self.info("Running LC with "+str(self.Nbin)+" bins")
-        for i in xrange(self.Nbin):
-            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]
-        print
+        for i in range(self.Nbin):
+            print(("Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1]))
+        print()
 
     def _errorReading(self,message,i):
         self.warning(message+" : "+self.configfile[i])
-        print "Job Number : ",i
+        print(("Job Number : "+i))
         self.warning("Please have a look at this job log file")
 
 
@@ -135,7 +135,7 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
@@ -152,11 +152,11 @@ class LightCurve(Loggin.Message):
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
             elif len(self.gtifile)>1:
-                print 'Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])
+                print(('Time selection file for bin {0} = {1}'.format(i,self.gtifile[i])))
                 self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
-                self.config.write(open(filename, 'w'))
+                self.config.write(open(filename, 'wb'))
 
             self.configfile.append(filename)
 
@@ -170,7 +170,7 @@ class LightCurve(Loggin.Message):
 
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
 
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             #gc.collect()
             cmd = str("enrico_sed %s && enrico_plot_lc %s" %(self.configfile[i], self.parent_filename))
             if self.submit == 'yes':
@@ -286,7 +286,7 @@ class LightCurve(Loggin.Message):
         IndexErrName = 'd' + IndexName
 
         Nfail = 0
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             CurConfig = get_config(self.configfile[i])
             #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
             try :
@@ -302,7 +302,7 @@ class LightCurve(Loggin.Message):
             Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
             TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
-            if ResultDic.has_key('Ulvalue') :
+            if 'Ulvalue' in ResultDic :
                 uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
                 # FluxErr.append(0)
@@ -360,12 +360,12 @@ class LightCurve(Loggin.Message):
                 popt,_ = scipy.optimize.curve_fit(pol1, NdN, FdF, p0=[0,1])#, sigma=dydata)
 
 
-                for i in xrange(len(FluxForNpred)):
+                for i in range(len(FluxForNpred)):
                     if FluxForNpred[i]/FluxErr[i]>2*pol1(sqrt(Npred[i]),popt[0],popt[1]):
                         self._errorReading("problem in errors calculation for",i)
-                        print "Flux +/- error = ",FluxForNpred[i]," +/- ",FluxErr[i]
-                        print "V(Npred) = ",sqrt(Npred[i])
-                        print
+                        print(("Flux +/- error = ",FluxForNpred[i]," +/- ",FluxErr[i]))
+                        print(("V(Npred) = ",sqrt(Npred[i])))
+                        print()
 
                 plt.plot(np.array([0,max(NdN)]),pol1(np.array([0,max(NdN)]),popt[0],popt[1]),'--',color='black')
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
@@ -375,7 +375,7 @@ class LightCurve(Loggin.Message):
                     transparent=False, bbox_inches=None, pad_inches=0.1,
                     frameon=None)
             else :
-                print "No Npred Plot produced"
+                print("No Npred Plot produced")
 
             #plot TS vs Time
             plt.figure()
@@ -556,10 +556,10 @@ class LightCurve(Loggin.Message):
             fvar=sqrt(intvar)/moy
             err_fvar = sqrt( ( 1./sqrt(2*len(Flux))*expvar/moy**2/fvar)**2 + (sqrt(expvar/len(Flux))*1./moy)**2)
             self.info("Calculation of Fvar (Vaughan et al. 2003)")
-            print "\tFvar = ",fvar," +/- ",err_fvar
+            print(("\tFvar = ",fvar," +/- ",err_fvar))
         except :
-            print  "\tFvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))
-        print
+            print(("\tFvar is negative, Fvar**2 = %2.2e +/- %2.2e"%(intvar/(moy*moy), ((1./sqrt(2*len(Flux))*expvar/moy**2)**2/(intvar/(moy*moy)) + (sqrt(expvar/len(Flux))*1./moy)**2))))
+        print()
 
     def FitWithCst(self,x,y,dy):
         """Fit the LC with a constant function an
@@ -570,9 +570,9 @@ class LightCurve(Loggin.Message):
         #print dy
         cost = np.sum(((pol0(x,res[0])-y)/dy)**2)
         self.info("Fit with a constant function")
-        print '\tChi2 = ',cost," NDF = ",len(y)-1
-        print '\tprobability of being cst = ',1 - chi2.cdf(cost,len(y)-1)
-        print
+        print(('\tChi2 = ',cost," NDF = ",len(y)-1))
+        print(('\tprobability of being cst = ',1 - chi2.cdf(cost,len(y)-1)))
+        print()
 
     def VariabilityIndex(self):
         """Compute the variability index as in the 2FGL catalogue. (see Nolan et al, 2012)"""
@@ -591,7 +591,7 @@ class LightCurve(Loggin.Message):
         LogL1 = []
         LogL0 = []
         Time = []
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             CurConfig = get_config(self.configfile[i])
             #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
             try :
@@ -621,7 +621,7 @@ class LightCurve(Loggin.Message):
             parameters['Index2'] = 2.
             parameters['Cutoff'] = 100000. # set the cutoff to be high
 
-            for key in parameters.keys():
+            for key in list(parameters.keys()):
                 try:
                     utils.FreezeParams(Fit, self.srcname, key, parameters[key])
                 except:
@@ -671,10 +671,10 @@ class LightCurve(Loggin.Message):
                 frameon=None)
 
         self.info("Variability index calculation")
-        print "\t TSvar = ",2*(sum(LogL1)-sum(LogL0))
-        print "\t NDF = ",len(LogL0)-1
-        print "\t Chi2 prob = ",1 - chi2.cdf(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)
-        print
+        print(("\t TSvar = ",2*(sum(LogL1)-sum(LogL0))))
+        print(("\t NDF = ",len(LogL0)-1))
+        print(("\t Chi2 prob = ",1 - chi2.cdf(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)))
+        print()
 
 def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename):
     """Write the results of the LC in a Ascii file"""
@@ -682,7 +682,7 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffEr
     if len(Cutoff) == 0:
         flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
                   'Delta_Flux Index Delta_Index TS Npred\n')
-        for i in xrange(len(Time)):
+        for i in range(len(Time)):
             flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
                       str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
                       str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
@@ -690,7 +690,7 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffEr
     else:
         flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
                   'Delta_Flux Index Delta_Index Cutoff Delta_Cutoff TS Npred\n')
-        for i in xrange(len(Time)):
+        for i in range(len(Time)):
             flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
                       str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
                       str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +

@@ -18,7 +18,7 @@ from astropy.wcs import WCS
 try:
   from aplpy import FITSFigure
 except:
-  print 
+  print() 
   sys.exit("Module aplpy missing")
 
 #enrico imports
@@ -29,10 +29,10 @@ except:
 
 try :
   vmax = float(sys.argv[2])
-  print "use user's vmax for the color scale: "+sys.argv[2]
+  print(("use user's vmax for the color scale: "+sys.argv[2]))
 except:
-  print "use default vmax for the color scale: 40"
-  print "you can change it by typing python "+sys.argv[0]+" config [vmax] [stretch]\n stretch can be linear (default), log, sqrt, arcsinh or power"
+  print("use default vmax for the color scale: 40")
+  print(("you can change it by typing python "+sys.argv[0]+" config [vmax] [stretch]\n stretch can be linear (default), log, sqrt, arcsinh or power"))
   vmax=40
 
 try :
@@ -41,10 +41,10 @@ except:
   st = ['linear']
 
 stretch =[ 'linear', 'log', 'sqrt', 'arcsinh', 'power']
-if not(bool(sum(map(lambda x: x in st, stretch)))):
-  print "use user's stretch for the color scale: "+st[0]
+if not(bool(sum([x in st for x in stretch]))):
+  print(("use user's stretch for the color scale: "+st[0]))
 else:
-  print "use default stretch value: "+st[0]
+  print(("use default stretch value: "+st[0]))
 
 
 def set_hgps_style(f):
@@ -67,7 +67,7 @@ except:
   "Please provide a configuration file"
   sys.exit(1)
 
-print 
+print() 
 config = get_config(infile)
 tsfile = config['out']+'/'+config['target']['name']+'_'+config['file']['tag']+"_TSMap.fits"
 
@@ -95,8 +95,8 @@ f.show_colorscale(vmin=1e-5, vmax=vmax, stretch=st[0], exponent=1, cmap='jet') #
 f.show_colorbar()
 
 filename = config["out"]+'/TSMaps.eps'
-print('Writing {}'.format(filename))
+print(('Writing {}'.format(filename)))
 figure.savefig(filename)
 filename = config["out"]+'/TSMaps.png'
-print('Writing {}'.format(filename))
+print(('Writing {}'.format(filename)))
 figure.savefig(filename)

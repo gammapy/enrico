@@ -18,7 +18,7 @@ from astropy.wcs import WCS
 try:
   from aplpy import FITSFigure
 except:
-  print 
+  print() 
   sys.exit("Module aplpy missing")
 
 #enrico imports
@@ -30,10 +30,10 @@ except:
 
 try :
   vmax = float(sys.argv[2])
-  print "use user vmax for the color scale: "+sys.argv[2]
+  print(("use user vmax for the color scale: "+sys.argv[2]))
 except:
-  print "use default vmax for the color scale: 8"
-  print "you can change it by typing python "+sys.argv[0]+" config [vmax]"
+  print("use default vmax for the color scale: 8")
+  print(("you can change it by typing python "+sys.argv[0]+" config [vmax]"))
   vmax=8
 
 def set_hgps_style(f):
@@ -56,7 +56,7 @@ except:
   "Please provide a configuration file"
   sys.exit(1)
 
-print 
+print() 
 config = get_config(infile)
 obs = Observation(config["out"], config)
 
@@ -99,8 +99,8 @@ for ii, image in enumerate(images):
 #    f.show_regions("sources.reg")
 
 filename = config["out"]+'/Maps.eps'
-print('Writing {}'.format(filename))
+print(('Writing {}'.format(filename)))
 figure.savefig(filename)
 filename = config["out"]+'/Maps.png'
-print('Writing {}'.format(filename))
+print(('Writing {}'.format(filename)))
 figure.savefig(filename)

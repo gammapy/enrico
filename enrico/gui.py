@@ -11,8 +11,8 @@ class EnricoGui:
        win = gtk.Window(gtk.WINDOW_TOPLEVEL)
        try :
            Checkevtclass(self.evclass.get_value())
-           print "selection : event class "+ str(self.evclass.get_value())+" and event type "+str(self.evtype.get_value())
-           print "Corresponding IRFs\t=\t",GetIRFS(self.evclass.get_value(),self.evtype.get_value())
+           print(("selection : event class "+ str(self.evclass.get_value())+" and event type "+str(self.evtype.get_value())))
+           print(("Corresponding IRFs\t=\t",GetIRFS(self.evclass.get_value(),self.evtype.get_value())))
            button = gtk.Button("Corresponding IRFs:"+str(GetIRFS(self.evclass.get_value(),self.evtype.get_value())))
 
 
@@ -1198,7 +1198,7 @@ if __name__ == "__main__":
         infile = sys.argv[1]
     except:
         logging.error('Config file not found.')
-        print('Usage: '+sys.argv[0]+' <output config file name>')
+        print(('Usage: '+sys.argv[0]+' <output config file name>'))
         sys.exit(1)
 
     EnricoGui(infile)

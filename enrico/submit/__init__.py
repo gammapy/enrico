@@ -12,7 +12,7 @@ import subprocess
 import os
 #import stat
 from os.path import join, dirname
-import commands
+import subprocess
 import time
 import datetime
 import tempfile
@@ -20,13 +20,13 @@ from enrico import environ
 
 def _cmd_to_str(cmd):
     """ Convert entries to strings and join with spaces """
-    cmd_string = map(str, cmd)
+    cmd_string = list(map(str, cmd))
     return ' '.join(cmd_string)
 
 def _options_to_str(options):
     """ Convert a dictionary of options to a string """
     string = ''
-    for key, value in options.items():
+    for key, value in list(options.items()):
         string += ' {0}={1}'.format(key, value)
     return string
 
@@ -35,7 +35,7 @@ def jobs_in_queue():
     import time
     from subprocess import Popen, PIPE
     user = os.environ['USER']
-    for trial in xrange(60):
+    for trial in range(60):
         try:
             fh = Popen("qstat -u {user}".format(user=user), \
                     stdout=PIPE, shell=True)
@@ -71,8 +71,8 @@ def GetSubCmd():
       queuetext = "-q %s" %(environ.QUEUE)
   cmd = {'LAPP' :    ['qsub -V','-l mem=4096mb'],
          'MPIK' :    ['qsub'],
-         'DESY' :    ['qsub','-R y -V -terse -l h_rss=20G -V %s %s'%(queueoptions,queuetext)],
-         'DESY_quick' : ['qsub','-js 10 -R y -V -terse -l h_rss=4G -l s_cpu=01:00:00 -l h_cpu=02:00:00 -V %s %s'%(queueoptions,queuetext)],
+         'DESY' :    ['qsub','-R y -V -terse -l h_rss=4G -l m_mem_free=4G -V %s %s'%(queueoptions,queuetext)],
+         'DESY_quick' : ['qsub','-V -terse -l h_rss=4G -l s_cpu=01:00:00 -l h_cpu=02:00:00 -V %s %s'%(queueoptions,queuetext)],
          'LOCAL' :   ['qsub','-V %s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
@@ -138,7 +138,7 @@ def call(cmd,
         # up the environment and then executes cmd.
         template = join(dirname(__file__),
                         'qsub_'+environ.FARM+'.sh')
-        fh = file(template)
+        fh = open(template)
         text = fh.read()
         fh.close()
 
@@ -223,11 +223,11 @@ def call(cmd,
     if scriptfile:
         logging.debug('Saving command in file: {0}'
                       ''.format(scriptfile))
-        fh = file(scriptfile, 'w')
+        fh = open(scriptfile, 'w')
         fh.write(text + '\n')
         fh.close()
         #os.chmod(scriptfile, stat.S_IRWXU)
 
     if not dry:
-        print("Running: %s" %cmd)
+        print(("Running: %s" %cmd))
         os.system(cmd)
