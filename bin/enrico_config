@@ -12,4 +12,4 @@ except:
     sys.exit(1)
 
 config = query_config()
-config.write(open(sys.argv[1], 'w'))
+config.write(open(sys.argv[1], 'wb'))

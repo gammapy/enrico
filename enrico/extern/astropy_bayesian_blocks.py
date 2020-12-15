@@ -143,7 +143,7 @@ def bayesian_blocks(t, x=None, sigma=None,
                     'regular_events': RegularEvents,
                     'measures': PointMeasures}
     fitness = FITNESS_DICT.get(fitness, fitness)
-    if isinstance(fitness, (types.TypeType, types.ClassType)) and issubclass(fitness, FitnessFunc):
+    if isinstance(fitness, type) and issubclass(fitness, FitnessFunc):
         #if (type(fitness) is type or str(type(fitness)) is '<type classobj>') and issubclass(fitness, FitnessFunc):
         fitfunc = fitness(**kwargs)
     elif isinstance(fitness, FitnessFunc):

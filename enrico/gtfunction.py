@@ -8,7 +8,7 @@ begun October 2010
 import os
 import sys
 import shutil
-import Loggin
+from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
@@ -139,23 +139,23 @@ class Observation:
 
     def printSum(self):
         """Print a summary of the value stored in the class"""
-        print "Source\t=\t",self.srcname
-        print "RA\t=\t",self.ra," degrees"
-        print "Dec\t=\t",self.dec," degrees"
-        print "Start\t=\t",self.t1,"  MET (s)"
-        print "Stop\t=\t",self.t2,"  MET (s)"
-        print "ROI\t=\t",self.roi," degrees"
-        print "E min\t=\t",self.Emin," MeV"
-        print "E max\t=\t",self.Emax," MeV"
-        print "E min ext\t=\t",self.Emin_ext," MeV"
-        print "E max ext\t=\t",self.Emax_ext," MeV"
-        print "IRFs\t=\t",self.irfs
-        print "evclass\t=\t",self.Configuration['event']['evclass']
-        print "evtype\t=\t",self.Configuration['event']['evtype']
+        print(("Source\t=\t",self.srcname))
+        print(("RA\t=\t",self.ra," degrees"))
+        print(("Dec\t=\t",self.dec," degrees"))
+        print(("Start\t=\t",self.t1,"  MET (s)"))
+        print(("Stop\t=\t",self.t2,"  MET (s)"))
+        print(("ROI\t=\t",self.roi," degrees"))
+        print(("E min\t=\t",self.Emin," MeV"))
+        print(("E max\t=\t",self.Emax," MeV"))
+        print(("E min ext\t=\t",self.Emin_ext," MeV"))
+        print(("E max ext\t=\t",self.Emax_ext," MeV"))
+        print(("IRFs\t=\t",self.irfs))
+        print(("evclass\t=\t",self.Configuration['event']['evclass']))
+        print(("evtype\t=\t",self.Configuration['event']['evtype']))
         if  self.irfs == 'CALDB':
-            print "Corresponding IRFs\t=\t",\
+            print(("Corresponding IRFs\t=\t",\
             utils.GetIRFS(self.Configuration['event']['evclass'],\
-            self.Configuration['event']['evtype'])
+            self.Configuration['event']['evtype'])))
 
     def Gtbin(self):
         """Run gtbin with the CMAP option. A square count map is produced enclosed inside the roi"""
@@ -278,12 +278,12 @@ class Observation:
         expcube2['nypix'] = "INDEF"
         expcube2['binsz'] = "INDEF"
         app = expcube2
-        if 'edisp_bins' in app.pars.keys():
+        if 'edisp_bins' in list(app.pars.keys()):
             if self.use_edisp:
                 app['edisp_bins'] = -min(3,int(Nbdecade*0.2+0.5))
             else:
                 app['edisp_bins'] = 0
-        elif 'edisp' in app.pars.keys():
+        elif 'edisp' in list(app.pars.keys()):
             app['edisp'] = True
                 
         expcube2['enumbins'] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
@@ -421,7 +421,7 @@ class Observation:
 
         selstr = self.Configuration['analysis']['filter']
         if self.Configuration['time']['file'] != '':
-            if '.fits' not in self.Configuration['time']['file']:
+            if '.fit' not in self.Configuration['time']['file'] and '.fts' not in self.Configuration['time']['file']:
                 selstr = self.Configuration['analysis']['filter']
                 self.time_selection_listofgtis()
             else:
@@ -465,7 +465,7 @@ class Observation:
         with open(self.diffrspflag,"w") as diffrspflag:
             diffrspflag.write("")
 
-        print "\ndone"
+        print("\ndone")
 
     def ExpCube(self):
         "Run gtltcube tool to produce livetime cube"
@@ -526,13 +526,13 @@ class Observation:
         
         # energy dispersion correction
         app = srcMaps
-        if 'edisp_bins' in app.pars.keys():
+        if 'edisp_bins' in list(app.pars.keys()):
             if self.use_edisp:
                 #app['edisp_ebins'] = -min(3,int(Nbdecade*0.2+0.5)) # adaptative.
                 app['edisp_bins'] = -2 # lets keep it simple
             else:
                 app['edisp_bins'] = 0
-        elif 'edisp' in app.pars.keys():
+        elif 'edisp' in list(app.pars.keys()):
             app['edisp'] = True
         
         srcMaps['emapbnds']='no'

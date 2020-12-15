@@ -4,11 +4,11 @@ from enrico import utils
 from enrico.gtfunction import Observation
 from enrico.fitmaker import FitMaker
 from enrico.plotting import plot_sed_fromconfig
-import Loggin
+from enrico import Loggin
 import SummedLikelihood
 from enrico.xml_model import XmlMaker
 from enrico.extern.configobj import ConfigObj
-from utils import hasKey, isKey, typeirfs
+from enrico.utils import hasKey, isKey, typeirfs
 
 # Called per component
 def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
@@ -65,7 +65,7 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
         # Special case of the PSF component analysis, 
         # where up to 15 components (energy+PSF) are created following 
         # 4FGL prescription.
-        from catalogComponents import evtnum, energybins, nbinsbins, zmaxbins, ringwidths, pixelsizes
+        from enrico.catalogComponents import evtnum, energybins, nbinsbins, zmaxbins, ringwidths, pixelsizes
         config['analysis']['likelihood'] = "binned"
         oldxml = config['file']['xml']
 
@@ -246,7 +246,7 @@ def run(infile):
         FitRunner.config['file']['parent_config'] = infile
     
     if config['Spectrum']['ResultParentPlots'] == "yes":
-        print(config['file']['parent_config'])
+        print((config['file']['parent_config']))
         plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     try:
         infile = sys.argv[1]
     except:
-        print('Usage: '+sys.argv[0]+' <config file name>')
+        print(('Usage: '+sys.argv[0]+' <config file name>'))
         mes.error('Config file not found.')
 
     run(infile)

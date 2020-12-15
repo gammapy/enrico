@@ -19,10 +19,10 @@ def isKey(dictionary,key):
 
 def _log(text, line=True):
     if line:
-        print("\033[34m"+'# ' + '*' * 60)
-    print("\033[34m"+"# *** %s ***" % text)
+        print(("\033[34m"+'# ' + '*' * 60))
+    print(("\033[34m"+"# *** %s ***" % text))
     if line:
-        print "\033[34m"+'# ' + '*' * 60+"\033[0m"
+        print(("\033[34m"+'# ' + '*' * 60+"\033[0m"))
 
 def fluxScale(flux_value):
     """Get the scale of the flux value
@@ -133,14 +133,14 @@ def SubtractFits(infile1, infile2, config, tag="", abs_diff_file="", rel_diff_fi
 
 def GetFluxes(Fit,Emin=1e2,Emax=3e5):
     """Print the integral flux and error for all the sources"""
-    print "\nSource Flux  [%2.2e MeV, %2.2e MeV] : " %(Emin,Emax)
+    print(("\nSource Flux  [%2.2e MeV, %2.2e MeV] : " %(Emin,Emax)))
     for src in Fit.model.srcNames:
         try:
-            print(src + "   Integral Flux : %2.2e +/-  %2.2e ph/cm2/s" %
-                  (Fit.flux(src,Emin,Emax), Fit.fluxError(src,Emin,Emax)))
+            print((src + "   Integral Flux : %2.2e +/-  %2.2e ph/cm2/s" %
+                  (Fit.flux(src,Emin,Emax), Fit.fluxError(src,Emin,Emax))))
         except:
             pass
-    print
+    print()
 
 def GetCovar(srcname, Fit, verbose = True):
     """Extract covariance matrix"""
@@ -167,8 +167,8 @@ def GetCovar(srcname, Fit, verbose = True):
         ix = par_index_map[xpar]
         my_covar.append([covar[ix][par_index_map[ypar]] for ypar in pars])
     if verbose :
-      print "The covariance matrix is :\n", np.array(my_covar)
-      print
+      print(("The covariance matrix is :\n", np.array(my_covar)))
+      print()
 
     return my_covar
 
@@ -184,8 +184,8 @@ def getParamIndx(fit, name, parameter):
         if(parName == parameter):
             ID = indx
     if(ID == -1):
-        print('Parameter %s not found for source %s in file %s.' %
-             (parameter, name, fit.srcModel))
+        print(('Parameter %s not found for source %s in file %s.' %
+             (parameter, name, fit.srcModel)))
 
     return ID
 
@@ -205,7 +205,7 @@ def FreezeParams(fit, name, parameter, value):
 
 def ApproxPref(Fit, ener,name):
     Pref = np.zeros(len(ener)-1)
-    for ibin in xrange(len(ener)-1):
+    for ibin in range(len(ener)-1):
       Eav = GetE0(ener[ibin+1],ener[ibin])
       Pref[ibin] = dNde(Eav,Fit,name)
 
@@ -214,7 +214,7 @@ def ApproxPref(Fit, ener,name):
 def ApproxGamma(Fit, ener,name):
     """ Get an approximation of the index for different bin in energy"""
     Gamma = np.zeros(len(ener)-1)
-    for ibin in xrange(len(ener)-1):
+    for ibin in range(len(ener)-1):
       #Compute an approximation of an index
       dnde1 = np.log10(dNde(ener[ibin],Fit,name))
       dnde2 = np.log10(dNde(ener[ibin+1],Fit,name))
@@ -265,7 +265,7 @@ def _dump_filename(config):
 def DumpResult(Result, config):
     """Dump the result into an ascii file """
     Dumpfile = open(_dump_filename(config), "w")
-    for key in Result.iterkeys():
+    for key in list(Result.keys()):
         Dumpfile.write(key + '\t' + str(Result[key]) + '\n')
     Dumpfile.close()
 
@@ -329,10 +329,10 @@ def string_to_list(string):
     try:
         for delim in [ "[", "]", "(", ")" ]:
             string = string.replace(delim,"")
-        print("Debug: read energy bins: {0}".format(string))
+        print(("Debug: read energy bins: {0}".format(string)))
         list_of_floats = [ float(item) for item in string.split(",") ]
         assert(len(list_of_floats)>=2)
-    except (ValueError, AssertionError), e:
+    except (ValueError, AssertionError) as e:
         # The conversion failed, return a None.
         return(None)
     else:

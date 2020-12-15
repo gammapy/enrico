@@ -70,8 +70,8 @@ class BayesianBlocks(lightcurve.LightCurve):
         expbins = Table.read(expfile, hdu='RATE')
 
         meanRate = float(len(evtlist))/float(self.tmax-self.tmin)
-        print("Mean photon rate %s s^-1" %meanRate)
-        print("Mean photon rate %s day^-1" %(meanRate*3600.*24))
+        print(("Mean photon rate %s s^-1" %meanRate))
+        print(("Mean photon rate %s day^-1" %(meanRate*3600.*24)))
 
         #Sort table in function of time just to be sure
         evtlist.sort()
@@ -96,8 +96,8 @@ class BayesianBlocks(lightcurve.LightCurve):
         #Apply exposure time correction
         evtlistcorrected = np.interp(evtlist, timeCorrection[:, 0], timeCorrection[:, 1])
         meanRateCorrected = float(len(evtlistcorrected))/float(timeCorrection[-1, 1]-timeCorrection[0, 1])
-        print("Mean photon rate exposure corrected %s s^-1" %meanRateCorrected)
-        print("Mean photon rate exposure corrected %s day^-1" %(meanRateCorrected*3600.*24))
+        print(("Mean photon rate exposure corrected %s s^-1" %meanRateCorrected))
+        print(("Mean photon rate exposure corrected %s day^-1" %(meanRateCorrected*3600.*24)))
 
         #Calculate bayesian block
         edgesCorrected = bayesian_blocks(evtlistcorrected, fitness='events', p0=self.p0)
@@ -120,13 +120,13 @@ class BayesianBlocks(lightcurve.LightCurve):
         self.Nbin = len(edges)-1
         self.time_array = np.zeros(self.Nbin*2)
         self.gtifile = []
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             self.time_array[2*i] = edges[i]
             self.time_array[2*i+1]= edges[i+1]
 
         self.info("Running LC with "+str(self.Nbin)+" bins")
-        for i in xrange(self.Nbin):
-            print "Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1], 'Apperture Photometry=', flux[i], '+/-', errflux[i], 'ph.s^-1'
+        for i in range(self.Nbin):
+            print(("Bin ",i," Start=",self.time_array[2*i]," Stop=",self.time_array[2*i+1], 'Apperture Photometry=', flux[i], '+/-', errflux[i], 'ph.s^-1'))
 
         #Dump into ascii
         bbfile = str("%s/BayesianBlocks/%s_bb.dat"%(self.folder,self.srcname))
@@ -188,7 +188,7 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         self.PrepareLC(self.config['BayesianBlocks']['MakeConfFile'])#Get the config file
 
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             #gc.collect()
             cmd = str("enrico_sed %s && enrico_plot_bayesianblocks %s" %(self.configfile[i], self.parent_filename))
             if self.submit == 'yes':
@@ -242,7 +242,7 @@ class BayesianBlocks(lightcurve.LightCurve):
         IndexErrName = 'd' + IndexName
 
         Nfail = 0
-        for i in xrange(self.Nbin):
+        for i in range(self.Nbin):
             CurConfig = get_config(self.configfile[i])
             #Read the result. If it fails, it means that the bins has not bin computed. A warning message is printed
             try :
@@ -258,7 +258,7 @@ class BayesianBlocks(lightcurve.LightCurve):
             Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
             TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
-            if ResultDic.has_key('Ulvalue') :
+            if 'Ulvalue' in ResultDic :
                 uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
                 # FluxErr.append(0)
@@ -316,12 +316,12 @@ class BayesianBlocks(lightcurve.LightCurve):
                 popt,_ = scipy.optimize.curve_fit(pol1, NdN, FdF, p0=[0,1])#, sigma=dydata)
 
 
-                for i in xrange(len(FluxForNpred)):
+                for i in range(len(FluxForNpred)):
                     if FluxForNpred[i]/FluxErr[i]>2*pol1(sqrt(Npred[i]),popt[0],popt[1]):
                         self._errorReading("problem in errors calculation for",i)
-                        print "Flux +/- error = ",FluxForNpred[i]," +/- ",FluxErr[i]
-                        print "V(Npred) = ",sqrt(Npred[i])
-                        print
+                        print(("Flux +/- error = ",FluxForNpred[i]," +/- ",FluxErr[i]))
+                        print(("V(Npred) = ",sqrt(Npred[i])))
+                        print()
 
                 plt.plot(np.array([0,max(NdN)]),pol1(np.array([0,max(NdN)]),popt[0],popt[1]),'--',color='black')
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
@@ -331,7 +331,7 @@ class BayesianBlocks(lightcurve.LightCurve):
                     transparent=False, bbox_inches=None, pad_inches=0.1,
                     frameon=None)
             else :
-                print "No Npred Plot produced"
+                print("No Npred Plot produced")
 
             #plot TS vs Time
             plt.figure()
@@ -395,7 +395,7 @@ class BayesianBlocks(lightcurve.LightCurve):
                     transparent=False, bbox_inches=None, pad_inches=0.1,
                     frameon=None)
         else:
-            print "[BayesianBlocks] Warning : No valid data"
+            print("[BayesianBlocks] Warning : No valid data")
 
 
 
@@ -442,7 +442,7 @@ class BayesianBlocks(lightcurve.LightCurve):
                     transparent=False, bbox_inches=None, pad_inches=0.1,
                     frameon=None)
             else:
-               print "[BayesianBlocks] Warning : No valid data"
+               print("[BayesianBlocks] Warning : No valid data")
 
 
 

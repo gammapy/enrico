@@ -21,6 +21,7 @@ def run_over_conffile(conffile):
 
 if len(sys.argv)==2 :
 #read an config file alone. If not working, try to read an ascii file with different conf file
+    print(sys.argv)
     try : 
         liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
         for inf in liste:

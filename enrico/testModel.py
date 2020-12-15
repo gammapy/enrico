@@ -2,7 +2,7 @@ import os
 import scipy.stats
 import SummedLikelihood
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except:
     print("cPickle not found, using pickle instead")
 from enrico.fitmaker import FitMaker
@@ -65,16 +65,16 @@ class ModelTester(Loggin.Message):
              self.Fit.addComponent(self.FitRunner.CreateLikeObject())
 
     def _printResults(self):
-        print 
+        print() 
         self.info("Summary of the results")
         for key in self.modellist:
            if key == "PowerLaw":
-               print key," Log(Like) = ",self.Results[key]
+               print((key," Log(Like) = ",self.Results[key]))
                llpl = self.Results[key]
            else :
                TS = 2*(self.Results[key]-llpl)
                prob = 1 - scipy.stats.chi2.cdf(TS, 1)
-               print key," Log(Like) = ",self.Results[key]," TS = ",TS," Pvalue = ",prob
+               print((key," Log(Like) = ",self.Results[key]," TS = ",TS," Pvalue = ",prob))
 
     def TestModel(self):
         """ actually test the models """
@@ -100,24 +100,24 @@ class ModelTester(Loggin.Message):
             pars = content[1:]
 
             if model not in self.modellist:
-                print("WARNING: given model %s not in the valid range %s" \
-                    %(str(model), str(self.modellist)))
+                print(("WARNING: given model %s not in the valid range %s" \
+                    %(str(model), str(self.modellist))))
                 continue
 
-            for k in xrange(len(pars)):
+            for k in range(len(pars)):
                 try: pars[k] = float(pars[k])
                 except: pars[k]=None
 
             # Reduce the list of possible models to the current one
             self.modellist = [model]
 
-            print("Using model %s with parameters %s" %(str(model), str(pars)))
+            print(("Using model %s with parameters %s" %(str(model), str(pars))))
             self.Results[model] = self.RunAFit(self.config["target"]["name"],model,pars)
             _sep_= ', '
             Dumpfile.write(model + _sep_ + _sep_.join([str(k) for k in pars]) \
                 + _sep_ + str(self.Results[model]) + '\n')
             
-            print("%s Log(Like) = %s" %(model,self.Results[model]))
+            print(("%s Log(Like) = %s" %(model,self.Results[model])))
         
         Inputfile.close()
         Dumpfile.close()
@@ -150,7 +150,7 @@ class ModelTester(Loggin.Message):
           self.Fit.fit(0,covar=True,optimizer=self.config["fitting"]["optimizer"])
           spectrum = self.Fit[self.config['target']['name']].funcs['Spectrum']
           # Get the names of the parameters for the source of interest
-          print "Loglike Value for ",model,": ",self.Fit.logLike.value()
+          print(("Loglike Value for ",model,": ",self.Fit.logLike.value()))
           self.Fit.writeXml(self.folder+"/TestModel/TestModel"+model+".xml")
           loglikevalue = 0
           for comp in self.Fit.components:

@@ -34,13 +34,13 @@ class FitMaker(Loggin.Message):
         self.log_like = 0
 
     def _log(self, task='', description=''):
-        print
-        print("\033[34m"+'# ' + '*' * 60)
+        print()
+        print(("\033[34m"+'# ' + '*' * 60))
         if task:
             task = '%10s --- ' % task
-        print("\033[34m"+'# *** %3d %s%s' %
-              (self.task_number, task, description))
-        print "\033[34m"+'# ' + '*' * 60+"\033[0m"
+        print(("\033[34m"+'# *** %3d %s%s' %
+              (self.task_number, task, description)))
+        print(("\033[34m"+'# ' + '*' * 60+"\033[0m"))
         self.task_number += 1
 
     def FirstSelection(self,config=None):
@@ -109,7 +109,7 @@ class FitMaker(Loggin.Message):
                                  optimizer=self.config['fitting']['optimizer'])
             
             Fit.setEnergyRange(self.obs.Emin,self.obs.Emax)
-            print("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp())))
+            print(("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp()))))
             
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':
@@ -132,7 +132,7 @@ class FitMaker(Loggin.Message):
             parameters['Index2'] = 2.
             parameters['Cutoff'] = 30000. # set the cutoff to be high
 
-            for key in parameters.keys():
+            for key in list(parameters.keys()):
                 IdGamma = utils.getParamIndx(Fit, self.obs.srcname, key)
                 if (IdGamma == -1):
                     continue
@@ -178,8 +178,8 @@ class FitMaker(Loggin.Message):
                 self.log_like = Fit.fit(verbosity=0, covar=True, optimizer=method, optObject=optObject)
                 edm,quality,loglike = self.GetStatus(Fit,optObject)
                 if self.config['verbose'] == 'yes' :
-                    print('Fit output with {1}: {0} [quality: {2}]'.format(
-                        self.log_like,self.config['fitting']['optimizer'],quality)) 
+                    print(('Fit output with {1}: {0} [quality: {2}]'.format(
+                        self.log_like,self.config['fitting']['optimizer'],quality))) 
             except Exception as exc:
                 self.warning('Exception while running {0}, {1}'.format(method,str(exc)))
             else:
@@ -257,10 +257,10 @@ class FitMaker(Loggin.Message):
         Result = {}
 
         if self.config['verbose'] == 'yes' :
-            print Fit.model,"\n"
+            print((Fit.model,"\n"))
             self.info("Results for the Fit")
             # Print src name, Npred and TS for source with TS > 5
-            print "Source Name\tNpred\tTS"
+            print("Source Name\tNpred\tTS")
             #TODO
         #for src in Fit.model.srcNames:
         #if Fit.Ts(src) > 5:
@@ -271,8 +271,8 @@ class FitMaker(Loggin.Message):
         Result['Npred'] = Fit.NpredValue(self.obs.srcname)
         Result['TS'] = Fit.Ts(self.obs.srcname)
         if self.config['verbose'] == 'yes' :
-            print "Values and (MINOS) errors for " + self.obs.srcname
-            print "TS : ", Fit.Ts(self.obs.srcname)
+            print(("Values and (MINOS) errors for " + self.obs.srcname))
+            print(("TS : ", Fit.Ts(self.obs.srcname)))
 
         # Get the python object 'Spectrum' for the source of interest
         spectrum = Fit[self.obs.srcname].funcs['Spectrum']
@@ -304,18 +304,18 @@ class FitMaker(Loggin.Message):
                 try:
                     MinosErrors = Fit.minosError(self.obs.srcname, par)
                     if self.config['verbose'] == 'yes' :
-                       print(par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
-                          (ParValue, ParError, MinosErrors[0], MinosErrors[1], Scale))
+                       print((par+" :  %2.2f +/-  %2.2f [ %2.2f, + %2.2f ] %2.0e" %
+                          (ParValue, ParError, MinosErrors[0], MinosErrors[1], Scale)))
                        Result.update({'d'+par+'-': MinosErrors[0] * Scale})
                        Result.update({'d'+par+'+': MinosErrors[1] * Scale})
                 except:
                     if self.config['verbose'] == 'yes' :
-                        print(par+" :  %2.2f +/-  %2.2f  %2.0e" %
-                          (ParValue, ParError, Scale))
+                        print((par+" :  %2.2f +/-  %2.2f  %2.0e" %
+                          (ParValue, ParError, Scale)))
             else:
                 if self.config['verbose'] == 'yes' :
-                    print(par+" :  %2.2f   %2.0e" %
-                      (ParValue, Scale))
+                    print((par+" :  %2.2f   %2.0e" %
+                      (ParValue, Scale)))
 
         try: # get covariance matrix
             if self.config['verbose'] == 'yes' :
@@ -370,9 +370,9 @@ class FitMaker(Loggin.Message):
         #read psf and get the 68% containement radius
         theta = (psfres[2].data["Theta"])
         theta68 = np.zeros(len(psfres[1].data["psf"]))
-        for i in xrange(len(psfres[1].data["psf"])):
+        for i in range(len(psfres[1].data["psf"])):
             integral = np.trapz(psfres[1].data["psf"][i],theta)
-            for j in xrange(psfres[1].data["psf"][i].size):
+            for j in range(psfres[1].data["psf"][i].size):
                if np.trapz(psfres[1].data["psf"][i][:j],theta[:j])/integral>0.68:
                    theta68[i] = theta[j]
                    break
@@ -386,7 +386,7 @@ class FitMaker(Loggin.Message):
         xx, yy = np.meshgrid(x, y)
         dist = np.sqrt(xx**2 + yy**2)
         Obsevt = 0 #compute the number of events within the PSF radius
-        for i in xrange(len(psfres[1].data["psf"])):
+        for i in range(len(psfres[1].data["psf"])):
             maps = ccube[0].data[i]
             Obsevt += sum(maps[dist<theta68[i]])/0.68
 
@@ -426,7 +426,7 @@ class FitMaker(Loggin.Message):
         parameters['Index2'] = 2.
         parameters['Cutoff'] = 30000. # set the cutoff to be high
 
-        for key in parameters.keys():
+        for key in list(parameters.keys()):
             try:
                 utils.FreezeParams(Fit,self.obs.srcname, key, parameters[key])
             except:
@@ -462,14 +462,14 @@ class FitMaker(Loggin.Message):
                 self.warning("ST UpperLimits returned RuntimeError, trying Poisson")
                 self.config['UpperLimit']['Method'] = 'Poisson'
                 
-            print "Upper limit using Integral method: ", ul
+            print(("Upper limit using Integral method: ", ul))
             self.warning("Be sure to have enough photons to validate the gaussian assumption")
 
         if self.config['UpperLimit']['Method'] == "Poisson": #The method is Poisson
             ul = self.PoissonUL(Fit)
-            print "Upper limit using Poisson statistic: ", ul
+            print(("Upper limit using Poisson statistic: ", ul))
 
-        print "This is an ul on the integral flux in ph/cm2/s"
+        print("This is an ul on the integral flux in ph/cm2/s")
         return ul #Return the result. This is an ul on the integral flux in ph/cm2/s
 
     def EnvelopeUL(self, Fit):
@@ -486,7 +486,7 @@ class FitMaker(Loggin.Message):
                            np.log10(self.obs.Emax), Npgraph)#the array containing the energy
         Ulenv = np.array(Npgraph * [0.])#the array containing the UL value
 
-        for i in xrange(Nbp):
+        for i in range(Nbp):
             indx = -1.5 - i / (Nbp - 1.)
             utils.FreezeParams(Fit,self.srcname,PhIndex,indx)
             #Use either the profile or the integral method
@@ -501,8 +501,8 @@ class FitMaker(Loggin.Message):
                 ul_val, _ = IntegralUpperLimit.calc_int(Fit, self.obs.srcname,
                                                         verbosity=0)
             self.success("Upper Limits calculated")
-            print "Index = ", indx, " UL = ", ul_val  #small print
-            for j in xrange(Npgraph):
+            print(("Index = ", indx, " UL = ", ul_val))  #small print
+            for j in range(Npgraph):
                 model_name = Fit.model.srcs[self.obs.srcname].spectrum().genericName()
                 #compute the DNDE value. The computation change is
                 #the model is PowerLaw or PowerLaw2
@@ -517,15 +517,15 @@ class FitMaker(Loggin.Message):
                     newUl = ul_val * pow(ener[j] / Escale, indx + 2)*Escale**2*1.6022e-6
                 Ulenv[j] = max(Ulenv[j], newUl)
 
-        print
+        print()
         self.info("Result of the UL envelope")
-        for j in xrange(Npgraph):
-            print ener[j], " ", Ulenv[j]
+        for j in range(Npgraph):
+            print((ener[j], " ", Ulenv[j]))
 
     def ComputeSED(self, Fit, dump=False):
         """compute the SED with the butterfly for all the model and save it into an ascii file"""
         self._log('PlotSED', 'Generate SED plot')
-        import plotting #plotting is the dedicated library
+        from enrico import plotting #plotting is the dedicated library
         from enrico.constants import SpectrumPath
         filename = self.config['out'] + '/'+SpectrumPath+\
                 '/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']

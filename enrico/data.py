@@ -79,10 +79,10 @@ FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
 def check_dirs():
     """Check directory availability"""
     print('*** DIRECTORIES ***')
-    for tag in DIRS.keys():
+    for tag in list(DIRS.keys()):
         dir = DIRS.get(tag, 'MISSING')
         status = 'YES' if os.path.isdir(dir) else 'NO'
-        print('{tag:.<20} {status:.<10} {dir}'.format(**locals()))
+        print(('{tag:.<20} {status:.<10} {dir}'.format(**locals())))
 
 
 def check_files():
@@ -91,7 +91,7 @@ def check_files():
     for _tag, _url, _dir, _file in FILES:
         path = join(_dir, _file)
         status = path if os.path.isfile(path) else 'MISSING'
-        print('{0:.<20} {1}'.format(_tag, status))
+        print(('{0:.<20} {1}'.format(_tag, status)))
 
 
 def check_catalog_templates():
@@ -147,7 +147,7 @@ class Data(object):
                 elif platform == "darwin": 
                     cmd = 'curl -O  -c  -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
                 
-            print('EXEC: ', cmd)
+            print(('EXEC: ', cmd))
             os.system(cmd)
         if photon:
             # -m --mirror
@@ -156,12 +156,12 @@ class Data(object):
             # -np --no-parent
             print(WEEKLY_URL)
             cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_URL
-            print('EXEC: ', cmd)
+            print(('EXEC: ', cmd))
             os.system(cmd)
 
     def download_aux(self):
         """Download missing diffuse model and catalog files"""
-        from urllib import urlretrieve
+        from urllib.request import urlretrieve
         from subprocess import call
         # Catalog and diffuse files
         for _tag, _url, _dir, _file in FILES:
@@ -170,23 +170,23 @@ class Data(object):
             url = join(_url, _file)
             if _dir:
                 if not os.path.isfile(path):
-                    print('Downloading %s' % path)
+                    print(('Downloading %s' % path))
                     urlretrieve(url, path)
                 else:
-                    print('%s exists already. Not downloading.' % _file)
+                    print(('%s exists already. Not downloading.' % _file))
             else:
                 print('Set DIRECTORIES before downloading the files.')
         # Diffuse emission templates
         if CATALOG_DIR:
             if not os.path.isdir(CATALOG_TEMPLATE_DIR):
-                print('Creating directory %s' % CATALOG_TEMPLATE_DIR)
+                print(('Creating directory %s' % CATALOG_TEMPLATE_DIR))
                 os.mkdir(CATALOG_TEMPLATE_DIR)
             # Use any one of the templates to check if they are installed
             filename = join(CATALOG_DIR, CATALOG)
             if not os.path.isfile(filename):
                 url = join(CATALOG_URL, filename)
                 path = join(CATALOG_DIR, filename)
-                print('Downloading %s' % path)
+                print(('Downloading %s' % path))
                 urlretrieve(url, path)
                 
             filename = join(CATALOG_TEMPLATE_DIR, 'CenALobes.fits')
@@ -195,7 +195,7 @@ class Data(object):
                 filename = 'LAT_extended_sources_%s.tgz' % TEMPLATE_VERSION
                 url = join(CATALOG_URL, filename)
                 path = join(CATALOG_DIR, filename)
-                print('Downloading %s' % path)
+                print(('Downloading %s' % path))
                 urlretrieve(url, path)
                 print('Unpacking')
                 call(['tar', 'zxvf', path, '-C', CATALOG_DIR])
@@ -211,9 +211,9 @@ class Data(object):
         if steps == None:
             steps = self.STEPS
         if event_classes == None:
-            event_classes = self.EVENT_CLASSES.keys()
+            event_classes = list(self.EVENT_CLASSES.keys())
         if selections == None:
-            selections = self.SELECTIONS.keys()
+            selections = list(self.SELECTIONS.keys())
         if emins == None:
             emins = self.EMINS
         log.info('steps: %s' % steps)

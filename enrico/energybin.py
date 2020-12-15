@@ -68,9 +68,9 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     lEmax = np.log10(Emax)
     lEmin = np.log10(Emin)
     utils._log("Preparing submission of fit into energy bins")
-    print("Emin = {0} MeV".format(Emin),
+    print(("Emin = {0} MeV".format(Emin),
           "Emax = {0} MeV".format(Emax),
-          "Nbins = {0}".format(NEbin))
+          "Nbins = {0}".format(NEbin)))
 
     ener = utils.string_to_list(config['Ebin']['DistEbins'])
     if ener is None:
@@ -105,7 +105,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     # Get elements strictly below limit +1 element to the right side.
     # example. [1,2,3,4,5] -> if Emin=3.4, Emax=3.9 we want to keep [3.4,3.9].
     ener = np.asarray(ener)
-    print("Energy bins (before energy cuts): {0}".format(str(ener)))
+    print(("Energy bins (before energy cuts): {0}".format(str(ener))))
     if len(ener)==0: 
         print("** Warning: energy bin array is empty")
         return(None)
@@ -124,7 +124,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     ener[0]  = np.max([Emin,ener[0]])
     ener[-1] = np.min([Emax,ener[-1]])
     NEbin = len(ener)-1
-    print("Energy bins (after energy cuts): {0}".format(str(ener)))
+    print(("Energy bins (after energy cuts): {0}".format(str(ener))))
     if len(ener)==0: 
         print("** Warning: energy bin array is empty")
         return(None)
@@ -140,7 +140,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
 
     if config['UpperLimit']['TSlimit']>TSsrc:
         utils._log('Re-optimize', False)
-        print "An upper limit has been computed. The fit need to be re-optimized"
+        print("An upper limit has been computed. The fit need to be re-optimized")
         Fit.optimize(0)
     
     Pref = utils.ApproxPref(Fit, ener, srcname)
@@ -164,7 +164,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         xmltag_list = ["_EDISP0","_EDISP1","_EDISP2","_EDISP3"]
         mes.info("Splitting EDISP events")
     elif config['ComponentAnalysis']['FGL4'] == "yes":
-        from catalogComponents import evtnum, energybins, pixelsizes
+        from enrico.catalogComponents import evtnum, energybins, pixelsizes
         xmltag_list = []
         for ebin_i in energybins:
             for k,evt in enumerate(evtnum):
@@ -174,7 +174,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
                 except KeyError:
                     continue
 
-    for ibin in xrange(NEbin):#Loop over the energy bins
+    for ibin in range(NEbin):#Loop over the energy bins
         E = utils.GetE0(ener[ibin + 1],ener[ibin])
         mes.info("Submitting # "+str(ibin)+" at energy "+str(E))
         #Update the model for the bin

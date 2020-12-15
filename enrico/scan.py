@@ -3,7 +3,7 @@ Make a profile likelihood for each free parameters of the source of interest
 begun November 2013
 """
 import enrico.constants as cst
-import RunGTlike
+from enrico. import RunGTlike
 import ROOT
 import numpy,os,string,array
 from enrico import Loggin
@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 def MakeScan(Fit,spectrum,par,bmin,bmax,opt,N=100):
     Param = numpy.zeros(N)
     loglike = numpy.zeros(N)
-    for i in xrange(N):
+    for i in range(N):
         Param[i] = bmin + (bmax-bmin)*i/(N-1.)
         spectrum.getParam(par).setValue(Param[i])
 #        spectrum.getParam(par).setFree(0)
@@ -38,7 +38,7 @@ def Scan(config):
 
     for par in ParName : #Loop over the parameters and get value, error and scale
       if  spectrum.getParam(par).isFree():
-          print "Scan for parameter ",par
+          print(("Scan for parameter ",par))
           ParValue = spectrum.getParam(par).value()
           ParError = spectrum.getParam(par).error()
           bmin,bmax = spectrum.getParam(par).getBounds()
@@ -60,7 +60,7 @@ def Scan(config):
 
           utils.mkdir_p(config["out"]+"/"+cst.ScanPath)
           savefile = open(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".txt","w")
-          for i in xrange(param.size):
+          for i in range(param.size):
              savefile.write(str(param[i])+" "+str(loglike[i])+"\n")
           savefile.close()
           plt.savefig(config["out"]+"/"+cst.ScanPath+ "/Scan_"+par+".png", dpi=150, facecolor='w', edgecolor='w',
@@ -101,8 +101,8 @@ def Contour(config):
         mes.error(parname2+" is not a valid parameter")
 
     bestloglike = Fit.fit(0,covar=False,optimizer=config['fitting']['optimizer'])
-    print spectrum
-    print "Min LogLikelihood =",bestloglike
+    print(spectrum)
+    print(("Min LogLikelihood =",bestloglike))
 
     ## get values
     ParValue1 = spectrum.getParam(parname1).value()
@@ -127,7 +127,7 @@ def Contour(config):
     mes.info("Boundaries for "+parname1+" ["+str(bmin1)+","+str(bmax1)+"]")
     mes.info("Boundaries for "+parname2+" ["+str(bmin2)+","+str(bmax2)+"]")
 
-    for i in xrange(N):
+    for i in range(N):
 
       param2[i] = bmin2 + (bmax2-bmin2)*i/(N-1.)
 
@@ -135,7 +135,7 @@ def Contour(config):
 
       param1,ll = MakeScan(Fit,spectrum,parname1,bmin1,bmax1,config['fitting']['optimizer'],N)
       
-      for j in xrange(N):
+      for j in range(N):
          loglike.Fill(param1[j],param2[i],ll[j])
 
     utils.mkdir_p(config["out"]+"/"+cst.ScanPath)

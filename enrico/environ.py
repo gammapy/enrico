@@ -104,7 +104,7 @@ def check_command_line_tools():
     for tool in ['python', 'ipython', 'gtlike', 'enrico_setupcheck']:
         location = Popen(['which', tool],
                          stdout=PIPE).communicate()[0]
-        print('{0:.<20} {1}'.format(tool, location.strip() or 'MISSING'))
+        print(('{0:.<20} {1}'.format(tool, location.strip() or 'MISSING')))
 
 
 def check_python_modules():
@@ -122,16 +122,16 @@ def check_python_modules():
         try:
             exec('import %s' % package)
             filename = eval('%s.__file__' % package)
-            print('{0:.<20} {1}'.format(package, filename))
+            print(('{0:.<20} {1}'.format(package, filename)))
         except ImportError:
-            print('{0:.<20} {1}'.format(package, 'MISSING'))
+            print(('{0:.<20} {1}'.format(package, 'MISSING')))
 
 
 def print_farm():
    """Print the name of the submission farm"""
    print('*** FARM ***')
    if FARM=='':
-     print('{0:.<20} {1}'.format("FARM", 'MISSING'))
+     print(('{0:.<20} {1}'.format("FARM", 'MISSING')))
    else:
-     print('{0:.<20} {1}'.format("FARM", FARM))
+     print(('{0:.<20} {1}'.format("FARM", FARM)))
 

@@ -20,9 +20,9 @@ class Message(object):
     def info(self,message,newline=True):
         printstring = self.infocolor+"["+self.classname+"]: "+message+self.endcolor     
         if newline:
-            print printstring
+            print(printstring)
         else:
-            print self.infocolor+message+self.endcolor,
+            print(self.infocolor+message+self.endcolor, end=' ')
             sys.stdout.flush()  
         
     def warning(self,message,functionname = ""):
@@ -31,9 +31,9 @@ class Message(object):
             printstring = self.warningcolor+"["+self.classname+"] Warning: "+message+self.endcolor
         else:
             printstring = self.warningcolor+"["+self.classname+"::"+functionname+"] Warning: "+message+self.endcolor
-        print printstring
+        print(printstring)
         
     def success(self,message):
         printstring = self.successcolor+"["+self.classname+"]: "+message+self.endcolor
-        print printstring
+        print(printstring)
         

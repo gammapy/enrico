@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from RunGTlike import Analysis
+from enrico.RunGTlike import Analysis
 import sys
 from enrico import utils
 from enrico import Loggin
@@ -11,7 +11,7 @@ if __name__ == '__main__':
     try:
         infile = sys.argv[1]
     except:
-        print('Usage: '+sys.argv[0]+' <config file name>')
+        print(('Usage: '+sys.argv[0]+' <config file name>'))
         mes.error('Config file not found.')
     """Run an  Fermi analysis to generate FITS files by reading a config file"""
     config = get_config(infile)

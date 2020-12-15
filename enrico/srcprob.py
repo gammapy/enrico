@@ -11,9 +11,9 @@ def Print(indices,config,ra,dec,proba,energy,time):
       mes = Loggin.Message()
       mes.info("Energy\tAngular Sep\tProba\tTime")
       mes.info("[MeV]   \t[Degrees]")
-      for i in xrange(min(config['srcprob']['numberPhoton'],indices.size)):
+      for i in range(min(config['srcprob']['numberPhoton'],indices.size)):
           angSep = calcAngSepDeg(config['target']["ra"],config['target']["dec"],ra[indices[indices.size-1-i]],dec[indices[indices.size-1-i]])
-          print "%2.3e\t%2.3f\t\t%2.5f\t%2.1f"%(energy[indices[indices.size-1-i]],angSep,proba[indices[indices.size-1-i]],time[indices[indices.size-1-i]])
+          print(("%2.3e\t%2.3f\t\t%2.5f\t%2.1f"%(energy[indices[indices.size-1-i]],angSep,proba[indices[indices.size-1-i]],time[indices[indices.size-1-i]])))
 
 
 def Runsrcprob(config):
@@ -41,7 +41,7 @@ def Runsrcprob(config):
       mes = Loggin.Message()
       mes.info( "Results sorted by decreasing energy")
       Print(indices,config,ra,dec,proba,energy,time)
-      print 
+      print() 
       mes.info( "Results sorted by decreasing probability")
       indices = proba.argsort()
       Print(indices,config,ra,dec,proba,energy,time)

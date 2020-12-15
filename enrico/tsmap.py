@@ -82,7 +82,7 @@ class TSMap(Loggin.Message):
             Fit.fit(0,optimizer=self.config['fitting']['optimizer'])
 
         for comp in Fit.components:
-            for par in xrange(comp.logLike.getNumParams()): # freeze all the source parameters
+            for par in range(comp.logLike.getNumParams()): # freeze all the source parameters
                 comp[par].setFree(False)
             comp.addSource(src)# add a spurious source
 
@@ -109,7 +109,7 @@ class TSMap(Loggin.Message):
     def FitOneRow(self,ra,i) :
         """ function which run the evaluation of 1 row of the TS map
         using a loop and calling the fit for 1 pixel"""
-        for j in xrange(self.npix):
+        for j in range(self.npix):
             dec = self.DECref + self.binsz*(j-self.npix/2.)
             self.info('FitOneRow at DEC = '+str(dec))
             self.FitOnePixel(ra,dec,i,j)
@@ -132,14 +132,14 @@ class TSMap(Loggin.Message):
             return 
 
         # Normal operation : all row and piwel are computed
-        for i in xrange(self.npix): #loop over the X axis
+        for i in range(self.npix): #loop over the X axis
             ra = self.RAref + self.binsz*(i-self.npix/2.)
             if self.config['TSMap']['method'] == 'row' : # a row is evaluated in one job
 #                if row<0 or i==row:
                  self.info('Run Row evaluation at '+str(ra))
                  self._launch(ra,0,i,0)
             else : # each pixel is evaluated by one job
-                for j in xrange(self.npix): #loop over the Y axis
+                for j in range(self.npix): #loop over the Y axis
 #                    if (row<0 and column<0) or (i==row and column<0) or (i==row and j==column):
                      dec = self.DECref + self.binsz*(j-self.npix/2.)
                      self.info('Run Pixel evaluation at '+str(ra)+' '+str(dec))
@@ -164,8 +164,8 @@ class TSMap(Loggin.Message):
         binsz = header['CDELT1']
 
         import string # read the results
-        for i in xrange(npix):
-            for j in xrange(npix):
+        for i in range(npix):
+            for j in range(npix):
                 try : 
                     lines = open(self._PixelFile(i,j),"r").readlines()
                     Value = float(string.split(lines[0])[2])

@@ -75,8 +75,8 @@ class Result(Loggin.Message):
         try:
             self.CountsPlot(par)
         except Exception as e:
-            print(type(e))    # the exception instance
-            print(e.args)     # arguments stored in .args
+            print((type(e)))    # the exception instance
+            print((e.args))     # arguments stored in .args
             print(e)          # __str__ allows args to be printed directly,
             #raise
         
@@ -84,7 +84,7 @@ class Result(Loggin.Message):
         # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
         save_file = open(par.PlotName + '.dat', 'w')
         save_file.write("# log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
-        for i in xrange(par.N):
+        for i in range(par.N):
             save_file.write("%12.4e  %12.4e  %12.4e \n" % (self.E[i], self.SED[i], self.Err[i]))
         save_file.close()
 
@@ -93,7 +93,7 @@ class Result(Loggin.Message):
         corresponding energy and return a numpy array"""
         E = np.logspace(np.log10(params.Emin), np.log10(params.Emax), params.N)
         Flux = np.zeros(params.N)
-        for i in xrange(params.N):
+        for i in range(params.N):
             Flux[i] = self.dNde(E[i])
         return E, Flux
 
@@ -102,7 +102,7 @@ class Result(Loggin.Message):
         and return a numpy array"""
         E = np.logspace(np.log10(pars.Emin), np.log10(pars.Emax), pars.N)
         nuFnu = np.zeros(pars.N)
-        for i in xrange(pars.N):
+        for i in range(pars.N):
             nuFnu[i] = MEV_TO_ERG  * E[i] ** 2 * self.dNde(E[i]) #Mev to Ergs
         return E, nuFnu
 
@@ -115,7 +115,7 @@ class Result(Loggin.Message):
         for ene in energies:
             arg = pyLikelihood.dArg(ene)
             partials = np.zeros(len(self.srcpars))
-            for i in xrange(len(self.srcpars)):
+            for i in range(len(self.srcpars)):
                 x = self.srcpars[i]
                 partials[i] = self.ptsrc.spectrum().derivByParam(arg, x)
             err[j] = np.sqrt(np.dot(partials, np.dot(self.covar, partials)))
@@ -154,7 +154,7 @@ class Result(Loggin.Message):
                         indice = j
                     j += 1
 
-                for jn in xrange(len(image[3].data.field(0))):
+                for jn in range(len(image[3].data.field(0))):
                     energymin = image[3].data.field(1)[jn]
                     energymax = image[3].data.field(0)[jn]
                     if energymax in emax and energymin in emin:
@@ -162,7 +162,7 @@ class Result(Loggin.Message):
                         obs[k]     = obs[k] + image[1].data.field(0)[jn]
                         obs_err[k] = np.sqrt(obs[k])
                         src[k]     = src[k] + image[1].data.field(indice)[jn]
-                        for i in xrange(len(image[1].data.names) - 1):
+                        for i in range(len(image[1].data.names) - 1):
                             total[k] = total[k] + image[1].data.field(i + 1)[jn]
                     else:
                         emax    = np.append(emax, energymax)
@@ -172,18 +172,18 @@ class Result(Loggin.Message):
                                             np.sqrt(image[1].data.field(0)[jn]))
                         src     = np.append(src, image[1].data.field(indice)[jn])
                         total   = np.append(total,0)
-                        for i in xrange(len(image[1].data.names) - 1):
+                        for i in range(len(image[1].data.names) - 1):
                             total[-1] = total[-1] + image[1].data.field(i + 1)[jn]
             except RuntimeError as e:
                 print("Exception RuntimeError ocurred: ")
-                print(type(e))
-                print(e.args)
+                print((type(e)))
+                print((e.args))
                 print(e)
                 break
             except IndexError:
                 print("Exception IndexError ocurred (component unavailable): ")
-                print(type(e))
-                print(e.args)
+                print((type(e)))
+                print((e.args))
                 print(e)
                 continue
 
@@ -225,7 +225,7 @@ class Result(Loggin.Message):
         plt.title('Residuals plot')
         plt.semilogx()
 
-        for i in xrange(Nbin):
+        for i in range(Nbin):
             try:
                 residual[i] = (obs[i] - total[i]) / total[i]
                 Dres[i] = (obs_err[i] / total[i])
@@ -295,7 +295,7 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
     dumpfile.write("# Energy (MeV)\tEmin (MeV)\tEmax (MeV)\tE**2. dN/dE (erg.cm-2s-1)\tGaussianError\tMinosNegativeError\tMinosPositiveError\n")
 
     from enrico.constants import EbinPath
-    for i in xrange(NEbin):#Loop over the energy bins
+    for i in range(NEbin):#Loop over the energy bins
         #E = int(pow(10, (np.log10(ener[i + 1]) + np.log10(ener[i])) / 2))
         filename = (config['out'] + '/'+EbinPath+str(NEbin)+'/' + config['target']['name'] +
                     "_" + str(i) + ".conf")
@@ -322,7 +322,7 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
         dprefactor = 0
 
         #Compute the flux or the UL (in SED format)
-        if results.has_key('Ulvalue'):
+        if 'Ulvalue' in results:
             PrefUl = utils.Prefactor(results.get("Ulvalue"),results.get("Index"),
                                     results.get("Emin"),results.get("Emax"),Epoint[i])
             Fluxpoint[i] = MEV_TO_ERG  * PrefUl * Epoint[i] ** 2
@@ -347,14 +347,14 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
                 pass
 
         mes.info("Energy bins results")
-        print "Energy = ",Epoint[i]
+        print(("Energy = ",Epoint[i]))
         #Save the data point in a ascii file
-        if results.has_key('Ulvalue'):
+        if 'Ulvalue' in results:
             dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t0\t0\t0\n")
-            print "E**2. dN/dE = ",Fluxpoint[i]
+            print(("E**2. dN/dE = ",Fluxpoint[i]))
         else:
             dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( MEV_TO_ERG  * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
-            print "E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]
+            print(("E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]))
     dumpfile.close()
     return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
 
@@ -423,7 +423,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
         xerrors = 0.5*(edges[1:]-edges[:-1])
         yvalues = []
         yerrors = []
-        for k in xrange(len(edges)-1):
+        for k in range(len(edges)-1):
             xmin,xmax = edges[k],edges[k+1]
             filt = (x>=xmin)*(x<=xmax)*(yerr>0)
             sum_inv_square = np.sum(1./yerr[filt]**2)
@@ -438,8 +438,8 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
         ystepmin = []
         ystepmax = []
         xstep = []
-        for k in xrange(len(xvalues)):
-            for _ in xrange(2):
+        for k in range(len(xvalues)):
+            for _ in range(2):
                 ystep.append(yvalues[k]) # 3 values, to mark the minimum and center
                 ystepmin.append(yvalues[k]-yerrors[k]) # 3 values, to mark the minimum and center
                 ystepmax.append(yvalues[k]+yerrors[k]) # 3 values, to mark the minimum and center
@@ -472,8 +472,8 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
     ystepmin = []
     ystepmax = []
     xstep = []
-    for k in xrange(len(xvalues)):
-        for _ in xrange(2):
+    for k in range(len(xvalues)):
+        for _ in range(2):
             ystep.append(y[k]) # 3 values, to mark the minimum and center
             ystepmin.append(y[k]-yerrm[k]) # 3 values, to mark the minimum and center
             ystepmax.append(y[k]+yerrp[k]) # 3 values, to mark the minimum and center
@@ -501,7 +501,7 @@ def PlotSED(config,pars,ignore_missing_bins=False):
     E = []
     Err = []
 
-    for i in xrange(len(lines) - 1):
+    for i in range(len(lines) - 1):
         words = lines[i + 1].split()
         if float(words[0])<pars.Emax :
             E.append(float(words[0]))
@@ -516,10 +516,10 @@ def PlotSED(config,pars,ignore_missing_bins=False):
     ErrorE = np.zeros(2 * ilen + 1)
 
     #Compute the butterfly and close it
-    for i in xrange(ilen):
+    for i in range(ilen):
         ErrorFlux[i] = Fluxp[i]
         ErrorE[i] = E[i]
-    for i in xrange(ilen):
+    for i in range(ilen):
         ErrorFlux[ilen + i] = Fluxm[ilen - i - 1]
         ErrorE[ilen + i] = E[ilen - i - 1]
     ErrorFlux[-1] = Fluxp[0]
@@ -623,4 +623,4 @@ def plot_sed_fromconfig(config,ignore_missing_bins=False):
         try :
             PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
         except :
-            print "Not able to plot an upper limit in a SED diagram. UL computed?"
+            print("Not able to plot an upper limit in a SED diagram. UL computed?")

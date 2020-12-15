@@ -9,7 +9,7 @@ except ImportError:
     import pyfits as fits
 from enrico import utils
 import enrico.environ as env
-from environ import CATALOG_TEMPLATE_DIR, TAG_ISO
+from enrico.environ import CATALOG_TEMPLATE_DIR, TAG_ISO
 from os.path import join
 
 def addParameter(el, name, free, value, scale, min, max):
@@ -21,10 +21,10 @@ def addParameter(el, name, free, value, scale, min, max):
     param.setAttribute('scale', '%g' % scale)
     # if value outside limits, set it to the closest limit
     if value>max: 
-        print('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name))
+        print(('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name)))
         value=max
     if value<min: 
-        print('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name))
+        print(('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name)))
         value=min
     param.setAttribute('value', '%g' % value)
     param.setAttribute('max', '%g' % max)
@@ -97,7 +97,7 @@ def addPSPowerLaw1(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
-    except TypeError,NameError:
+    except TypeError as NameError:
         spec.setAttribute('type', 'PowerLaw')
 
     addParameter(spec, 'Prefactor',
@@ -139,7 +139,7 @@ def addPSPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=3e5,
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
-    except TypeError,NameError:
+    except TypeError as NameError:
         spec.setAttribute('type', 'PowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
@@ -187,7 +187,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
-    except TypeError,NameError:
+    except TypeError as NameError:
         spec.setAttribute('type', 'LogParabola')
     addParameter(spec, 'norm',
                  norm_free, norm_value, norm_scale, norm_min, norm_max)
@@ -235,7 +235,7 @@ def addPSBrokenPowerLaw2(lib, name, ra, dec, ebl=None, emin=200, emax=100000,
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
-    except TypeError,NameError:
+    except TypeError as NameError:
         spec.setAttribute('type', 'BrokenPowerLaw2')
     addParameter(spec, 'Integral',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
@@ -287,7 +287,7 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=
         addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
         addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
         addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
-    except TypeError,NameError:
+    except TypeError as NameError:
         spec.setAttribute('type', 'PLSuperExpCutoff')
     addParameter(spec, 'Prefactor',
                  flux_free, flux_value, flux_scale, flux_min, flux_max)
@@ -414,7 +414,7 @@ def GetlistFromFits(config, catalog):
     parameter_noise = config['model']['parameters_noise']
 
     #loop over all the sources of the catalog
-    for i in xrange(len(names)):
+    for i in range(len(names)):
         #distance from the center of the maps to the given source
         rspace = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_space, dec_space)
         #distance for the target to the given source
@@ -540,9 +540,9 @@ def GetlistFromFits(config, catalog):
 
 
     mes.info("Summary of the XML model generation")
-    print "Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+", roi-config['space']['rad'],") degrees"
-    print Nfree, " sources have free parameters inside ", max_radius, " degrees"
-    print Nextended, " source(s) is (are) extended"
+    print(("Add ", len(sources), " sources in the ROI of ", roi, "(",config['space']['rad'],"+", roi-config['space']['rad'],") degrees"))
+    print((Nfree, " sources have free parameters inside ", max_radius, " degrees"))
+    print((Nextended, " source(s) is (are) extended"))
 
     #save log of the generation of the xml
     save =  "\n"
@@ -608,8 +608,8 @@ def WriteXml(lib, doc, srclist, config):
     addGalprop(lib, Gal, free=1, value=1.0, scale=1.0,
                max=10.0, min=.010, name=Galname)
 
-    print "Iso model file ",Iso
-    print "Galactic model file ",Gal
+    print(("Iso model file ",Iso))
+    print(("Galactic model file ",Gal))
 
     yesnodict = {}
     for y in ['yes',True,'true',1,1.0,'1','1.0']:
@@ -630,7 +630,7 @@ def WriteXml(lib, doc, srclist, config):
         ebldict = None
 
     # loop over the list of sources and add it to the library
-    for i in xrange(len(srclist)):
+    for i in range(len(srclist)):
         name = srclist[i].get('name')
         if (name == config['target']['name']):
             ebl = ebldict
@@ -677,13 +677,13 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=freeshape, index1_value=srclist[i].get('index'),
                               cutoff_free=freeshape, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
-	elif  spectype.strip() == "BrokenPowerLaw":
+        elif  spectype.strip() == "BrokenPowerLaw":
             addPSBrokenPowerLaw2(lib, name, ra, dec, ebl,
-               		emin=emin, emax=emax,
+                       emin=emin, emax=emax,
                         flux_value=1.6, flux_scale=1e-6, extendedName=extendedName)
 
         else:
-            print('Warning!!!, unknown model %s' %spectype.strip())
+            print(('Warning!!!, unknown model %s' %spectype.strip()))
 
     folder = config['out']
     utils.mkdir_p(folder)
@@ -737,18 +737,18 @@ def XmlMaker(config):
     #if not use the default one
     if config['environ']['FERMI_CATALOG_DIR'] == '':
         catalogDir = env.CATALOG_DIR
-        print "use the default location of the catalog"
+        print("use the default location of the catalog")
     else:
         catalogDir = config['environ']['FERMI_CATALOG_DIR']
 
     if config['environ']['FERMI_CATALOG'] == '':
         catalog = catalogDir + "/" + env.CATALOG
-        print "use the default catalog"
+        print("use the default catalog")
     else:
         catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
 
-    print "Use the catalog : ", catalog
-    print "Use the extended directory : ", CATALOG_TEMPLATE_DIR
+    print(("Use the catalog : ", catalog))
+    print(("Use the extended directory : ", CATALOG_TEMPLATE_DIR))
 
     lib, doc = CreateLib()
     srclist = GetlistFromFits(config, catalog)
