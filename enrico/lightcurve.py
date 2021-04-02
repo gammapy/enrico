@@ -122,7 +122,7 @@ class LightCurve(Loggin.Message):
 
     def _errorReading(self,message,i):
         self.warning(message+" : "+self.configfile[i])
-        print(("Job Number : "+i))
+        print("Job Number : "+str(i))
         self.warning("Please have a look at this job log file")
 
 
