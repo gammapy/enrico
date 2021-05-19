@@ -9,7 +9,7 @@ import pyLikelihood
 import matplotlib
 matplotlib.use('Agg')
 matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 15})
-matplotlib.rc('text', usetex=True)
+matplotlib.rc('text', usetex=False)
 import matplotlib.pyplot as plt
 from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
 from enrico.config import get_config
@@ -527,7 +527,7 @@ def PlotSED(config,pars,ignore_missing_bins=False):
 
     #Actually make the plot
     plt.figure()
-    plt.title(pars.PlotName.split("/")[-1].replace('_','\_'))
+    plt.title(pars.PlotName.split("/")[-1])#.replace('_','\_'))
     name = pars.PlotName.split("/")[-1]
     plt.loglog()
 

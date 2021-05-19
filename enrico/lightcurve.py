@@ -6,7 +6,7 @@ from scipy.stats import chi2
 import matplotlib
 matplotlib.use('Agg')
 matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 15})
-matplotlib.rc('text', usetex=True)
+matplotlib.rc('text', usetex=False)
 import matplotlib.pyplot as plt
 from enrico import utils
 from enrico import plotting
