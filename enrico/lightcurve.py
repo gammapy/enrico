@@ -156,7 +156,9 @@ class LightCurve(Loggin.Message):
                 self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
-                self.config.write(open(filename, 'wb'))
+                self.config.filename = filename
+                #self.config.write(open(filename, 'wb'))
+                self.config.write()
 
             self.configfile.append(filename)
 

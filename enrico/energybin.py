@@ -199,7 +199,9 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
-        config.write(open(config['out'] + '/' +filename, 'wb')) #save the config file in a ascii file
+        config.filename = config['out'] + '/' +filename
+        config.write()
+        #config.write(open(config['out'] + '/' +filename, 'w')) #save the config file in a ascii file
 
     return paramsfile
 
