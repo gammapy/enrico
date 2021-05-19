@@ -26,9 +26,10 @@ FSSC_URL = 'http://fermi.gsfc.nasa.gov/ssc'
 FSSC_FTP_URL = 'https://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat/'
 HEASARC_FTP = 'http://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
 WEEKLY_DIFFUSE_URL = 'http://heasarc.gsfc.nasa.gov/FTP/fermi/data/lat'
-CATALOG_URL = join(FSSC_URL, 'data/access/lat/8yr_catalog')
+CATALOG_URL = join(FSSC_URL, 'data/access/lat/10yr_catalog')
+CATALOG_URL_EXTENDED = join(FSSC_URL, 'data/access/lat/8yr_catalog')
 # CATALOG_URL_8yr = join(FSSC_URL, 'data/access/lat/fl8y/')
-DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux/4fgl/')
+DIFFUSE_URL = join(FSSC_URL, 'data/analysis/software/aux/')
 WEEKLY_URL = join(FSSC_FTP_URL, 'weekly/photon')
 WEEKLY_SC_URL = join(FSSC_FTP_URL, 'weekly/spacecraft')
 WEEKLY_DIFFRSP_URL = join(HEASARC_FTP, 'weekly/diffuse')
@@ -45,21 +46,23 @@ FILES = [('CATALOG',            CATALOG_URL, CATALOG_DIR, CATALOG),
          ('DIFFUSE_ISO_SOURCEPSF1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF1),
          ('DIFFUSE_ISO_SOURCEPSF2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF2),
          ('DIFFUSE_ISO_SOURCEPSF3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEPSF3),
-         ('DIFFUSE_ISO_CLEANFRONT', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANFRONT),
-         ('DIFFUSE_ISO_CLEANBACK', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANBACK),
+         ('DIFFUSE_ISO_CLEAN', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEAN),
+         #('DIFFUSE_ISO_CLEANFRONT', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANFRONT),
+         #('DIFFUSE_ISO_CLEANBACK', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANBACK),
          ('DIFFUSE_ISO_CLEANPSF0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF0),
          ('DIFFUSE_ISO_CLEANPSF1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF1),
          ('DIFFUSE_ISO_CLEANPSF2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF2),
          ('DIFFUSE_ISO_CLEANPSF3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANPSF3),
-         ('DIFFUSE_ISO_SOURCEEDISP0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP0),
-         ('DIFFUSE_ISO_SOURCEEDISP1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP1),
-         ('DIFFUSE_ISO_SOURCEEDISP2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP2),
-         ('DIFFUSE_ISO_SOURCEEDISP3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP3),
-         ('DIFFUSE_ISO_CLEANEDISP0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP0),
-         ('DIFFUSE_ISO_CLEANEDISP1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP1),
-         ('DIFFUSE_ISO_CLEANEDISP2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP2),
-         ('DIFFUSE_ISO_CLEANEDISP3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP3),
-         ('DIFFUSE_ISO_CLEAN',  DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEAN)]
+         #('DIFFUSE_ISO_SOURCEEDISP0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP0),
+         #('DIFFUSE_ISO_SOURCEEDISP1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP1),
+         #('DIFFUSE_ISO_SOURCEEDISP2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP2),
+         #('DIFFUSE_ISO_SOURCEEDISP3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_SOURCEEDISP3),
+         #('DIFFUSE_ISO_CLEANEDISP0', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP0),
+         #('DIFFUSE_ISO_CLEANEDISP1', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP1),
+         #('DIFFUSE_ISO_CLEANEDISP2', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP2),
+         #('DIFFUSE_ISO_CLEANEDISP3', DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEANEDISP3),
+         #('DIFFUSE_ISO_CLEAN',  DIFFUSE_URL, DIFFUSE_DIR, DIFFUSE_ISO_CLEAN)
+]
 
 
 # fermievtypes = {\
@@ -170,7 +173,7 @@ class Data(object):
             url = join(_url, _file)
             if _dir:
                 if not os.path.isfile(path):
-                    print(('Downloading %s' % path))
+                    print(('Downloading %s -> %s' %(url,path)))
                     urlretrieve(url, path)
                 else:
                     print(('%s exists already. Not downloading.' % _file))
@@ -186,16 +189,16 @@ class Data(object):
             if not os.path.isfile(filename):
                 url = join(CATALOG_URL, filename)
                 path = join(CATALOG_DIR, filename)
-                print(('Downloading %s' % path))
+                print(('Downloading %s -> %s' %(url,path)))
                 urlretrieve(url, path)
                 
             filename = join(CATALOG_TEMPLATE_DIR, 'CenALobes.fits')
             if not os.path.isfile(filename):
                 # Now we know that we want to download
                 filename = 'LAT_extended_sources_%s.tgz' % TEMPLATE_VERSION
-                url = join(CATALOG_URL, filename)
+                url = join(CATALOG_URL_EXTENDED, filename)
                 path = join(CATALOG_DIR, filename)
-                print(('Downloading %s' % path))
+                print(('Downloading %s -> %s' %(url,path)))
                 urlretrieve(url, path)
                 print('Unpacking')
                 call(['tar', 'zxvf', path, '-C', CATALOG_DIR])

@@ -246,10 +246,9 @@ class Result(Loggin.Message):
         Ezero = np.array([1e-5, 1e10])
         plt.plot(Ezero,zero,lw=1.5,ls='solid',color='black')
         plt.tight_layout()
-        plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+        plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', 
+            edgecolor='w', orientation='portrait', format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1)
         os.system("rm " + imName)
         image.close()
 
