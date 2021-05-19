@@ -3,6 +3,7 @@ import os, sys
 import errno
 from math import log10
 import numpy as np
+import struct
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
 
 typeirfs={1:"FRONT",2:"BACK",3:"FRONTBACK",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
@@ -105,6 +106,13 @@ def cube_to_image(cube, slicepos=None, mean=False):
 
     return PrimaryHDU(data, header)
 
+def intBitsToFloat(b):
+    # Interpret an unsigned int as float
+    s = struct.pack('>L', b)
+    return struct.unpack('>f', s)[0]
+
+def numpy_intBitsToFloat(b):
+    return np.vectorize(intBitsToFloat)(b)
 
 def SubtractFits(infile1, infile2, config, tag="", abs_diff_file="", rel_diff_file=""):
     """Create (absolute and relative) difference images"""
@@ -112,6 +120,10 @@ def SubtractFits(infile1, infile2, config, tag="", abs_diff_file="", rel_diff_fi
     data1 = fits.getdata(infile1)
     data2 = fits.getdata(infile2)
     head = fits.getheader(infile2)
+    if (head['BITPIX'] == -32 and np.min(data2) > 1e5):
+        # astropy has interpreted wrongly as int32.
+        data2=numpy_intBitsToFloat(data2)
+
     filebase = config['out'] + "/" + config['target']['name']
     if ( tag != "" ):
         tag = "_"+tag

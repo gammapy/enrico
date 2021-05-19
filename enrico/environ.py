@@ -49,7 +49,7 @@ except :
     DIRS = {}
 
 # File names
-CATALOG_VERSION = '22'
+CATALOG_VERSION = '26'
 TEMPLATE_VERSION = '8years'
 #if CATALOG_DIR :
 #  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_%s/Templates'% TEMPLATE_VERSION)
@@ -58,7 +58,7 @@ TEMPLATE_VERSION = '8years'
 #  except:
 #    pass
 
-ISO_MAJOR = "V2"
+ISO_MAJOR = "V3"
 ISO_MINOR = "v1"
 TAG_ISO="{0}_{1}".format(ISO_MAJOR,ISO_MINOR)
 CATALOG = 'gll_psc_v%s.fit' % CATALOG_VERSION

@@ -157,9 +157,9 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
                    norm_free=1, norm_value=1e-9, norm_scale=0,
                    norm_max=10000.0, norm_min=0,
                    alpha_free=1, alpha_value=1.0,
-                   alpha_min=.5, alpha_max=5.,
+                   alpha_min=.5, alpha_max=3.,
                    beta_free=1, beta_value=1.0,
-                   beta_min=0, beta_max=5.0,extendedName=""):
+                   beta_min=0, beta_max=1.0,extendedName=""):
     """Add a source with a LOGPARABOLA model"""
     elim_min = 30
     elim_max = 300000
