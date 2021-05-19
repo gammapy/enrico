@@ -414,7 +414,7 @@ def GetIRFS(evtclass,evttype,addversion=True):
     # {0}_SOURCE_V3 is the irf, but iso_{0}_SOURCE_V3_()_V2.txt does not exist,
     # instead it is _V6_()_V3.txt. We need to get around this inconsistency.
     if (addversion):
-        classirf = classirfs[evtclass]+ISO_MAJOR
+        classirf = classirfs[evtclass]+"_"+ISO_MAJOR
     else:
         classirf = classirfs[evtclass]
     #mes.info("Using IRFS for: class %s and type %s" %(str(classirf),str(typ)))
