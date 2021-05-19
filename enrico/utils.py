@@ -5,6 +5,7 @@ from math import log10
 import numpy as np
 import struct
 from enrico.constants import met_ref,mjd_ref, jd_ref, DAY_IN_SECOND
+from enrico.environ import IRF_TAG, ISO_MAJOR 
 
 typeirfs={1:"FRONT",2:"BACK",3:"FRONTBACK",4:"PSF0",8:"PSF1",16:"PSF2",32:"PSF3",64:"EDISP0",
         128:"EDISP1",256:"EDISP2",512:"EDISP3"}
@@ -353,10 +354,20 @@ def string_to_list(string):
     return(None)
 
 def Checkevtclass(evclass):
-    classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
-			16:"P8R3_TRANSIENT020",32:"P8R3_TRANSIENT010E",64:"P8R3_TRANSIENT010",128:"P8R3_SOURCE",
-			256:"P8R3_CLEAN",521:"P8R3_ULTRACLEAN",1024:"P8R3_ULTRACLEANVETO",32768:"P8R3_TRANSIENT100S",
-			65536:"P8R3_TRANSIENT015S",16777216:"P8R3_LLE"}
+    classirfs = {1:"{0}_TRANSIENT100A".format(IRF_TAG),
+                 2:"{0}_TRANSIENT100E".format(IRF_TAG),
+                 4:"{0}_TRANSIENT100".format(IRF_TAG),
+                 8:"{0}_TRANSIENT020E".format(IRF_TAG),
+		 16:"{0}_TRANSIENT020".format(IRF_TAG),
+                 32:"{0}_TRANSIENT010E".format(IRF_TAG),
+                 64:"{0}_TRANSIENT010".format(IRF_TAG),
+                 128:"{0}_SOURCE".format(IRF_TAG),
+		 256:"{0}_CLEAN".format(IRF_TAG),
+                 521:"{0}_ULTRACLEAN".format(IRF_TAG),
+                 1024:"{0}_ULTRACLEANVETO".format(IRF_TAG),
+                 32768:"{0}_TRANSIENT100S".format(IRF_TAG),
+		 65536:"{0}_TRANSIENT015S".format(IRF_TAG),
+                 16777216:"{0}_LLE".format(IRF_TAG)}
     try :
         tmp = classirfs[evclass]
     except:
@@ -374,11 +385,20 @@ def GetSDC(val):
 def GetIRFS(evtclass,evttype,addversion=True):
     from enrico import Loggin
     mes = Loggin.Message()
-    classirfs = {1:"P8R3_TRANSIENT100A",2:"P8R3_TRANSIENT100E",4:"P8R3_TRANSIENT100",8:"P8R3_TRANSIENT020E",
-			16:"P8R3_TRANSIENT020",32:"P8R3_TRANSIENT010E",64:"P8R3_TRANSIENT010",128:"P8R3_SOURCE",
-			256:"P8R3_CLEAN",521:"P8R3_ULTRACLEAN",1024:"P8R3_ULTRACLEANVETO",32768:"P8R3_TRANSIENT100S",
-			65536:"P8R3_TRANSIENT015S",16777216:"P8R3_LLE"}
-
+    classirfs = {1:"{0}_TRANSIENT100A".format(IRF_TAG),
+                 2:"{0}_TRANSIENT100E".format(IRF_TAG),
+                 4:"{0}_TRANSIENT100".format(IRF_TAG),
+                 8:"{0}_TRANSIENT020E".format(IRF_TAG),
+		 16:"{0}_TRANSIENT020".format(IRF_TAG),
+                 32:"{0}_TRANSIENT010E".format(IRF_TAG),
+                 64:"{0}_TRANSIENT010".format(IRF_TAG),
+                 128:"{0}_SOURCE".format(IRF_TAG),
+		 256:"{0}_CLEAN".format(IRF_TAG),
+                 521:"{0}_ULTRACLEAN".format(IRF_TAG),
+                 1024:"{0}_ULTRACLEANVETO".format(IRF_TAG),
+                 32768:"{0}_TRANSIENT100S".format(IRF_TAG),
+		 65536:"{0}_TRANSIENT015S".format(IRF_TAG),
+                 16777216:"{0}_LLE".format(IRF_TAG)}
 
     result = []
     val = evttype
@@ -391,10 +411,10 @@ def GetIRFS(evtclass,evttype,addversion=True):
     for t in result:
         typ.append(typeirfs[t])
 
-    # P8R3_SOURCE_V2 is the irf, but iso_P8R3_SOURCE_V2_()_V2.txt does not exist,
-    # instead it is _V6_()_V2.txt. We need to get around this inconsistency.
+    # {0}_SOURCE_V3 is the irf, but iso_{0}_SOURCE_V3_()_V2.txt does not exist,
+    # instead it is _V6_()_V3.txt. We need to get around this inconsistency.
     if (addversion):
-        classirf = classirfs[evtclass]+"_V2"
+        classirf = classirfs[evtclass]+ISO_MAJOR
     else:
         classirf = classirfs[evtclass]
     #mes.info("Using IRFS for: class %s and type %s" %(str(classirf),str(typ)))
