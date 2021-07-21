@@ -139,7 +139,7 @@ class Observation:
 
     def printSum(self):
         """Print a summary of the value stored in the class"""
-        print(("Source\t=\t",self.srcname))
+        print("Source = ",self.srcname) 
         print(("RA\t=\t",self.ra," degrees"))
         print(("Dec\t=\t",self.dec," degrees"))
         print(("Start\t=\t",self.t1,"  MET (s)"))

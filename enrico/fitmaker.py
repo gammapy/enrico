@@ -109,7 +109,7 @@ class FitMaker(Loggin.Message):
                                  optimizer=self.config['fitting']['optimizer'])
             
             Fit.setEnergyRange(self.obs.Emin,self.obs.Emax)
-            print(("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp()))))
+            #print(("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp()))))
             
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':

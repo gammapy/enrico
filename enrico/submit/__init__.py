@@ -37,7 +37,11 @@ def jobs_in_queue():
     user = os.environ['USER']
     for trial in range(60):
         try:
-            fh = Popen("qstat -u {user}".format(user=user), \
+            if environ.FARM == "LAPP":
+                fh = Popen("condor_q ", \
+                    stdout=PIPE, shell=True)  
+            else:
+                fh = Popen("qstat -u {user}".format(user=user), \
                     stdout=PIPE, shell=True)
         except OSError:
             # Wait 5 minutes and try again
@@ -104,6 +108,8 @@ def call(cmd,
          options=None):
     """Run a command line tool either directly
     or submit to the queue"""
+
+
     if check_present and not clobber:
         if os.path.exists(check_present):
             logging.info('{0} exists. Skipping.'
@@ -138,85 +144,81 @@ def call(cmd,
         # up the environment and then executes cmd.
         template = join(dirname(__file__),
                         'qsub_'+environ.FARM+'.sh')
-        fh = open(template)
+        fh = open(template,"r")
         text = fh.read()
         fh.close()
 
-        # Changes to home dir by default, which happens
-        # anyway in a new shell.
-        if exec_dir:
-            text += '\ncd {0}\n\n'.format(exec_dir)
+        if environ.FARM == "LAPP":
+            tool = cmd.split()[0]
+            conf = cmd.split()[1]
+            # text.format(tool=tool)
+            text = text.replace("tool",tool)
+            text = text.replace("conf",conf)
+            text = text.replace("outfile",jobname+".out")
+            text = text.replace("errorfile",jobname+".err")
+            text = text.replace("logfile",qsub_log)
 
-        text +='conda activate fermi'+'\n'
-        #text +='export FERMI_DIR='+fermiDir+'\n'
-        #text +='export HEADAS_DIR='+fermiDir+'\n'
-        text +='export ENRICO_DIR='+enricoDir+'\n'
-        #text +='source $HEADAS_DIR/headas-init.sh\n'
-        #text +='source $FERMI_DIR/fermi-init.sh\n'
-        text +='source $ENRICO_DIR/enrico-init.sh\n'
-        #text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
-        text +='export LATEXDIR=/tmp/aux\n'
-        #text +='env\n'
-        text +='#PBS -o '+qsub_log+'\n'
+        else: 
+            # Changes to home dir by default, which happens
+            # anyway in a new shell.
+            if exec_dir:
+                text += '\ncd {0}\n\n'.format(exec_dir)
 
-        ''' # Trying to move it to the qsub job template
-        if environ.FARM in ['DESY','DESY_quick']:
-            text += 'export TMPDIR=/tmp/pfiles/$(date +"%s"); mkdir -p $TMPDIR\n'
+            text +='conda activate fermi'+'\n'
+            #text +='export FERMI_DIR='+fermiDir+'\n'
+            #text +='export HEADAS_DIR='+fermiDir+'\n'
+            text +='export ENRICO_DIR='+enricoDir+'\n'
+            #text +='source $HEADAS_DIR/headas-init.sh\n'
+            #text +='source $FERMI_DIR/fermi-init.sh\n'
+            text +='source $ENRICO_DIR/enrico-init.sh\n'
+            #text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
+            text +='export LATEXDIR=/tmp/aux\n'
+            #text +='env\n'
+            text +='#PBS -o '+qsub_log+'\n'
 
-        if environ.FARM in ['LAPP','DESY','DESY_quick']:
-            text += 'cp -R $FERMI_DIR/syspfiles/* $TMPDIR/.\n'
-            text += 'export PFILES=$TMPDIR\n'
-            text += 'cd $TMPDIR\n'
+            
+            if environ.FARM in ['DESY','DESY_quick']:
+                text += 'if [ "$PFILES" != "" ]; then cp -R $FERMI_DIR/syspfiles/* ${PFILES}/; fi\n'
+            
+            text += cmd
 
-        text += cmd
+            # Now reset cmd to be the qsub command
+            cmd = GetSubCmd()
+            if jobname:
+                if environ.FARM in ["CCIN2P3","DESY","DESY_quick"]:
+                    if jobname[0].isdigit():
+                        jobname='_'+jobname
+                cmd += ['-N', jobname]
 
-        if environ.FARM in ['LAPP','DESY','DESY_quick']:
-            text += '\ncd ..\n'
-            text += 'rm -fr $TMPDIR\n'
-        '''
-        
-        if environ.FARM in ['LAPP','DESY','DESY_quick']:
-            text += 'if [ "$PFILES" != "" ]; then cp -R $FERMI_DIR/syspfiles/* ${PFILES}/; fi\n'
-        
-        text += cmd
+            if scriptfile == None:
+                # Note that mkstemp() returns an int,
+                # which represents an open file handle,
+                # which we have to close explicitly to
+                # avoid running out of file handles foer
+                # > 100s of jobs.
+                (outfd,scriptfile)=tempfile.mkstemp()
+                outsock=os.fdopen(outfd,'w')
+                outsock.close()
+                del outfd
 
-        # Now reset cmd to be the qsub command
-        cmd = GetSubCmd()
-        if jobname:
-            if environ.FARM in ["CCIN2P3","DESY","DESY_quick"]:
-                if jobname[0].isdigit():
-                    jobname='_'+jobname
-            cmd += ['-N', jobname]
+            if qsub_log == None:
+                (outfd,qsub_log)=tempfile.mkstemp()
+                outsock=os.fdopen(outfd,'w')
+                outsock.close()
+                del outfd
 
-        if scriptfile == None:
-            # Note that mkstemp() returns an int,
-            # which represents an open file handle,
-            # which we have to close explicitly to
-            # avoid running out of file handles foer
-            # > 100s of jobs.
-            (outfd,scriptfile)=tempfile.mkstemp()
-            outsock=os.fdopen(outfd,'w')
-            outsock.close()
-            del outfd
+            cmd += GetSubOutput(qsub_log)
+            #if environ.FARM in ["DESY"]:
+            #    cmd += ['/usr/bin/singularity','exec','/project/singularity/images/SL6.img','sh']
+            cmd += [scriptfile]
 
-        if qsub_log == None:
-            (outfd,qsub_log)=tempfile.mkstemp()
-            outsock=os.fdopen(outfd,'w')
-            outsock.close()
-            del outfd
-
-        cmd += GetSubOutput(qsub_log)
-        #if environ.FARM in ["DESY"]:
-        #    cmd += ['/usr/bin/singularity','exec','/project/singularity/images/SL6.img','sh']
-        cmd += [scriptfile]
-
-        cmd = _cmd_to_str(cmd)
-        logging.info(cmd)
+            cmd = _cmd_to_str(cmd)
+            logging.info(cmd)
     else:
         if exec_dir:
             os.chdir(exec_dir)
 
-        text = cmd
+            text = cmd
 
     # Now the following steps are again identical
     # for submitting or not
@@ -229,5 +231,9 @@ def call(cmd,
         #os.chmod(scriptfile, stat.S_IRWXU)
 
     if not dry:
-        print(("Running: %s" %cmd))
-        os.system(cmd)
+        if environ.FARM == "LAPP":
+            print("Running: condor_submit "+scriptfile)
+            os.system("condor_submit "+scriptfile)
+        else:
+            print(("Running: %s" %cmd))
+            os.system(cmd)

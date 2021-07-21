@@ -85,7 +85,7 @@ class LightCurve(Loggin.Message):
                 print(("use "+self.config['time']['file']))
                 self.gtifile.append(self.config['time']['file'])
                 times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
-                self.Nbin = times.size/2
+                self.Nbin = int(times.size/2)
                 self.time_array=np.reshape(times,times.size,'F')
                     
                 if self.config['time']['type']=='MJD':
@@ -107,7 +107,7 @@ class LightCurve(Loggin.Message):
                         self.time_array[2*i+1]= t[i+1]
         
         else:
-            self.Nbin = self.config['LightCurve']['NLCbin']
+            self.Nbin = int(self.config['LightCurve']['NLCbin'])
             self.time_array = np.zeros(self.Nbin*2)
 #            self.dt = (self.tmax - self.tmin) / self.Nbin
             t = np.arange(self.tmin,self.tmax+0.000001,(self.tmax - self.tmin) / self.Nbin)
@@ -122,7 +122,7 @@ class LightCurve(Loggin.Message):
 
     def _errorReading(self,message,i):
         self.warning(message+" : "+self.configfile[i])
-        print(("Job Number : "+i))
+        print("Job Number : "+str(i))
         self.warning("Please have a look at this job log file")
 
 

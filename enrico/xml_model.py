@@ -747,8 +747,8 @@ def XmlMaker(config):
     else:
         catalog = catalogDir + "/" + config['environ']['FERMI_CATALOG']
 
-    print(("Use the catalog : ", catalog))
-    print(("Use the extended directory : ", CATALOG_TEMPLATE_DIR))
+    print("Use the catalog : ", catalog)
+    print("Use the extended directory : ", CATALOG_TEMPLATE_DIR)
 
     lib, doc = CreateLib()
     srclist = GetlistFromFits(config, catalog)
