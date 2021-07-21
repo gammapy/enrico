@@ -22,8 +22,7 @@ class Message(object):
         if newline:
             print(printstring)
         else:
-            #print(self.infocolor+message+self.endcolor, end=' ')
-            sys.stdout.write(self.infocolor+message+self.endcolor+' ')
+            print(self.infocolor+message+self.endcolor)
             sys.stdout.flush()  
         
     def warning(self,message,functionname = ""):

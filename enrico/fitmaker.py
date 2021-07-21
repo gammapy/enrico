@@ -75,6 +75,8 @@ class FitMaker(Loggin.Message):
         self.obs.ExpCube()
         self.info('Compute the psf')#run gtpsf
         self.obs.GtPSF()
+        self.info('Compute Energy Migration Matrices')#run gtpsf
+        self.obs.GtDRM()
 
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
@@ -109,7 +111,7 @@ class FitMaker(Loggin.Message):
                                  optimizer=self.config['fitting']['optimizer'])
             
             Fit.setEnergyRange(self.obs.Emin,self.obs.Emax)
-            print(("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp()))))
+            #print(("Is edisp enabled? {0}".format(str(Fit.logLike.use_edisp()))))
             
         #create a unbinnedAnalysis object
         if self.config['analysis']['likelihood'] == 'unbinned':

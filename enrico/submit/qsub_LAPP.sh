@@ -1,48 +1,20 @@
-#!/bin/bash
+executable   = tool
+arguments    = conf
 
-# -----------------------------------------------
-# Environment setup
-# -----------------------------------------------
+universe = vanilla
 
+output       = outfile
+error        = errorfile
+log          = logfile
 
-#####################################################################
-#This need to be in the .profile for LAPP users
-#export LAPP_APP_SHARED=/gpfs/LAPP-DATA/hess/Fermi_temp/$USER
+#+RequestedAcctGroup = "group_lapp.hess"
+request_cpus   = 1
+request_memory = 1024
+request_disk   = 1024
 
-#if [ ! -d "${LAPP_APP_SHARED}" ]; then
-#    mkdir ${LAPP_APP_SHARED}
-#fi
+should_transfer_files = yes
 
-#export HOME=$LAPP_APP_SHARED
+when_to_transfer_output = ON_EXIT 
 
-#export PBS_O_HOME=$LAPP_APP_SHARED
-#export PBS_O_INITDIR=$LAPP_APP_SHARED
-#export TMP_DIR=/var/spool/pbs/tmpdir
-#####################################################################
-
-export HOME=$TMPDIR
-#export PATH=$FERMI_DIR/bin:$PATH
-
-unset LD_LIBRARY_PATH
-unset PYTHONPATH
-
-. /grid_sw/soft-dev-cta/Pipeline/anaconda3/etc/profile.d/conda.sh
-conda deactivate
-if [ "${PFILES}" != "" ]; then
-    if [ ! -d "${PFILES}" ]; then
-        mkdir ${PFILES}
-    fi
-fi
-
-
-echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
-
-# This will allow FTOOLS to run on the cluster, whereas if this is not
-# set you get an error about '/dev/tty' e.g. when running ftcopy
-#export HEADASNOQUERY=1
-#setenv HEADASNOQUERY 1
-#echo HEADASNOQUERY: $HEADASNOQUERY
-#echo PYTHONPATH: $PYTHONPATH
-#echo PATH: $PATH
-export PYTHONPATH
-export PATH
+getenv = True
+queue

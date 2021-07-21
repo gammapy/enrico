@@ -21,10 +21,10 @@ def isKey(dictionary,key):
 
 def _log(text, line=True):
     if line:
-        print(("\033[34m"+'# ' + '*' * 60))
-    print(("\033[34m"+"# *** %s ***" % text))
+        print("\033[34m"+'# ' + '*' * 60)
+    print("\033[34m"+"# *** %s ***" % text)
     if line:
-        print(("\033[34m"+'# ' + '*' * 60+"\033[0m"))
+        print("\033[34m"+'# ' + '*' * 60+"\033[0m")
 
 def fluxScale(flux_value):
     """Get the scale of the flux value
