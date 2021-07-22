@@ -6,13 +6,13 @@ from scipy.stats import chi2
 import matplotlib
 matplotlib.use('Agg')
 matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 15})
-matplotlib.rc('text', usetex=True)
+matplotlib.rc('text', usetex=False)
 import matplotlib.pyplot as plt
 from enrico import utils
 from enrico import plotting
 from enrico import environ
 from enrico.config import get_config
-from enrico.constants import LightcurvePath,FoldedLCPath
+from enrico.constants import LightcurvePath,FoldedLCPath,DAY_IN_SECOND
 from enrico.submit import call
 from enrico.RunGTlike import run, GenAnalysisObjects
 from enrico import Loggin
@@ -122,7 +122,7 @@ class LightCurve(Loggin.Message):
 
     def _errorReading(self,message,i):
         self.warning(message+" : "+self.configfile[i])
-        print("Job Number : "+str(i))
+        print(("Job Number : {}".format(i)))
         self.warning("Please have a look at this job log file")
 
 
@@ -156,7 +156,9 @@ class LightCurve(Loggin.Message):
                 self.config['time']['file']=self.gtifile[i]
 
             if write == 'yes':
-                self.config.write(open(filename, 'wb'))
+                self.config.filename = filename
+                #self.config.write(open(filename, 'wb'))
+                self.config.write()
 
             self.configfile.append(filename)
 
@@ -333,6 +335,14 @@ class LightCurve(Loggin.Message):
         Npred_detected = np.asarray(Npred[Npred_detected_indices])
         Time = np.asarray(Time)
         TimeErr = np.asarray(TimeErr)
+
+        if self.config['time']['type']=='MJD':
+            Time    = utils.MJD_to_met(Time)
+            TimeErr = TimeErr*DAY_IN_SECOND
+        elif self.config['time']['type']=='JD':
+            Time    = utils.JD_to_met(Time)
+            TimeErr = TimeErr*DAY_IN_SECOND 
+
         Flux = np.asarray(Flux)
         FluxErr = np.asarray(FluxErr)
         # Index = np.array(Index)

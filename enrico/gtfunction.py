@@ -90,6 +90,7 @@ class Observation:
         self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"
         self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"
         self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"
+        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -620,8 +621,11 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.psf)):
             #print("File exists and clobber is False")
             return(0)
-        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)#Compute the number of decade
-        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],self.Configuration['event']['evtype'])
+
+        #Compute the number of decade
+        Nbdecade = log10(self.Emax_ext)-log10(self.Emin_ext)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
         psf = GtApp('gtpsf', 'Likelihood')
         psf["expcube"] = self.Cubename
         psf["outfile"] = self.psf
@@ -631,7 +635,25 @@ class Observation:
         psf["dec"]     = self.dec
         psf["emin"]    = self.Emin_ext
         psf["emax"]    = self.Emax_ext
-        psf["nenergies"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
+        psf["nenergies"] = max(2,\
+          int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         #psf.run()
         run_retry(psf)
+
+    def GtDRM(self):
+        if (self.clobber=="no" and os.path.isfile(self.drmfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        drm = GtApp('gtdrm', 'DRM')
+        drm["cmap"]    = self.srcMap
+        drm["outfile"] = self.drmfile
+        drm["irfs"]    = irfs
+        drm["expcube"] = self.Cubename
+        drm["bexpmap"] = self.BinnedMapfile
+        drm["chatter"] = 0
+        run_retry(drm)
+        
+        # gtdrm 1ES1011+496_LAT_Analysis_FRONTBACK_PLExpCutoff_srcMap.fits 1ES1011+496_LAT_Analysis_FRONTBACK_EDRM.fits "CALDB" 1ES1011+496_LAT_Analysis_FRONTBACK_ltCube.fits 1ES1011+496_LAT_Analysis_FRONTBACK_BinnedMap.fits 0

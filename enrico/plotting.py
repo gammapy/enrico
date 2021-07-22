@@ -9,7 +9,7 @@ import pyLikelihood
 import matplotlib
 matplotlib.use('Agg')
 matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern'], 'size': 15})
-matplotlib.rc('text', usetex=True)
+matplotlib.rc('text', usetex=False)
 import matplotlib.pyplot as plt
 from enrico.constants import MEV_TO_ERG, ERG_TO_MEV
 from enrico.config import get_config
@@ -246,10 +246,9 @@ class Result(Loggin.Message):
         Ezero = np.array([1e-5, 1e10])
         plt.plot(Ezero,zero,lw=1.5,ls='solid',color='black')
         plt.tight_layout()
-        plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+        plt.savefig(filebase + "ResPlot.png", dpi=150, facecolor='w', 
+            edgecolor='w', orientation='portrait', format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1)
         os.system("rm " + imName)
         image.close()
 
@@ -527,7 +526,7 @@ def PlotSED(config,pars,ignore_missing_bins=False):
 
     #Actually make the plot
     plt.figure()
-    plt.title(pars.PlotName.split("/")[-1].replace('_','\_'))
+    plt.title(pars.PlotName.split("/")[-1])#.replace('_','\_'))
     name = pars.PlotName.split("/")[-1]
     plt.loglog()
 
