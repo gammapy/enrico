@@ -50,7 +50,7 @@ except :
 
 # File names
 CATALOG_VERSION = '27'
-TEMPLATE_VERSION = '10years'
+TEMPLATE_VERSION = '8years'
 #if CATALOG_DIR :
 #  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_%s/Templates'% TEMPLATE_VERSION)
 #  try :
