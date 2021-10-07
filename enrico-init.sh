@@ -16,7 +16,7 @@
 # $ init_enrico
 
 if [ "$ENRICO_DIR" == "" ]; then
-    export ENRICO_DIR=$(dirname $0) #$HOME
+    export ENRICO_DIR=$HOME
 fi
 echo "Adding Enrico to PATH and PYTHONPATH"
 export PATH=$PATH:$ENRICO_DIR/bin
