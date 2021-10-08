@@ -73,10 +73,6 @@ class FitMaker(Loggin.Message):
         self.obs.Gtbin()
         self._log('gtltcube', 'Make live time cube')#run gtltcube
         self.obs.ExpCube()
-        self.info('Compute the psf')#run gtpsf
-        self.obs.GtPSF()
-        self.info('Compute Energy Migration Matrices')#run gtpsf
-        self.obs.GtDRM()
 
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
@@ -86,6 +82,10 @@ class FitMaker(Loggin.Message):
             self.obs.GtBinnedMap()
             self._log('gtsrcmap', 'Make a source map')#run gtsrcmap
             self.obs.SrcMap()
+            self.info('Compute the psf')#run gtpsf
+            self.obs.GtPSF()
+            self.info('Compute Energy Migration Matrices')#run gtpsf
+            self.obs.GtDRM()
             # the model should be generated for each component after optimizing.
             #self._log('gtmodel', 'Make a model map')#run gtmodel
             #self.obs.ModelMap(self.config["file"]["xml"])
