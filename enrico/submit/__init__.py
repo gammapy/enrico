@@ -37,9 +37,12 @@ def jobs_in_queue():
     user = os.environ['USER']
     for trial in range(60):
         try:
-            if environ.FARM == "LAPP":
+            if environ.FARM in ["LAPP", "IAC_CONDOR"]:
                 fh = Popen("condor_q ", \
                     stdout=PIPE, shell=True)  
+            elif environ.FARM in ["IAC_DIVA"]:
+                fh = Popen("squeue -u {user}".format(user=user), \
+                    stdout=PIPE, shell=True)
             else:
                 fh = Popen("qstat -u {user}".format(user=user), \
                     stdout=PIPE, shell=True)
@@ -77,17 +80,23 @@ def GetSubCmd():
          'MPIK' :    ['qsub'],
          'DESY' :    ['qsub','-R y -V -terse -l h_rss=30G -l m_mem_free=10G -l tmpdir_size=5G -V %s %s'%(queueoptions,queuetext)],
          'DESY_quick' : ['qsub','-V -terse -l h_rss=4G -l s_cpu=01:00:00 -l h_cpu=02:00:00 -V %s %s'%(queueoptions,queuetext)],
+         'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess'],
+         'IAC_CONDOR' : ['qsub -V','-l mem=4096mb'],
+         'IAC_DIVA' : ['sbatch','--export=ALL --mem=8G'],
          'LOCAL' :   ['qsub','-l nodes=1:ppn=1 -V %s %s'%(queueoptions,queuetext)],
-         'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
+         }
   return cmd[environ.FARM]
 
 def GetSubOutput(qsub_log):
   cmd = {'LAPP' :    ['-o', qsub_log, '-j', 'oe'],
          'MPIK' :    ['-o', qsub_log, '-j', 'y'],
-         'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
          'DESY' :    ['-o', qsub_log, '-j', 'y'],
          'DESY_quick' :  ['-o', qsub_log, '-j', 'y'],
-         'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes']}
+         'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes'],
+         'IAC_CONDOR' : ['-o', qsub_log, '-j', 'oe'],
+         'IAC_DIVA' : ['-o', qsub_log],
+         'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
+         }
   return cmd[environ.FARM]
 ###
 
@@ -129,6 +138,8 @@ def call(cmd,
     max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
+    elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA"]:
+        max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
         max_jobs = 90000
     elif environ.FARM=="LOCAL":
@@ -148,15 +159,62 @@ def call(cmd,
         text = fh.read()
         fh.close()
 
-        if environ.FARM == "LAPP":
+        if environ.FARM in ["LAPP", "IAC_CONDOR"]:
             tool = cmd.split()[0]
             conf = cmd.split()[1]
             # text.format(tool=tool)
             text = text.replace("tool",tool)
             text = text.replace("conf",conf)
+            #text = text.replace("enricodir",enricoDir)
             text = text.replace("outfile",jobname+".out")
             text = text.replace("errorfile",jobname+".err")
             text = text.replace("logfile",qsub_log)
+
+
+        elif environ.FARM in ["IAC_DIVA"]:
+            # Changes to home dir by default, which happens
+            # anyway in a new shell.
+            text = text.replace("job-name=fermilat","job-name={}".format(jobname))
+
+            if exec_dir:
+                text += '\ncd {0}\n\n'.format(exec_dir)
+
+            #text +='conda activate fermi'+'\n'
+            #text +='export ENRICO_DIR='+enricoDir+'\n'
+            #text +='source $ENRICO_DIR/enrico-init.sh\n'
+            #text +='export LATEXDIR=/tmp/aux\n'
+            if jobname:
+                if jobname[0].isdigit():
+                    jobname='_'+jobname
+            text +='#SBATCH --job-name='+jobname+'\n'
+            text +='#SBATCH --output= '+qsub_log+'\n'
+            text += cmd
+
+            # Now reset cmd to be the qsub command
+            cmd = GetSubCmd()
+
+            if scriptfile == None:
+                # Note that mkstemp() returns an int,
+                # which represents an open file handle,
+                # which we have to close explicitly to
+                # avoid running out of file handles foer
+                # > 100s of jobs.
+                (outfd,scriptfile)=tempfile.mkstemp()
+                outsock=os.fdopen(outfd,'w')
+                outsock.close()
+                del outfd
+
+            if qsub_log == None:
+                (outfd,qsub_log)=tempfile.mkstemp()
+                outsock=os.fdopen(outfd,'w')
+                outsock.close()
+                del outfd
+
+            cmd += GetSubOutput(qsub_log)
+            cmd += [scriptfile]
+
+            cmd = _cmd_to_str(cmd)
+            logging.info(cmd)
 
         else: 
             # Changes to home dir by default, which happens
@@ -165,15 +223,9 @@ def call(cmd,
                 text += '\ncd {0}\n\n'.format(exec_dir)
 
             text +='conda activate fermi'+'\n'
-            #text +='export FERMI_DIR='+fermiDir+'\n'
-            #text +='export HEADAS_DIR='+fermiDir+'\n'
             text +='export ENRICO_DIR='+enricoDir+'\n'
-            #text +='source $HEADAS_DIR/headas-init.sh\n'
-            #text +='source $FERMI_DIR/fermi-init.sh\n'
             text +='source $ENRICO_DIR/enrico-init.sh\n'
-            #text +='export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/:$PYTHONPATH\n'
             text +='export LATEXDIR=/tmp/aux\n'
-            #text +='env\n'
             text +='#PBS -o '+qsub_log+'\n'
 
             
@@ -231,7 +283,7 @@ def call(cmd,
         #os.chmod(scriptfile, stat.S_IRWXU)
 
     if not dry:
-        if environ.FARM == "LAPP":
+        if environ.FARM in ["LAPP","IAC_CONDOR"]:
             print("Running: condor_submit "+scriptfile)
             os.system("condor_submit "+scriptfile)
         else:

@@ -195,7 +195,9 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         Gamma_bin=-max(min(Gamma_max,Gamma[ibin]),Gamma_min)
         config['Spectrum']['FrozenSpectralIndex'] = Gamma_bin
         config['UpperLimit']['SpectralIndex'] = Gamma_bin
-
+        
+        # Force ebin jobs to be sequential
+        config['Submit'] = 'no'
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
