@@ -78,6 +78,7 @@ def GetSubCmd():
          'DESY' :    ['qsub','-R y -V -terse -l h_rss=30G -l m_mem_free=10G -l tmpdir_size=5G -V %s %s'%(queueoptions,queuetext)],
          'DESY_quick' : ['qsub','-V -terse -l h_rss=4G -l s_cpu=01:00:00 -l h_cpu=02:00:00 -V %s %s'%(queueoptions,queuetext)],
          'LOCAL' :   ['qsub','-l nodes=1:ppn=1 -V %s %s'%(queueoptions,queuetext)],
+         'IAC' :     ['qsub','-l nodes=1:ppn=1 -V %s %s'%(queueoptions,queuetext)],
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess']}
   return cmd[environ.FARM]
 
@@ -132,7 +133,7 @@ def call(cmd,
     elif environ.FARM in ["DESY", "DESY_quick"]:
         max_jobs = 90000
     elif environ.FARM=="LOCAL":
-        max_jobs = 100
+        max_jobs = 5000
     elif environ.FARM=="CCIN2P3":
         max_jobs = 3500
 
