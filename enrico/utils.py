@@ -239,7 +239,9 @@ def ApproxGamma(Fit, ener,name):
 def _SpecFileName(config):
     """return a generic name for the file related to the spectrum (plot, results...)"""
     from enrico.constants import SpectrumPath
-    return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
+    return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +\
+            '_'+config['file']['tag'] +\
+            '_'+config['target']['spectrum']
 
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""

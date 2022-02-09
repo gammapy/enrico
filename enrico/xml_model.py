@@ -372,8 +372,15 @@ def GetlistFromFits(config, catalog):
               beta[k]  = data.field('LP_beta')[k]
           elif spec == 'PLSuperExpCutoff':
               # From the makeFL8Yxml.py script
-              index[k]  = data.field('PLEC_Index')[k]
-              expfac = data.field('PLEC_Expfactor')[k]
+              try:  
+                # from 4FGL-DR3
+                index[k]  = data.field('PLEC_IndexS')[k]
+                expfac = data.field('PLEC_ExpfactorS')[k]
+              except KeyError:
+                # before 4FGL-DR3
+                index[k]  = data.field('PLEC_Index')[k]
+                expfac = data.field('PLEC_Expfactor')[k]
+
               expind = data.field('PLEC_Exp_Index')[k]
               if (expfac!=0 and expind!=0): cutoff[k] =(1./expfac)**(1./expind)
         
