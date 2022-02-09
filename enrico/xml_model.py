@@ -309,8 +309,8 @@ def addPSPLSuperExpCutoff2(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax
                    flux_max=1000.0, flux_min=0,
                    index1_free=1, index1_value=-1.436,
                    index1_min=-5.0, index1_max=1.5,
-                   expfactor_free=1, expfactor_value=1e-3,
-                   expfactor_min=-1, expfactor_max=1,
+                   expfac_free=1, expfac_value=0.001,
+                   expfac_min=-1, expfac_max=1,
                    index2_free=0, index2_value=1.0,
                    index2_min=0.0, index2_max=5.0,extendedName=""):
     """Add a source with a SUPEREXPCUTOFF model"""
@@ -343,8 +343,8 @@ def addPSPLSuperExpCutoff2(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax
     addParameter(spec, 'Index1', index1_free, index1_value, 1.0,
                  index1_min, index1_max)
     addParameter(spec, 'Scale', 0, eflux, 1.0, elim_min, elim_max)
-    addParameter(spec, 'Expfactor', expfactor_free, expfactor_value, 1.0,
-                 expfactor_min, expfactor_max)
+    addParameter(spec, 'Expfactor', expfac_free, expfac_value, 1.0,
+                 expfac_min, expfac_max)
     addParameter(spec, 'Index2', index2_free, index2_value, 1.0,
                  index2_min, index2_max)
 
@@ -523,12 +523,12 @@ def GetlistFromFits(config, catalog):
               # From the makeFL8Yxml.py script
               try:  
                 # from 4FGL-DR3
-                spec='PLSuperExpCutoff4'
+                spectype[k]='PLSuperExpCutoff4'
                 index[k]  = data.field('PLEC_IndexS')[k]
                 expfac[k] = data.field('PLEC_ExpfactorS')[k]
               except KeyError:
                 # before 4FGL-DR3
-                spec='PLSuperExpCutoff2'
+                spectype[k]='PLSuperExpCutoff2'
                 index[k]  = data.field('PLEC_Index')[k]
                 expfac[k] = data.field('PLEC_Expfactor')[k]
 
@@ -611,7 +611,7 @@ def GetlistFromFits(config, catalog):
                 except KeyError:
                   # before 4FGL-DR3
                   index[i]  = data.field('PLEC_Index')[i]
-                  expfac[i] = data.field('PLEC_Expfactor')[ii]
+                  expfac[i] = data.field('PLEC_Expfactor')[i]
                   spectype[i] = 'PLSuperExpCutoff2'
                 expind[i] = data.field('PLEC_Exp_Index')[i]
                 if (expfac[i]!=0 and expind[i]!=0): cutoff[i] =(1./expfac[i])**(1./expind[i])
@@ -650,7 +650,8 @@ def GetlistFromFits(config, catalog):
                 Nextended+=1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape': 1,
+                            'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                            'IsFree': 1, 'IsFreeShape': 1,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
         elif (rsrc < 2*max_radius and rsrc >= .1 and sigma[i] > min_significance_free) or (sigma[i] > 100 and rspace < original_roi):
             flux[i]   = (flux[i])*(np.random.normal(1,parameter_noise))
@@ -666,7 +667,8 @@ def GetlistFromFits(config, catalog):
                 Nextended+=1
             sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                             'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                            'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape': 0,
+                            'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                            'IsFree': 1, 'IsFreeShape': 0,
                             'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
         
         elif (sigma[i] > min_significance_catalog):
@@ -681,7 +683,8 @@ def GetlistFromFits(config, catalog):
                     Nextended+=1
                 sources.append({'name': names[i], 'ra': ra[i], 'dec': dec[i],
                                 'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                                'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 0, 'IsFreeShape': 0,
+                                'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                                'IsFree': 0, 'IsFreeShape': 0,
                                 'SpectrumType': spectype[i],'ExtendedName': extended_fitsfilename})
 
 
@@ -853,7 +856,7 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=freeshape, index1_value=srclist[i].get('index'),
                               expfac_free=freeshape, expfac_value=srclist[i].get('expfac'),
-                              index2_free=0,index2_value=srclist[i].get('expind')
+                              index2_free=0, index2_value=srclist[i].get('expind'),
                               extendedName=extendedName)
         elif spectype.strip() == "PLSuperExpCutoff3":
             addPSPLSuperExpCutoff3(lib, name, ra, dec, ebl,
@@ -862,7 +865,7 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               indexS_free=freeshape, indexS_value=srclist[i].get('index'),
                               expfacS_free=freeshape, expfacS_value=srclist[i].get('expfac'),
-                              index2_free=0,index2_value=srclist[i].get('expind')
+                              index2_free=0,index2_value=srclist[i].get('expind'),
                               extendedName=extendedName)
         elif spectype.strip() == "PLSuperExpCutoff4":
             addPSPLSuperExpCutoff4(lib, name, ra, dec, ebl,
@@ -871,7 +874,7 @@ def WriteXml(lib, doc, srclist, config):
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               indexS_free=freeshape, indexS_value=srclist[i].get('index'),
                               expfacS_free=freeshape, expfacS_value=srclist[i].get('expfac'),
-                              index2_free=0,index2_value=srclist[i].get('expind')
+                              index2_free=0,index2_value=srclist[i].get('expind'),
                               extendedName=extendedName)
         elif  spectype.strip() == "BrokenPowerLaw":
             addPSBrokenPowerLaw2(lib, name, ra, dec, ebl,
