@@ -304,6 +304,153 @@ def addPSPLSuperExpCutoff(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=
     src.appendChild(spatial)
     lib.appendChild(src)
 
+def addPSPLSuperExpCutoff2(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
+                   flux_free=1, flux_value=10.976, flux_scale=1e-11,
+                   flux_max=1000.0, flux_min=0,
+                   index1_free=1, index1_value=-1.436,
+                   index1_min=-5.0, index1_max=1.5,
+                   expfactor_free=1, expfactor_value=1e-3,
+                   expfactor_min=-1, expfactor_max=1,
+                   index2_free=0, index2_value=1.0,
+                   index2_min=0.0, index2_max=5.0,extendedName=""):
+    """Add a source with a SUPEREXPCUTOFF model"""
+    elim_min = 30
+    elim_max = 300000
+    if emin < elim_min:
+        elim_min = emin
+    if emax > elim_max:
+        elim_max = emax
+    if flux_scale == 0:
+        flux_scale = utils.fluxScale(flux_value)
+    flux_value /= flux_scale
+    doc = lib.ownerDocument
+    src = doc.createElement('source')
+    src.setAttribute('name', name)
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
+    spec = doc.createElement('spectrum')
+    try:
+        spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff2')
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
+    except TypeError as NameError:
+        spec.setAttribute('type', 'PLSuperExpCutoff2')
+    addParameter(spec, 'Prefactor',
+                 flux_free, flux_value, flux_scale, flux_min, flux_max)
+    addParameter(spec, 'Index1', index1_free, index1_value, 1.0,
+                 index1_min, index1_max)
+    addParameter(spec, 'Scale', 0, eflux, 1.0, elim_min, elim_max)
+    addParameter(spec, 'Expfactor', expfactor_free, expfactor_value, 1.0,
+                 expfactor_min, expfactor_max)
+    addParameter(spec, 'Index2', index2_free, index2_value, 1.0,
+                 index2_min, index2_max)
+
+    src.appendChild(spec)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
+    src.appendChild(spatial)
+    lib.appendChild(src)
+
+def addPSPLSuperExpCutoff3(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
+                   flux_free=1, flux_value=1e-9, flux_scale=0,
+                   flux_max=10000.0, flux_min=0,
+                   index1_free=1, index1_value=-1.7,
+                   index1_min=-5, index1_max=1.5,
+                   expfac2_free=1, expfac2_value=2,
+                   expfac2_min=0, expfac2_max=10,
+                   index2_free=0, index2_value=1.0,
+                   index2_min=0.0, index2_max=2.0,extendedName=""):
+    """Add a source with a SUPEREXPCUTOFF model"""
+    elim_min = 30
+    elim_max = 300000
+    if emin < elim_min:
+        elim_min = emin
+    if emax > elim_max:
+        elim_max = emax
+    if flux_scale == 0:
+        flux_scale = utils.fluxScale(flux_value)
+    flux_value /= flux_scale
+    doc = lib.ownerDocument
+    src = doc.createElement('source')
+    src.setAttribute('name', name)
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
+    spec = doc.createElement('spectrum')
+    try:
+        spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff3')
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
+    except TypeError as NameError:
+        spec.setAttribute('type', 'PLSuperExpCutoff3')
+    addParameter(spec, 'Prefactor',
+                 flux_free, flux_value, flux_scale, flux_min, flux_max)
+    addParameter(spec, 'IndexS', index1_free, index1_value, 1.0,
+                 index1_min, index1_max)
+    addParameter(spec, 'Scale', 0, eflux, 1.0, elim_min, elim_max)
+    addParameter(spec, 'Expfactor2', expfac2_free, expfac2_value, 1.0,
+                 expfac2_min, expfac2_max)
+    addParameter(spec, 'Index2', index2_free, index2_value, 1.0,
+                 index2_min, index2_max)
+
+    src.appendChild(spec)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
+    src.appendChild(spatial)
+    lib.appendChild(src)
+
+def addPSPLSuperExpCutoff4(lib, name, ra, dec, ebl=None, eflux=0, emin=200, emax=3e5,
+                   flux_free=1, flux_value=1, flux_scale=1e-11,
+                   flux_max=1000.0, flux_min=1e-5,
+                   indexS_free=1, indexS_value=-1.7,
+                   indexS_min=-5.0, indexS_max=0.,
+                   expfacS_free=1, expfacS_value=0.4,
+                   expfacS_min=0, expfacS_max=5,
+                   index2_free=0, index2_value=0.66,
+                   index2_min=-0.5, index2_max=2.0,extendedName=""):
+    """Add a source with a SUPEREXPCUTOFF model"""
+    elim_min = 30
+    elim_max = 300000
+    if emin < elim_min:
+        elim_min = emin
+    if emax > elim_max:
+        elim_max = emax
+    if flux_scale == 0:
+        flux_scale = utils.fluxScale(flux_value)
+    flux_value /= flux_scale
+    doc = lib.ownerDocument
+    src = doc.createElement('source')
+    src.setAttribute('name', name)
+    if extendedName=="":
+      src.setAttribute('type', 'PointSource')
+    else:
+      src.setAttribute('type', 'DiffuseSource')
+    spec = doc.createElement('spectrum')
+    try:
+        spec.setAttribute('type', 'EblAtten::PLSuperExpCutoff4')
+        addParameter(spec, 'tau_norm', ebl['free_tau_norm'], ebl['tau_norm'], 1.0, 0, 2.5)
+        addParameter(spec, 'redshift', ebl['free_redshift'], ebl['redshift'], 1.0, 0, 5)
+        addParameter(spec, 'ebl_model', 0, ebl['model'], 1.0, 0, 20)
+    except TypeError as NameError:
+        spec.setAttribute('type', 'PLSuperExpCutoff4')
+    addParameter(spec, 'Prefactor',
+                 flux_free, flux_value, flux_scale, flux_min, flux_max)
+    addParameter(spec, 'IndexS', indexS_free, indexS_value, 1.0,
+                 indexS_min, indexS_max)
+    addParameter(spec, 'Scale', 0, eflux, 1.0, elim_min, elim_max)
+    addParameter(spec, 'ExpfactorS', expfacS_free, expfacS_value, 1.0,
+                 expfacS_min, expfacS_max)
+    addParameter(spec, 'Index2', index2_free, index2_value, 1.0,
+                 index2_min, index2_max)
+
+    src.appendChild(spec)
+    spatial = AddSpatial(doc,ra,dec,extendedName)
+    src.appendChild(spatial)
+    lib.appendChild(src)
+
 def AddSpatial(doc,ra,dec,extendedName=""):
     spatial = doc.createElement('spatialModel')
     if extendedName=="":
@@ -362,6 +509,8 @@ def GetlistFromFits(config, catalog):
       spectype = data.field('SpectrumType')
       index  = np.zeros(names.size)
       cutoff = 1e5 * np.ones(names.size)
+      expind = np.zeros(names.size)
+      expfac = np.zeros(names.size)
       beta   = np.zeros(names.size)
       # iterate over each source, check the selected spectrum and get the params.
       for k,spec in enumerate(spectype):
@@ -374,15 +523,17 @@ def GetlistFromFits(config, catalog):
               # From the makeFL8Yxml.py script
               try:  
                 # from 4FGL-DR3
+                spec='PLSuperExpCutoff4'
                 index[k]  = data.field('PLEC_IndexS')[k]
-                expfac = data.field('PLEC_ExpfactorS')[k]
+                expfac[k] = data.field('PLEC_ExpfactorS')[k]
               except KeyError:
                 # before 4FGL-DR3
+                spec='PLSuperExpCutoff2'
                 index[k]  = data.field('PLEC_Index')[k]
-                expfac = data.field('PLEC_Expfactor')[k]
+                expfac[k] = data.field('PLEC_Expfactor')[k]
 
-              expind = data.field('PLEC_Exp_Index')[k]
-              if (expfac!=0 and expind!=0): cutoff[k] =(1./expfac)**(1./expind)
+              expind[k] = data.field('PLEC_Exp_Index')[k]
+              if (expfac[k]!=0 and expind[k]!=0): cutoff[k] =(1./expfac[k])**(1./expind[k])
         
         #cutoff = data.field('Cutoff')
         #beta = data.field('LP_beta')
@@ -452,9 +603,18 @@ def GetlistFromFits(config, catalog):
             elif model == 'PLSuperExpCutoff':
                 # From the makeFL8Yxml.py script
                 index[i]  = data.field('PLEC_Index')[i]
-                expfac = data.field('PLEC_Expfactor')[i]
-                expind = data.field('PLEC_Exp_Index')[i]
-                if (expfac!=0 and expind!=0): cutoff[i] =(1./expfac)**(1./expind)
+                try:  
+                  # from 4FGL-DR3
+                  index[i]  = data.field('PLEC_IndexS')[i]
+                  expfac[i] = data.field('PLEC_ExpfactorS')[i]
+                  spectype[i] = 'PLSuperExpCutoff4'
+                except KeyError:
+                  # before 4FGL-DR3
+                  index[i]  = data.field('PLEC_Index')[i]
+                  expfac[i] = data.field('PLEC_Expfactor')[ii]
+                  spectype[i] = 'PLSuperExpCutoff2'
+                expind[i] = data.field('PLEC_Exp_Index')[i]
+                if (expfac[i]!=0 and expind[i]!=0): cutoff[i] =(1./expfac[i])**(1./expind[i])
                 else: cutoff[i] = 2.99e5
             
             flux[i]   = (flux[i])*(np.random.normal(1,parameter_noise))
@@ -468,7 +628,8 @@ def GetlistFromFits(config, catalog):
                 if (sources[0]['name'] != srcname):
                     sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                                       'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
-                                      'cutoff': cutoff[i], 'beta': beta[i], 'IsFree': 1, 'IsFreeShape' : 1,
+                                      'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                                      'IsFree': 1, 'IsFreeShape' : 1,
                                       'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
 
         elif rsrc < max_radius and rsrc >= .1 and sigma[i] > min_significance_free:
@@ -677,13 +838,41 @@ def WriteXml(lib, doc, srclist, config):
                               norm_free=free, norm_value=srclist[i].get('flux'),
                               alpha_free=freeshape, alpha_value=abs(srclist[i].get('index')),
                               beta_free=freeshape, beta_value=srclist[i].get('beta'),extendedName=extendedName)
-        elif spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff" or spectype == "PLSuperExpCutoff2":
+        elif spectype.strip() == "PLExpCutoff" or spectype == "PLSuperExpCutoff":
             addPSPLSuperExpCutoff(lib, name, ra, dec, ebl,
                               emin=emin, emax=emax,
                               eflux=srclist[i].get('scale'),
                               flux_free=free, flux_value=srclist[i].get('flux'),
                               index1_free=freeshape, index1_value=srclist[i].get('index'),
-                              cutoff_free=freeshape, cutoff_value=srclist[i].get('cutoff'),extendedName=extendedName)
+                              cutoff_free=freeshape, cutoff_value=srclist[i].get('cutoff'),
+                              extendedName=extendedName)
+        elif spectype.strip() == "PLSuperExpCutoff2":
+            addPSPLSuperExpCutoff2(lib, name, ra, dec, ebl,
+                              emin=emin, emax=emax,
+                              eflux=srclist[i].get('scale'),
+                              flux_free=free, flux_value=srclist[i].get('flux'),
+                              index1_free=freeshape, index1_value=srclist[i].get('index'),
+                              expfac_free=freeshape, expfac_value=srclist[i].get('expfac'),
+                              index2_free=0,index2_value=srclist[i].get('expind')
+                              extendedName=extendedName)
+        elif spectype.strip() == "PLSuperExpCutoff3":
+            addPSPLSuperExpCutoff3(lib, name, ra, dec, ebl,
+                              emin=emin, emax=emax,
+                              eflux=srclist[i].get('scale'),
+                              flux_free=free, flux_value=srclist[i].get('flux'),
+                              indexS_free=freeshape, indexS_value=srclist[i].get('index'),
+                              expfacS_free=freeshape, expfacS_value=srclist[i].get('expfac'),
+                              index2_free=0,index2_value=srclist[i].get('expind')
+                              extendedName=extendedName)
+        elif spectype.strip() == "PLSuperExpCutoff4":
+            addPSPLSuperExpCutoff4(lib, name, ra, dec, ebl,
+                              emin=emin, emax=emax,
+                              eflux=srclist[i].get('scale'),
+                              flux_free=free, flux_value=srclist[i].get('flux'),
+                              indexS_free=freeshape, indexS_value=srclist[i].get('index'),
+                              expfacS_free=freeshape, expfacS_value=srclist[i].get('expfac'),
+                              index2_free=0,index2_value=srclist[i].get('expind')
+                              extendedName=extendedName)
         elif  spectype.strip() == "BrokenPowerLaw":
             addPSBrokenPowerLaw2(lib, name, ra, dec, ebl,
                        emin=emin, emax=emax,
