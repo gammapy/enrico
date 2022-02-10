@@ -74,6 +74,10 @@ class FitMaker(Loggin.Message):
         self._log('gtltcube', 'Make live time cube')#run gtltcube
         self.obs.ExpCube()
 
+        self.info('Compute the psf')#run gtpsf
+        self.obs.GtPSF()
+
+
         #Choose between the binned of the unbinned analysis
         if self.config['analysis']['likelihood'] == 'binned': #binned analysis chain
             self._log('gtbin', 'Make count map CCUBE')#run gtbin
@@ -89,6 +93,9 @@ class FitMaker(Loggin.Message):
             # the model should be generated for each component after optimizing.
             #self._log('gtmodel', 'Make a model map')#run gtmodel
             #self.obs.ModelMap(self.config["file"]["xml"])
+            self.info('Compute Energy Migration Matrices')#run gtdrm
+            self.obs.GtDRM()
+
 
         if self.config['analysis']['likelihood'] == 'unbinned': #unbinned analysis chain
             self._log('gtexpmap', 'Make an exposure map')
