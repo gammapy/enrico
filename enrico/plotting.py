@@ -493,13 +493,12 @@ def PlotSED(config,pars,ignore_missing_bins=False):
     """plot a nice SED with a butterfly and points"""
 
     # Read the ascii file where the butterfly is stored
-    filebase = utils._SpecFileName(config)
-
+    filebase = pars.PlotName#utils._SpecFileName(config)
+    print("\033[33m PrepareEbin",filebase," \033[0m")
     lines = open(filebase + '.dat', 'r').readlines()
     SED = []
     E = []
     Err = []
-
     for i in range(len(lines) - 1):
         words = lines[i + 1].split()
         if float(words[0])<pars.Emax :
@@ -617,7 +616,10 @@ def plot_sed_fromconfig(config,ignore_missing_bins=False):
 
     # if the TS > ts limit plot the butterfly, if not draw UL
     if Result["TS"]> config['UpperLimit']['TSlimit'] :
+        # try :
         PlotSED(config,Param,ignore_missing_bins)
+        # except:
+            # pass
     else :
         try :
             PlotUL(Param,config,Result['Ulvalue'],config['UpperLimit']['SpectralIndex'])
