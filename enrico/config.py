@@ -72,7 +72,7 @@ def get_times_from_spacecraft(scfile,target=['tmin','tmax']):
             tset=True
     return([tmin,tmax])
 
-def query_config():
+def query_config(target = ""):
     import os
     """Make a new config object, asking the user for required options"""
     config = ConfigObj(indent_type='\t')
@@ -86,8 +86,20 @@ def query_config():
     # Informations about the source
     config['target'] = {}
     config['target']['name'] = input('Target Name : ')
-    config['target']['ra'] = input('Right Ascension: ')
-    config['target']['dec'] = input('Declination: ')
+
+
+    ##use astropy
+    try : 
+        from astropy.coordinates import SkyCoord
+        c = SkyCoord.from_name(target)
+        ra = c.ra.value
+        dec = c.dec.value
+        config['target']['ra'] = c.ra.value
+        config['target']['dec'] = c.dec.value
+    except:
+
+        config['target']['ra'] = input('Right Ascension: ')
+        config['target']['dec'] = input('Declination: ')
 
     config['target']['redshift'] = '0'
     redshift = input('redshift, no effect if null [0] : ')

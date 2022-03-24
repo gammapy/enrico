@@ -536,8 +536,9 @@ class FitMaker(Loggin.Message):
         self._log('PlotSED', 'Generate SED plot')
         from enrico import plotting #plotting is the dedicated library
         from enrico.constants import SpectrumPath
-        filename = self.config['out'] + '/'+SpectrumPath+\
-                '/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
+        # filename = self.config['out'] + '/'+SpectrumPath+\
+        #         '/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
+        filename = utils._SpecFileName(self.config)
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin,
                               Emax=self.obs.Emax, PlotName=filename)
         result = plotting.Result(Fit, Param)

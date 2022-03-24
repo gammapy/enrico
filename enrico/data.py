@@ -105,9 +105,19 @@ def check_catalog_templates():
 class Data(object):
     """Standard data directories and files"""
     # Event classes pass 7 are still hierarchichal
-    # Transient = 1, Source = 2, Clean = 3, UltraClean = 4
-    EVENT_CLASSES = dict(source=2,
-                         clean=3)
+
+    # P8R3 IRF name   Event Class (evclass)   Class Hierarchy Photon File Extended File
+    # P8R3_SOURCEVETO_V3  2048    Standard    X   X
+    # P8R3_ULTRACLEANVETO_V3  1024    Standard    X   X
+    # P8R3_ULTRACLEAN_V3  512 Standard    X   X
+    # P8R3_CLEAN_V3   256 Standard    X   X
+    # P8R3_SOURCE_V3  128 Standard    X   X
+    # P8R3_TRANSIENT010_V3    64  Standard        X
+    # P8R3_TRANSIENT020_V3    16  Standard        X
+    # P8R3_TRANSIENT010E_V3   32  Extended        X
+    # P8R3_TRANSIENT020E_V3   8   Extended        X
+    EVENT_CLASSES = dict(source=128,
+                         clean=256)
 
     # Time selections
     SELECTIONS = dict(week=1,
@@ -298,6 +308,7 @@ class Data(object):
         tool['phasemin'] = 0
         tool['phasemax'] = 1
         tool['evtable'] = 'EVENTS'
+        tool['clobber'] = 'yes'
         tool.run()
 
     def _preprocess_gtmktime(self):
