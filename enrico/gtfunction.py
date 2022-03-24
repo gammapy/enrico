@@ -12,7 +12,7 @@ from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
-from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter, obsSim
 from GtApp import GtApp
 from enrico import utils
 
@@ -72,6 +72,9 @@ class Observation:
         self.ft1       = self.Configuration['file']['event']
         self.ft2       = self.Configuration['file']['spacecraft']
         self.xmlfile   = self.Configuration['file']['xml']
+
+        self.SimXmlfile = self.Configuration['ObservationSimulation']['infile'] 
+        self.srcList    = self.Configuration['ObservationSimulation']['srclist'] 
 
         #Fits files
         self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
@@ -140,19 +143,19 @@ class Observation:
 
     def printSum(self):
         """Print a summary of the value stored in the class"""
-        print("Source = ",self.srcname) 
-        print(("RA\t=\t",self.ra," degrees"))
-        print(("Dec\t=\t",self.dec," degrees"))
-        print(("Start\t=\t",self.t1,"  MET (s)"))
-        print(("Stop\t=\t",self.t2,"  MET (s)"))
-        print(("ROI\t=\t",self.roi," degrees"))
-        print(("E min\t=\t",self.Emin," MeV"))
-        print(("E max\t=\t",self.Emax," MeV"))
-        print(("E min ext\t=\t",self.Emin_ext," MeV"))
-        print(("E max ext\t=\t",self.Emax_ext," MeV"))
-        print(("IRFs\t=\t",self.irfs))
-        print(("evclass\t=\t",self.Configuration['event']['evclass']))
-        print(("evtype\t=\t",self.Configuration['event']['evtype']))
+        print("Source = ",self.srcname)
+        print("RA\t=\t",self.ra," degrees")
+        print("Dec\t=\t",self.dec," degrees")
+        print("Start\t=\t",self.t1,"  MET (s)")
+        print("Stop\t=\t",self.t2,"  MET (s)")
+        print("ROI\t=\t",self.roi," degrees")
+        print("E min\t=\t",self.Emin," MeV")
+        print("E max\t=\t",self.Emax," MeV")
+        print("E min ext\t=\t",self.Emin_ext," MeV")
+        print("E max ext\t=\t",self.Emax_ext," MeV")
+        print("IRFs\t=\t",self.irfs)
+        print("evclass\t=\t",self.Configuration['event']['evclass'])
+        print("evtype\t=\t",self.Configuration['event']['evtype'])
         if  self.irfs == 'CALDB':
             print(("Corresponding IRFs\t=\t",\
             utils.GetIRFS(self.Configuration['event']['evclass'],\
@@ -506,6 +509,29 @@ class Observation:
         expMap['clobber'] = self.clobber
         #expMap.run()
         run_retry(expMap)
+
+    def Obssim(self):
+        """Run gtobssim tool"""
+        if (self.clobber=="no" and os.path.isfile(self.srcMap)):
+            #print("File exists and clobber is False")
+            return(0) 
+        obsSim["infile"] = self.SimXmlfile     
+        obsSim["srclist"] = self.srcList     
+        obsSim['scfile'] = self.ft2
+        obsSim['evroot'] = self.Configuration['file']['tag']
+        obsSim['simtime'] = self.t2-self.t1
+        obsSim['tstart'] = self.t1
+        obsSim['use_ac'] = "no"
+        obsSim["emin"]    = self.Emin_ext
+        obsSim["emax"]    = self.Emax_ext
+        obsSim["edisp"]    = "yes"
+        # if  self.irfs != 'CALDB':
+        #     obsSim['evtype']= self.Configuration['event']['evtype']
+        # else :
+        #     obsSim['evtype']= 'INDEF'
+        obsSim['irfs']= self.irfs
+        obsSim['seed']= int(random()*100000)
+        run_retry(obsSim)
 
     def SrcMap(self):
         """Run gtsrcmap tool for binned analysis"""

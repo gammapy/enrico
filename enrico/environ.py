@@ -49,8 +49,10 @@ except :
     DIRS = {}
 
 # File names
+
 CATALOG_VERSION = '28'
 TEMPLATE_VERSION = '12years'
+
 #if CATALOG_DIR :
 #  CATALOG_TEMPLATE_DIR = join(CATALOG_DIR, 'Extended_archive_%s/Templates'% TEMPLATE_VERSION)
 #  try :
