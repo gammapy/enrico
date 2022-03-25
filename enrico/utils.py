@@ -239,9 +239,7 @@ def ApproxGamma(Fit, ener,name):
 def _SpecFileName(config):
     """return a generic name for the file related to the spectrum (plot, results...)"""
     from enrico.constants import SpectrumPath
-    return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +\
-            '_'+config['file']['tag'] +\
-            '_'+config['target']['spectrum']
+    return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
 
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
@@ -305,7 +303,15 @@ def time_selection_string(config,numbin0):
         numbin0=0
 
     # Read MET_TSTART, MET_TSTOP pairs from file
-    bins = np.loadtxt(config['time']['file'])
+    for delimiter in [' ',',',';','\t']: 
+        try:
+            bins = np.loadtxt(config['time']['file'], delimiter=delimiter)
+            break
+        except ValueError as e:
+            if delimiter == '\t':
+                raise e 
+            continue
+
 
     if config['time']['type']=='MJD':
         bins = MJD_to_met(bins)
