@@ -122,6 +122,7 @@ class Data(object):
     # Time selections
     SELECTIONS = dict(week=1,
                       month=4,
+                      lastmonth=-4,
                       eleven_months=48,
                       two_year=105,
                       three_year=156,
@@ -272,7 +273,10 @@ class Data(object):
         files.sort()
         # Select only a subset of weeks
         weeks = self.SELECTIONS[selection]
-        files = files[:weeks]
+        if weeks <0:
+            files = files[weeks:]
+        else:
+            files = files[:weeks]
         log.debug('Writing weeks.lis with %04d lines.' % len(files))
         open('weeks.lis', 'w').writelines(files)
         if USE_FULLMISSION_SPACECRAFT=="False":
