@@ -13,7 +13,7 @@ from enrico.environ import DIFFUSE_ISO_SOURCEEDISP0, DIFFUSE_ISO_SOURCEEDISP1, D
 from enrico.environ import DIFFUSE_ISO_CLEANPSF0, DIFFUSE_ISO_CLEANPSF1, DIFFUSE_ISO_CLEANPSF2, DIFFUSE_ISO_CLEANPSF3
 from enrico.environ import DIFFUSE_ISO_CLEANEDISP0, DIFFUSE_ISO_CLEANEDISP1, DIFFUSE_ISO_CLEANEDISP2, DIFFUSE_ISO_CLEANEDISP3
 from enrico.environ import DIRS, DOWNLOAD_DIR, CATALOG_TEMPLATE_DIR, TEMPLATE_VERSION, PREPROCESSED_DIR
-from enrico.environ import WEEKLY_DIR, SPACECRAFT, USE_FULLMISSION_SPACECRAFT
+from enrico.environ import WEEKLY_DIR, SPACECRAFT, USE_FULLMISSION_SPACECRAFT,WEEKLY_SC_DIR
 #check platform
 from sys import platform 
 
@@ -288,8 +288,12 @@ class Data(object):
             # Sort chronologically
             files.sort()
             # Select only a subset of weeks
-            weeks = self.SELECTIONS[selection]
-            files = files[:weeks]
+            # weeks = self.SELECTIONS[selection]
+            if weeks <0:
+                files = files[weeks:]
+            else:
+                files = files[:weeks]
+            # files = files[:weeks]
             log.debug('Writing weeks.lis with %04d lines.' % len(files))
             open('weeks_sc.lis', 'w').writelines(files)
 
@@ -322,7 +326,7 @@ class Data(object):
         if USE_FULLMISSION_SPACECRAFT=="True":
             tool['scfile'] = join(DOWNLOAD_DIR, SPACECRAFT)
         else:
-            tool['scfile'] = '@weeks_sc.lis'
+            tool['scfile'] =  '@weeks_sc.lis'
         tool['sctable'] = 'SC_DATA'
         tool['filter'] = default_filter
         tool['roicut'] = 'no'

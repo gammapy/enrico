@@ -246,7 +246,7 @@ def run(infile):
         FitRunner.config['file']['parent_config'] = infile
     
     if config['Spectrum']['ResultParentPlots'] == "yes":
-        print((config['file']['parent_config']))
+        print(config['file']['parent_config'])
         plot_sed_fromconfig(config['file']['parent_config'],ignore_missing_bins=True) 
     
     if config['Spectrum']['ResultPlots'] == 'yes' :
@@ -257,7 +257,6 @@ def run(infile):
         if Nbin>0:
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
         plot_sed_fromconfig(infile,ignore_missing_bins=True)
-    
     energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
 
     del(sedresult)

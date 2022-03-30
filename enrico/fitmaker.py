@@ -280,8 +280,8 @@ class FitMaker(Loggin.Message):
         Result['Npred'] = Fit.NpredValue(self.obs.srcname)
         Result['TS'] = Fit.Ts(self.obs.srcname)
         if self.config['verbose'] == 'yes' :
-            print(("Values and (MINOS) errors for " + self.obs.srcname))
-            print(("TS : ", Fit.Ts(self.obs.srcname)))
+            print("Values and (MINOS) errors for " + self.obs.srcname)
+            print("TS : ", Fit.Ts(self.obs.srcname))
 
         # Get the python object 'Spectrum' for the source of interest
         spectrum = Fit[self.obs.srcname].funcs['Spectrum']

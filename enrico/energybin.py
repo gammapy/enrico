@@ -68,11 +68,12 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     lEmax = np.log10(Emax)
     lEmin = np.log10(Emin)
     utils._log("Preparing submission of fit into energy bins")
-    print(("Emin = {0} MeV".format(Emin),
+    print("Emin = {0} MeV".format(Emin),
           "Emax = {0} MeV".format(Emax),
-          "Nbins = {0}".format(NEbin)))
+          "Nbins = {0}".format(NEbin))
 
     ener = utils.string_to_list(config['Ebin']['DistEbins'])
+
     if ener is None:
         if (config['ComponentAnalysis']['FGL4'] == 'yes' or config['Ebin']['DistEbins']=='FGL4'):
             ener  = np.asarray([50,1e2,3e2,1e3,3e3,1e4,3e4,3e5])
