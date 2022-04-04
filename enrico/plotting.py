@@ -43,7 +43,9 @@ class Result(Loggin.Message):
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
-        self.covar = np.array(utils.GetCovar(pars.srcname, self.Fit, False))
+        covar_matrix,covar_pars = utils.GetCovar(pars.srcname, self.Fit, verbose = False, with_par_map = True
+        self.covar = np.array(covar_matrix)
+        self.covar_pars = np.array(covar_pars)
         self.srcpars = pyLikelihood.StringVector()
         Fit[pars.srcname].src.spectrum().getFreeParamNames(self.srcpars)
 
@@ -56,6 +58,11 @@ class Result(Loggin.Message):
         self.decFluxerr = self.Err[i]/self.E[i]**2*ERG_TO_MEV
         self.decSED     = self.SED[i]
         self.decSEDerr  = self.Err[i]
+
+    def _WriteCovMatrix(self,par):
+        header  = '#Covariance matrix. Parameters:'
+        header += ''.join(['#'+str(s)+'\n' for s in self.covar_pars])
+        np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, comments='', delimiter=',')    
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
@@ -349,10 +356,19 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
         print(("Energy = ",Epoint[i]))
         #Save the data point in a ascii file
         if 'Ulvalue' in results:
-            dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t0\t0\t0\n")
+            dumpfile.write(str(Epoint[i])+"\t"+\
+                           str(results.get("Emin"))+"\t"+\
+                           str(results.get("Emax"))+"\t"+\
+                           str(Fluxpoint[i])+"\t0\t0\t0\n")
             print(("E**2. dN/dE = ",Fluxpoint[i]))
         else:
-            dumpfile.write(str(Epoint[i])+"\t"+str(results.get("Emin"))+"\t"+str( results.get("Emax"))+"\t"+str(Fluxpoint[i])+"\t"+str( MEV_TO_ERG  * dprefactor * Epoint[i] ** 2)+"\t"+str(FluxpointErrm[i])+"\t"+str(FluxpointErrp[i])+"\n")
+            dumpfile.write(str(Epoint[i])+"\t"+\
+                           str(results.get("Emin"))+"\t"+\
+                           str(results.get("Emax"))+"\t"+\
+                           str(Fluxpoint[i])+"\t"+\
+                           str(MEV_TO_ERG  * dprefactor * Epoint[i] ** 2)+"\t"+\
+                           str(FluxpointErrm[i])+"\t"+\
+                           str(FluxpointErrp[i])+"\n")
             print(("E**2. dN/dE = ",Fluxpoint[i]," + ",FluxpointErrp[i]," - ",FluxpointErrm[i]))
     dumpfile.close()
     return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
@@ -488,6 +504,9 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
                  xerr=xerrors,yerr=[yerrm, yerrp],
                  marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
                  ls='None')
+
+
+
 
 def PlotSED(config,pars,ignore_missing_bins=False):
     """plot a nice SED with a butterfly and points"""
