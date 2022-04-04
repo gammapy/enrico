@@ -43,7 +43,7 @@ class Result(Loggin.Message):
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
-        covar_matrix,covar_pars = utils.GetCovar(pars.srcname, self.Fit, verbose = False, with_par_map = True
+        covar_matrix,covar_pars = utils.GetCovar(pars.srcname, self.Fit, verbose = False, with_par_map = True)
         self.covar = np.array(covar_matrix)
         self.covar_pars = np.array(covar_pars)
         self.srcpars = pyLikelihood.StringVector()
