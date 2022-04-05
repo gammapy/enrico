@@ -22,7 +22,7 @@ class Params:
     colors, file name, etc...."""
     def __init__(self, srcname, Emin=100, Emax=3e5,
                  PlotName="LAT_SED", LineColor=2,
-                 PointColor = 1, N = 2000):
+                 PointColor = 1, N = 2000, SaveResData=False):
         self.Emin = Emin #Energy bounds
         self.Emax = Emax
         self.N = N #Number of points for the TGraph
@@ -31,6 +31,7 @@ class Params:
         #color options
         self.LineColor = LineColor
         self.PointColor = PointColor
+        self.SaveResData = SaveResData
 
 
 class Result(Loggin.Message):
@@ -39,7 +40,7 @@ class Result(Loggin.Message):
     def __init__(self, Fit, pars):
         super(Result,self).__init__()
         Loggin.Message.__init__(self)
-
+        
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
         self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
@@ -242,6 +243,12 @@ class Result(Loggin.Message):
             if residual[i] == -1.:
                residual[i] = 0.
 
+        # Write residuals to csv file
+        if par.SaveResData:
+            residual_array = np.asarray([E,err_E,residual,Dres]).transpose()
+            np.savetxt(par.PlotName+'.ResData.dat', residual_data, 
+                       header=['x','xerr','y','yerr'], fmt='%.3e', delimiter=',')
+        
         ymin = min(residual) - max(Dres)
         ymax = max(residual) + max(Dres)
         plt.ylim(ymax = ymax, ymin = ymin)
