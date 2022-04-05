@@ -60,7 +60,7 @@ class Result(Loggin.Message):
         self.decSEDerr  = self.Err[i]
 
     def _WriteCovMatrix(self,par):
-        header  = '#Covariance matrix. Parameters:'
+        header  = '#### Covariance matrix. ###\n#Parameters:\n'
         header += ''.join(['#'+str(s)+'\n' for s in self.covar_pars])
         np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, comments='', delimiter=',')    
 
