@@ -62,7 +62,7 @@ class Result(Loggin.Message):
     def _WriteCovMatrix(self,par):
         header  = '#### Covariance matrix. ###\n#Parameters:\n'
         header += ''.join(['#'+str(s)+'\n' for s in self.covar_pars])
-        np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, comments='', delimiter=',')    
+        np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=',')    
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
