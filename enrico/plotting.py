@@ -225,9 +225,8 @@ class Result(Loggin.Message):
         plt.legend()
         plt.tight_layout()
         plt.savefig(filebase + "_CountsPlot.png", dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+            orientation='portrait', format=None,
+            transparent=False, pad_inches=0.1)
 
         plt.figure()
         plt.title('Residuals plot')
@@ -244,7 +243,7 @@ class Result(Loggin.Message):
                residual[i] = 0.
 
         # Write residuals to csv file
-        if par.SaveResData:
+        if Parameter.SaveResData:
             residual_array = np.asarray([E,err_E,residual,Dres]).transpose()
             np.savetxt(par.PlotName+'.ResData.dat', residual_data, 
                        header=['x','xerr','y','yerr'], fmt='%.3e', delimiter=',')
@@ -598,9 +597,8 @@ def PlotSED(config,pars,ignore_missing_bins=False):
     #plt.grid()
     plt.tight_layout()
     plt.savefig("%s.png" %filebase, dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inch=None, pad_inches=0.1,
-            frameon=None)
+            orientation='portrait', format=None,
+            transparent=False, pad_inches=0.1)
 
 def PlotUL(pars,config,ULFlux,Index):
 
@@ -625,9 +623,8 @@ def PlotUL(pars,config,ULFlux,Index):
     filebase = utils._SpecFileName(config)
     plt.tight_layout()
     plt.savefig(filebase + '.png', dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+            orientation='portrait', format=None,
+            transparent=False, pad_inches=0.1)
 
 
 def plot_sed_fromconfig(config,ignore_missing_bins=False):
