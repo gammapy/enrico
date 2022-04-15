@@ -146,6 +146,13 @@ def query_config(target = ""):
       config['file']['tag'] = tag
     else :
       config['file']['tag'] = 'LAT_Analysis'
+    # Compress files
+    compressfits = input('compress fits files? : yes/no [no]')
+    if not(tag=='yes') :
+      config['file']['compress_fits'] = 'no'
+    else :
+      config['file']['compress_fits'] = 'yes'
+    # Compress files
 
 #    informations about the time
     config['time'] = {}

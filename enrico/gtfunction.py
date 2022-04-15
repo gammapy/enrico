@@ -16,7 +16,7 @@ from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model
 from GtApp import GtApp
 from enrico import utils
 
-def run_retry(macro,tries=5):
+def run_retry(macro,tries=5,compress=False):
     """
     The Fermi LAT sometimes fail with annoying Runtime errors,
     try to catch them and re-run the macro that failed. 
@@ -44,6 +44,12 @@ def run_retry(macro,tries=5):
         else:
             if is_out_in_tmp:
                 shutil.move(macro['output'],orig_name)
+            if os.path.isfile(orig_name):
+                if not utils.is_gz_file(orig_name):
+                    if compress:
+                        cmd = "gzip "+orig_name+ " && mv " + orig_name+".gz " + orig_name
+                        print('Compressing file: '+ cmd)
+                        os.system(cmd)
 
             return(macro)
     mes.error("An error ocurred and could not be recovered. Exiting!")
@@ -76,24 +82,28 @@ class Observation:
         self.SimXmlfile = self.Configuration['ObservationSimulation']['infile'] 
         self.srcList    = self.Configuration['ObservationSimulation']['srclist'] 
 
-        #Fits files
-        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"
-        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"
-        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"
-        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"
-        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"
-        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"
-        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"
-        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"
-        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"
-        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"
-        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"
-        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"
-        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"
-        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"
-        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"
-        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"
-        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"
+        #Fits files and optional gz compression
+        gzflag = ""
+        if self.Configuration['file']['compress_fits'] == "yes":
+            gzflag=".gz"
+
+        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"+gzflag
+        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"+gzflag
+        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"+gzflag
+        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"+gzflag
+        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"+gzflag
+        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"+gzflag
+        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"+gzflag
+        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"+gzflag
+        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"+gzflag
+        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"+gzflag
+        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"+gzflag
+        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"+gzflag
+        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"+gzflag
+        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"+gzflag
+        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"+gzflag
+        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"+gzflag
+        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"+gzflag
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -141,6 +151,10 @@ class Observation:
         #tool options
         self.clobber = self.Configuration['clobber']
 
+    def run_retry_compress(self,macro,tries=5):
+        compress = self.Configuration['file']['compress_fits'] == "yes"
+        run_retry(f,tries,compress)
+
     def printSum(self):
         """Print a summary of the value stored in the class"""
         print("Source = ",self.srcname)
@@ -182,7 +196,7 @@ class Observation:
         evtbin['proj'] = self.Configuration['space']['proj']
         evtbin['clobber'] = self.clobber
         #evtbin.run()
-        run_retry(evtbin)
+        self.run_retry_compress(evtbin)
     
     def GtBinDef(self,filename):
         if (self.clobber=="no" and os.path.isfile(self.BinDef)):
@@ -193,7 +207,7 @@ class Observation:
         bindef['binfile'] = filename
         bindef['outfile'] = self.BinDef
         #bindef.run()
-        run_retry(bindef)
+        self.run_retry_compress(bindef)
 
     def GtExposure(self):
         exposure = GtApp('gtexposure', 'Likelihood')
@@ -207,7 +221,7 @@ class Observation:
         exposure['specin'] = -self.Configuration['AppLC']['index']
         exposure['clobber'] = self.clobber
         #exposure.run()
-        run_retry(exposure)
+        self.run_retry_compress(exposure)
 
     def GtLCbin(self,dt=60):
         """Run gtbin with the LC option. the default dt is 60 sec and data can be rebinned after.
@@ -229,7 +243,7 @@ class Observation:
             evtbin["tbinfile"] = self.BinDef
         evtbin['clobber'] = self.clobber
         #evtbin.run()
-        run_retry(evtbin)
+        self.run_retry_compress(evtbin)
 
     def GtCcube(self):
         """Run gtbin with the CCUBE option"""
@@ -259,7 +273,7 @@ class Observation:
         evtbin["enumbins"] = max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         evtbin['clobber'] = self.clobber
         #evtbin.run()
-        run_retry(evtbin)
+        self.run_retry_compress(evtbin)
 
     def GtBinnedMap(self):
         """Run the gtexpcube2 tool for binned analysis"""
@@ -295,7 +309,7 @@ class Observation:
         expcube2['proj'] = self.Configuration['space']['proj'] #"AIT"
         expcube2['clobber'] = self.clobber
         #expcube2.run()
-        run_retry(expcube2)
+        self.run_retry_compress(expcube2)
 
     def FirstCut(self):
         """Run gtselect tool"""
@@ -325,7 +339,7 @@ class Observation:
         filter['evtype'] = "INDEF"
         filter['clobber'] = self.clobber
         #filter.run()
-        run_retry(filter)
+        self.run_retry_compress(filter)
 
     def SelectEvents(self):
         """Run gtselect tool"""
@@ -346,7 +360,7 @@ class Observation:
         filter['evtype'] = self.Configuration['event']['evtype']
         filter['clobber'] = self.clobber
         #filter.run()
-        run_retry(filter)
+        self.run_retry_compress(filter)
 
     def time_selection(self):
         """
@@ -365,13 +379,13 @@ class Observation:
             # Do not create an insanely large amount of files in the same directory.
             outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
             #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
+            outfile    = self.eventfile.split('.fits')[0],'_{}'.format(numbin%200)
             outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
             utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
             self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
 
-        evlist_filename = self.eventfile.replace('.fits','.list')
+        evlist_filename = self.eventfile.split('.fits')[0]+'.list'
         with open(evlist_filename,'w') as evlistfile:
             evlistfile.writelines(eventlist)
     
@@ -392,13 +406,13 @@ class Observation:
             # Do not create an insanely big amount of files in the same directory.
             outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
             #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.replace('.fits','_{}'.format(numbin%200))
+            outfile    = self.eventfile.split('.fits')[0]+'_{}'.format(numbin%200)
             outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
             utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
             self._RunMktime(selstr,outfile,'no')
             eventlist.append(outfile+'\n')
 
-        evlist_filename = self.eventfile.replace('.fits','.list')
+        evlist_filename = self.eventfile.split('.fits')[0]+'.list'
         with open(evlist_filename,'w') as evlistfile:
             evlistfile.writelines(eventlist)
 
@@ -448,7 +462,7 @@ class Observation:
         maketime['outfile'] = outfile
         maketime['clobber'] = self.clobber
         #maketime.run()
-        run_retry(maketime)
+        self.run_retry_compress(maketime)
 
     def DiffResps(self):
         """run gtdiffresp"""
@@ -465,7 +479,7 @@ class Observation:
 
         diffResps['clobber'] = self.clobber
         #diffResps.run()
-        run_retry(diffResps)
+        self.run_retry_compress(diffResps)
         with open(self.diffrspflag,"w") as diffrspflag:
             diffrspflag.write("")
 
@@ -485,7 +499,7 @@ class Observation:
         expCube['phibins']=self.Configuration['space']['phibins']
         expCube['clobber'] = self.clobber
         #expCube.run()
-        run_retry(expCube)
+        self.run_retry_compress(expCube)
 
     def ExpMap(self):
         "Run gtexpmap for unbinned analysis"
@@ -508,7 +522,7 @@ class Observation:
         expMap['nenergies'] =  max(2,int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         expMap['clobber'] = self.clobber
         #expMap.run()
-        run_retry(expMap)
+        self.run_retry_compress(expMap)
 
     def Obssim(self):
         """Run gtobssim tool"""
@@ -531,7 +545,7 @@ class Observation:
         #     obsSim['evtype']= 'INDEF'
         obsSim['irfs']= self.irfs
         obsSim['seed']= int(random()*100000)
-        run_retry(obsSim)
+        self.run_retry_compress(obsSim)
 
     def SrcMap(self):
         """Run gtsrcmap tool for binned analysis"""
@@ -572,7 +586,7 @@ class Observation:
         ### TODO: test this flag to see, speed up? (default: disabled)
         srcMaps['clobber'] = self.clobber
         #srcMaps.run()
-        run_retry(srcMaps)
+        self.run_retry_compress(srcMaps)
 
     def ModelMap(self,xml):
         """Run gtmodel tool for binned analysis and make a subtraction of the produced map
@@ -587,7 +601,7 @@ class Observation:
         model_map["irfs"] = self.irfs
         model_map['outfile'] = self.ModelMapFile
         model_map['clobber'] = self.clobber
-        run_retry(model_map)
+        self.run_retry_compress(model_map)
         #Compute the residual map
         utils.SubtractFits(self.cmapfile,
                            self.ModelMapFile,
@@ -621,7 +635,7 @@ class Observation:
         findsrc['reopt'] = self.Configuration["findsrc"]["Refit"]
         findsrc['outfile'] = outfile
         #findsrc.run()
-        run_retry(findsrc)
+        self.run_retry_compress(findsrc)
 
     def SrcProb(self):
         """Run the gtsrcprob tool"""
@@ -641,7 +655,7 @@ class Observation:
         srcprob['srclist'] = self.Configuration['srcprob']['srclist']
         srcprob['clobber'] = self.clobber
         #srcprob.run()
-        run_retry(srcprob)
+        self.run_retry_compress(srcprob)
 
     def GtPSF(self):
         if (self.clobber=="no" and os.path.isfile(self.psf)):
@@ -665,7 +679,7 @@ class Observation:
           int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
         psf["thetamax"] = 5.
         #psf.run()
-        run_retry(psf)
+        self.run_retry_compress(psf)
 
     def GtDRM(self):
         if (self.clobber=="no" and os.path.isfile(self.drmfile)):
@@ -680,6 +694,5 @@ class Observation:
         drm["expcube"] = self.Cubename
         drm["bexpmap"] = self.BinnedMapfile
         drm["chatter"] = 0
-        run_retry(drm)
+        self.run_retry_compress(drm)
         
-        # gtdrm 1ES1011+496_LAT_Analysis_FRONTBACK_PLExpCutoff_srcMap.fits 1ES1011+496_LAT_Analysis_FRONTBACK_EDRM.fits "CALDB" 1ES1011+496_LAT_Analysis_FRONTBACK_ltCube.fits 1ES1011+496_LAT_Analysis_FRONTBACK_BinnedMap.fits 0

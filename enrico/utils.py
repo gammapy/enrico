@@ -126,12 +126,16 @@ def SubtractFits(infile1, infile2, config, tag="", abs_diff_file="", rel_diff_fi
         data2=numpy_intBitsToFloat(data2)
 
     filebase = config['out'] + "/" + config['target']['name']
+    gzipflag = ""
+    if config['file']['compress_fits'] == "yes":
+        gzipflag = ".gzip"
+    
     if ( tag != "" ):
         tag = "_"+tag
     if ( abs_diff_file == "" ):
-        abs_diff_file = filebase + tag + "_Subtract_Model_cmap.fits"
+        abs_diff_file = filebase + tag + "_Subtract_Model_cmap.fits"+gzipflag
     if ( rel_diff_file == "" ):
-        rel_diff_file = filebase + tag + "_Residual_Model_cmap.fits"
+        rel_diff_file = filebase + tag + "_Residual_Model_cmap.fits"+gzipflag
     if 'NAXIS3' in head:
         head.remove('NAXIS3')
     if 'DATASUM' in head:
@@ -468,3 +472,7 @@ def GetZenithCut(evtclass,evttype,emin):
        return PSF2[emin_ind]
     elif irfs[1][0] == "PSF3":
        return PSF3[emin_ind]
+
+def is_gz_file(filepath):
+    with open(filepath, 'rb') as test_f:
+        return test_f.read(2) == b'\x1f\x8b'
