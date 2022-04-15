@@ -171,7 +171,7 @@ class Data(object):
                     # always leave out the last file uncompressed, so that wget can resume download
                     list_of_files=sorted(glob.glob("weekly/spacecraft/lat_spacecraft*.fits"))[:-1]
                     for f in list_of_files:
-                        cmd = 'gzip '+f
+                        cmd = 'gzip -f '+f
                         print(('EXEC: ', cmd))
                         os.system(cmd)
                 
@@ -191,7 +191,7 @@ class Data(object):
                 # always leave out the last file uncompressed, so that wget can resume download
                 list_of_files=sorted(glob.glob("weekly/photon/lat_photon_weekly*.fits"))[:-1]
                 for f in list_of_files:
-                    cmd = 'gzip '+f
+                    cmd = 'gzip -f '+f
                     print(('EXEC: ', cmd))
                     os.system(cmd)
 
