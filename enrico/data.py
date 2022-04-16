@@ -148,9 +148,6 @@ class Data(object):
         For info on wget options see
         http://www.gnu.org/software/wget/manual/wget.html"""
         
-        print(f"USE_FULLMISSION_SPACECRAFT set to {USE_FULLMISSION_SPACECRAFT}")
-        print(f"COMPRESS_WEEKLY_FILES set to {COMPRESS_WEEKLY_FILES}")
-        
         os.system("mkdir -p "+DOWNLOAD_DIR)
         os.chdir(DOWNLOAD_DIR)
         if spacecraft:

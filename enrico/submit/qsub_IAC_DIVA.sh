@@ -9,6 +9,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
+#SBATCH --export=ALL
 
 echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 
