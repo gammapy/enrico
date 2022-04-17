@@ -153,7 +153,7 @@ class Observation:
 
     def run_retry_compress(self,macro,tries=5):
         compress = self.Configuration['file']['compress_fits'] == "yes"
-        run_retry(f,tries,compress)
+        run_retry(macro,tries,compress)
 
     def printSum(self):
         """Print a summary of the value stored in the class"""
