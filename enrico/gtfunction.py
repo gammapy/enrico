@@ -25,9 +25,9 @@ def run_retry(macro,tries=5,compress=False):
     mes = Loggin.Message()
 
     # Try to write the temporary output to a temporary file and then move it, to avoid broken files
-    orig_name = str(macro['output'])
+    orig_name = str(macro['outfile'])
     try:
-        macro['output'] = macro['output']+".tmpout"
+        macro['outfile'] = macro['outfile']+".tmpout"
     except:
         is_out_in_tmp = False
     else:
@@ -43,7 +43,7 @@ def run_retry(macro,tries=5,compress=False):
             continue
         else:
             if is_out_in_tmp:
-                shutil.move(macro['output'],orig_name)
+                shutil.move(macro['outfile'],orig_name)
             if os.path.isfile(orig_name):
                 if not utils.is_gz_file(orig_name):
                     if compress:
