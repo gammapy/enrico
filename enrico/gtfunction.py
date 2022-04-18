@@ -25,8 +25,8 @@ def run_retry(macro,tries=5,compress=False):
     mes = Loggin.Message()
 
     # Try to write the temporary output to a temporary file and then move it, to avoid broken files
+    orig_name = str(macro['output'])
     try:
-        orig_name = str(macro['output'])
         macro['output'] = macro['output']+".tmpout"
     except:
         is_out_in_tmp = False
