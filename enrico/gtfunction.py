@@ -50,7 +50,7 @@ def run_retry(macro,tries=5,compress=False):
             if os.path.isfile(orig_name):
                 if not utils.is_gz_file(orig_name):
                     if compress:
-                        cmd = "gzip -f "+orig_name+ " && mv " + orig_name+".gz " + orig_name
+                        cmd = "gzip -f "+orig_name 
                         print('Compressing file: '+ cmd)
                         os.system(cmd)
 
@@ -86,9 +86,10 @@ class Observation:
         self.srcList    = self.Configuration['ObservationSimulation']['srclist'] 
 
         #Fits files and optional gz compression
-        gzflag = ""
         if self.Configuration['file']['compress_fits'] == "yes":
             gzflag=".gz"
+        else:
+            gzflag=""
 
         self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"+gzflag
         self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"+gzflag
@@ -382,16 +383,24 @@ class Observation:
             # Do not create an insanely large amount of files in the same directory.
             outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
             #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.split('.fits')[0],'_{}'.format(numbin%200)
+            outfile    = self.eventfile.split('.fits')[0]+'_{}'.format(numbin%200)
             outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
             utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
             self._RunMktime(selstr,outfile,'no')
-            eventlist.append(outfile+'\n')
+            #Fits files and optional gz compression
+            if self.Configuration['file']['compress_fits'] == "yes":
+                gzflag=".gz"
+            else:
+                gzflag=""
+            eventlist.append(outfile+gzflag+'\n')
 
         evlist_filename = self.eventfile.split('.fits')[0]+'.list'
         with open(evlist_filename,'w') as evlistfile:
             evlistfile.writelines(eventlist)
     
+        self._evlist_filename = evlist_filename
+        self._eventlist = eventlist
+
     def time_selection_listofgtis(self):
         """
         Do a GTI selection based on a file of time spans
@@ -401,37 +410,21 @@ class Observation:
         more than ~30 time spans covered) we split the gtmktime calls into
         chunks of ~20 time spans.
         """
-        eventlist = []
-        last = False
-        numbin = None
-        while not last:
-            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            # Do not create an insanely big amount of files in the same directory.
-            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
-            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.split('.fits')[0]+'_{}'.format(numbin%200)
-            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
-            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
-            self._RunMktime(selstr,outfile,'no')
-            eventlist.append(outfile+'\n')
-
-        evlist_filename = self.eventfile.split('.fits')[0]+'.list'
-        with open(evlist_filename,'w') as evlistfile:
-            evlistfile.writelines(eventlist)
+        self.time_selection()
 
         # Redo SelectEvents to consolidate into single fits file (gtmktime does not accept lists!)
         eventcoarse = self.eventcoarse # Store eventcoarse to restore it later
         clobber = self.clobber         # Store clobber settings, we will force clobber at this step
-        self.eventcoarse = evlist_filename
+        self.eventcoarse = self._evlist_filename
         self.clobber = True
         self.SelectEvents()
         self.eventcoarse = eventcoarse
         self.clobber = clobber
 
         # Clean cruft: all temp event files and event file list
-        os.unlink(evlist_filename)
-        for file in eventlist:
-            os.unlink(file.strip()) # strip of endline char
+        os.unlink(self._evlist_filename)
+        for f in self._eventlist:
+            os.unlink(f.strip()) # strip of endline char
 
     def MkTime(self):
         import os.path

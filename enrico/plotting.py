@@ -91,7 +91,7 @@ class Result(Loggin.Message):
         # Save all in ascii file
         # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
         save_file = open(par.PlotName + '.dat', 'w')
-        save_file.write("# log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
+        save_file.write("#E [MeV]  E**2*dN/dE [erg/cm2/s]  Error on (E**2*dN/dE) [erg/cm2/s]   \n")
         for i in range(par.N):
             save_file.write("%12.4e  %12.4e  %12.4e \n" % (self.E[i], self.SED[i], self.Err[i]))
         save_file.close()
