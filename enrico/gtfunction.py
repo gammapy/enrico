@@ -24,8 +24,9 @@ def run_retry(macro,tries=5,compress=False):
     """
     mes = Loggin.Message()
 
-    # Try to write the temporary output to a temporary file and then move it, to avoid broken files
-    orig_name = str(macro['outfile'])
+    # Try to write the temporary output to a temporary file and then move it, 
+    # to avoid broken files left all over the place if the macro is interrupted 
+    orig_name = str(macro['outfile']).replace(".gz","")
     try:
         macro['outfile'] = macro['outfile']+".tmpout"
     except:
@@ -44,10 +45,12 @@ def run_retry(macro,tries=5,compress=False):
         else:
             if is_out_in_tmp:
                 shutil.move(macro['outfile'],orig_name)
+
+            # Compress the output if needed and the file exists
             if os.path.isfile(orig_name):
                 if not utils.is_gz_file(orig_name):
                     if compress:
-                        cmd = "gzip "+orig_name+ " && mv " + orig_name+".gz " + orig_name
+                        cmd = "gzip -f "+orig_name+ " && mv " + orig_name+".gz " + orig_name
                         print('Compressing file: '+ cmd)
                         os.system(cmd)
 
