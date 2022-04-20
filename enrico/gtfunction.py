@@ -440,9 +440,9 @@ class Observation:
                 self.time_selection_listofgtis()
             else:
                 selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
-        outfile = self.mktimefile+".tmp"
+        outfile = self.mktimefile#+".tmp"
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
-        os.system("mv "+outfile+" "+self.mktimefile)
+        #os.system("mv "+outfile+" "+self.mktimefile)
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""

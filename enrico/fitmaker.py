@@ -545,7 +545,7 @@ class FitMaker(Loggin.Message):
                               Emax=self.obs.Emax, PlotName=filename, SaveResData=SaveResData)
         result = plotting.Result(Fit, Param)
         result.GetDecorrelationEnergy(Param)
-
+        
         if self.config['Spectrum']['WriteCovMatrix'] == 'yes':
             result._WriteCovMatrix(Param)
 

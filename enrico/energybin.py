@@ -59,6 +59,7 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
     config['target']['redshift']    = '0'#Disable EBL correction
     config['out'] = FitRunner.config['out'] + '/'+EbinPath + str(NEbin)
     config['Spectrum']['ResultPlots'] = 'no' #no SED plot/modelmap
+    config['Spectrum']['WriteCovMatrix'] = 'no' #no cov matrix
     #copy the chose of the user for the enery bin computing
     config['Spectrum']['FitsGeneration'] = config['Ebin']['FitsGeneration']
     config['UpperLimit']['TSlimit'] = config['Ebin']['TSEnergyBins']
@@ -198,7 +199,11 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         config['UpperLimit']['SpectralIndex'] = Gamma_bin
         
         # Force ebin jobs to be sequential ?
-        config['Submit'] = 'no'
+        if config['Ebin']['Submit'] == 'yes':
+            config['Submit'] = 'yes'
+        elif config['Ebin']['Submit'] == 'no':
+            config['Submit'] = 'no'
+        
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)
