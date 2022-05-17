@@ -64,11 +64,14 @@ if options.download_data:
       # saved.write(join(weekly_dir,evt)+'\n')
     # saved.close()
     os.system("mv "+join(weekly_dir,'evt.lis')+" "+join(DOWNLOAD_DIR,'events.lis'))
+
+if options.download_spacecraft:
+    data.download(spacecraft=True, photon=False)
     if USE_FULLMISSION_SPACECRAFT=="False":
+        from os.path import join
         weekly_sc_dir = join(DOWNLOAD_DIR+'/weekly/spacecraft')
         os.system('ls '+weekly_sc_dir+'/lat_spacecraft*.fits > '+join(weekly_sc_dir,'sc.lis'))
         liste_sc = [l.strip() for l in open(join(weekly_sc_dir,'sc.lis'),'r').readlines()]
-        print(liste_sc[-1])
         #saved = open(join(DOWNLOAD_DIR,'spacecraft.lis'),"w")
         #for sc in liste_sc:
         #    # if 'p202' in sc:
@@ -76,8 +79,6 @@ if options.download_data:
         #saved.close()
         os.system("mv "+join(weekly_sc_dir,'sc.lis')+" "+join(DOWNLOAD_DIR,'spacecraft.lis'))
 
-if options.download_spacecraft:
-    data.download(spacecraft=True, photon=False)
 
 if options.download_aux:
     data.download_aux()
