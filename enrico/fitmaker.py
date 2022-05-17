@@ -539,10 +539,16 @@ class FitMaker(Loggin.Message):
         # filename = self.config['out'] + '/'+SpectrumPath+\
         #         '/SED_' + self.obs.srcname +'_'+ self.config['target']['spectrum']
         filename = utils._SpecFileName(self.config)
+
+        SaveResData = self.config['Spectrum']['WriteResiduals'] == 'yes'
         Param = plotting.Params(self.obs.srcname, Emin=self.obs.Emin,
-                              Emax=self.obs.Emax, PlotName=filename)
+                              Emax=self.obs.Emax, PlotName=filename, SaveResData=SaveResData)
         result = plotting.Result(Fit, Param)
         result.GetDecorrelationEnergy(Param)
+
+        if self.config['Spectrum']['WriteCovMatrix'] == 'yes':
+            result._WriteCovMatrix(Param)
+
         if (dump):
             result._DumpSED(Param)
 
