@@ -63,7 +63,10 @@ class Result(Loggin.Message):
     def _WriteCovMatrix(self,par):
         header  = '#### Covariance matrix. ###\n#Parameters:\n'
         header += ''.join(['#'+str(s)+'\n' for s in self.covar_pars])
-        np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=',')    
+        try:
+            np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=',')    
+        except FileNotFoundError:
+            self.warning("Cannot write cov file: {}".format(par.PlotName+'.cov.dat'))
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
@@ -245,7 +248,7 @@ class Result(Loggin.Message):
         # Write residuals to csv file
         if Parameter.SaveResData:
             residual_array = np.asarray([E,err_E,residual,Dres]).transpose()
-            np.savetxt(par.PlotName+'.ResData.dat', residual_data, 
+            np.savetxt(filebase + '.ResData.dat', residual_data, 
                        header=['x','xerr','y','yerr'], fmt='%.3e', delimiter=',')
         
         ymin = min(residual) - max(Dres)
