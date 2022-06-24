@@ -619,7 +619,7 @@ class LightCurve(Loggin.Message):
             ##############################################################
             # Create one obs instance
             CurConfig['Spectrum']['FitsGeneration'] = 'no'
-            _,Fit = GenAnalysisObjects(CurConfig,verbose=0)#be quiet
+            FitRunner,Fit,ListAnalyses = GenAnalysisObjects(CurConfig,verbose=0)#be quiet
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!

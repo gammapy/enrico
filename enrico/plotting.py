@@ -248,7 +248,7 @@ class Result(Loggin.Message):
         # Write residuals to csv file
         if Parameter.SaveResData:
             residual_array = np.asarray([E,err_E,residual,Dres]).transpose()
-            np.savetxt(filebase + '.ResData.dat', residual_data, 
+            np.savetxt(filebase + '.ResData.dat', residual_array, 
                        header=['x','xerr','y','yerr'], fmt='%.3e', delimiter=',')
         
         ymin = min(residual) - max(Dres)
