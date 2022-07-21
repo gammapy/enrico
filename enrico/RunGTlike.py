@@ -16,8 +16,7 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
     mes = Loggin.Message()
     """ run an analysis"""
     # If there are no xml files, create it and print a warning <--- This should be here?
-    #if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
-    if len(glob.glob(config['file']['xml']))==0: #.replace('.xml','*.xml')))==0:
+    if len(glob.glob(config['file']['xml']))==0:
         mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
         XmlMaker(config)
     

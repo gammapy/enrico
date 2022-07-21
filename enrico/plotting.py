@@ -176,8 +176,8 @@ class Result(Loggin.Message):
                         for i in range(len(image[1].data.names) - 1):
                             total[k] = total[k] + image[1].data.field(i + 1)[jn]
                     else:
-                        emax    = np.append(emax, energymax)
-                        emin    = np.append(emin, energymin)
+                        emax    = np.append(emax, max(energymax,energymin))
+                        emin    = np.append(emin, min(energymax,energymin))
                         obs     = np.append(obs,image[1].data.field(0)[jn])
                         obs_err = np.append(obs_err,\
                                             np.sqrt(image[1].data.field(0)[jn]))
@@ -209,20 +209,23 @@ class Result(Loggin.Message):
 
         other = np.array(total - src)
         Nbin  = len(src)
-        E = np.array((emax + emin) / 2.)
-        err_E = np.array((emax - emin) / 2.)
-
-        total = np.array(total)
+        E = np.asarray((emax + emin) / 2.)
+        #err_E = np.asarray((emax - emin) / 2.)
+        err_E = np.asarray([E-emin,emax-E])
+        total = np.asarray(total)
         residual = np.zeros(Nbin)
         Dres = np.zeros(Nbin)
 
+        srcname = Parameter.srcname.replace("_"," ")
+
+        print('Generating counts plot')
         plt.figure()
         plt.loglog()
         plt.title('Counts plot')
         plt.xlabel("E (MeV) ")
         plt.ylabel("Counts / bin")
         plt.errorbar(E,obs,xerr=err_E,yerr=obs_err,fmt='o',color="red",ls='None',label="Data")
-        plt.plot(E,src,ls='dashed',color="blue",label=Parameter.srcname.replace("_"," "))
+        plt.plot(E,src,ls='dashed',color="blue",label=srcname)
         plt.plot(E,other,ls='solid',color="green",label="Other Sources")
         plt.plot(E,total,lw=1.5,ls='solid',label="All Sources")
         plt.legend()
@@ -231,10 +234,10 @@ class Result(Loggin.Message):
             orientation='portrait', format=None,
             transparent=False, pad_inches=0.1)
 
+        print('Generating residuals plot')
         plt.figure()
         plt.title('Residuals plot')
         plt.semilogx()
-
         for i in range(Nbin):
             try:
                 residual[i] = (obs[i] - total[i]) / total[i]
@@ -247,9 +250,10 @@ class Result(Loggin.Message):
 
         # Write residuals to csv file
         if Parameter.SaveResData:
-            residual_array = np.asarray([E,err_E,residual,Dres]).transpose()
+            print('Writing also residuals data')
+            residual_array = np.asarray([E,err_E,obs,obs_err,residual,Dres]).transpose()
             np.savetxt(filebase + '.ResData.dat', residual_array, 
-                       header=['x','xerr','y','yerr'], fmt='%.3e', delimiter=',')
+                       header='E, E_err, Counts, Counts_err, Residuals,Residuals_err', fmt='%.3e', delimiter=',')
         
         ymin = min(residual) - max(Dres)
         ymax = max(residual) + max(Dres)
@@ -267,24 +271,6 @@ class Result(Loggin.Message):
             transparent=False, bbox_inches=None, pad_inches=0.1)
         os.system("rm " + imName)
         image.close()
-
-
-# def PlotFoldedLC(Time, TimeErr, Flux, FluxErr, tag="Flux (photon cm^{-2} s^{-1})"):
-#     _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr, tag)
-
-#     xmin = 0
-#     xmax = 1
-#     if max(FluxErr)==0:
-#         ymin = 0.
-#         ymax = max(Flux)*1.3
-#     else:
-#         ymin = np.min(min(Flux) - max(FluxErr) * 1.3, 0.)
-#         ymax = (max(Flux) + max(FluxErr)) * 1.3
-#     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
-#     gh.SetStats(000)
-#     gh.SetXTitle("Orbital Phase")
-#     gh.SetYTitle(tag)
-#     return gh, tgraph, arrows
 
 def GetDataPoints(config,pars,ignore_missing_bins=False):
     """Collect the data points/UL and generate a TGraph for the points
@@ -553,7 +539,7 @@ def PlotSED(config,pars,ignore_missing_bins=False):
 
     #Actually make the plot
     plt.figure()
-    plt.title(pars.PlotName.split("/")[-1])#.replace('_','\_'))
+    plt.title(pars.PlotName.split("/")[-1])
     name = pars.PlotName.split("/")[-1]
     plt.loglog()
 
