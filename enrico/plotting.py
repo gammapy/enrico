@@ -209,8 +209,8 @@ class Result(Loggin.Message):
 
         other = np.array(total - src)
         Nbin  = len(src)
-        E = np.asarray((emax + emin) / 2.)
-        #err_E = np.asarray((emax - emin) / 2.)
+        E = 10**((np.log10(emin)+np.log10(emax))/2.)
+        #E = np.asarray((emax + emin) / 2.)
         err_E = np.asarray([E-emin,emax-E])
         total = np.asarray(total)
         residual = np.zeros(Nbin)
@@ -251,9 +251,9 @@ class Result(Loggin.Message):
         # Write residuals to csv file
         if Parameter.SaveResData:
             print('Writing also residuals data')
-            residual_array = np.asarray([E,err_E,obs,obs_err,residual,Dres]).transpose()
+            residual_array = np.asarray([E,err_E[0],err_E[1],obs,obs_err,residual,Dres]).transpose()
             np.savetxt(filebase + '.ResData.dat', residual_array, 
-                       header='E, E_err, Counts, Counts_err, Residuals,Residuals_err', fmt='%.3e', delimiter=',')
+                       header='E, E_err-, E_err+, Counts, Counts_err, Residuals,Residuals_err', fmt='%.3e', delimiter=',')
         
         ymin = min(residual) - max(Dres)
         ymax = max(residual) + max(Dres)
