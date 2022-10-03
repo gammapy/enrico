@@ -1,5 +1,8 @@
 import os
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    from distutils.version import LooseVersion as Version
 import numpy as np
 try:
     import astropy.io.fits as fits
@@ -415,7 +418,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
 
     # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
     # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
-    if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
+    if Version(matplotlib.__version__) < Version("1.4.0"):
         plt.errorbar(x[uplim], y[uplim],
             xerr=[xerrm[uplim], xerrp[uplim]],
             yerr=[yerrm[uplim], yerrp[uplim]],
@@ -621,7 +624,7 @@ def PlotUL(pars,config,ULFlux,Index):
 
     # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
     # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
-    if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
+    if Version(matplotlib.__version__) < Version("1.4.0"):
         plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',lolims=[1,1])
     else:
         plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',uplims=[1,1])
