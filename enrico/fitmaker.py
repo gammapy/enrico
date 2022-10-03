@@ -547,6 +547,7 @@ class FitMaker(Loggin.Message):
         result.GetDecorrelationEnergy(Param)
         
         if self.config['Spectrum']['WriteCovMatrix'] == 'yes':
+            result._WriteFitPars(Param)
             result._WriteCovMatrix(Param)
 
         if (dump):

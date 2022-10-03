@@ -60,11 +60,29 @@ class Result(Loggin.Message):
         self.decSED     = self.SED[i]
         self.decSEDerr  = self.Err[i]
 
+    def _WriteFitPars(self,par):
+        header  = '#### Parameter matrix. ###\n#Par Name, Value, Error, Scale:\n'
+        spectrum = self.Fit[self.obs.srcname].funcs['Spectrum']
+        ParName = spectrum.paramNames
+        data = []
+        for par in ParName:
+            ParValue = '{:.3e'}.format(float(spectrum.getParam(par).value()))
+            ParError = '{:.3e'}.format(float(spectrum.getParam(par).error()))
+            ParScale = '{:.3e'}.format(float(spectrum.getParam(par).getScale()))
+            data.append([par,ParValue,ParError,ParScale])
+        
+        try:
+            np.savetxt(par.PlotName+'.fitpars.dat', data, header=header, fmt='%s', comments='', delimiter=', ')    
+        except FileNotFoundError:
+            self.warning("Cannot write fitpars file: {}".format(par.PlotName+'.fitpars.dat'))
+        
+        
+
     def _WriteCovMatrix(self,par):
         header  = '#### Covariance matrix. ###\n#Parameters:\n'
         header += ''.join(['#'+str(s)+'\n' for s in self.covar_pars])
         try:
-            np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=',')    
+            np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=', ')    
         except FileNotFoundError:
             self.warning("Cannot write cov file: {}".format(par.PlotName+'.cov.dat'))
 
