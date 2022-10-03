@@ -69,9 +69,9 @@ class Result(Loggin.Message):
         ParName = spectrum.paramNames
         data = []
         for par in ParName:
-            ParValue = '{:.3e'}.format(float(spectrum.getParam(par).value()))
-            ParError = '{:.3e'}.format(float(spectrum.getParam(par).error()))
-            ParScale = '{:.3e'}.format(float(spectrum.getParam(par).getScale()))
+            ParValue = '{:.3e}'.format(float(spectrum.getParam(par).value()))
+            ParError = '{:.3e}'.format(float(spectrum.getParam(par).error()))
+            ParScale = '{:.3e}'.format(float(spectrum.getParam(par).getScale()))
             data.append([par,ParValue,ParError,ParScale])
         
         try:
