@@ -65,19 +65,20 @@ class Result(Loggin.Message):
 
     def _WriteFitPars(self,par):
         header  = '#### Parameter matrix. ###\n#Par Name, Value, Error, Scale:\n'
-        spectrum = self.Fit[self.obs.srcname].funcs['Spectrum']
+        spectrum = self.Fit[par.srcname].funcs['Spectrum']
         ParName = spectrum.paramNames
+        OutFile = par.PlotName+'.fitpars.dat'
         data = []
-        for par in ParName:
-            ParValue = '{:.3e}'.format(float(spectrum.getParam(par).value()))
-            ParError = '{:.3e}'.format(float(spectrum.getParam(par).error()))
-            ParScale = '{:.3e}'.format(float(spectrum.getParam(par).getScale()))
-            data.append([par,ParValue,ParError,ParScale])
+        for p in ParName:
+            ParValue = '{:.3e}'.format(float(spectrum.getParam(p).value()))
+            ParError = '{:.3e}'.format(float(spectrum.getParam(p).error()))
+            ParScale = '{:.3e}'.format(float(spectrum.getParam(p).getScale()))
+            data.append([p,ParValue,ParError,ParScale])
         
         try:
-            np.savetxt(par.PlotName+'.fitpars.dat', data, header=header, fmt='%s', comments='', delimiter=', ')    
+            np.savetxt(OutFile, data, header=header, fmt='%s', comments='', delimiter=', ')    
         except FileNotFoundError:
-            self.warning("Cannot write fitpars file: {}".format(par.PlotName+'.fitpars.dat'))
+            self.warning("Cannot write fitpars file: {}".format(OutFile))
         
         
 
