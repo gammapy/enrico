@@ -21,11 +21,24 @@ def addParameter(el, name, free, value, scale, min, max):
     param.setAttribute('scale', '%g' % scale)
     # if value outside limits, set it to the closest limit
     if value>max: 
-        print(('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name)))
-        value=max
+        #print(('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name)))
+        print(('Parameter {2} value outside limits {0}>{1}, re-setting limits.'.format(value,max,name)))
+        #value=max
+        if value>=0:
+            max = np.min([value*1.1,value+1])
+        else:
+            max = np.min([value*0.9,value+1])
+        print(('... new limit for parameter {2}: <{1}'.format(value,max,name)))
     if value<min: 
-        print(('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name)))
-        value=min
+        #print(('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name)))
+        print(('Parameter {2} value outside limits {0}<{1}, re-setting limits.'.format(value,min,name))),
+        #value=min
+        if value>=0:
+            min = np.max([value*0.9,value-1])
+        else:
+            min = np.max([value*1.1,value-1])
+        print(('... new limit for parameter {2}: >{1}'.format(value,min,name)))
+
     param.setAttribute('value', '%g' % value)
     param.setAttribute('max', '%g' % max)
     param.setAttribute('min', '%g' % min)
@@ -167,12 +180,13 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
         elim_min = emin
     if emax > elim_max:
         elim_max = emax
-
+    
     if enorm == 0:
         enorm = 2e5  # meanEnergy(emin,emax,index_value)
         norm_value *= (enorm / 100.0) ** alpha_value
     if norm_scale == 0:
         norm_scale = utils.fluxScale(norm_value)
+
     norm_value /= norm_scale
     doc = lib.ownerDocument
     src = doc.createElement('source')
@@ -501,6 +515,17 @@ def GetlistFromFits(config, catalog):
     ra = data.field('RAJ2000')
     dec = data.field('DEJ2000')
     flux = data.field('PL_Flux_Density')
+    nan_values = np.isnan(flux)
+    if len(nan_values) > 0:
+        flux[nan_values] = data.field('LP_Flux_Density')[np.isnan(flux)]
+        nan_values = np.isnan(flux)
+    if len(nan_values) > 0:
+        flux[nan_values] = data.field('PLEC_Flux_Density')[np.isnan(flux)]
+        nan_values = np.isnan(flux)
+    if len(nan_values) > 0:
+        ### generic value
+        flux[nan_values] = 1e-12
+    
     pivot = data.field('Pivot_Energy')
     spectype = data.field('SpectrumType')
     is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
@@ -813,6 +838,7 @@ def WriteXml(lib, doc, srclist, config):
         freeshape = srclist[i].get('IsFreeShape')
         spectype  = srclist[i].get('SpectrumType')
         extendedName = srclist[i].get('ExtendedName')
+
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
             if (ebl==None):
