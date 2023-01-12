@@ -12,7 +12,7 @@ from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
-from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter, obsSim
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
 from GtApp import GtApp
 from enrico import utils
 
@@ -521,6 +521,7 @@ class Observation:
         self.run_retry_compress(expMap)
 
     def Obssim(self):
+        obsSim = GtApp('gtobssim', 'observationSim')
         """Run gtobssim tool"""
         if (self.clobber=="no" and os.path.isfile(self.srcMap)):
             #print("File exists and clobber is False")
