@@ -139,12 +139,12 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
 
                 # Tune parameters
-                if TYPE is "lowE":
+                if TYPE == "lowE":
                     config['energy']['emin'] = emintotal
                     config['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
                     config['analysis']['likelihood'] = "binned"
                     config['analysis']['ComputeDiffrsp'] = "no"
-                elif TYPE is "highE":
+                elif TYPE == "highE":
                     config['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
                     config['energy']['emax'] = emaxtotal
                     config['analysis']['likelihood'] = "unbinned"
