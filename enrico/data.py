@@ -1,6 +1,7 @@
 """Utilities to download / preprocess data"""
 import os
 from os.path import join
+import glob
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -13,7 +14,7 @@ from enrico.environ import DIFFUSE_ISO_SOURCEEDISP0, DIFFUSE_ISO_SOURCEEDISP1, D
 from enrico.environ import DIFFUSE_ISO_CLEANPSF0, DIFFUSE_ISO_CLEANPSF1, DIFFUSE_ISO_CLEANPSF2, DIFFUSE_ISO_CLEANPSF3
 from enrico.environ import DIFFUSE_ISO_CLEANEDISP0, DIFFUSE_ISO_CLEANEDISP1, DIFFUSE_ISO_CLEANEDISP2, DIFFUSE_ISO_CLEANEDISP3
 from enrico.environ import DIRS, DOWNLOAD_DIR, CATALOG_TEMPLATE_DIR, TEMPLATE_VERSION, PREPROCESSED_DIR
-from enrico.environ import WEEKLY_DIR, SPACECRAFT, USE_FULLMISSION_SPACECRAFT,WEEKLY_SC_DIR
+from enrico.environ import WEEKLY_DIR, SPACECRAFT, USE_FULLMISSION_SPACECRAFT,COMPRESS_WEEKLY_FILES,WEEKLY_SC_DIR
 #check platform
 from sys import platform 
 
@@ -146,6 +147,7 @@ class Data(object):
         the Fermi LAT data server.
         For info on wget options see
         http://www.gnu.org/software/wget/manual/wget.html"""
+        
         os.system("mkdir -p "+DOWNLOAD_DIR)
         os.chdir(DOWNLOAD_DIR)
         if spacecraft:
@@ -156,10 +158,20 @@ class Data(object):
                 elif platform == "darwin": 
                     cmd = 'curl -O -N ' + SPACECRAFT_URL
             else:
+                list_spacecrafts = sorted(glob.glob("weekly/spacecraft/lat_spacecraft*.fits*"))
+                list_of_files=[F.replace('weekly/spacecraft/','').replace('.gz','') for F in list_spacecrafts]
                 if platform == "linux" or platform == "linux2": # linux 
-                    cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
+                    cmd = 'wget -c -N -R '+','.join(list_of_files[:-1])+' -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
                 elif platform == "darwin": 
                     cmd = 'curl -O  -c  -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
+            
+                if COMPRESS_WEEKLY_FILES=="True":
+                    # always leave out the last file uncompressed, so that wget can resume download
+                    list_of_files=sorted(glob.glob("weekly/spacecraft/lat_spacecraft*.fits"))[:-1]
+                    for f in list_of_files:
+                        cmd = 'gzip -f '+f
+                        print(('EXEC: ', cmd))
+                        os.system(cmd)
                 
             print(('EXEC: ', cmd))
             os.system(cmd)
@@ -169,9 +181,19 @@ class Data(object):
             # -nH --no-host-directories
             # -np --no-parent
             print(WEEKLY_URL)
-            cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_URL
+            list_photons = sorted(glob.glob("weekly/photon/lat_photon_weekly*.fits*"))
+            list_of_files=[F.replace('weekly/photon/','').replace('.gz','') for F in list_photons]
+            cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -R '+','.join(list_of_files[:-1])+' -nH --cut-dirs=4 -np ' + WEEKLY_URL
             print(('EXEC: ', cmd))
             os.system(cmd)
+            if COMPRESS_WEEKLY_FILES=="True":
+                # always leave out the last file uncompressed, so that wget can resume download
+                list_of_files=sorted(glob.glob("weekly/photon/lat_photon_weekly*.fits"))[:-1]
+                for f in list_of_files:
+                    cmd = 'gzip -f '+f
+                    print(('EXEC: ', cmd))
+                    os.system(cmd)
+
 
     def download_aux(self):
         """Download missing diffuse model and catalog files"""

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 # -----------------------------------------------
 # Environment setup
@@ -9,15 +9,31 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
+#SBATCH --export=ALL
 
 echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 
-conda activate fermi
+__conda_setup="$('/net/diva/scratch1/mnievas/conda/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/net/diva/scratch1/mnievas/conda/etc/profile.d/conda.sh" ]; then
+        . "/net/diva/scratch1/mnievas/conda/etc/profile.d/conda.sh"
+    else
+        export PATH="/net/diva/scratch1/mnievas/conda/bin:$PATH"
+    fi
+fi
+unset __conda_setup
 
-# This will allow FTOOLS to run on the cluster, whereas if this is not
-# set you get an error about '/dev/tty' e.g. when running ftcopy
-export HEADASNOQUERY=1
-#setenv HEADASNOQUERY 1
-echo HEADASNOQUERY: $HEADASNOQUERY
-echo PYTHONPATH: $PYTHONPATH 
-echo PATH: $PATH
+if [ -f "/net/diva/scratch1/mnievas/conda/etc/profile.d/mamba.sh" ]; then
+    . "/net/diva/scratch1/mnievas/conda/etc/profile.d/mamba.sh"
+fi
+
+export /net/diva/scratch1/mnievas/conda/bin/:$PATH
+conda activate fermi
+export FARM='IAC_DIVA'
+export QUEUE='std'
+export ENRICO_DIR=/net/diva/scratch1/mnievas/enrico/
+source $ENRICO_DIR/enrico-init.sh
+export USE_FULLMISSION_SPACECRAFT=True
+export COMPRESS_WEEKLY_FILES=True

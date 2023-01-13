@@ -32,6 +32,8 @@ if DOWNLOAD_DIR :
 PREPROCESSED_DIR = os.environ.get('FERMI_PREPROCESSED_DIR', '')
 CONFIG_DIR = join(os.path.dirname(__file__), 'config')
 USE_FULLMISSION_SPACECRAFT = os.environ.get('USE_FULLMISSION_SPACECRAFT','True')#bool(os.environ.get('USE_FULLMISSION_SPACECRAFT','False')=='True')
+COMPRESS_WEEKLY_FILES = os.environ.get('COMPRESS_WEEKLY_FILES','False')
+
 
 try :
     from enrico.extern.odict import OrderedDict
@@ -50,7 +52,7 @@ except :
 
 # File names
 
-CATALOG_VERSION = '28'
+CATALOG_VERSION = '30'
 TEMPLATE_VERSION = '12years'
 
 #if CATALOG_DIR :

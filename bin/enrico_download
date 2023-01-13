@@ -57,7 +57,7 @@ if options.download_data:
     data.download(spacecraft=False, photon=True)
     from os.path import join
     weekly_dir = join(DOWNLOAD_DIR+'/weekly/photon')
-    os.system('ls '+weekly_dir+'/*fits > '+join(weekly_dir,'evt.lis'))
+    os.system('ls '+weekly_dir+'/lat_photon*.fits* > '+join(weekly_dir,'evt.lis'))
     liste    = [l.strip() for l in open(join(weekly_dir,'evt.lis'),'r').readlines()]
     # saved    = open(join(DOWNLOAD_DIR,'events.lis'),"w")
     # for evt in liste:
@@ -70,7 +70,7 @@ if options.download_spacecraft:
     if USE_FULLMISSION_SPACECRAFT=="False":
         from os.path import join
         weekly_sc_dir = join(DOWNLOAD_DIR+'/weekly/spacecraft')
-        os.system('ls '+weekly_sc_dir+'/lat_spacecraft*.fits > '+join(weekly_sc_dir,'sc.lis'))
+        os.system('ls '+weekly_sc_dir+'/lat_spacecraft*.fits* > '+join(weekly_sc_dir,'sc.lis'))
         liste_sc = [l.strip() for l in open(join(weekly_sc_dir,'sc.lis'),'r').readlines()]
         #saved = open(join(DOWNLOAD_DIR,'spacecraft.lis'),"w")
         #for sc in liste_sc:

@@ -16,8 +16,7 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
     mes = Loggin.Message()
     """ run an analysis"""
     # If there are no xml files, create it and print a warning <--- This should be here?
-    #if len(glob.glob(config['file']['xml'].replace('.xml','*.xml')))==0:
-    if len(glob.glob(config['file']['xml']))==0: #.replace('.xml','*.xml')))==0:
+    if len(glob.glob(config['file']['xml']))==0:
         mes.warning("Xml not found, creating one for the given config %s" %config['file']['xml'])
         XmlMaker(config)
     
@@ -140,12 +139,12 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
 
                 # Tune parameters
-                if TYPE is "lowE":
+                if TYPE == "lowE":
                     config['energy']['emin'] = emintotal
                     config['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
                     config['analysis']['likelihood'] = "binned"
                     config['analysis']['ComputeDiffrsp'] = "no"
-                elif TYPE is "highE":
+                elif TYPE == "highE":
                     config['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
                     config['energy']['emax'] = emaxtotal
                     config['analysis']['likelihood'] = "unbinned"
