@@ -108,9 +108,9 @@ class Observation:
         self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"+gzflag
         self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"+gzflag
         self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"+gzflag
-		self.effbkgfile    = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_effbkgfile.fits"+gzflag
-		self.alphabkgfile  = self.folder+'/'+self.srcname+"_"+self.modelname+"_alphabkgfile.fits"+gzflag
-		self.wtsmapfile    = self.folder+'/'+self.srcname+"_"+self.modelname+"_wtsmapfile.fits"+gzflag
+        self.effbkgfile    = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_effbkgfile.fits"+gzflag
+        self.alphabkgfile  = self.folder+'/'+self.srcname+"_"+self.modelname+"_alphabkgfile.fits"+gzflag
+        self.wtsmapfile    = self.folder+'/'+self.srcname+"_"+self.modelname+"_wtsmapfile.fits"+gzflag
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -696,69 +696,65 @@ class Observation:
         drm["chatter"] = 0
         self.run_retry_compress(drm)
     
-	def GtEffBkg(self,efact=2):
-		'''
-		DataCube of Effective background for a point source
-		'''
+    def GtEffBkg(self,efact=2):
+        '''
+        DataCube of Effective background for a point source
+        '''
         if (self.clobber=="no" and os.path.isfile(self.effbkgfile)):
             #print("File exists and clobber is False")
             return(0)
         irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
                                self.Configuration['event']['evtype'])
         effbkg = GtApp('gteffbkg', 'EffBkg')
-		effbkg["cmap"]    = self.cmapfile
-		effbkg["outfile"] = self.effbkgfile
-		effbkg["irfs"]    = irfs
-		effbkg["expcube"] = self.Cubename
-		effbkg["bexpmap"] = self.BinnedMapfile
-		effbkg["efact"]   = efact
+        effbkg["cmap"]    = self.cmapfile
+        effbkg["outfile"] = self.effbkgfile
+        effbkg["irfs"]    = irfs
+        effbkg["expcube"] = self.Cubename
+        effbkg["bexpmap"] = self.BinnedMapfile
+        effbkg["efact"]   = efact
         self.run_retry_compress(effbkg)
 
-	def GtAlphaBkg(self,epsilon=0.03):
-		'''
-		Hypercube - relative contributions to likelihood weights from different analysis components
-		needs to be run once ALL components are done
-		'''
+    def GtAlphaBkg(self,epsilon=0.03):
+        '''
+        Hypercube - relative contributions to likelihood weights from different analysis components
+        needs to be run once ALL components are done
+        '''
         if (self.clobber=="no" and os.path.isfile(self.alphabkgfile)):
             #print("File exists and clobber is False")
             return(0)
         irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
                                self.Configuration['event']['evtype'])
-		
-		effbkg_files = glob.glob(\
-							self.folder+'/'+\
-							self.srcname+"*_"+\
-							self.modelname+\
-							"_effbkgfile.fits"+\
-							gzflag)
-		effbkg_textfile = self.folder+'/'+self.srcname+"_"+self.modelname+"_effbkgfile.list"
-		with open(effbkg_textfile, "r+") as f:
-			for effbkg in effbkg_files:
-				f.write(effbkg)
+        
+        effbkg_files = glob.glob(\
+                            self.folder+'/'+\
+                            self.srcname+"*_"+\
+                            self.modelname+\
+                            "_effbkgfile.fits"+\
+                            gzflag)
+        effbkg_textfile = self.folder+'/'+self.srcname+"_"+self.modelname+"_effbkgfile.list"
+        with open(effbkg_textfile, "r+") as f:
+            for effbkg in effbkg_files:
+                f.write(effbkg)
         alphabkg = GtApp('gtalphabkg', 'AlphaBkg')
-		alphabkg["inputs"]  = effbkg_textfile
-		alphabkg["outfile"] = self.alphabkgfile
-		alphabkg["epsilon"] = epsilon
+        alphabkg["inputs"]  = effbkg_textfile
+        alphabkg["outfile"] = self.alphabkgfile
+        alphabkg["epsilon"] = epsilon
         self.run_retry_compress(alphabkg)
-	
-	def GtWtsMap(self,epsilon=0.03):
-		'''
-		Cube of likelihood weight factors
-		needs to be done once ALL components are done, component by component.
-		'''
+    
+    def GtWtsMap(self,epsilon=0.03):
+        '''
+        Cube of likelihood weight factors
+        needs to be done once ALL components are done, component by component.
+        '''
         if (self.clobber=="no" and os.path.isfile(self.alphabkgfile)):
             #print("File exists and clobber is False")
             return(0)
         irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
                                self.Configuration['event']['evtype'])
         wtsmap = GtApp('gtwtsmap', 'WtsMap')
-		wtsmap["effbkgfile"] = self.effbkgfile
-		wtsmap["alphafile"]  = self.alphabkgfile
-		wtsmap["epsilon"]    = epsilon
-		wtsmap["output"]     = self.wtsmapfile
+        wtsmap["effbkgfile"] = self.effbkgfile
+        wtsmap["alphafile"]  = self.alphabkgfile
+        wtsmap["epsilon"]    = epsilon
+        wtsmap["output"]     = self.wtsmapfile
         self.run_retry_compress(wtsmap)
-		
-
-	
-		
         

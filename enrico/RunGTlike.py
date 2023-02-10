@@ -111,14 +111,14 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
       
-		# Exports the weights that internally gtlike uses. These are hyper-cubes (component, energy, position). 
-		# This is not fully correct. There should be an unbinned way of doing these steps, so it should be possible to generate weights
-		if config['analysis']['likelihood'] == 'binned':
-			for Analyse in ListOfAnalysisObjects:
-				Analyse.obs.GtEffBkg()
-			Analyse.obs.GtAlphaBkg()	
-			for Analyse in ListOfAnalysisObjects:
-				Analyse.obs.GtWtsMap()
+        # Exports the weights that internally gtlike uses. These are hyper-cubes (component, energy, position). 
+        # This is not fully correct. There should be an unbinned way of doing these steps, so it should be possible to generate weights
+        if config['analysis']['likelihood'] == 'binned':
+            for Analyse in ListOfAnalysisObjects:
+                Analyse.obs.GtEffBkg()
+            Analyse.obs.GtAlphaBkg()    
+            for Analyse in ListOfAnalysisObjects:
+                Analyse.obs.GtWtsMap()
  
         FitRunner = Analyse
         FitRunner.obs.Emin = emintotal

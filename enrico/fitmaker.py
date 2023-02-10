@@ -92,8 +92,8 @@ class FitMaker(Loggin.Message):
             # the model should be generated for each component after optimizing.
             #self._log('gtmodel', 'Make a model map')#run gtmodel
             #self.obs.ModelMap(self.config["file"]["xml"])
-			#self.info('Compute effective background cube')
-			#self.obs.GtEffBkg()
+            #self.info('Compute effective background cube')
+            #self.obs.GtEffBkg()
 
         if self.config['analysis']['likelihood'] == 'unbinned': #unbinned analysis chain
             self._log('gtexpmap', 'Make an exposure map')
