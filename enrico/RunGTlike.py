@@ -12,7 +12,6 @@ from enrico.utils import hasKey, isKey, typeirfs
 
 # Called per component
 def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
-
     mes = Loggin.Message()
     """ run an analysis"""
     # If there are no xml files, create it and print a warning <--- This should be here?
@@ -111,7 +110,16 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 Fit_component = Analyse.CreateLikeObject()
                 mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
-            
+      
+		# Exports the weights that internally gtlike uses. These are hyper-cubes (component, energy, position). 
+		# This is not fully correct. There should be an unbinned way of doing these steps, so it should be possible to generate weights
+		if config['analysis']['likelihood'] == 'binned':
+			for Analyse in ListOfAnalysisObjects:
+				Analyse.obs.GtEffBkg()
+			Analyse.obs.GtAlphaBkg()	
+			for Analyse in ListOfAnalysisObjects:
+				Analyse.obs.GtWtsMap()
+ 
         FitRunner = Analyse
         FitRunner.obs.Emin = emintotal
         FitRunner.obs.Emax = emaxtotal
