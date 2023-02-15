@@ -7,6 +7,7 @@ begun October 2010
 """
 import os
 import sys
+import glob
 import shutil
 from enrico import Loggin
 from time import sleep
@@ -87,27 +88,30 @@ class Observation:
 
         #Fits files and optional gz compression
         if self.Configuration['file']['compress_fits'] == "yes":
-            gzflag=".gz"
+            self.gzflag=".gz"
         else:
-            gzflag=""
+            self.gzflag=""
 
-        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"+gzflag
-        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"+gzflag
-        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"+gzflag
-        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"+gzflag
-        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"+gzflag
-        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"+gzflag
-        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"+gzflag
-        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"+gzflag
-        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"+gzflag
-        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"+gzflag
-        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"+gzflag
-        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"+gzflag
-        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"+gzflag
-        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"+gzflag
-        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"+gzflag
-        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"+gzflag
-        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"+gzflag
+        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"+self.gzflag
+        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"+self.gzflag
+        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"+self.gzflag
+        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"+self.gzflag
+        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"+self.gzflag
+        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"+self.gzflag
+        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"+self.gzflag
+        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"+self.gzflag
+        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"+self.gzflag
+        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"+self.gzflag
+        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"+self.gzflag
+        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"+self.gzflag
+        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"+self.gzflag
+        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"+self.gzflag
+        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"+self.gzflag
+        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"+self.gzflag
+        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"+self.gzflag
+        self.effbkgfile    = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_effbkgfile.fits"+self.gzflag
+        self.alphabkgfile  = self.folder+'/'+self.srcname+"_"+self.modelname+"_alphabkgfile.fits"+self.gzflag
+        self.wtsmapfile    = self.folder+'/'+self.srcname+"_"+self.modelname+"_wtsmapfile.fits"+self.gzflag
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -388,11 +392,7 @@ class Observation:
             utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
             self._RunMktime(selstr,outfile,'no')
             #Fits files and optional gz compression
-            if self.Configuration['file']['compress_fits'] == "yes":
-                gzflag=".gz"
-            else:
-                gzflag=""
-            eventlist.append(outfile+gzflag+'\n')
+            eventlist.append(outfile+self.gzflag+'\n')
 
         evlist_filename = self.eventfile.split('.fits')[0]+'.list'
         with open(evlist_filename,'w') as evlistfile:
@@ -692,4 +692,67 @@ class Observation:
         drm["bexpmap"] = self.BinnedMapfile
         drm["chatter"] = 0
         self.run_retry_compress(drm)
+    
+    def GtEffBkg(self,efact=2):
+        '''
+        DataCube of Effective background for a point source
+        '''
+        if (self.clobber=="no" and os.path.isfile(self.effbkgfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        effbkg = GtApp('gteffbkg', 'EffBkg')
+        effbkg["cmap"]    = self.ccube
+        effbkg["outfile"] = self.effbkgfile
+        effbkg["irfs"]    = irfs
+        effbkg["expcube"] = self.Cubename
+        effbkg["bexpmap"] = self.BinnedMapfile
+        effbkg["efact"]   = efact
+        self.run_retry_compress(effbkg)
+
+    def GtAlphaBkg(self,epsilon=0.03):
+        '''
+        Hypercube - relative contributions to likelihood weights from different analysis components
+        needs to be run once ALL components are done
+        '''
+        if (self.clobber=="no" and os.path.isfile(self.alphabkgfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        
+        effbkg_files = glob.glob(\
+                            self.folder+'/'+\
+                            self.srcname+"*_"+\
+                            self.modelname+\
+                            "_effbkgfile.fits"+\
+                            self.gzflag)
+        effbkg_textfile = self.folder+'/'+self.srcname+"_"+self.modelname+"_effbkgfile.list"
+        with open(effbkg_textfile, "w") as f:
+            f.writelines(effbkg_files)
+            f.write("\n")
+
+        alphabkg = GtApp('gtalphabkg', 'AlphaBkg')
+        alphabkg["inputs"]  = effbkg_textfile
+        alphabkg["outfile"] = self.alphabkgfile
+        alphabkg["epsilon"] = epsilon
+        self.run_retry_compress(alphabkg)
+    
+    def GtWtsMap(self,epsilon=0.03):
+        '''
+        Cube of likelihood weight factors
+        needs to be done once ALL components are done, component by component.
+        '''
+        if (self.clobber=="no" and os.path.isfile(self.alphabkgfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        wtsmap = GtApp('gtwtsmap', 'WtsMap')
+        wtsmap["effbkgfile"] = self.effbkgfile
+        wtsmap["alphafile"]  = self.alphabkgfile
+        wtsmap["epsilon"]    = epsilon
+        wtsmap["output"]     = self.wtsmapfile
+        self.run_retry_compress(wtsmap)
         
