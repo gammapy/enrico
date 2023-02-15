@@ -208,7 +208,12 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
     addParameter(spec, 'alpha', alpha_free, alpha_value, 1.0,
                  alpha_min, alpha_max)
     addParameter(spec, 'Eb', 0, enorm, 1.0, elim_min, elim_max)
-    addParameter(spec, 'beta', beta_free, beta_value, 1.0, beta_min, beta_max)
+    # Hack for Lucas / Mireia --- Remove !!!!
+    if ebl == None:
+        addParameter(spec, 'beta', beta_free, beta_value, 1.0, beta_min, beta_max)
+    else:
+        addParameter(spec, 'beta', beta_free, beta_value, 1.0, -2,2)
+
     src.appendChild(spec)
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)

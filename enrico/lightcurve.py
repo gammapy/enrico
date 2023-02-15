@@ -381,9 +381,9 @@ class LightCurve(Loggin.Message):
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
                 plt.ylabel(r"${\rm Flux/\Delta Flux}$")
                 plt.savefig(LcOutPath+"_Npred.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
+                    orientation='portrait', format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    )
             else :
                 print("No Npred Plot produced")
 
@@ -412,9 +412,9 @@ class LightCurve(Loggin.Message):
             plt.tight_layout()
 
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
+                    orientation='portrait', format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    )
 
 
 #    Plot the LC itself. This function return a TH2F for a nice plot
@@ -474,9 +474,9 @@ class LightCurve(Loggin.Message):
         plt.tight_layout()
 
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
+                orientation='portrait', format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
-                frameon=None)
+                )
 
         if self.config["LightCurve"]["SpectralIndex"] == 0 :
             plt.figure()
@@ -518,9 +518,9 @@ class LightCurve(Loggin.Message):
             plt.tight_layout()
             plt.savefig(LcOutPath+"_Index.png", dpi=150,
                 facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
+                orientation='portrait', format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
-                frameon=None)
+                )
 
 
         # compute Fvar and probability of being cst
@@ -676,9 +676,9 @@ class LightCurve(Loggin.Message):
         plt.tight_layout()
 
         plt.savefig(LcOutPath+"_VarIndex.png", dpi=150, facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
+                orientation='portrait', format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
-                frameon=None)
+                )
 
         self.info("Variability index calculation")
         print(("\t TSvar = ",2*(sum(LogL1)-sum(LogL0))))

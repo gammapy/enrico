@@ -142,7 +142,7 @@ class Result(Loggin.Message):
     def MakeSEDError(self, pars):
         """@todo: document me"""
         estep = np.log(pars.Emax / pars.Emin) / (pars.N - 1)
-        energies = pars.Emin * np.exp(estep * np.arange(np.float(pars.N)))
+        energies = pars.Emin * np.exp(estep * np.arange(pars.N,dtype=float))
         err = np.zeros(pars.N)
         j = 0
         for ene in energies:
