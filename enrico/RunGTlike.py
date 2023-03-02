@@ -12,7 +12,6 @@ from enrico.utils import hasKey, isKey, typeirfs
 
 # Called per component
 def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose = 1):
-
     mes = Loggin.Message()
     """ run an analysis"""
     # If there are no xml files, create it and print a warning <--- This should be here?
@@ -30,6 +29,19 @@ def Analysis(folder, config, configgeneric=None, tag="", convtyp='-1', verbose =
         FitRunner.FirstSelection(configgeneric) #Generates fits files for the coarse selection
         FitRunner.GenerateFits() #Generates fits files for the rest of the products
     return FitRunner
+
+def GenLikelihoodWeights(config,ListOfAnalysisObjects):
+    # Exports the weights that internally gtlike uses. These are hyper-cubes (component, energy, position). 
+    # This is not fully correct. There should be an unbinned way of doing these steps, so it should be possible to generate weights
+    if config['analysis']['likelihood'] == 'binned':
+        ListOfAnalysisObjects[0]._log('gteffbkg', 'Generate effective background')#run gtselect
+        for Analyse in ListOfAnalysisObjects:
+            Analyse.obs.GtEffBkg()
+        ListOfAnalysisObjects[0]._log('gtalphabkg', 'Relative contribs of components')#run gtselect
+        Analyse.obs.GtAlphaBkg()    
+        ListOfAnalysisObjects[0]._log('gtwtsmap', 'Relative weights')#run gtselect
+        for Analyse in ListOfAnalysisObjects:
+            Analyse.obs.GtWtsMap()
 
 # Called once
 def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
@@ -60,13 +72,16 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
     elif isKey(config['ComponentAnalysis'],'EDISP') == 'yes':
         evtnum = [64,128,256,521]
         config['analysis']['likelihood'] = "binned"
-    elif isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
+        
+
+    oldxml = config['file']['xml']
+
+    if isKey(config['ComponentAnalysis'],'FGL4') == 'yes':
         # Special case of the PSF component analysis, 
         # where up to 15 components (energy+PSF) are created following 
         # 4FGL prescription.
         from enrico.catalogComponents import evtnum, energybins, nbinsbins, zmaxbins, ringwidths, pixelsizes
         config['analysis']['likelihood'] = "binned"
-        oldxml = config['file']['xml']
 
         bin_i = 0
         roi = 0
@@ -111,77 +126,78 @@ def GenAnalysisObjects(config, verbose = 1, xmlfile =""):
                 Fit_component = Analyse.CreateLikeObject()
                 mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
-            
+      
+        # Gen likelihood weights
+        GenLikelihoodWeights(config,ListOfAnalysisObjects)
+
         FitRunner = Analyse
         FitRunner.obs.Emin = emintotal
         FitRunner.obs.Emax = emaxtotal
         config["energy"]["emin"] = emintotal
         config["energy"]["emax"] = emaxtotal
-        config["event"]["evtype"] = evtold
-        FitRunner.config = config
+    else:
+        # Standard (non-4FGL) analysis components
+        for k,evt in enumerate(evtnum):
+            config['event']['evtype'] = evt
+            if typeirfs[evt] != "" and typeirfs[evt]!="FRONTBACK":
+                config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml")
 
-        return FitRunner,Fit,ListOfAnalysisObjects
+            if EUnBinned>emintotal and EUnBinned<emaxtotal:
+                mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
+                analysestorun = ["lowE","highE"]
 
-    # Standard (non-4FGL) analysis components
-    oldxml = config['file']['xml']
-    for k,evt in enumerate(evtnum):
-        config['event']['evtype'] = evt
-        if typeirfs[evt] != "" and typeirfs[evt]!="FRONTBACK":
-            config["file"]["xml"] = oldxml.replace(".xml","_"+typeirfs[evt]+".xml")
+                for j,TYPE in enumerate(analysestorun):
+                    tag = TYPE
+                    if typeirfs[evt] != "" : tag += "_"+typeirfs[evt]# handle name of fits file
+                    config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
 
-        if EUnBinned>emintotal and EUnBinned<emaxtotal:
-            mes.info("Breaking the analysis in Binned (low energy) and Unbinned (high energies)")
-            analysestorun = ["lowE","highE"]
+                    # Tune parameters
+                    if TYPE == "lowE":
+                        config['energy']['emin'] = emintotal
+                        config['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
+                        config['analysis']['likelihood'] = "binned"
+                        config['analysis']['ComputeDiffrsp'] = "no"
+                    elif TYPE == "highE":
+                        config['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
+                        config['energy']['emax'] = emaxtotal
+                        config['analysis']['likelihood'] = "unbinned"
+                        config['analysis']['ComputeDiffrsp'] = "yes"
 
-            for j,TYPE in enumerate(analysestorun):
-                tag = TYPE
-                if typeirfs[evt] != "" : tag += "_"+typeirfs[evt]# handle name of fits file
-                config["file"]["xml"] = oldxml.replace(".xml","_"+tag+".xml")
+                    Analyse = Analysis(folder, config, \
+                        configgeneric=config,\
+                        tag=tag,\
+                        verbose=verbose)
+                    ListOfAnalysisObjects.append(Analyse)
 
-                # Tune parameters
-                if TYPE == "lowE":
-                    config['energy']['emin'] = emintotal
-                    config['energy']['emax'] = min(config['energy']['emax'],EUnBinned)
-                    config['analysis']['likelihood'] = "binned"
-                    config['analysis']['ComputeDiffrsp'] = "no"
-                elif TYPE == "highE":
-                    config['energy']['emin'] = max(config['energy']['emin'],EUnBinned)
-                    config['energy']['emax'] = emaxtotal
-                    config['analysis']['likelihood'] = "unbinned"
-                    config['analysis']['ComputeDiffrsp'] = "yes"
+                    mes.info('Creating Likelihood object for component.')
+                    Fit_component = Analyse.CreateLikeObject()
+                    mes.info('Adding component to the summed likelihood.')
+                    Fit.addComponent(Fit_component)
+                FitRunner = Analyse
+                FitRunner.obs.Emin = emintotal
+                FitRunner.obs.Emax = emaxtotal
+                config["energy"]["emin"] = emintotal
+                config["energy"]["emax"] = emaxtotal
 
+            else:
                 Analyse = Analysis(folder, config, \
                     configgeneric=config,\
-                    tag=tag,\
-                    verbose=verbose)
+                    tag=typeirfs[evt], verbose = verbose)
+                
                 ListOfAnalysisObjects.append(Analyse)
-
+                if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
                 mes.info('Creating Likelihood object for component.')
                 Fit_component = Analyse.CreateLikeObject()
                 mes.info('Adding component to the summed likelihood.')
                 Fit.addComponent(Fit_component)
-            FitRunner = Analyse
-            FitRunner.obs.Emin = emintotal
-            FitRunner.obs.Emax = emaxtotal
-            config["energy"]["emin"] = emintotal
-            config["energy"]["emax"] = emaxtotal
-
-        else:
-            Analyse = Analysis(folder, config, \
-                configgeneric=config,\
-                tag=typeirfs[evt], verbose = verbose)
             
-            ListOfAnalysisObjects.append(Analyse)
-            if not(xmlfile ==""): Analyse.obs.xmlfile = xmlfile
-            mes.info('Creating Likelihood object for component.')
-            Fit_component = Analyse.CreateLikeObject()
-            mes.info('Adding component to the summed likelihood.')
-            Fit.addComponent(Fit_component)
-   
-    FitRunner = Analyse
+       
+        FitRunner = Analyse
+    
     config["event"]["evtype"] = evtold
+    # Gen likelihood weights
+    GenLikelihoodWeights(config,ListOfAnalysisObjects)
     FitRunner.config = config
-
     return FitRunner,Fit,ListOfAnalysisObjects
 
 def run(infile):
