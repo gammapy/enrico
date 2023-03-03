@@ -303,6 +303,7 @@ def ReadResult(config):
         results[key] = value
     return results
 
+'''
 def time_selection_string(config,numbin0):
     """Convert file with start stop pairs to gtmktime filter string"""
 
@@ -340,6 +341,7 @@ def time_selection_string(config,numbin0):
     selstr='('+selstr[:-2]+')'
     # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
     return selstr, numbin0+1, last
+'''
 
 def met_to_MJD(met):
   return mjd_ref + (met-met_ref)/DAY_IN_SECOND
