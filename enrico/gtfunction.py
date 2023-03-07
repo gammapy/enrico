@@ -16,7 +16,9 @@ from math import sqrt, log10
 from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
 from GtApp import GtApp
 from enrico import utils
-
+import numpy as np
+import astropy.io.fits as pyfits
+import astropy.io.ascii as aascii
 def run_retry(macro,tries=5,compress=False):
     """
     The Fermi LAT sometimes fail with annoying Runtime errors,
@@ -112,6 +114,7 @@ class Observation:
         self.effbkgfile    = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_effbkgfile.fits"+self.gzflag
         self.alphabkgfile  = self.folder+'/'+self.srcname+"_"+self.modelname+"_alphabkgfile.fits"+self.gzflag
         self.wtsmapfile    = self.folder+'/'+self.srcname+"_"+self.modelname+"_wtsmapfile.fits"+self.gzflag
+        self.gtifitsfile   = self.folder+'/'+self.srcname+"_"+filetag+"_GTI.fits"
 
         #Variables
         if ('MJD' in self.Configuration['time']['type']):
@@ -370,6 +373,7 @@ class Observation:
         #filter.run()
         self.run_retry_compress(filter)
 
+    '''
     def time_selection(self):
         """
         Do a GTI selection based on a file of time spans
@@ -426,6 +430,40 @@ class Observation:
         for f in self._eventlist:
             os.unlink(f.strip()) # strip of endline char
 
+    '''
+    def gen_filter_fits_file(self):
+        # Convert any set of time cuts into a fits file with the list there (as in 4FGL)
+        
+        data=None
+        out = self.gtifitsfile
+        for ext in ['.fits','.fts','fit']:
+            if ext in self.Configuration['time']['file']:
+                data = pyfits.open(self.Configuration['time']['file'])
+                c1 = list(data['GTI'].data['START'])
+                c2 = list(data['GTI'].data['STOP'])
+                break
+        
+        if data==None:
+            data = aascii.read(self.Configuration['time']['file'],names=['START','STOP'])
+            c1 = np.asarray(list(data['START']))
+            c2 = np.asarray(list(data['STOP']))
+
+        if self.Configuration['time']['type']=='MJD':
+            c1 = utils.MJD_to_met(c1)
+            c2 = utils.MJD_to_met(c2)
+        elif self.Configuration['time']['type']=='JD':
+            c1 = utils.MJD_to_met(c1)
+            c2 = utils.MJD_to_met(c2)
+
+        header = pyfits.Header()
+        header['COMMENT'] = "Fermi-LAT/Enrico GTI file"
+        primary = pyfits.PrimaryHDU(header=header)
+        c1 = pyfits.Column(name='START', array=np.array(c1), format='D')
+        c2 = pyfits.Column(name='STOP',  array=np.array(c2), format='D')
+        gtitab = pyfits.BinTableHDU.from_columns([c1,c2],name="GTI")
+        hdu = pyfits.HDUList([primary,gtitab])
+        hdu.writeto(out,overwrite=True)
+
     def MkTime(self):
         import os.path
         """compute GTI"""
@@ -435,11 +473,9 @@ class Observation:
 
         selstr = self.Configuration['analysis']['filter']
         if self.Configuration['time']['file'] != '':
-            if '.fit' not in self.Configuration['time']['file'] and '.fts' not in self.Configuration['time']['file']:
-                selstr = self.Configuration['analysis']['filter']
-                self.time_selection_listofgtis()
-            else:
-                selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
+            self.gen_filter_fits_file()
+            selstr = "{0} && gtifilter(\'{1}[GTI]\',START) && gtifilter(\'{1}[GTI]\',STOP)".format(selstr,self.gtifitsfile)
+        
         outfile = self.mktimefile#+".tmp"
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
         #os.system("mv "+outfile+" "+self.mktimefile)
@@ -730,8 +766,8 @@ class Observation:
                             self.gzflag)
         effbkg_textfile = self.folder+'/'+self.srcname+"_"+self.modelname+"_effbkgfile.list"
         with open(effbkg_textfile, "w") as f:
-            f.writelines(effbkg_files)
-            f.write("\n")
+            for effbkg_f in effbkg_files:
+                f.write('{}\n'.format(effbkg_f))
 
         alphabkg = GtApp('gtalphabkg', 'AlphaBkg')
         alphabkg["inputs"]  = effbkg_textfile
