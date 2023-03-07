@@ -766,8 +766,8 @@ class Observation:
                             self.gzflag)
         effbkg_textfile = self.folder+'/'+self.srcname+"_"+self.modelname+"_effbkgfile.list"
         with open(effbkg_textfile, "w") as f:
-            f.writelines(effbkg_files)
-            f.write("\n")
+            for effbkg_f in effbkg_files:
+                f.write('{}\n'.format(effbkg_f))
 
         alphabkg = GtApp('gtalphabkg', 'AlphaBkg')
         alphabkg["inputs"]  = effbkg_textfile
