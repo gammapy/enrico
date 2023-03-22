@@ -208,7 +208,6 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
     addParameter(spec, 'alpha', alpha_free, alpha_value, 1.0,
                  alpha_min, alpha_max)
     addParameter(spec, 'Eb', 0, enorm, 1.0, elim_min, elim_max)
-    # Hack for Lucas / Mireia --- Remove !!!!
     addParameter(spec, 'beta', beta_free, beta_value, 1.0, beta_min, beta_max)
 
     src.appendChild(spec)
@@ -599,7 +598,7 @@ def GetlistFromFits(config, catalog):
     parameter_noise = config['model']['parameters_noise']
 
     #loop over all the sources of the catalog
-    for i in range(len(names)):
+    for i,name in enumerate(names):
         #distance from the center of the maps to the given source
         rspace = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_space, dec_space)
         #distance for the target to the given source
@@ -649,15 +648,23 @@ def GetlistFromFits(config, catalog):
             beta[i]   *= np.random.normal(1,parameter_noise)
             cutoff[i] = cutoff[i]*(np.random.normal(1,parameter_noise))
 
-            mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
         
             if len(sources)>0:
-                if (sources[0]['name'] != srcname):
+                if (sources[0]['name'] != srcname and srcname not in names) or (names[i] == srcname):
+                    mes.info("---> Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                     sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                                       'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                       'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
                                       'IsFree': 1, 'IsFreeShape' : 1,
                                       'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+                else:
+                    mes.info("(!!) Adding [fixed] co-spatial source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
+                    sources.append({'name': names[i], 'ra': ra_src, 'dec': dec_src,
+                                    'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                                    'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                                    'IsFree': 0, 'IsFreeShape' : 0,
+                                    'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+
 
         elif rsrc < max_radius and rsrc >= .1 and sigma[i] > min_significance_free:
             # if the source is close to the target and is bright : add it as a free source

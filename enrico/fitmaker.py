@@ -9,6 +9,7 @@ begun September 2011
 #import logging
 #logging.basicConfig(level=logging.INFO)
 #log = logging.getLogger(__name__)
+import os
 import numpy as np
 import string
 try:
@@ -106,12 +107,18 @@ class FitMaker(Loggin.Message):
         if self.config['analysis']['likelihood'] == 'binned':
             use_edisp  = self.config['analysis']['EnergyDispersion'] == 'yes'
             edisp_bins = -2 if use_edisp==True else 0
+            use_wmap  = self.config['analysis']['UseWeightsMap'] == 'yes'
+            wmap = None
+            if use_wmap:
+                if os.path.exists(self.obs.wtsmapfile):
+                    wmap = self.obs.wtsmapfile
+                
             Obs = BinnedObs(srcMaps=self.obs.srcMap,
                             expCube=self.obs.Cubename,
                             binnedExpMap=self.obs.BinnedMapfile,
                             irfs=self.obs.irfs)
             Cfg = BinnedConfig(use_edisp=use_edisp, 
-                               edisp_bins=edisp_bins)
+                               edisp_bins=edisp_bins,wmap=wmap)
             Fit = BinnedAnalysis(Obs, self.obs.xmlfile, config=Cfg,
                                  optimizer=self.config['fitting']['optimizer'])
             
