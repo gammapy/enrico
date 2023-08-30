@@ -373,64 +373,6 @@ class Observation:
         #filter.run()
         self.run_retry_compress(filter)
 
-    '''
-    def time_selection(self):
-        """
-        Do a GTI selection based on a file of time spans
-
-        CFITSIO won't allow filenames (including filter expression) longer than
-        ~1100 chars, so for selections that require very long filters (i.e.,
-        more than ~30 time spans covered) we split the gtmktime calls into
-        chunks of ~20 time spans.
-        """
-        eventlist = []
-        last = False
-        numbin = None
-        while not last:
-            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            # Do not create an insanely large amount of files in the same directory.
-            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
-            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.split('.fits')[0]+'_{}'.format(numbin%200)
-            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
-            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
-            self._RunMktime(selstr,outfile,'no')
-            #Fits files and optional gz compression
-            eventlist.append(outfile+self.gzflag+'\n')
-
-        evlist_filename = self.eventfile.split('.fits')[0]+'.list'
-        with open(evlist_filename,'w') as evlistfile:
-            evlistfile.writelines(eventlist)
-    
-        self._evlist_filename = evlist_filename
-        self._eventlist = eventlist
-
-    def time_selection_listofgtis(self):
-        """
-        Do a GTI selection based on a file of time spans
-
-        CFITSIO won't allow filenames (including filter expression) longer than
-        ~1100 chars, so for selections that require very long filters (i.e.,
-        more than ~30 time spans covered) we split the gtmktime calls into
-        chunks of ~20 time spans.
-        """
-        self.time_selection()
-
-        # Redo SelectEvents to consolidate into single fits file (gtmktime does not accept lists!)
-        eventcoarse = self.eventcoarse # Store eventcoarse to restore it later
-        clobber = self.clobber         # Store clobber settings, we will force clobber at this step
-        self.eventcoarse = self._evlist_filename
-        self.clobber = True
-        self.SelectEvents()
-        self.eventcoarse = eventcoarse
-        self.clobber = clobber
-
-        # Clean cruft: all temp event files and event file list
-        os.unlink(self._evlist_filename)
-        for f in self._eventlist:
-            os.unlink(f.strip()) # strip of endline char
-
-    '''
     def gen_filter_fits_file(self):
         # Convert any set of time cuts into a fits file with the list there (as in 4FGL)
         

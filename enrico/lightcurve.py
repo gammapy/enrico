@@ -145,11 +145,14 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
+        parentdir = str(self.config['out'])
         for i in range(self.Nbin):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
             self.config['target']['spectrum'] = 'PowerLaw' # simplify the spectrum
+            self.config['out'] = parentdir + '/LC_' + str(i) + '/' 
+            utils.mkdir_p(self.config['out'])
             filename = (self.config['out'] + "Config_" + str(i) + "_" +
                     str(self.config['time']['tmin']) + "_" +
                     str(self.config['time']['tmax']))#Name of the config file
