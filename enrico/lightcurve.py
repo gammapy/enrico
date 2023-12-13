@@ -79,32 +79,43 @@ class LightCurve(Loggin.Message):
         self.time_array = np.zeros(0)
         self.Nbin = 0
         self.gtifile = []
-        if self.config['time']['file'] != '': 
-            if ".fit" not in self.config['time']['file']:
+
+        # Generated based on Edge file
+        TimeBinEdgeFile = self.config['LightCurve']['TimeBinEdgeFile']
+        if TimeBinEdgeFile != '':
+            times = np.sort(np.genfromtxt(TimeBinEdgeFile,dtype="float",unpack=True))
+            self.tmin = times[0]
+            self.tmax = times[-1]
+            self.Nbin = len(times)-1
+            self.time_array = np.zeros(self.Nbin*2)
+            for i in range(self.Nbin):
+                self.time_array[2*i] = times[i]
+                self.time_array[2*i+1] = times[i+1]
+
+        # Generate based on Nbins
+        elif self.config['time']['file'] != '': 
+            if ".fit" not in self.config['time']['file'].split("/")[-1]:
                 # Assume it is a text file
                 print(("use "+self.config['time']['file']))
                 self.gtifile.append(self.config['time']['file'])
-                times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
-                self.Nbin = int(times.size/2)
-                self.time_array=np.reshape(times,times.size,'F')
-                    
-                if self.config['time']['type']=='MJD':
-                     self.time_array = utils.MJD_to_met(self.time_array)
-                elif self.config['time']['type']=='JD':
-                     self.time_array = utils.JD_to_met(self.time_array)
+                times = np.sort(np.genfromtxt(self.gtifile[0],dtype="float",unpack=True))
+                times = times.flatten()
+                times = times[~np.isnan(times)]
+                self.tmin = times[0]
+                self.tmax = times[-1]
             else:
                 # Assume it is a catalog.fits file
-                # get from the header the BEGIN and END time 
+                # get from the header the BEGIN and END time
                 with pyfits.open(self.config['time']['file']) as catfile:
                     self.tmin = catfile[1].header['TSTART']
                     self.tmax = catfile[1].header['TSTOP']
-                    self.Nbin = self.config['LightCurve']['NLCbin']
-                    self.time_array = np.zeros(self.Nbin*2)
-                    t = np.arange(self.tmin,self.tmax+1e-5,\
-                        (self.tmax - self.tmin) / self.Nbin)
-                    for i in range(self.Nbin):
-                        self.time_array[2*i] = t[i]
-                        self.time_array[2*i+1]= t[i+1]
+            
+            self.Nbin = self.config['LightCurve']['NLCbin']
+            self.time_array = np.zeros(self.Nbin*2)
+            t = np.linspace(self.tmin,self.tmax,self.Nbin+1)
+            for i in range(self.Nbin):
+                self.time_array[2*i] = t[i]
+                self.time_array[2*i+1]= t[i+1]
         
         else:
             self.Nbin = int(self.config['LightCurve']['NLCbin'])
@@ -135,11 +146,14 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
+        parentdir = str(self.config['out'])
         for i in range(self.Nbin):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
             self.config['target']['spectrum'] = 'PowerLaw' # simplify the spectrum
+            self.config['out'] = parentdir + '/LC_' + str(i) + '/' 
+            utils.mkdir_p(self.config['out'])
             filename = (self.config['out'] + "Config_" + str(i) + "_" +
                     str(self.config['time']['tmin']) + "_" +
                     str(self.config['time']['tmax']))#Name of the config file
