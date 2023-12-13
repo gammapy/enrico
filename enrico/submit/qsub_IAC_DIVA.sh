@@ -10,6 +10,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --export=ALL
+#SBATCH --partition=batch
 
 echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
 
@@ -29,7 +30,7 @@ if [ -f "/net/diva/scratch1/mnievas/conda/etc/profile.d/mamba.sh" ]; then
     . "/net/diva/scratch1/mnievas/conda/etc/profile.d/mamba.sh"
 fi
 
-export /net/diva/scratch1/mnievas/conda/bin/:$PATH
+export PATH=/net/diva/scratch1/mnievas/conda/bin/:$PATH
 conda activate fermi
 export FARM='IAC_DIVA'
 export QUEUE='std'

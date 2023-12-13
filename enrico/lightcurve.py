@@ -99,19 +99,20 @@ class LightCurve(Loggin.Message):
                 print(("use "+self.config['time']['file']))
                 self.gtifile.append(self.config['time']['file'])
                 times = np.sort(np.genfromtxt(self.gtifile[0],dtype="float",unpack=True))
+                times = times.flatten()
+                times = times[~np.isnan(times)]
                 self.tmin = times[0]
                 self.tmax = times[-1]
             else:
                 # Assume it is a catalog.fits file
-                # get from the header the BEGIN and END time 
+                # get from the header the BEGIN and END time
                 with pyfits.open(self.config['time']['file']) as catfile:
                     self.tmin = catfile[1].header['TSTART']
                     self.tmax = catfile[1].header['TSTOP']
             
             self.Nbin = self.config['LightCurve']['NLCbin']
             self.time_array = np.zeros(self.Nbin*2)
-            t = np.arange(self.tmin,self.tmax+1e-5,\
-                (self.tmax - self.tmin) / self.Nbin)
+            t = np.linspace(self.tmin,self.tmax,self.Nbin+1)
             for i in range(self.Nbin):
                 self.time_array[2*i] = t[i]
                 self.time_array[2*i+1]= t[i+1]
