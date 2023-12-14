@@ -46,7 +46,15 @@ def Prefactor(flux,index,emin,emax,escale):
 def dNde(energy,Fit,name):
     '''Compute the dN/dE value at energy E fir the source name'''
     import pyLikelihood
-    ptsrc = pyLikelihood.PointSource_cast(Fit[name].src)
+    if Fit[pars.srcname].src.getType() == 'Point':
+        self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
+    elif Fit[pars.srcname].src.getType() == 'Diffuse':
+        self.ptsrc = pyLikelihood.DiffuseSource_cast(Fit[pars.srcname].src)
+    elif Fit[pars.srcname].src.getType() == 'Composite':
+        self.ptsrc = pyLikelihood.CompositeSource_cast(Fit[pars.srcname].src)
+    else:
+        print('Source is not Point, Diffuse or Composite')
+        return()
     arg = pyLikelihood.dArg(energy)
     return ptsrc.spectrum()(arg)
 
