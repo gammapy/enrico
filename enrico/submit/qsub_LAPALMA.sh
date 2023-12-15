@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash -f
+#!/usr/bin/bash -f
 
 # -----------------------------------------------
 # Environment setup
