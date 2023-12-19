@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import traceback
 from enrico import environ
 from enrico.constants import EbinPath
 from enrico.submit import call
@@ -225,7 +226,14 @@ def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
              Newconfig = get_config(pathconf)
              cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
              if Newconfig['Submit'] == 'no' : #run directly
-                 os.system(cmd)
+                 try:
+                     os.system(cmd)
+                 except Exception as exc:
+                     print('**** Error running energy bin analysis ****')
+                     print(traceback.format_exc())
+                     print(exc)
+                     #os.system(cmd)
+            
              else : #submit a job to a cluster
                  prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
                  scriptname = prefix + "_Script.sh"

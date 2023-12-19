@@ -46,7 +46,15 @@ class Result(Loggin.Message):
         
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
-        self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
+        if Fit[pars.srcname].src.getType() == 'Point':
+            self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
+        elif Fit[pars.srcname].src.getType() == 'Diffuse':
+            self.ptsrc = pyLikelihood.DiffuseSource_cast(Fit[pars.srcname].src)
+        elif Fit[pars.srcname].src.getType() == 'Composite':
+            self.ptsrc = pyLikelihood.CompositeSource_cast(Fit[pars.srcname].src)
+        else:
+            print('Source is not Point, Diffuse or Composite')
+            return()
         covar_matrix,covar_pars = utils.GetCovar(pars.srcname, self.Fit, verbose = False, with_par_map = True)
         self.covar = np.array(covar_matrix)
         self.covar_pars = np.array(covar_pars)
