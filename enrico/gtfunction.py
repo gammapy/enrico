@@ -731,6 +731,6 @@ class Observation:
         wtsmap["effbkgfile"] = self.effbkgfile
         wtsmap["alphafile"]  = self.alphabkgfile
         wtsmap["epsilon"]    = epsilon
-        wtsmap["output"]     = self.wtsmapfile
+        wtsmap["outfile"]     = self.wtsmapfile
         self.run_retry_compress(wtsmap)
         
