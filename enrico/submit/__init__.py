@@ -103,13 +103,11 @@ def GetSubOutput(qsub_log):
 
 def call(cmd,
          enricoDir,
-         fermiDir,
          scriptfile=None,
          qsub_log=None,
          jobname=None,
-	 submit=True,
-	 max_jobs=50,
-         #logfile=None,
+         submit=True,
+         max_jobs=50,
          check_present=None,
          clobber=False,
          exec_dir=None,
@@ -124,9 +122,9 @@ def call(cmd,
             logging.info('{0} exists. Skipping.'
                          ''.format(check_present))
             return
-
- #   if logfile:
-  #      cmd += '>'+ logfile+ '2>&1'
+    
+    #   if logfile:
+    #      cmd += '>'+ logfile+ '2>&1'
 
     if not isinstance(cmd, str):
         cmd = _cmd_to_str(cmd)
@@ -135,13 +133,12 @@ def call(cmd,
     logging.info(cmd)
 
     #Number of Max jobs in the queue
-    max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
-    elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA"]:
+    elif environ.FARM in ["IAC_DIVA"]:
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
-        max_jobs = 90000
+        max_jobs = 1000
     elif environ.FARM=="LOCAL":
         max_jobs = 200
     elif environ.FARM=="CCIN2P3":
@@ -186,9 +183,21 @@ def call(cmd,
             if jobname:
                 if jobname[0].isdigit():
                     jobname='_'+jobname
+            
             text +='#SBATCH --job-name='+jobname+'\n'
             text +='#SBATCH --output= '+qsub_log+'\n'
-            text += cmd
+            
+            if isinstance(cmd, list):
+                text += '#SBATCH --array=0-'+str(len(cmd)-1)+'\n'
+                text += '#SBATCH --output=%j_%a.out\n'
+                text += '#SBATCH --error=%j_%a.err\n'
+                call_command = cmd[0].split(' ')[0]
+                config_file  = cmd[0].split(' ')[1]
+                preffix = config_file.rsplit('_',1)
+                suffix  = config_file.rsplit('.',1)
+                text += call_command + " " + preffix+'_${SLURM_ARRAY_TASK_ID}.'+suffix
+            elif isinstance(cmd, str):
+                text += cmd
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
@@ -289,3 +298,4 @@ def call(cmd,
         else:
             print(("Running: %s" %cmd))
             os.system(cmd)
+

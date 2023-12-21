@@ -221,25 +221,42 @@ def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
         ind = 0
         enricodir = environ.DIRS.get('ENRICO_DIR')
         fermidir = environ.DIRS.get('FERMI_DIR')
+        cmd_array = []
         for conf in configfiles:
-             pathconf = folder + "/"+ EbinPath + str(Nbin) +"/" + conf
-             Newconfig = get_config(pathconf)
-             cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
-             if Newconfig['Submit'] == 'no' : #run directly
-                 try:
-                     os.system(cmd)
-                 except Exception as exc:
-                     print('**** Error running energy bin analysis ****')
-                     print(traceback.format_exc())
-                     print(exc)
-                     #os.system(cmd)
+            pathconf = folder + "/"+ EbinPath + str(Nbin) +"/" + conf
+            Newconfig = get_config(pathconf)
+            cmd = enricodir+"/enrico/RunGTlike.py "+pathconf
+            if Newconfig['Submit'] == 'no' : #run directly
+                try:
+                    os.system(cmd)
+                except Exception as exc:
+                    print('**** Error running energy bin analysis ****')
+                    print(traceback.format_exc())
+                    print(exc)
+                    #os.system(cmd)
             
-             else : #submit a job to a cluster
-                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
-                 scriptname = prefix + "_Script.sh"
-                 JobLog = prefix + "_Job.log"
-                 JobName = (Newconfig['target']['name'] + "_" +
+            elif environ.FARM in ["IAC_DIVA"]:
+                # Do not submit directly. Compile a list of commands and submit them as an array
+                cmd_array.apped(cmd)
+            
+            else:  #submit a job to a cluster but in job-array-mode (mandatory)
+                prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
+                scriptname = prefix + "_Script.sh"
+                JobLog = prefix + "_Job.log"
+                JobName = (Newconfig['target']['name'] + "_" +
                            Newconfig['analysis']['likelihood'] +
                            "_Ebin_" + str(ind) + "_" + Newconfig['file']['tag'])
-                 call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)# submition
-             ind+=1
+                 
+                call(cmd, enricodir, fermidir, scriptname, JobLog, JobName)
+                 
+            ind+=1
+        
+        if len(cmd_array)>0:
+            prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
+            scriptname = prefix + "_Script.sh"
+            JobLog = prefix + "_Job.log"
+            JobName = (Newconfig['target']['name'] + "_" +
+                        Newconfig['analysis']['likelihood'] +
+                        "_Ebin_" + str(ind) + "_" + Newconfig['file']['tag'])
+                
+            call(cmd_array, enricodir, fermidir, scriptname, JobLog, JobName)
