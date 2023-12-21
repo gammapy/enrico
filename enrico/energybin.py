@@ -237,7 +237,7 @@ def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
             
             elif environ.FARM in ["IAC_DIVA"]:
                 # Do not submit directly. Compile a list of commands and submit them as an array
-                cmd_list.apped(cmd)
+                cmd_list.append(cmd)
             
             else:  #submit a job to a cluster but in job-array-mode (mandatory)
                 prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
@@ -259,4 +259,4 @@ def RunEbin(folder,Nbin,Fit,FitRunner,sedresult=None):
                         Newconfig['analysis']['likelihood'] +
                         "_Ebin_" + str(ind) + "_" + Newconfig['file']['tag'])
                 
-            call(cmd_array, enricodir, fermidir, scriptname, JobLog, JobName)
+            call(cmd_list, enricodir, fermidir, scriptname, JobLog, JobName)

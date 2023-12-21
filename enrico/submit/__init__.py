@@ -103,6 +103,7 @@ def GetSubOutput(qsub_log):
 
 def call(cmd,
          enricoDir,
+         fermidir=None,
          scriptfile=None,
          qsub_log=None,
          jobname=None,
@@ -126,8 +127,9 @@ def call(cmd,
     #   if logfile:
     #      cmd += '>'+ logfile+ '2>&1'
 
-    if not isinstance(cmd, str):
-        cmd = _cmd_to_str(cmd)
+    #obsolete: now cmd can be a list of strings to be run in a job_array slurm
+    #if not isinstance(cmd, str):
+    #    cmd = _cmd_to_str(cmd)
     if options:
         cmd += _options_to_str(options)
     logging.info(cmd)
@@ -176,25 +178,26 @@ def call(cmd,
             if exec_dir:
                 text += '\ncd {0}\n\n'.format(exec_dir)
 
-            #text +='conda activate fermi'+'\n'
-            #text +='export ENRICO_DIR='+enricoDir+'\n'
-            #text +='source $ENRICO_DIR/enrico-init.sh\n'
-            #text +='export LATEXDIR=/tmp/aux\n'
             if jobname:
                 if jobname[0].isdigit():
                     jobname='_'+jobname
             
-            text +='#SBATCH --job-name='+jobname+'\n'
-            text +='#SBATCH --output= '+qsub_log+'\n'
             
             if isinstance(cmd, list):
-                text += '#SBATCH --array=0-'+str(len(cmd)-1)+'\n'
-                text += '#SBATCH --output=%j_%a.out\n'
-                text += '#SBATCH --error=%j_%a.err\n'
+                remove_lines = ['#SBATCH --job-name=','#SBATCH --output=']
+                for rl in remove_lines:
+                    text = '\n'.join([ln for ln in text.split('\n') if rl not in ln])
+                text2  = '#SBATCH --partition=batch\n'
+                text2 += '#SBATCH --job-name='+jobname+'\n'
+                #text2 += '#SBATCH --output='+qsub_log+'\n'
+                text2 += '#SBATCH --array=0-'+str(len(cmd)-1)+'\n'
+                text2 += '#SBATCH --output=%j_%a.out\n'
+                text2 += '#SBATCH --error=%j_%a.err\n'
+                text = text.replace('#SBATCH --partition=batch',text2)
                 call_command = cmd[0].split(' ')[0]
                 config_file  = cmd[0].split(' ')[1]
-                preffix = config_file.rsplit('_',1)
-                suffix  = config_file.rsplit('.',1)
+                preffix = config_file.rsplit('_',1)[0]
+                suffix  = config_file.rsplit('.',1)[-1]
                 text += call_command + " " + preffix+'_${SLURM_ARRAY_TASK_ID}.'+suffix
             elif isinstance(cmd, str):
                 text += cmd
