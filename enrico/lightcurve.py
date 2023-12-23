@@ -208,9 +208,8 @@ class LightCurve(Loggin.Message):
                 os.system(cmd)
         
         if len(cmd_list)>0:
-            prefix = Newconfig['out'] + "/"+ EbinPath + str(ind)
             scriptname = self.LCfolder+"LC_Script_jobarray.sh"
-            JobLog = prefix + "_Job.log"
+            JobLog = self.LCfolder+"LC_Script_jobarray.log"
             JobName = (self.config['target']['name'] + "_" +
                        self.config['analysis']['likelihood'] +
                        "_LC_" + self.config['file']['tag'])+".log"
