@@ -205,6 +205,10 @@ def PrepareEbin(Fit, FitRunner,sedresult=None):
         elif config['Ebin']['Submit'] == 'no':
             config['Submit'] = 'no'
         
+        # cleanup files from this bin after the analysis is done?
+        if config['Ebin']['FitsCleanupAfterAnalysis'] == 'yes':
+            config['file']['FitsCleanupAfterAnalysis'] = 'yes'
+        
         config['file']['tag'] = tag + '_Ebin' + str(NEbin) + '_' + str(ibin)
         filename =  config['target']['name'] + "_" + str(ibin) + ".conf"
         paramsfile.append(filename)

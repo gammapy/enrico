@@ -164,6 +164,10 @@ class LightCurve(Loggin.Message):
             #        str(self.config['time']['tmax'])) + ".xml" #Name of the xml file
             self.config['file']['xml'] = xmlfilename
             # Do not produce spectral plots
+            
+            # cleanup the fits files of this bin after the analysis is done
+            if self.config['LightCurve']['FitsCleanupAfterAnalysis'] == 'yes':
+                self.config['file']['FitsCleanupAfterAnalysis'] = 'yes'
 
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
