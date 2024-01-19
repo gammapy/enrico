@@ -28,8 +28,8 @@ class BayesianBlocks(lightcurve.LightCurve):
     def __init__(self, config, parent_filename=""):
         super(BayesianBlocks, self).__init__(config, parent_filename)
 
-	self.LCfolder =  self.folder+"/BayesianBlocks/"
-	utils.mkdir_p(self.LCfolder)
+        self.LCfolder =  self.folder+"/BayesianBlocks/"
+        utils.mkdir_p(self.LCfolder)
 
         # Convert time if necessary
         if self.config['time']['type']=='MJD':
@@ -169,9 +169,8 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         LcOutPath = self.LCfolder + self.config['target']['name']
         plt.savefig(LcOutPath+"_AP.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
 
     def _ManageFolder(self,path):
         """   All files will be stored in a subfolder name path + NLCbin
@@ -327,9 +326,8 @@ class BayesianBlocks(lightcurve.LightCurve):
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
                 plt.ylabel(r"${\rm Flux/\Delta Flux}$")
                 plt.savefig(LcOutPath+"_Npred.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
             else :
                 print("No Npred Plot produced")
 
@@ -358,9 +356,8 @@ class BayesianBlocks(lightcurve.LightCurve):
             plt.tight_layout()
 
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
 
 
         if len(Time) > 0:
@@ -391,9 +388,8 @@ class BayesianBlocks(lightcurve.LightCurve):
             plt.tight_layout()
 
             plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
         else:
             print("[BayesianBlocks] Warning : No valid data")
 
@@ -438,9 +434,8 @@ class BayesianBlocks(lightcurve.LightCurve):
                 plt.tight_layout()
                 plt.savefig(LcOutPath+"_Index.png", dpi=150,
                     facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
             else:
                print("[BayesianBlocks] Warning : No valid data")
 

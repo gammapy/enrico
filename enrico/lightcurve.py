@@ -458,7 +458,7 @@ class LightCurve(Loggin.Message):
         #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,i
         #             fmt='o',color='black',ls='None',uplims=uplim)
         plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,
-                              uplim,bblocks=True)
+                              uplim,bblocks=True,LcOutPath=LcOutPath)
         
         try:
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
@@ -505,7 +505,7 @@ class LightCurve(Loggin.Message):
                                   IndexErr[~uplimIndex],
                                   IndexErr[~uplimIndex],
                                   uplimIndex[~uplimIndex],
-                                  bblocks=True)
+                                  bblocks=True,LcOutPath=LcOutPath)
 
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),
                      ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
