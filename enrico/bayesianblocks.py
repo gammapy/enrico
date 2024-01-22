@@ -28,8 +28,8 @@ class BayesianBlocks(lightcurve.LightCurve):
     def __init__(self, config, parent_filename=""):
         super(BayesianBlocks, self).__init__(config, parent_filename)
 
-	self.LCfolder =  self.folder+"/BayesianBlocks/"
-	utils.mkdir_p(self.LCfolder)
+        self.LCfolder =  self.folder+"/BayesianBlocks/"
+        utils.mkdir_p(self.LCfolder)
 
         # Convert time if necessary
         if self.config['time']['type']=='MJD':
@@ -169,9 +169,8 @@ class BayesianBlocks(lightcurve.LightCurve):
 
         LcOutPath = self.LCfolder + self.config['target']['name']
         plt.savefig(LcOutPath+"_AP.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
 
     def _ManageFolder(self,path):
         """   All files will be stored in a subfolder name path + NLCbin
@@ -327,9 +326,8 @@ class BayesianBlocks(lightcurve.LightCurve):
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
                 plt.ylabel(r"${\rm Flux/\Delta Flux}$")
                 plt.savefig(LcOutPath+"_Npred.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
             else :
                 print("No Npred Plot produced")
 
@@ -358,16 +356,15 @@ class BayesianBlocks(lightcurve.LightCurve):
             plt.tight_layout()
 
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
 
 
         if len(Time) > 0:
             plt.figure()
             plt.xlabel(r"Time (s)")
             plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
-            plot_bayesianblocks(Time-TimeErr, Time+TimeErr, Flux, FluxErr, FluxErr, uplim)
+            plot_bayesianblocks(Time-TimeErr, Time+TimeErr, Flux, FluxErr, FluxErr, uplim,LcOutPath=LcOutPath)
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
                      ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
             plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time-TimeErr)-0.02*max(Time+TimeErr)),
@@ -382,6 +379,7 @@ class BayesianBlocks(lightcurve.LightCurve):
                 ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
                   r" [${\times 10^{%d}}$]" %offset_factor)
 
+
             # Secondary axis with MJD
             mjdaxis = ax.twiny()
             mjdaxis.set_xlim([utils.met_to_MJD(k) for k in ax.get_xlim()])
@@ -391,9 +389,8 @@ class BayesianBlocks(lightcurve.LightCurve):
             plt.tight_layout()
 
             plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
         else:
             print("[BayesianBlocks] Warning : No valid data")
 
@@ -438,9 +435,8 @@ class BayesianBlocks(lightcurve.LightCurve):
                 plt.tight_layout()
                 plt.savefig(LcOutPath+"_Index.png", dpi=150,
                     facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
-                    transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    orientation='portrait', format=None,
+                    transparent=False, bbox_inches=None, pad_inches=0.1)
             else:
                print("[BayesianBlocks] Warning : No valid data")
 
