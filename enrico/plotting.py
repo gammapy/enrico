@@ -521,6 +521,7 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim, LcOutPath="."):
         xstep.append(xmax[k])
 
     # save BB definition
+    print(LcOutPath + "_BB_edges.dat")
     dumpfile = open(LcOutPath + "_BB_edges.dat", 'w')
     dumpfile.write(
         "# xstep\tystep\tystepmin\tystepmax\n")
