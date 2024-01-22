@@ -364,7 +364,7 @@ class BayesianBlocks(lightcurve.LightCurve):
             plt.figure()
             plt.xlabel(r"Time (s)")
             plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
-            plot_bayesianblocks(Time-TimeErr, Time+TimeErr, Flux, FluxErr, FluxErr, uplim)
+            plot_bayesianblocks(Time-TimeErr, Time+TimeErr, Flux, FluxErr, FluxErr, uplim,LcOutPath=LcOutPath)
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
                      ymax=min(plt.ylim()[1],np.percentile(Flux[~uplim],99)*2.0))
             plt.xlim(xmin=max(plt.xlim()[0],1.02*min(Time-TimeErr)-0.02*max(Time+TimeErr)),
@@ -378,6 +378,7 @@ class BayesianBlocks(lightcurve.LightCurve):
                   for k in ax.get_yticks()*10**(-offset_factor)])
                 ax.yaxis.set_label_text(ax.yaxis.get_label_text() +\
                   r" [${\times 10^{%d}}$]" %offset_factor)
+
 
             # Secondary axis with MJD
             mjdaxis = ax.twiny()

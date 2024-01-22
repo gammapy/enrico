@@ -489,7 +489,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False,LcOutP
             ls='None',label='bayesian blocks')
 
         #save BB definition
-        dumpfile = open(LcOutPath + ".bb.dat", 'w')
+        dumpfile = open(LcOutPath + "_bb.dat", 'w')
         dumpfile.write(
             "# xstep\tystep\tystepmin\tystepmax\n")
         for i in range(len(xstep)):
@@ -498,7 +498,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False,LcOutP
 
         plt.legend(loc=0,fontsize='small',numpoints=1)
 
-def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
+def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim, LcOutPath="."):
     # Set the value and error for the uls.
     yerrm[uplim] = y[uplim]
     yerrp[uplim] = y[uplim]
@@ -519,6 +519,15 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
             ystepmax.append(y[k]+yerrp[k]) # 3 values, to mark the minimum and center
         xstep.append(xmin[k])
         xstep.append(xmax[k])
+
+    # save BB definition
+    dumpfile = open(LcOutPath + "_BB_edges.dat", 'w')
+    dumpfile.write(
+        "# xstep\tystep\tystepmin\tystepmax\n")
+    for i in range(len(xstep)):
+        dumpfile.write(
+            str(xstep[i]) + "\t" + str(ystep[i]) + "\t" + str(ystepmin[i]) + "\t" + str(ystepmax[i]) + "\n")
+    dumpfile.close()
 
     plt.step(xstep, ystep,
              color='#d62728',zorder=-10,
