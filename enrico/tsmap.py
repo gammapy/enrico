@@ -33,8 +33,9 @@ class TSMap(Loggin.Message):
         self.infile = infile
         self.npix = self.config['TSMap']['npix']
         # Read the cmap produced before to get the grid for the TS map
-        FitRunner = Observation(self.config['out'], self.config)
+        FitRunner = Observation(self.config['out'], self.config, 'FRONTBACK')
         try :
+             print(FitRunner.cmapfile)
              cmap = fits.open(FitRunner.cmapfile)
         except :
              self.error('Count map not found.')
@@ -70,7 +71,7 @@ class TSMap(Loggin.Message):
         """Run a evaluation of the pixel (i,j) corresponding to position (ra,dec)"""
         outXml = utils._dump_xml(self.config)
         folder = self.config['out']
-        _,Fit = GenAnalysisObjects(self.config,xmlfile=outXml) #get the Fit object
+        _,Fit,_ = GenAnalysisObjects(self.config,xmlfile=outXml) #get the Fit object
 
         src = GetSrc(Fit,ra,dec) # get the Source object at position ra dec
 
@@ -91,7 +92,7 @@ class TSMap(Loggin.Message):
 
         # # a new Fit object with the new xml file is needed.
         # # just changing the position of the spurious source does not work 
-        _,Fit = GenAnalysisObjects(self.config,xmlfile=self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") #get the Fit object
+        _,Fit,_ = GenAnalysisObjects(self.config,xmlfile=self.tsfolder+"/model_"+str(ra)+"_"+str(dec)+".xml") #get the Fit object
 
         # Fit.fit(0,optimizer=self.config['fitting']['optimizer'])
         Fit.fit(0,optimizer=self.config['fitting']['optimizer'])

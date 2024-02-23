@@ -273,6 +273,10 @@ def run(infile):
             FitRunner.config['Spectrum']['ResultParentPlots'] = "yes"
         plot_sed_fromconfig(infile,ignore_missing_bins=True)
     energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
+    
+    # Cleanup files for this analysis? (this is supposed to be done only for bins, to save up space) 
+    if config['file']['FitsCleanupAfterAnalysis'] == 'yes':
+        utils.CleanUpFitsFiles(config)
 
     del(sedresult)
     del(Result)
