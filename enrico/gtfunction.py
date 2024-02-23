@@ -12,7 +12,7 @@ from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
-from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter, obsSim
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter #, obsSim
 from GtApp import GtApp
 from enrico import utils
 
@@ -479,7 +479,7 @@ class Observation:
 
         diffResps['clobber'] = self.clobber
         #diffResps.run()
-        self.run_retry_compress(diffResps)
+         #self.run_retry_compress(diffResps)
         with open(self.diffrspflag,"w") as diffrspflag:
             diffrspflag.write("")
 
@@ -526,6 +526,7 @@ class Observation:
 
     def Obssim(self):
         """Run gtobssim tool"""
+        obsSim = GtApp('obssim', 'obsSim')
         if (self.clobber=="no" and os.path.isfile(self.srcMap)):
             #print("File exists and clobber is False")
             return(0) 
