@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 """Make a bayesian blocks analysis"""
 import sys
-import logging
 import numpy as np
-import enrico.lightcurve as lightcurve
 import enrico.bayesianblocks as bayesianblocks
 from enrico.config import get_config
 from enrico import Loggin
@@ -16,7 +14,7 @@ except:
 
 
 def run_over_conffile(conffile):
-    print conffile
+    print(conffile)
     config = get_config(conffile)
     bb = bayesianblocks.BayesianBlocks(config,parent_filename=conffile)
     bb.MakeLC()

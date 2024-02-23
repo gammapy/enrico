@@ -40,7 +40,7 @@ def jobs_in_queue():
             if environ.FARM in ["LAPP", "IAC_CONDOR"]:
                 fh = Popen("condor_q ", \
                     stdout=PIPE, shell=True)  
-            elif environ.FARM in ["IAC_DIVA"]:
+            elif environ.FARM in ["IAC_DIVA","LAPALMA"]:
                 fh = Popen("squeue -u {user}".format(user=user), \
                     stdout=PIPE, shell=True)
             else:
@@ -83,6 +83,7 @@ def GetSubCmd():
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess'],
          'IAC_CONDOR' : ['qsub -V','-l mem=4096mb'],
          'IAC_DIVA' : ['sbatch','--export=ALL --mem=8G'],
+         'LAPALMA' : ['sbatch','--export=ALL --mem=8G'],
          'LOCAL' :   ['qsub','-l nodes=1:ppn=1 -V %s %s'%(queueoptions,queuetext)],
          }
   return cmd[environ.FARM]
@@ -95,6 +96,7 @@ def GetSubOutput(qsub_log):
          'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes'],
          'IAC_CONDOR' : ['-o', qsub_log, '-j', 'oe'],
          'IAC_DIVA' : ['-o', qsub_log],
+         'LAPALMA' : ['-o', qsub_log],
          'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
          }
   return cmd[environ.FARM]
@@ -137,7 +139,7 @@ def call(cmd,
     #Number of Max jobs in the queue
     if environ.FARM=="LAPP":
         max_jobs = 1000
-    elif environ.FARM in ["IAC_DIVA"]:
+  elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA", "LAPALMA"]:
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
         max_jobs = 1000
@@ -170,7 +172,7 @@ def call(cmd,
             text = text.replace("logfile",qsub_log)
 
 
-        elif environ.FARM in ["IAC_DIVA"]:
+        elif environ.FARM in ["IAC_DIVA", "LAPALMA"]:
             # Changes to home dir by default, which happens
             # anyway in a new shell.
             text = text.replace("job-name=fermilat","job-name={}".format(jobname))

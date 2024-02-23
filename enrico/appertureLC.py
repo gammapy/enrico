@@ -129,9 +129,8 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
     plt.savefig(LCoutfolder+'/Counts.png', dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+            orientation='portrait', format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1)
 
 
     plt.figure()
@@ -139,9 +138,8 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
     plt.savefig(LCoutfolder+'/Exposure.png', dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+            orientation='portrait', format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1)
 
     plt.figure()
     plt.errorbar((flux_edges[:1]+flux_edges[1:])/2.,flux_histo,yerr=dflux_histo,fmt="o")
@@ -149,9 +147,8 @@ def PlotAppLC(Nbins,LCoutfolder,FITSfile):
     plt.xlabel("Time (MJD)")
    #Save the canvas in the Apperture LightCurve subfolder
     plt.savefig(LCoutfolder+'/AppLC.png', dpi=150, facecolor='w', edgecolor='w',
-            orientation='portrait', papertype=None, format=None,
-            transparent=False, bbox_inches=None, pad_inches=0.1,
-            frameon=None)
+            orientation='portrait', format=None,
+            transparent=False, bbox_inches=None, pad_inches=0.1)
 
 def _log(task='', description=''):
     print()
