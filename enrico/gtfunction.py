@@ -7,15 +7,23 @@ begun October 2010
 """
 import os
 import sys
+import glob
 import shutil
 from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
+<<<<<<< HEAD
 from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter #, obsSim
+=======
+#from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
+>>>>>>> 4805e96a6db5ef6a7ea5c6971c34e9aaa8b59d2a
 from GtApp import GtApp
 from enrico import utils
-
+import numpy as np
+import astropy.io.fits as pyfits
+import astropy.io.ascii as aascii
 def run_retry(macro,tries=5,compress=False):
     """
     The Fermi LAT sometimes fail with annoying Runtime errors,
@@ -24,10 +32,15 @@ def run_retry(macro,tries=5,compress=False):
     """
     mes = Loggin.Message()
 
-    # Try to write the temporary output to a temporary file and then move it, to avoid broken files
-    orig_name = str(macro['output'])
+    # Try to write the temporary output to a temporary file and then move it, 
+    # to avoid broken files left all over the place if the macro is interrupted
+    try :
+        orig_name = str(macro['outfile']).replace(".gz","")
+    except:
+        orig_name = str(macro['infile']).replace(".gz","") #for gtexposure which has no outfile
+
     try:
-        macro['output'] = macro['output']+".tmpout"
+        macro['outfile'] = macro['outfile']+".tmpout"
     except:
         is_out_in_tmp = False
     else:
@@ -43,11 +56,13 @@ def run_retry(macro,tries=5,compress=False):
             continue
         else:
             if is_out_in_tmp:
-                shutil.move(macro['output'],orig_name)
+                shutil.move(macro['outfile'],orig_name)
+
+            # Compress the output if needed and the file exists
             if os.path.isfile(orig_name):
                 if not utils.is_gz_file(orig_name):
                     if compress:
-                        cmd = "gzip "+orig_name+ " && mv " + orig_name+".gz " + orig_name
+                        cmd = "gzip -f "+orig_name 
                         print('Compressing file: '+ cmd)
                         os.system(cmd)
 
@@ -83,29 +98,35 @@ class Observation:
         self.srcList    = self.Configuration['ObservationSimulation']['srclist'] 
 
         #Fits files and optional gz compression
-        gzflag = ""
         if self.Configuration['file']['compress_fits'] == "yes":
-            gzflag=".gz"
+            self.gzflag=".gz"
+        else:
+            self.gzflag=""
 
-        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"+gzflag
-        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"+gzflag
-        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"+gzflag
-        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"+gzflag
-        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"+gzflag
-        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"+gzflag
-        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"+gzflag
-        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"+gzflag
-        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"+gzflag
-        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"+gzflag
-        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"+gzflag
-        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"+gzflag
-        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"+gzflag
-        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"+gzflag
-        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"+gzflag
-        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"+gzflag
-        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"+gzflag
+        self.eventcoarse   = self.folder+'/'+self.srcname+"_"+filetag+"_EvtCoarse.fits"+self.gzflag
+        self.eventfile     = self.folder+'/'+self.srcname+self.inttag+"_Evt.fits"+self.gzflag
+        self.mktimefile    = self.folder+'/'+self.srcname+self.inttag+"_MkTime.fits"+self.gzflag
+        self.Cubename      = self.folder+'/'+self.srcname+self.inttag+"_ltCube.fits"+self.gzflag
+        self.Mapname       = self.folder+'/'+self.srcname+self.inttag+"_ExpMap.fits"+self.gzflag
+        self.BinnedMapfile = self.folder+'/'+self.srcname+self.inttag+"_BinnedMap.fits"+self.gzflag
+        self.cmapfile      = self.folder+'/'+self.srcname+self.inttag+"_CountMap.fits"+self.gzflag
+        self.lcfile        = self.folder+'/'+self.srcname+self.inttag+"_applc.fits"+self.gzflag
+        self.ccube         = self.folder+'/'+self.srcname+self.inttag+"_CCUBE.fits"+self.gzflag
+        self.srcMap        = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_srcMap.fits"+self.gzflag
+        self.ModelMapFile  = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ModelMap.fits"+self.gzflag
+        self.BinDef        = self.folder+'/'+self.srcname+self.inttag+"_BinDef.fits"+self.gzflag
+        self.Probfile      = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_prob.fits"+self.gzflag
+        self.psf           = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_psf.fits"+self.gzflag
+        self.rel_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_ResidualMap.fits"+self.gzflag
+        self.abs_diff_file = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_SubtractMap.fits"+self.gzflag
+        self.drmfile       = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_eDRM.fits"+self.gzflag
+        self.effbkgfile    = self.folder+'/'+self.srcname+self.inttag+"_"+self.modelname+"_effbkgfile.fits"+self.gzflag
+        self.alphabkgfile  = self.folder+'/'+self.srcname+"_"+self.modelname+"_alphabkgfile.fits"+self.gzflag
+        self.wtsmapfile    = self.folder+'/'+self.srcname+"_"+self.modelname+"_wtsmapfile.fits"+self.gzflag
+        self.gtifitsfile   = self.folder+'/'+self.srcname+"_"+filetag+"_GTI.fits"
 
         #Variables
+        print("DAVID :",self.Configuration['time']['type'])
         if ('MJD' in self.Configuration['time']['type']):
             get_met = lambda t: utils.MJD_to_met(float(t))
         elif ('JD' in self.Configuration['time']['type']):
@@ -117,6 +138,8 @@ class Observation:
         self.use_edisp = bool(self.Configuration['analysis']['EnergyDispersion']=='yes' and self.Configuration["analysis"]["likelihood"]=="binned")
         
         self.t1        = get_met(self.Configuration['time']['tmin'])
+        print("DAVID :", self.Configuration['time']['tmin'])
+        print("DAVID :", get_met(self.Configuration['time']['tmin']))
         self.t2        = get_met(self.Configuration['time']['tmax'])
         self.Emin      = float(self.Configuration['energy']['emin'])
         self.Emax      = float(self.Configuration['energy']['emax'])
@@ -362,73 +385,38 @@ class Observation:
         #filter.run()
         self.run_retry_compress(filter)
 
-    def time_selection(self):
-        """
-        Do a GTI selection based on a file of time spans
+    def gen_filter_fits_file(self):
+        # Convert any set of time cuts into a fits file with the list there (as in 4FGL)
+        
+        data=None
+        out = self.gtifitsfile
+        for ext in ['.fits','.fts','fit']:
+            if ext in self.Configuration['time']['file']:
+                data = pyfits.open(self.Configuration['time']['file'])
+                c1 = list(data['GTI'].data['START'])
+                c2 = list(data['GTI'].data['STOP'])
+                break
+        
+        if data==None:
+            data = aascii.read(self.Configuration['time']['file'],names=['START','STOP'])
+            c1 = np.asarray(list(data['START']))
+            c2 = np.asarray(list(data['STOP']))
 
-        CFITSIO won't allow filenames (including filter expression) longer than
-        ~1100 chars, so for selections that require very long filters (i.e.,
-        more than ~30 time spans covered) we split the gtmktime calls into
-        chunks of ~20 time spans.
-        """
-        eventlist = []
-        last = False
-        numbin = None
-        while not last:
-            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            # Do not create an insanely large amount of files in the same directory.
-            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
-            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.split('.fits')[0],'_{}'.format(numbin%200)
-            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
-            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
-            self._RunMktime(selstr,outfile,'no')
-            eventlist.append(outfile+'\n')
+        if self.Configuration['time']['type']=='MJD':
+            c1 = utils.MJD_to_met(c1)
+            c2 = utils.MJD_to_met(c2)
+        elif self.Configuration['time']['type']=='JD':
+            c1 = utils.MJD_to_met(c1)
+            c2 = utils.MJD_to_met(c2)
 
-        evlist_filename = self.eventfile.split('.fits')[0]+'.list'
-        with open(evlist_filename,'w') as evlistfile:
-            evlistfile.writelines(eventlist)
-    
-    def time_selection_listofgtis(self):
-        """
-        Do a GTI selection based on a file of time spans
-
-        CFITSIO won't allow filenames (including filter expression) longer than
-        ~1100 chars, so for selections that require very long filters (i.e.,
-        more than ~30 time spans covered) we split the gtmktime calls into
-        chunks of ~20 time spans.
-        """
-        eventlist = []
-        last = False
-        numbin = None
-        while not last:
-            selstr,numbin,last = utils.time_selection_string(self.Configuration,numbin)
-            # Do not create an insanely big amount of files in the same directory.
-            outtempdir = '/timebin/{0:04d}'.format(int(numbin/200))
-            #outfile = self.eventfile.replace('.fits','_{}'.format(numbin))
-            outfile    = self.eventfile.split('.fits')[0]+'_{}'.format(numbin%200)
-            outfile    = os.path.dirname(outfile)+"/"+outtempdir+"/"+os.path.basename(outfile)
-            utils.mkdir_p(os.path.dirname(outfile)+"/"+outtempdir)
-            self._RunMktime(selstr,outfile,'no')
-            eventlist.append(outfile+'\n')
-
-        evlist_filename = self.eventfile.split('.fits')[0]+'.list'
-        with open(evlist_filename,'w') as evlistfile:
-            evlistfile.writelines(eventlist)
-
-        # Redo SelectEvents to consolidate into single fits file (gtmktime does not accept lists!)
-        eventcoarse = self.eventcoarse # Store eventcoarse to restore it later
-        clobber = self.clobber         # Store clobber settings, we will force clobber at this step
-        self.eventcoarse = evlist_filename
-        self.clobber = True
-        self.SelectEvents()
-        self.eventcoarse = eventcoarse
-        self.clobber = clobber
-
-        # Clean cruft: all temp event files and event file list
-        os.unlink(evlist_filename)
-        for file in eventlist:
-            os.unlink(file.strip()) # strip of endline char
+        header = pyfits.Header()
+        header['COMMENT'] = "Fermi-LAT/Enrico GTI file"
+        primary = pyfits.PrimaryHDU(header=header)
+        c1 = pyfits.Column(name='START', array=np.array(c1), format='D')
+        c2 = pyfits.Column(name='STOP',  array=np.array(c2), format='D')
+        gtitab = pyfits.BinTableHDU.from_columns([c1,c2],name="GTI")
+        hdu = pyfits.HDUList([primary,gtitab])
+        hdu.writeto(out,overwrite=True)
 
     def MkTime(self):
         import os.path
@@ -439,14 +427,12 @@ class Observation:
 
         selstr = self.Configuration['analysis']['filter']
         if self.Configuration['time']['file'] != '':
-            if '.fit' not in self.Configuration['time']['file'] and '.fts' not in self.Configuration['time']['file']:
-                selstr = self.Configuration['analysis']['filter']
-                self.time_selection_listofgtis()
-            else:
-                selstr = "gtifilter(\'{0}[GTI]\',START) && gtifilter(\'{0}[GTI]\',STOP)".format(self.Configuration['time']['file'])
-        outfile = self.mktimefile+".tmp"
+            self.gen_filter_fits_file()
+            selstr = "{0} && gtifilter(\'{1}[GTI]\',START) && gtifilter(\'{1}[GTI]\',STOP)".format(selstr,self.gtifitsfile)
+        
+        outfile = self.mktimefile#+".tmp"
         self._RunMktime(selstr,outfile,self.Configuration['analysis']['roicut'])
-        os.system("mv "+outfile+" "+self.mktimefile)
+        #os.system("mv "+outfile+" "+self.mktimefile)
 
     def _RunMktime(self,selstr,outfile,roicut):
         """run gtmktime tool"""
@@ -525,6 +511,7 @@ class Observation:
         self.run_retry_compress(expMap)
 
     def Obssim(self):
+        obsSim = GtApp('gtobssim', 'observationSim')
         """Run gtobssim tool"""
         obsSim = GtApp('obssim', 'obsSim')
         if (self.clobber=="no" and os.path.isfile(self.srcMap)):
@@ -549,7 +536,7 @@ class Observation:
         self.run_retry_compress(obsSim)
 
     def SrcMap(self):
-        """Run gtsrcmap tool for binned analysis"""
+        """Run gtsrcmaps tool for binned analysis"""
         if (self.clobber=="no" and os.path.isfile(self.srcMap)):
             #print("File exists and clobber is False")
             return(0)
@@ -696,4 +683,67 @@ class Observation:
         drm["bexpmap"] = self.BinnedMapfile
         drm["chatter"] = 0
         self.run_retry_compress(drm)
+    
+    def GtEffBkg(self,efact=2):
+        '''
+        DataCube of Effective background for a point source
+        '''
+        if (self.clobber=="no" and os.path.isfile(self.effbkgfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        effbkg = GtApp('gteffbkg', 'EffBkg')
+        effbkg["cmap"]    = self.ccube
+        effbkg["outfile"] = self.effbkgfile
+        effbkg["irfs"]    = irfs
+        effbkg["expcube"] = self.Cubename
+        effbkg["bexpmap"] = self.BinnedMapfile
+        effbkg["efact"]   = efact
+        self.run_retry_compress(effbkg)
+
+    def GtAlphaBkg(self,epsilon=0.03):
+        '''
+        Hypercube - relative contributions to likelihood weights from different analysis components
+        needs to be run once ALL components are done
+        '''
+        if (self.clobber=="no" and os.path.isfile(self.alphabkgfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        
+        effbkg_files = glob.glob(\
+                            self.folder+'/'+\
+                            self.srcname+"*_"+\
+                            self.modelname+\
+                            "_effbkgfile.fits"+\
+                            self.gzflag)
+        effbkg_textfile = self.folder+'/'+self.srcname+"_"+self.modelname+"_effbkgfile.list"
+        with open(effbkg_textfile, "w") as f:
+            for effbkg_f in effbkg_files:
+                f.write('{}\n'.format(effbkg_f))
+
+        alphabkg = GtApp('gtalphabkg', 'AlphaBkg')
+        alphabkg["inputs"]  = effbkg_textfile
+        alphabkg["outfile"] = self.alphabkgfile
+        alphabkg["epsilon"] = epsilon
+        self.run_retry_compress(alphabkg)
+    
+    def GtWtsMap(self,epsilon=0.03):
+        '''
+        Cube of likelihood weight factors
+        needs to be done once ALL components are done, component by component.
+        '''
+        if (self.clobber=="no" and os.path.isfile(self.alphabkgfile)):
+            #print("File exists and clobber is False")
+            return(0)
+        irfs,_ = utils.GetIRFS(self.Configuration['event']['evclass'],
+                               self.Configuration['event']['evtype'])
+        wtsmap = GtApp('gtwtsmap', 'WtsMap')
+        wtsmap["effbkgfile"] = self.effbkgfile
+        wtsmap["alphafile"]  = self.alphabkgfile
+        wtsmap["epsilon"]    = epsilon
+        wtsmap["outfile"]     = self.wtsmapfile
+        self.run_retry_compress(wtsmap)
         

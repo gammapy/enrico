@@ -40,7 +40,7 @@ def jobs_in_queue():
             if environ.FARM in ["LAPP", "IAC_CONDOR"]:
                 fh = Popen("condor_q ", \
                     stdout=PIPE, shell=True)  
-            elif environ.FARM in ["IAC_DIVA"]:
+            elif environ.FARM in ["IAC_DIVA","LAPALMA"]:
                 fh = Popen("squeue -u {user}".format(user=user), \
                     stdout=PIPE, shell=True)
             else:
@@ -83,6 +83,7 @@ def GetSubCmd():
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess'],
          'IAC_CONDOR' : ['qsub -V','-l mem=4096mb'],
          'IAC_DIVA' : ['sbatch','--export=ALL --mem=8G'],
+         'LAPALMA' : ['sbatch','--export=ALL --mem=8G'],
          'LOCAL' :   ['qsub','-l nodes=1:ppn=1 -V %s %s'%(queueoptions,queuetext)],
          }
   return cmd[environ.FARM]
@@ -95,6 +96,7 @@ def GetSubOutput(qsub_log):
          'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes'],
          'IAC_CONDOR' : ['-o', qsub_log, '-j', 'oe'],
          'IAC_DIVA' : ['-o', qsub_log],
+         'LAPALMA' : ['-o', qsub_log],
          'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
          }
   return cmd[environ.FARM]
@@ -103,13 +105,12 @@ def GetSubOutput(qsub_log):
 
 def call(cmd,
          enricoDir,
-         fermiDir,
+         fermidir=None,
          scriptfile=None,
          qsub_log=None,
          jobname=None,
-	 submit=True,
-	 max_jobs=50,
-         #logfile=None,
+         submit=True,
+         max_jobs=50,
          check_present=None,
          clobber=False,
          exec_dir=None,
@@ -124,24 +125,24 @@ def call(cmd,
             logging.info('{0} exists. Skipping.'
                          ''.format(check_present))
             return
+    
+    #   if logfile:
+    #      cmd += '>'+ logfile+ '2>&1'
 
- #   if logfile:
-  #      cmd += '>'+ logfile+ '2>&1'
-
-    if not isinstance(cmd, str):
-        cmd = _cmd_to_str(cmd)
+    #obsolete: now cmd can be a list of strings to be run in a job_array slurm
+    #if not isinstance(cmd, str):
+    #    cmd = _cmd_to_str(cmd)
     if options:
         cmd += _options_to_str(options)
     logging.info(cmd)
 
     #Number of Max jobs in the queue
-    max_jobs = 50
     if environ.FARM=="LAPP":
         max_jobs = 1000
-    elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA"]:
+  elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA", "LAPALMA"]:
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
-        max_jobs = 90000
+        max_jobs = 1000
     elif environ.FARM=="LOCAL":
         max_jobs = 200
     elif environ.FARM=="CCIN2P3":
@@ -171,7 +172,7 @@ def call(cmd,
             text = text.replace("logfile",qsub_log)
 
 
-        elif environ.FARM in ["IAC_DIVA"]:
+        elif environ.FARM in ["IAC_DIVA", "LAPALMA"]:
             # Changes to home dir by default, which happens
             # anyway in a new shell.
             text = text.replace("job-name=fermilat","job-name={}".format(jobname))
@@ -179,16 +180,29 @@ def call(cmd,
             if exec_dir:
                 text += '\ncd {0}\n\n'.format(exec_dir)
 
-            #text +='conda activate fermi'+'\n'
-            #text +='export ENRICO_DIR='+enricoDir+'\n'
-            #text +='source $ENRICO_DIR/enrico-init.sh\n'
-            #text +='export LATEXDIR=/tmp/aux\n'
             if jobname:
                 if jobname[0].isdigit():
                     jobname='_'+jobname
-            text +='#SBATCH --job-name='+jobname+'\n'
-            text +='#SBATCH --output= '+qsub_log+'\n'
-            text += cmd
+            
+            
+            if isinstance(cmd, list):
+                remove_lines = ['#SBATCH --job-name=','#SBATCH --output=']
+                for rl in remove_lines:
+                    text = '\n'.join([ln for ln in text.split('\n') if rl not in ln])
+                text2  = '#SBATCH --partition=batch\n'
+                text2 += '#SBATCH --job-name='+jobname+'\n'
+                #text2 += '#SBATCH --output='+qsub_log+'\n'
+                text2 += '#SBATCH --array=0-'+str(len(cmd)-1)+'\n'
+                text2 += '#SBATCH --output=%j_%a.out\n'
+                text2 += '#SBATCH --error=%j_%a.err\n'
+                text = text.replace('#SBATCH --partition=batch',text2)
+                call_command = cmd[0].split(' ')[0]
+                config_file  = cmd[0].split(' ')[1]
+                preffix = config_file.rsplit('_',1)[0]
+                suffix  = config_file.rsplit('.',1)[-1]
+                text += call_command + " " + preffix+'_${SLURM_ARRAY_TASK_ID}.'+suffix
+            elif isinstance(cmd, str):
+                text += cmd
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
@@ -289,3 +303,4 @@ def call(cmd,
         else:
             print(("Running: %s" %cmd))
             os.system(cmd)
+

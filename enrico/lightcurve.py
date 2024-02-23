@@ -79,32 +79,43 @@ class LightCurve(Loggin.Message):
         self.time_array = np.zeros(0)
         self.Nbin = 0
         self.gtifile = []
-        if self.config['time']['file'] != '': 
-            if ".fit" not in self.config['time']['file']:
+
+        # Generated based on Edge file
+        TimeBinEdgeFile = self.config['LightCurve']['TimeBinEdgeFile']
+        if TimeBinEdgeFile != '':
+            times = np.sort(np.genfromtxt(TimeBinEdgeFile,dtype="float",unpack=True))
+            self.tmin = times[0]
+            self.tmax = times[-1]
+            self.Nbin = len(times)-1
+            self.time_array = np.zeros(self.Nbin*2)
+            for i in range(self.Nbin):
+                self.time_array[2*i] = times[i]
+                self.time_array[2*i+1] = times[i+1]
+
+        # Generate based on Nbins
+        elif self.config['time']['file'] != '': 
+            if ".fit" not in self.config['time']['file'].split("/")[-1]:
                 # Assume it is a text file
                 print(("use "+self.config['time']['file']))
                 self.gtifile.append(self.config['time']['file'])
-                times = np.genfromtxt(self.gtifile[0],dtype="float",unpack=True)
-                self.Nbin = int(times.size/2)
-                self.time_array=np.reshape(times,times.size,'F')
-                    
-                if self.config['time']['type']=='MJD':
-                     self.time_array = utils.MJD_to_met(self.time_array)
-                elif self.config['time']['type']=='JD':
-                     self.time_array = utils.JD_to_met(self.time_array)
+                times = np.sort(np.genfromtxt(self.gtifile[0],dtype="float",unpack=True))
+                times = times.flatten()
+                times = times[~np.isnan(times)]
+                self.tmin = times[0]
+                self.tmax = times[-1]
             else:
                 # Assume it is a catalog.fits file
-                # get from the header the BEGIN and END time 
+                # get from the header the BEGIN and END time
                 with pyfits.open(self.config['time']['file']) as catfile:
                     self.tmin = catfile[1].header['TSTART']
                     self.tmax = catfile[1].header['TSTOP']
-                    self.Nbin = self.config['LightCurve']['NLCbin']
-                    self.time_array = np.zeros(self.Nbin*2)
-                    t = np.arange(self.tmin,self.tmax+1e-5,\
-                        (self.tmax - self.tmin) / self.Nbin)
-                    for i in range(self.Nbin):
-                        self.time_array[2*i] = t[i]
-                        self.time_array[2*i+1]= t[i+1]
+            
+            self.Nbin = self.config['LightCurve']['NLCbin']
+            self.time_array = np.zeros(self.Nbin*2)
+            t = np.linspace(self.tmin,self.tmax,self.Nbin+1)
+            for i in range(self.Nbin):
+                self.time_array[2*i] = t[i]
+                self.time_array[2*i+1]= t[i+1]
         
         else:
             self.Nbin = int(self.config['LightCurve']['NLCbin'])
@@ -135,19 +146,28 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
+        parentdir = str(self.config['out'])
         for i in range(self.Nbin):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
             self.config['file']['tag'] = self.Tag + '_LC_' + str(i)
             self.config['target']['spectrum'] = 'PowerLaw' # simplify the spectrum
-            filename = (self.config['out'] + "Config_" + str(i) + "_" +
-                    str(self.config['time']['tmin']) + "_" +
-                    str(self.config['time']['tmax']))#Name of the config file
-            xmlfilename = (self.config['out'] + "" + str(i) + "_" +
-                    str(self.config['time']['tmin']) + "_" +
-                    str(self.config['time']['tmax'])) + ".xml" #Name of the xml file
+            self.config['out'] = parentdir + '/LC_' + str(i) + '/' 
+            utils.mkdir_p(self.config['out'])
+            #filename = (self.config['out'] + "Config_" + str(i) + "_" +
+            #        str(self.config['time']['tmin']) + "_" +
+            #        str(self.config['time']['tmax']))#Name of the config file
+            filename    = self.config['out'] + "LCbin_"+str(i) + '.conf'
+            xmlfilename = self.config['out'] + "LCbin_"+str(i) + '.xml'
+            #xmlfilename = (self.config['out'] + "" + str(i) + "_" +
+            #        str(self.config['time']['tmin']) + "_" +
+            #        str(self.config['time']['tmax'])) + ".xml" #Name of the xml file
             self.config['file']['xml'] = xmlfilename
             # Do not produce spectral plots
+            
+            # cleanup the fits files of this bin after the analysis is done
+            if self.config['LightCurve']['FitsCleanupAfterAnalysis'] == 'yes':
+                self.config['file']['FitsCleanupAfterAnalysis'] = 'yes'
 
             if len(self.gtifile)==1:
                 self.config['time']['file']=self.gtifile[0]
@@ -171,10 +191,12 @@ class LightCurve(Loggin.Message):
         fermidir = environ.DIRS.get('FERMI_DIR')
 
         self.PrepareLC(self.config['LightCurve']['MakeConfFile'])#Get the config file
-
+        
+        cmd_list = []        
         for i in range(self.Nbin):
             #gc.collect()
-            cmd = str("enrico_sed %s && enrico_plot_lc %s" %(self.configfile[i], self.parent_filename))
+            #cmd = str("enrico_sed %s && enrico_plot_lc %s" %(self.configfile[i], self.parent_filename))
+            cmd = enricodir+"/enrico/RunGTlike.py "+self.configfile[i]
             if self.submit == 'yes':
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"
                 JobLog = self.LCfolder+"LC_Job_"+str(i)+".log"
@@ -182,12 +204,22 @@ class LightCurve(Loggin.Message):
                        self.config['analysis']['likelihood'] +
                        "_LC_" + self.config['file']['tag'])+"_"+str(i)+".log"
 
-                call(cmd,enricodir,fermidir,scriptname,JobLog,JobName)#Submit the job
+                if environ.FARM in ["IAC_DIVA"]:
+                    cmd_list.append(cmd)
+                else:
+                    call(cmd,enricodir,fermidir,scriptname,JobLog,JobName)
             else :
                 os.system(cmd)
-
-                #run(self.configfile[i])#run in command line
-
+        
+        if len(cmd_list)>0:
+            scriptname = self.LCfolder+"LC_Script_jobarray.sh"
+            JobLog = self.LCfolder+"LC_Script_jobarray.log"
+            JobName = (self.config['target']['name'] + "_" +
+                       self.config['analysis']['likelihood'] +
+                       "_LC_" + self.config['file']['tag'])+".log"
+                
+            call(cmd_list, enricodir, fermidir, scriptname, JobLog, JobName)
+            
 
     def _MakePhasebin(self):
         """document me """
@@ -307,21 +339,12 @@ class LightCurve(Loggin.Message):
             if 'Ulvalue' in ResultDic :
                 uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
-                # FluxErr.append(0)
-                # FluxErrChi2.append(ResultDic.get("dFlux"))
-                # Index.append(ResultDic.get(IndexName))
-                # IndexErr.append(0)
             else :
                 uplim.append(0)
                 Flux.append(ResultDic.get("Flux"))
             FluxErr.append(ResultDic.get("dFlux"))
-            # FluxErrChi2.append(ResultDic.get("dFlux"))
             Index.append(ResultDic.get(IndexName))
             IndexErr.append(ResultDic.get(IndexErrName))
-                # if CutoffName is not None:
-                    # Cutoff.append(ResultDic.get(CutoffName))
-                    # CutoffErr.append(ResultDic.get(CutoffErrName))
-            # FluxErrForNpred.append(ResultDic.get("dFlux"))
             FluxForNpred.append(ResultDic.get("Flux"))
             #Get the Npred and TS values
             Npred.append(ResultDic.get("Npred"))
@@ -345,12 +368,7 @@ class LightCurve(Loggin.Message):
 
         Flux = np.asarray(Flux)
         FluxErr = np.asarray(FluxErr)
-        # Index = np.array(Index)
-        # IndexErr = np.array(IndexErr)
-        # Cutoff = np.array(Cutoff)
-        # CutoffErr = np.array(CutoffErr)
         FluxForNpred = np.asarray(FluxForNpred)
-        # FluxErrForNpred = np.array(FluxErrForNpred)
         uplim = np.asarray(uplim,dtype=bool)
         #Plots the diagnostic plots is asked
         # Plots are : Npred vs flux
@@ -381,9 +399,9 @@ class LightCurve(Loggin.Message):
                 plt.xlabel(r"${\rm Npred/\sqrt{Npred}}$")
                 plt.ylabel(r"${\rm Flux/\Delta Flux}$")
                 plt.savefig(LcOutPath+"_Npred.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
+                    orientation='portrait', format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
+                    )
             else :
                 print("No Npred Plot produced")
 
@@ -412,40 +430,16 @@ class LightCurve(Loggin.Message):
             plt.tight_layout()
 
             plt.savefig(LcOutPath+"_TS.png", dpi=150, facecolor='w', edgecolor='w',
-                    orientation='portrait', papertype=None, format=None,
+                    orientation='portrait', format=None,
                     transparent=False, bbox_inches=None, pad_inches=0.1,
-                    frameon=None)
-
-
-#    Plot the LC itself. This function return a TH2F for a nice plot
-#    a TGraph and a list of TArrow for the ULs
-        # if folded:
-        #     phase = np.linspace(0,1,self.Nbin+1)
-        #     Time = (phase[1:]+phase[:-1])/2.
-        #     TimeErr = (phase[1:]-phase[:-1])/2.
-        #     gTHLC,TgrLC,ArrowLC = plotting.PlotFoldedLC(Time,TimeErr,Flux,FluxErr)
-        #     gTHIndex,TgrIndex,ArrowIndex = plotting.PlotFoldedLC(Time,TimeErr,Index,IndexErr)
-        #     if CutoffName is not None:
-        #         gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
-        # else :
-        #     gTHLC,TgrLC,ArrowLC = plotting.PlotLC(Time,TimeErr,Flux,FluxErr)
-        #     gTHIndex,TgrIndex,ArrowIndex = plotting.PlotLC(Time,TimeErr,Index,IndexErr)
-        #     if CutoffName is not None:
-        #         gTHCutoff,TgrCutoff,ArrowCutoff = plotting.PlotFoldedLC(Time,TimeErr,Cutoff,CutoffErr)
-
-        # xmin = min(Time) - max(TimeErr) * 10
-        # xmax = max(Time) + max(TimeErr) * 10
-        # ymin = min(Flux) - max(FluxErr) * 1.3
-        # ymax = max(Flux) + max(FluxErr) * 1.3
+                    )
+        
         plt.figure()
         plt.xlabel(r"Time (s)")
         plt.ylabel(r"${\rm Flux\ (photon\ cm^{-2}\ s^{-1})}$")
-        # plt.ylim(ymin=ymin,ymax=ymax)
-        # plt.xlim(xmin=xmin,xmax=xmax)
-        #plt.errorbar(Time,Flux,xerr=TimeErr,yerr=FluxErr,i
-        #             fmt='o',color='black',ls='None',uplims=uplim)
+        
         plot_errorbar_withuls(Time,TimeErr,TimeErr,Flux,FluxErr,FluxErr,
-                              uplim,bblocks=True)
+                              uplim,bblocks=True,LcOutPath=LcOutPath)
         
         try:
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Flux[~uplim],1)*0.1),
@@ -474,9 +468,9 @@ class LightCurve(Loggin.Message):
         plt.tight_layout()
 
         plt.savefig(LcOutPath+"_LC.png", dpi=150, facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
+                orientation='portrait', format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
-                frameon=None)
+                )
 
         if self.config["LightCurve"]["SpectralIndex"] == 0 :
             plt.figure()
@@ -492,7 +486,7 @@ class LightCurve(Loggin.Message):
                                   IndexErr[~uplimIndex],
                                   IndexErr[~uplimIndex],
                                   uplimIndex[~uplimIndex],
-                                  bblocks=True)
+                                  bblocks=True,LcOutPath=LcOutPath)
 
             plt.ylim(ymin=max(plt.ylim()[0],np.percentile(Index[~uplimIndex],1)*0.1),
                      ymax=min(plt.ylim()[1],np.percentile(Index[~uplimIndex],99)*2.0))
@@ -518,9 +512,9 @@ class LightCurve(Loggin.Message):
             plt.tight_layout()
             plt.savefig(LcOutPath+"_Index.png", dpi=150,
                 facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
+                orientation='portrait', format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
-                frameon=None)
+                )
 
 
         # compute Fvar and probability of being cst
@@ -528,24 +522,6 @@ class LightCurve(Loggin.Message):
         self.info("Flux vs Time: infos")
         self.FitWithCst(Time,Flux,FluxErr)
         self.Fvar(Flux,FluxErr)
-
-        # ### plot and save the Index LC
-        # CanvIndex = ROOT.TCanvas()
-        # gTHIndex.Draw()
-        # TgrIndex.Draw('zP')
-
-        # #plot the ul as arrow
-        # for i in xrange(len(ArrowIndex)):
-        #     ArrowIndex[i].Draw()
-
-        # #Save the canvas in the LightCurve subfolder
-        # if self.config["LightCurve"]["SpectralIndex"] == 0 :
-        #     self.info("Index vs Time")
-        #     self.FitWithCst(Time,Index,IndexErr)
-        #     CanvIndex.Print(LcOutPath+'_Index.png')
-        #     CanvIndex.Print(LcOutPath+'_Index.eps')
-        #     CanvIndex.Print(LcOutPath+'_Index.C')
-
 
         #Dump into ascii
         lcfilename = LcOutPath+"_results.dat"
@@ -619,7 +595,7 @@ class LightCurve(Loggin.Message):
             ##############################################################
             # Create one obs instance
             CurConfig['Spectrum']['FitsGeneration'] = 'no'
-            _,Fit = GenAnalysisObjects(CurConfig,verbose=0)#be quiet
+            FitRunner,Fit,ListAnalyses = GenAnalysisObjects(CurConfig,verbose=0)#be quiet
             Fit.ftol = float(self.config['fitting']['ftol'])
 
             #Spectral index management!
@@ -676,9 +652,9 @@ class LightCurve(Loggin.Message):
         plt.tight_layout()
 
         plt.savefig(LcOutPath+"_VarIndex.png", dpi=150, facecolor='w', edgecolor='w',
-                orientation='portrait', papertype=None, format=None,
+                orientation='portrait', format=None,
                 transparent=False, bbox_inches=None, pad_inches=0.1,
-                frameon=None)
+                )
 
         self.info("Variability index calculation")
         print(("\t TSvar = ",2*(sum(LogL1)-sum(LogL0))))

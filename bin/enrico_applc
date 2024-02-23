@@ -38,20 +38,8 @@ except:
     print('Usage: '+sys.argv[0]+' <config file name>')
     sys.exit(1)
 
-if len(sys.argv)==2 :
-#read an config file alone. If not working, try to read an ascii file with different conf file
-  try :
-    liste = np.genfromtxt(sys.argv[1],dtype="str",unpack=True)
-    for inf in liste:
-      print "work on the config file ",inf
-      run(inf)
-  except :
-    config = get_config(infile)
-    run(infile)
-else:
-  for inf in sys.argv[1:]:
-    print "work on the config file ",inf
-    run(inf)
+config = get_config(infile)
+run(infile)
 
 
 

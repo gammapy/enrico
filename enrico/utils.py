@@ -1,5 +1,7 @@
 """Random collection of usefull functions"""
 import os, sys
+import glob 
+import shutil
 import errno
 from math import log10
 import numpy as np
@@ -46,7 +48,15 @@ def Prefactor(flux,index,emin,emax,escale):
 def dNde(energy,Fit,name):
     '''Compute the dN/dE value at energy E fir the source name'''
     import pyLikelihood
-    ptsrc = pyLikelihood.PointSource_cast(Fit[name].src)
+    if Fit[name].src.getType() == 'Point':
+        ptsrc = pyLikelihood.PointSource_cast(Fit[name].src)
+    elif Fit[name].src.getType() == 'Diffuse':
+        ptsrc = pyLikelihood.DiffuseSource_cast(Fit[name].src)
+    elif Fit[name].src.getType() == 'Composite':
+        ptsrc = pyLikelihood.CompositeSource_cast(Fit[name].src)
+    else:
+        print('Source is not Point, Diffuse or Composite')
+        return()
     arg = pyLikelihood.dArg(energy)
     return ptsrc.spectrum()(arg)
 
@@ -248,6 +258,13 @@ def _SpecFileName(config):
     from enrico.constants import SpectrumPath
     return  config['out'] + '/'+SpectrumPath+'/SED_' + config['target']['name'] +'_'+ config['target']['spectrum']
 
+def CleanUpFitsFiles(config):
+    """Remove FITS files from destination directory"""
+    for ftype in ['fits', 'fits.gz','fit','fit.gz']:
+        for f in glob.glob(config['out']+'/*.'+ftype):
+            shutil.rmtree(f,ignore_errors=True)
+
+
 def _dump_xml(config) :
     """Give the name of the XML file where the results will be save by gtlike"""
     return (config['out'] + "/" + config['target']['name']
@@ -303,6 +320,7 @@ def ReadResult(config):
         results[key] = value
     return results
 
+'''
 def time_selection_string(config,numbin0):
     """Convert file with start stop pairs to gtmktime filter string"""
 
@@ -340,6 +358,7 @@ def time_selection_string(config,numbin0):
     selstr='('+selstr[:-2]+')'
     # add one to numbin so that on next call it starts on the following bin to the last one that was included in selstr
     return selstr, numbin0+1, last
+'''
 
 def met_to_MJD(met):
   return mjd_ref + (met-met_ref)/DAY_IN_SECOND

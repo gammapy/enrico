@@ -158,7 +158,8 @@ class Data(object):
                 elif platform == "darwin": 
                     cmd = 'curl -O -N ' + SPACECRAFT_URL
             else:
-                list_of_files=[F.replace('weekly/spacecraft/','').replace('.gz','') for F in sorted(glob.glob("weekly/spacecraft/lat_spacecraft*.fits*"))]
+                list_spacecrafts = sorted(glob.glob("weekly/spacecraft/lat_spacecraft*.fits*"))
+                list_of_files=[F.replace('weekly/spacecraft/','').replace('.gz','') for F in list_spacecrafts]
                 if platform == "linux" or platform == "linux2": # linux 
                     cmd = 'wget -c -N -R '+','.join(list_of_files[:-1])+' -r -l 1 -A fits --random-wait -e robots=off -nH --cut-dirs=4 -np ' + WEEKLY_SC_URL
                 elif platform == "darwin": 
@@ -180,7 +181,8 @@ class Data(object):
             # -nH --no-host-directories
             # -np --no-parent
             print(WEEKLY_URL)
-            list_of_files=[F.replace('weekly/photon/','').replace('.gz','') for F in sorted(glob.glob("weekly/photon/lat_photon_weekly*.fits*"))]
+            list_photons = sorted(glob.glob("weekly/photon/lat_photon_weekly*.fits*"))
+            list_of_files=[F.replace('weekly/photon/','').replace('.gz','') for F in list_photons]
             cmd = 'wget -c -N -r -l 1 -A fits --random-wait -e robots=off -R '+','.join(list_of_files[:-1])+' -nH --cut-dirs=4 -np ' + WEEKLY_URL
             print(('EXEC: ', cmd))
             os.system(cmd)

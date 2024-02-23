@@ -21,11 +21,24 @@ def addParameter(el, name, free, value, scale, min, max):
     param.setAttribute('scale', '%g' % scale)
     # if value outside limits, set it to the closest limit
     if value>max: 
-        print(('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name)))
-        value=max
+        #print(('Parameter {2} value outside limits {0}>{1}, clipping.'.format(value,max,name)))
+        print(('Parameter {2} value outside limits {0}>{1}, re-setting limits.'.format(value,max,name)))
+        #value=max
+        if value>=0:
+            max = np.min([value*1.1,value+1])
+        else:
+            max = np.min([value*0.9,value+1])
+        print(('... new limit for parameter {2}: <{1}'.format(value,max,name)))
     if value<min: 
-        print(('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name)))
-        value=min
+        #print(('Parameter {2} value outside limits {0}<{1}, clipping.'.format(value,min,name)))
+        print(('Parameter {2} value outside limits {0}<{1}, re-setting limits.'.format(value,min,name))),
+        #value=min
+        if value>=0:
+            min = np.max([value*0.9,value-1])
+        else:
+            min = np.max([value*1.1,value-1])
+        print(('... new limit for parameter {2}: >{1}'.format(value,min,name)))
+
     param.setAttribute('value', '%g' % value)
     param.setAttribute('max', '%g' % max)
     param.setAttribute('min', '%g' % min)
@@ -167,12 +180,13 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
         elim_min = emin
     if emax > elim_max:
         elim_max = emax
-
+    
     if enorm == 0:
         enorm = 2e5  # meanEnergy(emin,emax,index_value)
         norm_value *= (enorm / 100.0) ** alpha_value
     if norm_scale == 0:
         norm_scale = utils.fluxScale(norm_value)
+
     norm_value /= norm_scale
     doc = lib.ownerDocument
     src = doc.createElement('source')
@@ -195,6 +209,7 @@ def addPSLogparabola(lib, name, ra, dec, ebl=None, enorm=1000, emin=200, emax=3e
                  alpha_min, alpha_max)
     addParameter(spec, 'Eb', 0, enorm, 1.0, elim_min, elim_max)
     addParameter(spec, 'beta', beta_free, beta_value, 1.0, beta_min, beta_max)
+
     src.appendChild(spec)
     spatial = AddSpatial(doc,ra,dec,extendedName)
     src.appendChild(spatial)
@@ -471,6 +486,7 @@ def GetlistFromFits(config, catalog):
     """Read the config and catalog file and generate the list of sources to include"""
     #Get the informations for the config file
     srcname = config['target']['name']
+    srcname_short = srcname.replace(' ','_')
     ra_src = config['target']['ra']
     dec_src = config['target']['dec']
     redshift = config['target']['redshift']
@@ -498,9 +514,21 @@ def GetlistFromFits(config, catalog):
     cfile = fits.open(catalog)
     data = cfile[1].data
     names = data.field('Source_Name')
+    names_short = [k.replace(' ','_') for k in names]
     ra = data.field('RAJ2000')
     dec = data.field('DEJ2000')
     flux = data.field('PL_Flux_Density')
+    nan_values = np.isnan(flux)
+    if len(nan_values) > 0:
+        flux[nan_values] = data.field('LP_Flux_Density')[np.isnan(flux)]
+        nan_values = np.isnan(flux)
+    if len(nan_values) > 0:
+        flux[nan_values] = data.field('PLEC_Flux_Density')[np.isnan(flux)]
+        nan_values = np.isnan(flux)
+    if len(nan_values) > 0:
+        ### generic value
+        flux[nan_values] = 1e-12
+    
     pivot = data.field('Pivot_Energy')
     spectype = data.field('SpectrumType')
     is8yr = 'FL8Y' in cfile[1].header['CDS-NAME']
@@ -572,7 +600,7 @@ def GetlistFromFits(config, catalog):
     parameter_noise = config['model']['parameters_noise']
 
     #loop over all the sources of the catalog
-    for i in range(len(names)):
+    for i,name in enumerate(names):
         #distance from the center of the maps to the given source
         rspace = utils.calcAngSepDeg(float(ra[i]), float(dec[i]), ra_space, dec_space)
         #distance for the target to the given source
@@ -622,15 +650,36 @@ def GetlistFromFits(config, catalog):
             beta[i]   *= np.random.normal(1,parameter_noise)
             cutoff[i] = cutoff[i]*(np.random.normal(1,parameter_noise))
 
-            mes.info("Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
         
             if len(sources)>0:
-                if (sources[0]['name'] != srcname):
+                if srcname_short in names_short:
+                    if names_short[i] == srcname_short:
+                        # Target source, srcname matches that in the catalog. e.g. J0534.5+2201i
+                        mes.info("---> Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
+                        sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
+                                          'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                                          'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                                          'IsFree': 1, 'IsFreeShape' : 1,
+                                          'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+                    else:
+                        # This is a co-spatial source, e.g. J0534.5+2201s
+                        mes.info("(!!) Adding [fixed] co-spatial source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
+                        sources.append({'name': names[i], 'ra': ra_src, 'dec': dec_src,
+                                        'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
+                                        'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
+                                        'IsFree': 0, 'IsFreeShape' : 0,
+                                        'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+                else:
+                    # This is the unclear case. User specifies a srcname not in the catalog. There might be several
+                    # co-spatial sources, but we are unsure which one the user wants. Add a single 'sum' source (e.g.
+                    # CrabTotal = CrabPulsar + CrabNebula). 
+                    mes.info("---> Adding [free] target source, Catalog name is %s, dist is %.2f and TS is %.2f" %(names[i],rsrc,sigma[i]) )
                     sources.insert(0,{'name': srcname, 'ra': ra_src, 'dec': dec_src,
                                       'flux': flux[i], 'index': -index[i], 'scale': pivot[i],
                                       'cutoff': cutoff[i], 'beta': beta[i], 'expfac': expfac[i], 'expind': expind[i],
                                       'IsFree': 1, 'IsFreeShape' : 1,
                                       'SpectrumType': spectype[i], 'ExtendedName': extended_fitsfilename})
+
 
         elif rsrc < max_radius and rsrc >= .1 and sigma[i] > min_significance_free:
             # if the source is close to the target and is bright : add it as a free source
@@ -813,6 +862,7 @@ def WriteXml(lib, doc, srclist, config):
         freeshape = srclist[i].get('IsFreeShape')
         spectype  = srclist[i].get('SpectrumType')
         extendedName = srclist[i].get('ExtendedName')
+
         # Check the spectrum model
         if spectype.strip() == "PowerLaw":
             if (ebl==None):

@@ -1,5 +1,8 @@
 import os
-from distutils.version import LooseVersion
+try:
+    from packaging.version import Version
+except ImportError:
+    from distutils.version import LooseVersion as Version
 import numpy as np
 try:
     import astropy.io.fits as fits
@@ -43,7 +46,15 @@ class Result(Loggin.Message):
         
         self.Fit = Fit
         self.Model = Fit[pars.srcname].funcs['Spectrum'].genericName()
-        self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
+        if Fit[pars.srcname].src.getType() == 'Point':
+            self.ptsrc = pyLikelihood.PointSource_cast(Fit[pars.srcname].src)
+        elif Fit[pars.srcname].src.getType() == 'Diffuse':
+            self.ptsrc = pyLikelihood.DiffuseSource_cast(Fit[pars.srcname].src)
+        elif Fit[pars.srcname].src.getType() == 'Composite':
+            self.ptsrc = pyLikelihood.CompositeSource_cast(Fit[pars.srcname].src)
+        else:
+            print('Source is not Point, Diffuse or Composite')
+            return()
         covar_matrix,covar_pars = utils.GetCovar(pars.srcname, self.Fit, verbose = False, with_par_map = True)
         self.covar = np.array(covar_matrix)
         self.covar_pars = np.array(covar_pars)
@@ -60,10 +71,32 @@ class Result(Loggin.Message):
         self.decSED     = self.SED[i]
         self.decSEDerr  = self.Err[i]
 
+    def _WriteFitPars(self,par):
+        header  = '#### Parameter matrix. ###\n#Par Name, Value, Error, Scale:\n'
+        spectrum = self.Fit[par.srcname].funcs['Spectrum']
+        ParName = spectrum.paramNames
+        OutFile = par.PlotName+'.fitpars.dat'
+        data = []
+        for p in ParName:
+            ParValue = '{:.3e}'.format(float(spectrum.getParam(p).value()))
+            ParError = '{:.3e}'.format(float(spectrum.getParam(p).error()))
+            ParScale = '{:.3e}'.format(float(spectrum.getParam(p).getScale()))
+            data.append([p,ParValue,ParError,ParScale])
+        
+        try:
+            np.savetxt(OutFile, data, header=header, fmt='%s', comments='', delimiter=', ')    
+        except FileNotFoundError:
+            self.warning("Cannot write fitpars file: {}".format(OutFile))
+        
+        
+
     def _WriteCovMatrix(self,par):
         header  = '#### Covariance matrix. ###\n#Parameters:\n'
         header += ''.join(['#'+str(s)+'\n' for s in self.covar_pars])
-        np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=',')    
+        try:
+            np.savetxt(par.PlotName+'.cov.dat', self.covar, header=header, fmt='%.3e', comments='', delimiter=', ')    
+        except FileNotFoundError:
+            self.warning("Cannot write cov file: {}".format(par.PlotName+'.cov.dat'))
 
     def _DumpSED(self,par):
         """Save the energy, E2.dN/dE, and corresponding  error in an ascii file
@@ -91,7 +124,7 @@ class Result(Loggin.Message):
         # Save all in ascii file
         # log(E)  log (E**2*dN/dE)   log(E**2*dN/dE_err)  is_dot (0,1) is_upper (0,1)
         save_file = open(par.PlotName + '.dat', 'w')
-        save_file.write("# log(E)  log (E**2*dN/dE)   Error on log(E**2*dN/dE)   \n")
+        save_file.write("#E [MeV]  E**2*dN/dE [erg/cm2/s]  Error on (E**2*dN/dE) [erg/cm2/s]   \n")
         for i in range(par.N):
             save_file.write("%12.4e  %12.4e  %12.4e \n" % (self.E[i], self.SED[i], self.Err[i]))
         save_file.close()
@@ -117,7 +150,7 @@ class Result(Loggin.Message):
     def MakeSEDError(self, pars):
         """@todo: document me"""
         estep = np.log(pars.Emax / pars.Emin) / (pars.N - 1)
-        energies = pars.Emin * np.exp(estep * np.arange(np.float(pars.N)))
+        energies = pars.Emin * np.exp(estep * np.arange(pars.N,dtype=float))
         err = np.zeros(pars.N)
         j = 0
         for ene in energies:
@@ -173,8 +206,8 @@ class Result(Loggin.Message):
                         for i in range(len(image[1].data.names) - 1):
                             total[k] = total[k] + image[1].data.field(i + 1)[jn]
                     else:
-                        emax    = np.append(emax, energymax)
-                        emin    = np.append(emin, energymin)
+                        emax    = np.append(emax, max(energymax,energymin))
+                        emin    = np.append(emin, min(energymax,energymin))
                         obs     = np.append(obs,image[1].data.field(0)[jn])
                         obs_err = np.append(obs_err,\
                                             np.sqrt(image[1].data.field(0)[jn]))
@@ -206,20 +239,23 @@ class Result(Loggin.Message):
 
         other = np.array(total - src)
         Nbin  = len(src)
-        E = np.array((emax + emin) / 2.)
-        err_E = np.array((emax - emin) / 2.)
-
-        total = np.array(total)
+        E = 10**((np.log10(emin)+np.log10(emax))/2.)
+        #E = np.asarray((emax + emin) / 2.)
+        err_E = np.asarray([E-emin,emax-E])
+        total = np.asarray(total)
         residual = np.zeros(Nbin)
         Dres = np.zeros(Nbin)
 
+        srcname = Parameter.srcname.replace("_"," ")
+
+        print('Generating counts plot')
         plt.figure()
         plt.loglog()
         plt.title('Counts plot')
         plt.xlabel("E (MeV) ")
         plt.ylabel("Counts / bin")
         plt.errorbar(E,obs,xerr=err_E,yerr=obs_err,fmt='o',color="red",ls='None',label="Data")
-        plt.plot(E,src,ls='dashed',color="blue",label=Parameter.srcname.replace("_"," "))
+        plt.plot(E,src,ls='dashed',color="blue",label=srcname)
         plt.plot(E,other,ls='solid',color="green",label="Other Sources")
         plt.plot(E,total,lw=1.5,ls='solid',label="All Sources")
         plt.legend()
@@ -228,10 +264,10 @@ class Result(Loggin.Message):
             orientation='portrait', format=None,
             transparent=False, pad_inches=0.1)
 
+        print('Generating residuals plot')
         plt.figure()
         plt.title('Residuals plot')
         plt.semilogx()
-
         for i in range(Nbin):
             try:
                 residual[i] = (obs[i] - total[i]) / total[i]
@@ -244,9 +280,10 @@ class Result(Loggin.Message):
 
         # Write residuals to csv file
         if Parameter.SaveResData:
-            residual_array = np.asarray([E,err_E,residual,Dres]).transpose()
-            np.savetxt(par.PlotName+'.ResData.dat', residual_data, 
-                       header=['x','xerr','y','yerr'], fmt='%.3e', delimiter=',')
+            print('Writing also residuals data')
+            residual_array = np.asarray([E,err_E[0],err_E[1],obs,obs_err,residual,Dres]).transpose()
+            np.savetxt(filebase + '.ResData.dat', residual_array, 
+                       header='E, E_err-, E_err+, Counts, Counts_err, Residuals,Residuals_err', fmt='%.3e', delimiter=',')
         
         ymin = min(residual) - max(Dres)
         ymax = max(residual) + max(Dres)
@@ -264,24 +301,6 @@ class Result(Loggin.Message):
             transparent=False, bbox_inches=None, pad_inches=0.1)
         os.system("rm " + imName)
         image.close()
-
-
-# def PlotFoldedLC(Time, TimeErr, Flux, FluxErr, tag="Flux (photon cm^{-2} s^{-1})"):
-#     _, tgraph, arrows = PlotLC(Time, TimeErr, Flux, FluxErr, tag)
-
-#     xmin = 0
-#     xmax = 1
-#     if max(FluxErr)==0:
-#         ymin = 0.
-#         ymax = max(Flux)*1.3
-#     else:
-#         ymin = np.min(min(Flux) - max(FluxErr) * 1.3, 0.)
-#         ymax = (max(Flux) + max(FluxErr)) * 1.3
-#     gh = ROOT.TH2F("ghflux", "", 80, xmin, xmax, 100, ymin, ymax)
-#     gh.SetStats(000)
-#     gh.SetXTitle("Orbital Phase")
-#     gh.SetYTitle(tag)
-#     return gh, tgraph, arrows
 
 def GetDataPoints(config,pars,ignore_missing_bins=False):
     """Collect the data points/UL and generate a TGraph for the points
@@ -379,7 +398,7 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
     dumpfile.close()
     return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
 
-def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
+def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False,LcOutPath="."):
     """ plot an errorbar plot with upper limits. Optionally compute and draw bayesian blocks (bblocks) """
     # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
     uplim = np.asarray(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
@@ -408,7 +427,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
 
     # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
     # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
-    if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
+    if Version(matplotlib.__version__) < Version("1.4.0"):
         plt.errorbar(x[uplim], y[uplim],
             xerr=[xerrm[uplim], xerrp[uplim]],
             yerr=[yerrm[uplim], yerrp[uplim]],
@@ -428,7 +447,7 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             fmt='o',markersize=0,capsize=0,zorder=-1,
             color='0.50',ls='None',uplims=False)
         plt.errorbar(x[uplim], y[uplim],
-            yerr=[0.2*y[uplim], 0.2*y[uplim]],
+            yerr=[0.2*np.abs(y[uplim])+1e-40, 0.2*np.abs(y[uplim])+1e-40],
             lw=optimal_errorlinewidth,
             fmt='o',markersize=0,capsize=optimal_markersize/1.5,zorder=-1,
             color='0.50',ls='None',uplims=True)
@@ -477,9 +496,17 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
             ls='None',label='bayesian blocks')
 
+        #save BB definition
+        dumpfile = open(LcOutPath + "_bb.dat", 'w')
+        dumpfile.write(
+            "# xstep\tystep\tystepmin\tystepmax\n")
+        for i in range(len(xstep)):
+            dumpfile.write(str(xstep[i])+"\t"+str(ystep[i])+"\t"+str(ystepmin[i])+"\t"+str(ystepmax[i])+"\n")
+        dumpfile.close()
+
         plt.legend(loc=0,fontsize='small',numpoints=1)
 
-def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
+def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim, LcOutPath="."):
     # Set the value and error for the uls.
     yerrm[uplim] = y[uplim]
     yerrp[uplim] = y[uplim]
@@ -500,6 +527,16 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
             ystepmax.append(y[k]+yerrp[k]) # 3 values, to mark the minimum and center
         xstep.append(xmin[k])
         xstep.append(xmax[k])
+
+    # save BB definition
+    print(LcOutPath + "_BB_edges.dat")
+    dumpfile = open(LcOutPath + "_BB_edges.dat", 'w')
+    dumpfile.write(
+        "# xstep\tystep\tystepmin\tystepmax\n")
+    for i in range(len(xstep)):
+        dumpfile.write(
+            str(xstep[i]) + "\t" + str(ystep[i]) + "\t" + str(ystepmin[i]) + "\t" + str(ystepmax[i]) + "\n")
+    dumpfile.close()
 
     plt.step(xstep, ystep,
              color='#d62728',zorder=-10,
@@ -550,7 +587,7 @@ def PlotSED(config,pars,ignore_missing_bins=False):
 
     #Actually make the plot
     plt.figure()
-    plt.title(pars.PlotName.split("/")[-1])#.replace('_','\_'))
+    plt.title(pars.PlotName.split("/")[-1])
     name = pars.PlotName.split("/")[-1]
     plt.loglog()
 
@@ -614,7 +651,7 @@ def PlotUL(pars,config,ULFlux,Index):
 
     # Plot the upper limits. For some reason, matplotlib draws the arrows inverted for uplim and lolim [?]
     # This is a known issue fixed in matplotlib 1.4: https://github.com/matplotlib/matplotlib/pull/2452
-    if LooseVersion(matplotlib.__version__) < LooseVersion("1.4.0"):
+    if Version(matplotlib.__version__) < Version("1.4.0"):
         plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',lolims=[1,1])
     else:
         plt.errorbar([E[0],E[-1]], [SED[0],SED[-1]],  yerr=[SED[0]*0.8,SED[-1]*0.8],fmt='.',color='black',ls='None',uplims=[1,1])

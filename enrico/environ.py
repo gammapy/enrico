@@ -52,7 +52,7 @@ except :
 
 # File names
 
-CATALOG_VERSION = '28'
+CATALOG_VERSION = '30'
 TEMPLATE_VERSION = '12years'
 
 #if CATALOG_DIR :
