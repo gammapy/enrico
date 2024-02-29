@@ -398,7 +398,7 @@ def GetDataPoints(config,pars,ignore_missing_bins=False):
     dumpfile.close()
     return Epoint, Fluxpoint, EpointErrm, EpointErrp, FluxpointErrm, FluxpointErrp, uplim
 
-def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
+def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False,LcOutPath="."):
     """ plot an errorbar plot with upper limits. Optionally compute and draw bayesian blocks (bblocks) """
     # plt.errorbar(Epoint, Fluxpoint, xerr=[EpointErrm, EpointErrp], yerr=[FluxpointErrm, FluxpointErrp],fmt='o',color='black',ls='None',uplims=uplim)
     uplim = np.asarray(uplim,dtype=bool) # It is an array of 1 and 0s, needs to be a bool array.
@@ -496,9 +496,17 @@ def plot_errorbar_withuls(x,xerrm,xerrp,y,yerrm,yerrp,uplim,bblocks=False):
             marker=None,ms=0,capsize=0,color='#d62728',zorder=-10,
             ls='None',label='bayesian blocks')
 
+        #save BB definition
+        dumpfile = open(LcOutPath + "_bb.dat", 'w')
+        dumpfile.write(
+            "# xstep\tystep\tystepmin\tystepmax\n")
+        for i in range(len(xstep)):
+            dumpfile.write(str(xstep[i])+"\t"+str(ystep[i])+"\t"+str(ystepmin[i])+"\t"+str(ystepmax[i])+"\n")
+        dumpfile.close()
+
         plt.legend(loc=0,fontsize='small',numpoints=1)
 
-def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
+def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim, LcOutPath="."):
     # Set the value and error for the uls.
     yerrm[uplim] = y[uplim]
     yerrp[uplim] = y[uplim]
@@ -519,6 +527,16 @@ def plot_bayesianblocks(xmin, xmax, y, yerrm, yerrp, uplim):
             ystepmax.append(y[k]+yerrp[k]) # 3 values, to mark the minimum and center
         xstep.append(xmin[k])
         xstep.append(xmax[k])
+
+    # save BB definition
+    print(LcOutPath + "_BB_edges.dat")
+    dumpfile = open(LcOutPath + "_BB_edges.dat", 'w')
+    dumpfile.write(
+        "# xstep\tystep\tystepmin\tystepmax\n")
+    for i in range(len(xstep)):
+        dumpfile.write(
+            str(xstep[i]) + "\t" + str(ystep[i]) + "\t" + str(ystepmin[i]) + "\t" + str(ystepmax[i]) + "\n")
+    dumpfile.close()
 
     plt.step(xstep, ystep,
              color='#d62728',zorder=-10,

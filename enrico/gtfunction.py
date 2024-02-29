@@ -13,8 +13,12 @@ from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
+<<<<<<< HEAD
+from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter #, obsSim
+=======
 #from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
 from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
+>>>>>>> 4805e96a6db5ef6a7ea5c6971c34e9aaa8b59d2a
 from GtApp import GtApp
 from enrico import utils
 import numpy as np
@@ -29,8 +33,12 @@ def run_retry(macro,tries=5,compress=False):
     mes = Loggin.Message()
 
     # Try to write the temporary output to a temporary file and then move it, 
-    # to avoid broken files left all over the place if the macro is interrupted 
-    orig_name = str(macro['outfile']).replace(".gz","")
+    # to avoid broken files left all over the place if the macro is interrupted
+    try :
+        orig_name = str(macro['outfile']).replace(".gz","")
+    except:
+        orig_name = str(macro['infile']).replace(".gz","") #for gtexposure which has no outfile
+
     try:
         macro['outfile'] = macro['outfile']+".tmpout"
     except:
@@ -118,6 +126,7 @@ class Observation:
         self.gtifitsfile   = self.folder+'/'+self.srcname+"_"+filetag+"_GTI.fits"
 
         #Variables
+        print("DAVID :",self.Configuration['time']['type'])
         if ('MJD' in self.Configuration['time']['type']):
             get_met = lambda t: utils.MJD_to_met(float(t))
         elif ('JD' in self.Configuration['time']['type']):
@@ -129,6 +138,8 @@ class Observation:
         self.use_edisp = bool(self.Configuration['analysis']['EnergyDispersion']=='yes' and self.Configuration["analysis"]["likelihood"]=="binned")
         
         self.t1        = get_met(self.Configuration['time']['tmin'])
+        print("DAVID :", self.Configuration['time']['tmin'])
+        print("DAVID :", get_met(self.Configuration['time']['tmin']))
         self.t2        = get_met(self.Configuration['time']['tmax'])
         self.Emin      = float(self.Configuration['energy']['emin'])
         self.Emax      = float(self.Configuration['energy']['emax'])
@@ -454,7 +465,7 @@ class Observation:
 
         diffResps['clobber'] = self.clobber
         #diffResps.run()
-        self.run_retry_compress(diffResps)
+         #self.run_retry_compress(diffResps)
         with open(self.diffrspflag,"w") as diffrspflag:
             diffrspflag.write("")
 
@@ -502,6 +513,7 @@ class Observation:
     def Obssim(self):
         obsSim = GtApp('gtobssim', 'observationSim')
         """Run gtobssim tool"""
+        obsSim = GtApp('obssim', 'obsSim')
         if (self.clobber=="no" and os.path.isfile(self.srcMap)):
             #print("File exists and clobber is False")
             return(0) 
