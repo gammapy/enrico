@@ -139,7 +139,7 @@ def call(cmd,
     #Number of Max jobs in the queue
     if environ.FARM=="LAPP":
         max_jobs = 1000
-  elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA", "LAPALMA"]:
+    elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA", "LAPALMA"]:
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
         max_jobs = 1000

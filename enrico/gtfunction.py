@@ -13,12 +13,7 @@ from enrico import Loggin
 from time import sleep
 from random import random
 from math import sqrt, log10
-<<<<<<< HEAD
 from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter #, obsSim
-=======
-#from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
-from gt_apps import evtbin, maketime, diffResps, expCube, expMap, srcMaps, model_map, filter
->>>>>>> 4805e96a6db5ef6a7ea5c6971c34e9aaa8b59d2a
 from GtApp import GtApp
 from enrico import utils
 import numpy as np
