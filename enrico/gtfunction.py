@@ -74,6 +74,7 @@ class Observation:
         self.Configuration = Configuration
         self.tag = tag
         self.folder = folder
+        self.queryfermi=False
         self.LoadConfiguration()
 
     def LoadConfiguration(self):
@@ -87,6 +88,14 @@ class Observation:
         self.modelname = self.Configuration['target']['spectrum']
         self.ft1       = self.Configuration['file']['event']
         self.ft2       = self.Configuration['file']['spacecraft']
+
+        if self.ft1 in ["query",""] or self.ft2 in ["query",""]:
+            self.queryfermi=True
+            self.ft1 = self.Configuration['out']+"/photons.list"
+            self.ft2 = '@'+self.Configuration['out']+"/spacecraft.list"
+            self.Configuration['file']['event'] = self.ft1
+            self.Configuration['file']['spacecraft'] = self.ft2
+
         self.xmlfile   = self.Configuration['file']['xml']
 
         self.SimXmlfile = self.Configuration['ObservationSimulation']['infile'] 
@@ -332,9 +341,10 @@ class Observation:
             #print("File exists and clobber is False")
             return(0)
         
-        if self.ft1 == "query" or self.ft1=="" or self.ft2 == "query" or self.ft2 == "":
+        if self.queryfermi==True:
             from astroquery.fermi import FermiLAT
             from urllib.request import urlretrieve
+            print('Querying Fermi LAT photon server ... this may take a while')
             result = FermiLAT.query_object(\
                 name_or_coords=str(self.ra)+", "+str(self.dec),
                 searchradius=self.roi,
@@ -357,13 +367,10 @@ class Observation:
                 urlretrieve(s, so)
                 scfofiles.append(so)
             
-            self.ft1 = self.Configuration['out']+"/photons.list"
-            self.ft2 = self.Configuration['out']+"/spacecraft.list"
-
             with open(self.ft1, "w") as f:
-                f.writelines(ph)
+                f.writelines(phfofiles)
             with open(self.ft2, "w") as s:
-                s.writelines(ph)
+                s.writelines(scfofiles)
 
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventcoarse
