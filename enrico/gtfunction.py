@@ -121,7 +121,6 @@ class Observation:
         self.gtifitsfile   = self.folder+'/'+self.srcname+"_"+filetag+"_GTI.fits"
 
         #Variables
-        print("DAVID :",self.Configuration['time']['type'])
         if ('MJD' in self.Configuration['time']['type']):
             get_met = lambda t: utils.MJD_to_met(float(t))
         elif ('JD' in self.Configuration['time']['type']):
@@ -133,8 +132,6 @@ class Observation:
         self.use_edisp = bool(self.Configuration['analysis']['EnergyDispersion']=='yes' and self.Configuration["analysis"]["likelihood"]=="binned")
         
         self.t1        = get_met(self.Configuration['time']['tmin'])
-        print("DAVID :", self.Configuration['time']['tmin'])
-        print("DAVID :", get_met(self.Configuration['time']['tmin']))
         self.t2        = get_met(self.Configuration['time']['tmax'])
         self.Emin      = float(self.Configuration['energy']['emin'])
         self.Emax      = float(self.Configuration['energy']['emax'])
@@ -334,6 +331,40 @@ class Observation:
         if (self.clobber=="no" and os.path.isfile(self.eventcoarse)):
             #print("File exists and clobber is False")
             return(0)
+        
+        if self.ft1 == "query" or self.ft1=="" or self.ft2 == "query" or self.ft2 == "":
+            from astroquery.fermi import FermiLAT
+            from urllib.request import urlretrieve
+            result = FermiLAT.query_object(\
+                name_or_coords=str(self.ra)+", "+str(self.dec),
+                searchradius=self.roi,
+                obsdates=str(self.t1)+", "+str(self.t2),
+                timesys='MET', 
+                energyrange_MeV=str(self.Emin)+", "+str(self.Emax),
+            )
+            phfiles = [f for f in result if '_PH' in f]
+            scfiles = [s for s in result if '_SC' in s]
+            phfofiles = []
+            scfofiles = []
+            for f in phfiles:
+                print('Downloading '+f+' ...')
+                fo = self.Configuration['out']+"/"+f.split("/")[-1]
+                urlretrieve(f, fo)
+                phfofiles.append(fo)
+            for s in scfiles:
+                print('Downloading '+s+' ...')
+                so = self.Configuration['out']+"/"+s.split("/")[-1]
+                urlretrieve(s, so)
+                scfofiles.append(so)
+            
+            self.ft1 = self.Configuration['out']+"/photons.list"
+            self.ft2 = self.Configuration['out']+"/spacecraft.list"
+
+            with open(self.ft1, "w") as f:
+                f.writelines(ph)
+            with open(self.ft2, "w") as s:
+                s.writelines(ph)
+
         filter['infile'] = self.ft1
         filter['outfile'] = self.eventcoarse
         if (self.roicuts == True):
@@ -447,7 +478,7 @@ class Observation:
 
     def DiffResps(self):
         """run gtdiffresp"""
-        if (self.clobber=="no" and os.path.isfile(self.diffrspflag)):
+        if (self.clobber=="no" or os.path.isfile(self.diffrspflag)):
             #print("File exists and clobber is False")
             return(0)
         diffResps['evfile']=self.mktimefile
@@ -459,8 +490,8 @@ class Observation:
         diffResps['convert']="no"
 
         diffResps['clobber'] = self.clobber
-        #diffResps.run()
-         #self.run_retry_compress(diffResps)
+        diffResps.run()
+        #self.run_retry_compress(diffResps)
         with open(self.diffrspflag,"w") as diffrspflag:
             diffrspflag.write("")
 

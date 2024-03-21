@@ -80,17 +80,29 @@ class LightCurve(Loggin.Message):
         self.Nbin = 0
         self.gtifile = []
 
-        # Generated based on Edge file
+        # Generated based on Edge file or two columns
         TimeBinEdgeFile = self.config['LightCurve']['TimeBinEdgeFile']
         if TimeBinEdgeFile != '':
-            times = np.sort(np.genfromtxt(TimeBinEdgeFile,dtype="float",unpack=True))
-            self.tmin = times[0]
-            self.tmax = times[-1]
-            self.Nbin = len(times)-1
-            self.time_array = np.zeros(self.Nbin*2)
-            for i in range(self.Nbin):
-                self.time_array[2*i] = times[i]
-                self.time_array[2*i+1] = times[i+1]
+            try:
+                # two columns edges
+                times = np.loadtxt(TimeBinEdgeFile, delimiter=',', usecols=(0,1))
+                self.tmin = times[0][0]
+                self.tmax = times[-1][-1]
+                self.Nbin = len(times)
+                self.time_array = np.zeros(self.Nbin*2)
+                for i in range(self.Nbin):
+                    self.time_array[2*i] = times[i][0]
+                    self.time_array[2*i+1] = times[i][1]
+            except:
+                # one column, edges
+                times = np.sort(np.genfromtxt(TimeBinEdgeFile,dtype="float",unpack=True))
+                self.tmin = times[0]
+                self.tmax = times[-1]
+                self.Nbin = len(times)-1
+                self.time_array = np.zeros(self.Nbin*2)
+                for i in range(self.Nbin):
+                    self.time_array[2*i] = times[i]
+                    self.time_array[2*i+1] = times[i+1]
 
         # Generate based on Nbins
         elif self.config['time']['file'] != '': 

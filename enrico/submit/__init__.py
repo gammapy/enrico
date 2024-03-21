@@ -178,6 +178,8 @@ def call(cmd,
             text = text.replace("job-name=fermilat","job-name={}".format(jobname))
 
             if exec_dir:
+                text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
+                text += '\nmkdir -p $PFILES\n'
                 text += '\ncd {0}\n\n'.format(exec_dir)
 
             if jobname:
@@ -203,6 +205,8 @@ def call(cmd,
                 text += call_command + " " + preffix+'_${SLURM_ARRAY_TASK_ID}.'+suffix
             elif isinstance(cmd, str):
                 text += cmd
+
+            text += '\n rm $PFILES/*.par\n'
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
@@ -244,9 +248,12 @@ def call(cmd,
 
             
             if environ.FARM in ['DESY','DESY_quick']:
-                text += 'if [ "$PFILES" != "" ]; then cp -R $FERMI_DIR/syspfiles/* ${PFILES}/; fi\n'
+                text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
+                text += '\nmkdir -p $PFILES\n'
+                text += '\ncd {0}\n\n'.format(exec_dir)
             
             text += cmd
+            text += '\n rm $PFILES/*.par\n'
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
@@ -283,7 +290,6 @@ def call(cmd,
     else:
         if exec_dir:
             os.chdir(exec_dir)
-
             text = cmd
 
     # Now the following steps are again identical
