@@ -369,7 +369,7 @@ class Observation:
             
             with open(self.ft1, "w") as f:
                 f.writelines(phfofiles)
-            with open(self.ft2, "w") as s:
+            with open(self.ft2.lstrip('@'), "w") as s:
                 s.writelines(scfofiles)
 
         filter['infile'] = self.ft1
