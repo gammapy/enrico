@@ -294,8 +294,4 @@ if __name__ == '__main__':
         print(('Usage: '+sys.argv[0]+' <config file name>'))
         mes.error('Config file not found.')
 
-    # Move to the directory where the config file is, otherwise the .par files of Fermi-LAT run into overwriting issues
-    _currdir_=os.getcwd()
-    os.chdir(os.path.dirname(os.path.realpath(infile)))
     run(infile)
-    os.chdir(_currdir_)
