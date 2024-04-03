@@ -10,6 +10,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --export=ALL
 #SBATCH --partition=batch
+#SBATCH --time=3:00:00
 
 
 echo "~~~~~~~~ SETUP ENVIRONMENT ~~~~~~~~ "
