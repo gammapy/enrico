@@ -158,7 +158,7 @@ class LightCurve(Loggin.Message):
 
     def PrepareLC(self,write = 'no'):
         """Simple function to prepare the LC generation : generate and write the config files"""
-        parentdir = str(self.config['out'])
+        parentdir = str(self.LCfolder)
         for i in range(self.Nbin):
             self.config['time']['tmin'] = self.time_array[2*i]
             self.config['time']['tmax'] = self.time_array[2*i+1]
@@ -166,14 +166,9 @@ class LightCurve(Loggin.Message):
             self.config['target']['spectrum'] = 'PowerLaw' # simplify the spectrum
             self.config['out'] = parentdir + '/LC_' + str(i) + '/' 
             utils.mkdir_p(self.config['out'])
-            #filename = (self.config['out'] + "Config_" + str(i) + "_" +
-            #        str(self.config['time']['tmin']) + "_" +
-            #        str(self.config['time']['tmax']))#Name of the config file
-            filename    = self.config['out'] + "LCbin_"+str(i) + '.conf'
+            utils.mkdir_p(parentdir + '/confs/')
+            filename    = parentdir + "/confs/LCbin_"+str(i) + '.conf'
             xmlfilename = self.config['out'] + "LCbin_"+str(i) + '.xml'
-            #xmlfilename = (self.config['out'] + "" + str(i) + "_" +
-            #        str(self.config['time']['tmin']) + "_" +
-            #        str(self.config['time']['tmax'])) + ".xml" #Name of the xml file
             self.config['file']['xml'] = xmlfilename
             # Do not produce spectral plots
             
@@ -189,9 +184,8 @@ class LightCurve(Loggin.Message):
 
             if write == 'yes':
                 self.config.filename = filename
-                #self.config.write(open(filename, 'wb'))
                 self.config.write()
-
+            
             self.configfile.append(filename)
 
     def _MakeLC(self,Path=LightcurvePath) :
@@ -206,8 +200,6 @@ class LightCurve(Loggin.Message):
         
         cmd_list = []        
         for i in range(self.Nbin):
-            #gc.collect()
-            #cmd = str("enrico_sed %s && enrico_plot_lc %s" %(self.configfile[i], self.parent_filename))
             cmd = enricodir+"/enrico/RunGTlike.py "+self.configfile[i]
             if self.submit == 'yes':
                 scriptname = self.LCfolder+"LC_Script_"+str(i)+".sh"
@@ -223,14 +215,21 @@ class LightCurve(Loggin.Message):
             else :
                 os.system(cmd)
         
-        if len(cmd_list)>0:
-            scriptname = self.LCfolder+"LC_Script_jobarray.sh"
-            JobLog = self.LCfolder+"LC_Script_jobarray.log"
-            JobName = (self.config['target']['name'] + "_" +
-                       self.config['analysis']['likelihood'] +
-                       "_LC_" + self.config['file']['tag'])+".log"
-                
-            call(cmd_list, enricodir, fermidir, scriptname, JobLog, JobName)
+        nmax = 100
+        if len(cmd_list)>0:    
+            if len(cmd_list)>nmax:
+                cmd_list_split = [cmd_list[i * nmax:(i + 1) * nmax] for i in range((len(cmd_list) + nmax - 1) // nmax )]
+            else:
+                cmd_list_split = [cmd_list]
+
+            for k,cmd_list_i in enumerate(cmd_list_split): 
+                scriptname = self.LCfolder+"LC_Script_jobarray_"+str(k)+".sh"
+                JobLog = self.LCfolder+"LC_Script_jobarray_"+str(k)+".log"
+                JobName = (self.config['target']['name'] + "_" +
+                           self.config['analysis']['likelihood'] +
+                           "_LC_" + self.config['file']['tag'])+"_"+str(k)+".log"
+                    
+                call(cmd_list_i, enricodir, fermidir, scriptname, JobLog, JobName, jobarray_n0=k*nmax)
             
 
     def _MakePhasebin(self):
