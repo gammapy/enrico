@@ -343,6 +343,7 @@ class Observation:
         
         if self.queryfermi==True:
             from astroquery.fermi import FermiLAT
+            FermiLAT.clear_cache()
             from urllib.request import urlretrieve
             print('Querying Fermi LAT photon server ... this may take a while')
             result = FermiLAT.query_object(\
@@ -698,7 +699,7 @@ class Observation:
         psf["emax"]    = self.Emax_ext
         psf["nenergies"] = max(2,\
           int(Nbdecade*self.Configuration['energy']['enumbins_per_decade']+0.5))
-        psf["thetamax"] = 5.
+        psf["thetamax"] = 30.
         #psf.run()
         self.run_retry_compress(psf)
 

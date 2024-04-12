@@ -110,12 +110,14 @@ def call(cmd,
          qsub_log=None,
          jobname=None,
          submit=True,
-         max_jobs=50,
+         max_jobs=100,
+         jobarray_n0=0,
          check_present=None,
          clobber=False,
          exec_dir=None,
          dry=False,
-         options=None):
+         options=None,
+         ):
     """Run a command line tool either directly
     or submit to the queue"""
 
@@ -193,7 +195,8 @@ def call(cmd,
                     text = '\n'.join([ln for ln in text.split('\n') if rl not in ln])
                 text2  = '#SBATCH --partition=batch\n'
                 text2 += '#SBATCH --job-name='+jobname+'\n'
-                #text2 += '#SBATCH --output='+qsub_log+'\n'
+                jobnstart = str(jobarray_n0)
+                jobnstop  = str(jobarray_n0+len(cmd)-1)
                 text2 += '#SBATCH --array=0-'+str(len(cmd)-1)+'\n'
                 text2 += '#SBATCH --output=%j_%a.out\n'
                 text2 += '#SBATCH --error=%j_%a.err\n'
@@ -202,7 +205,9 @@ def call(cmd,
                 config_file  = cmd[0].split(' ')[1]
                 preffix = config_file.rsplit('_',1)[0]
                 suffix  = config_file.rsplit('.',1)[-1]
-                text += call_command + " " + preffix+'_${SLURM_ARRAY_TASK_ID}.'+suffix
+                text += "OFFSETSTARTNJOB=({"+jobnstart+".."+jobnstop+"})\n"
+                text += "REAL_SLURM_TASK_ARRAY_ID=${OFFSETSTARTNJOB[$SLURM_TASK_ARRAY_ID]}\n"
+                text += call_command + " " + preffix+'_${REAL_SLURM_TASK_ARRAY_ID}.'+suffix
             elif isinstance(cmd, str):
                 text += cmd
 
