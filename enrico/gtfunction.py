@@ -322,7 +322,8 @@ class Observation:
         app = expcube2
         if 'edisp_bins' in list(app.pars.keys()):
             if self.use_edisp:
-                app['edisp_bins'] = -min(3,int(Nbdecade*0.2+0.5))
+                #app['edisp_bins'] = -min(3,int(Nbdecade*0.2+0.5))
+                app['edisp_bins'] = -2 # lets keep it simple
             else:
                 app['edisp_bins'] = 0
         elif 'edisp' in list(app.pars.keys()):
