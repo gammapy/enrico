@@ -178,10 +178,12 @@ def call(cmd,
             # Changes to home dir by default, which happens
             # anyway in a new shell.
             text = text.replace("job-name=fermilat","job-name={}".format(jobname))
+            
+            text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
+            text += '\nmkdir -p $PFILES\n'
+            text += '\ncp -a $FERMI_DIR/syspfiles/*.par $PFILES/\n'
 
             if exec_dir:
-                text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
-                text += '\nmkdir -p $PFILES\n'
                 text += '\ncd {0}\n\n'.format(exec_dir)
 
             if jobname:
@@ -211,7 +213,7 @@ def call(cmd,
             elif isinstance(cmd, str):
                 text += cmd
 
-            text += '\n rm $PFILES/*.par\n'
+            text += '\n rm -f $PFILES/*.par\n'
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
@@ -258,7 +260,7 @@ def call(cmd,
                 text += '\ncd {0}\n\n'.format(exec_dir)
             
             text += cmd
-            text += '\n rm $PFILES/*.par\n'
+            text += '\n rm -rf $PFILES/*.par\n'
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
