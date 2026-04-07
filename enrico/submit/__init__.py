@@ -181,9 +181,9 @@ def call(cmd,
             # anyway in a new shell.
             text = text.replace("job-name=fermilat","job-name={}".format(jobname))
             
-            text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
-            text += '\nmkdir -p $PFILES\n'
-            text += '\ncp -a $FERMI_DIR/syspfiles/*.par $PFILES/\n'
+            #text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
+            #text += '\nmkdir -p $PFILES\n'
+            #text += '\ncp -a $FERMI_DIR/syspfiles/*.par $PFILES/\n'
 
             if exec_dir:
                 text += '\ncd {0}\n\n'.format(exec_dir)
