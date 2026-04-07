@@ -276,8 +276,10 @@ def run(infile):
     energybin.RunEbin(folder,Nbin,Fit,FitRunner,sedresult)
     
     # Cleanup files for this analysis? (this is supposed to be done only for bins, to save up space) 
-    if config['file']['FitsCleanupAfterAnalysis'] == 'yes':
-        utils.CleanUpFitsFiles(config)
+    if config['file']['FitsCleanupAfterAnalysis']=='minimal':
+        utils.CleanUpFitsFiles(config,keep_minimal=True)
+    elif config['file']['FitsCleanupAfterAnalysis']=='yes':
+        utils.CleanUpFitsFiles(config,keep_minimal=False)
 
     del(sedresult)
     del(Result)

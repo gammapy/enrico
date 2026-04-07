@@ -40,7 +40,7 @@ def jobs_in_queue():
             if environ.FARM in ["LAPP", "IAC_CONDOR"]:
                 fh = Popen("condor_q ", \
                     stdout=PIPE, shell=True)  
-            elif environ.FARM in ["IAC_DIVA","LAPALMA"]:
+            elif environ.FARM in ["IAC_DIVA","IAC_DAMPE","LAPALMA"]:
                 fh = Popen("squeue -u {user}".format(user=user), \
                     stdout=PIPE, shell=True)
             else:
@@ -83,6 +83,7 @@ def GetSubCmd():
          'CCIN2P3' : ['qsub','-l ct=24:00:00 -l vmem=4G -l fsize=20G -l sps=1 -l os=sl6 -P P_hess'],
          'IAC_CONDOR' : ['qsub -V','-l mem=4096mb'],
          'IAC_DIVA' : ['sbatch','--export=ALL --mem=8G'],
+         'IAC_DAMPE': ['sbatch','--export=ALL'],
          'LAPALMA' : ['sbatch','--export=ALL --mem=8G'],
          'LOCAL' :   ['qsub','-l nodes=1:ppn=1 -V %s %s'%(queueoptions,queuetext)],
          }
@@ -96,6 +97,7 @@ def GetSubOutput(qsub_log):
          'CCIN2P3' : ['-o', qsub_log, '-e', qsub_log, '-j', 'yes'],
          'IAC_CONDOR' : ['-o', qsub_log, '-j', 'oe'],
          'IAC_DIVA' : ['-o', qsub_log],
+         'IAC_DAMPE' : ['-o', qsub_log],
          'LAPALMA' : ['-o', qsub_log],
          'LOCAL' :   ['-o', qsub_log, '-j', 'oe'],
          }
@@ -141,7 +143,7 @@ def call(cmd,
     #Number of Max jobs in the queue
     if environ.FARM=="LAPP":
         max_jobs = 1000
-    elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA", "LAPALMA"]:
+    elif environ.FARM in ["IAC_CONDOR", "IAC_DIVA", "IAC_DAMPE", "LAPALMA"]:
         max_jobs = 1000
     elif environ.FARM in ["DESY", "DESY_quick"]:
         max_jobs = 1000
@@ -174,7 +176,7 @@ def call(cmd,
             text = text.replace("logfile",qsub_log)
 
 
-        elif environ.FARM in ["IAC_DIVA", "LAPALMA"]:
+        elif environ.FARM in ["IAC_DIVA", "LAPALMA"] or isinstance(cmd,list):
             # Changes to home dir by default, which happens
             # anyway in a new shell.
             text = text.replace("job-name=fermilat","job-name={}".format(jobname))
@@ -199,17 +201,25 @@ def call(cmd,
                 text2 += '#SBATCH --job-name='+jobname+'\n'
                 jobnstart = str(jobarray_n0)
                 jobnstop  = str(jobarray_n0+len(cmd)-1)
-                text2 += '#SBATCH --array=0-'+str(len(cmd)-1)+'\n'
-                text2 += '#SBATCH --output=%j_%a.out\n'
-                text2 += '#SBATCH --error=%j_%a.err\n'
+                text2 += '#SBATCH --array=0-'+str(len(cmd)-1)+'%30\n'
                 text = text.replace('#SBATCH --partition=batch',text2)
                 call_command = cmd[0].split(' ')[0]
                 config_file  = cmd[0].split(' ')[1]
                 preffix = config_file.rsplit('_',1)[0]
                 suffix  = config_file.rsplit('.',1)[-1]
-                text += "OFFSETSTARTNJOB=({"+jobnstart+".."+jobnstop+"})\n"
-                text += "REAL_SLURM_TASK_ARRAY_ID=${OFFSETSTARTNJOB[$SLURM_TASK_ARRAY_ID]}\n"
-                text += call_command + " " + preffix+'_${REAL_SLURM_TASK_ARRAY_ID}.'+suffix
+                if "LightCurve" in config_file:
+                    parent_dir = os.path.dirname(os.path.dirname(config_file))
+                    logs_dir = os.path.join(parent_dir, "logs")
+                else:
+                    parent_dir = os.path.dirname(config_file)
+                    logs_dir = os.path.join(parent_dir, "logs")
+
+                text += f'#SBATCH --output={logs_dir}/%j_%a.out\n'
+                text += f'#SBATCH --error={logs_dir}/%j_%a.err\n'
+                #text += "OFFSETSTARTNJOB=({"+jobnstart+".."+jobnstop+"})\n"
+                #text += "REAL_SLURM_TASK_ARRAY_ID=${OFFSETSTARTNJOB[$SLURM_TASK_ARRAY_ID]}\n"
+                #text += call_command + " " + preffix+'_${REAL_SLURM_TASK_ARRAY_ID}.'+suffix
+                text += call_command + " " + preffix+'_${SLURM_ARRAY_TASK_ID}.'+suffix
             elif isinstance(cmd, str):
                 text += cmd
 
@@ -252,7 +262,6 @@ def call(cmd,
             text +='source $ENRICO_DIR/enrico-init.sh\n'
             text +='export LATEXDIR=/tmp/aux\n'
             text +='#PBS -o '+qsub_log+'\n'
-
             
             if environ.FARM in ['DESY','DESY_quick']:
                 text += '\nexport PFILES=$HOME/pfiles/$(date +%s%N)\n'
@@ -260,7 +269,7 @@ def call(cmd,
                 text += '\ncd {0}\n\n'.format(exec_dir)
             
             text += cmd
-            text += '\n rm -rf $PFILES/*.par\n'
+            text += '\ntrap "rm -rf $PFILES" EXIT\n'
 
             # Now reset cmd to be the qsub command
             cmd = GetSubCmd()
@@ -268,7 +277,7 @@ def call(cmd,
                 if environ.FARM in ["CCIN2P3","DESY","DESY_quick"]:
                     if jobname[0].isdigit():
                         jobname='_'+jobname
-                cmd += ['-N', jobname]
+                #cmd += ['-N', jobname]
 
             if scriptfile == None:
                 # Note that mkstemp() returns an int,

@@ -43,7 +43,12 @@ import warnings
 import numpy as np
 import types
 #from funcsigs import signature
-from inspect import getargspec
+try:
+    # Python 3.0–3.10
+    from inspect import getfullargspec as getargspec
+except ImportError:
+    # fallback for very old Pythons
+    from inspect import getargspec
 
 # TODO: implement other fitness functions from appendix B of Scargle 2012
 
