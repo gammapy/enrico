@@ -681,7 +681,7 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffEr
         ul = np.zeros(len(Time))
     if len(Cutoff) == 0:
         flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
-                  'Delta_Flux Index Delta_Index TS Npred\n')
+                  'Delta_Flux Index Delta_Index TS Npred UL\n')
         for i in range(len(Time)):
             flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
                       str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
