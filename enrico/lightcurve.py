@@ -312,6 +312,7 @@ class LightCurve(Loggin.Message):
         Npred_detected_indices = []
         TS = []
         uplim = []
+        ul = []
 
         # Find name used for index parameter
         if ((self.config['target']['spectrum'] == 'PowerLaw' or
@@ -346,6 +347,7 @@ class LightCurve(Loggin.Message):
             Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
             TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
+            ul.append(ResultDic.get("Ulvalue"))
             if 'Ulvalue' in ResultDic :
                 uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
@@ -537,7 +539,7 @@ class LightCurve(Loggin.Message):
         lcfilename = LcOutPath+"_results.dat"
         self.info("Write to Ascii file : "+lcfilename)
         WriteToAscii(Time,TimeErr,Flux,FluxErr,Index,IndexErr,
-                     Cutoff,CutoffErr,TS,Npred,lcfilename)
+                     Cutoff,CutoffErr,TS,Npred,lcfilename,ul=ul)
 
         if self.config["LightCurve"]['ComputeVarIndex'] == 'yes':
              self.VariabilityIndex()
@@ -672,9 +674,11 @@ class LightCurve(Loggin.Message):
         print(("\t Chi2 prob = ",1 - chi2.cdf(2*(sum(LogL1)-sum(LogL0)),len(LogL0)-1)))
         print()
 
-def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename):
-    """Write the results of the LC in a Ascii file"""
+def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffErr, TS, Npred, filename, ul=0):
+    """Write the results of the LC in an Ascii file"""
     flc = open(filename, 'w')
+    if ul == 0:
+        ul = np.zeros(len(Time))
     if len(Cutoff) == 0:
         flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
                   'Delta_Flux Index Delta_Index TS Npred\n')
@@ -682,6 +686,7 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffEr
             flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
                       str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
                       str(Index[i]) + "\t" + str(IndexErr[i]) + "\t" +
+                      str(ul[i]) + "\t" +
                       str(TS[i]) + "\t" + str(Npred[i]) + "\n")
     else:
         flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
