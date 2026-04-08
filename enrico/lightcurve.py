@@ -348,6 +348,7 @@ class LightCurve(Loggin.Message):
             TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
             ul.append(ResultDic.get("Ulvalue"))
+            print(ResultDic.get("Ulvalue"))
             if 'Ulvalue' in ResultDic :
                 uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
