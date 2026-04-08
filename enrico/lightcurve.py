@@ -347,14 +347,15 @@ class LightCurve(Loggin.Message):
             Time.append((ResultDic.get("tmax")+ResultDic.get("tmin"))/2.)
             TimeErr.append((ResultDic.get("tmax")-ResultDic.get("tmin"))/2.)
             #Check is an ul have been computed. The error is set to zero for the TGraph.
-            ul.append(ResultDic.get("Ulvalue"))
-            print(ResultDic.get("Ulvalue"))
+
             if 'Ulvalue' in ResultDic :
                 uplim.append(1)
                 Flux.append(ResultDic.get("Ulvalue"))
+                ul.append(ResultDic.get("Ulvalue"))
             else :
                 uplim.append(0)
                 Flux.append(ResultDic.get("Flux"))
+                ul.append(0)
             FluxErr.append(ResultDic.get("dFlux"))
             Index.append(ResultDic.get(IndexName))
             IndexErr.append(ResultDic.get(IndexErrName))
@@ -682,7 +683,7 @@ def WriteToAscii(Time, TimeErr, Flux, FluxErr, Index, IndexErr, Cutoff, CutoffEr
         ul = np.zeros(len(Time))
     if len(Cutoff) == 0:
         flc.write('# Time (MET) Delta_Time Flux(ph cm-2 s-1) '
-                  'Delta_Flux Index Delta_Index TS Npred UL\n')
+                  'Delta_Flux Index Delta_Index UL TS Npred\n')
         for i in range(len(Time)):
             flc.write(str(Time[i]) + "\t" + str(TimeErr[i]) + "\t" +
                       str(Flux[i]) + "\t" + str(FluxErr[i]) + "\t" +
